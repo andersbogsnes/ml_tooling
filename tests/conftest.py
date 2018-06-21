@@ -2,7 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from src.ab_models import BaseClassModel
+from ab_models import BaseClassModel
 from sklearn.datasets import load_iris
 
 

@@ -11,6 +11,7 @@ VERSION = None
 
 REQUIRED = [
     'scikit-learn',
+    'scipy',
     'pandas',
     'numpy'
 ]

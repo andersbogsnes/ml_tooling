@@ -1,1 +1,1 @@
-from .baseclass.baseclass import BaseClassModel
+from .baseclass.baseclass import BaseClassModel  # noqa: F401

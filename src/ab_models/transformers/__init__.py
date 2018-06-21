@@ -1,3 +1,4 @@
+# flake8: noqa
 from .pandas_transformers import Select
 from .pandas_transformers import FillNA
 from .pandas_transformers import ToCategorical

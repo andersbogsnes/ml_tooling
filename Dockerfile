@@ -10,7 +10,7 @@ COPY httpproxy.crt /usr/local/share/ca-certificates/
 
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    && update-ca-certificates
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements.txt

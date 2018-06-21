@@ -9,6 +9,9 @@ from ab_models.transformers import (Select,
                                     FreqFeature)
 import pytest
 import pandas as pd
+import numpy as np
+
+np.random.seed(42)
 
 
 def test_df_selector_returns_correct_dataframe(categorical):

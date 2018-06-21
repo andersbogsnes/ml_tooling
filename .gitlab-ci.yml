@@ -1,0 +1,18 @@
+stages:
+ - build
+ - test
+
+docker build:
+  stage: build
+  tags:
+    - runner-gitlab-9.0
+  script:
+    - docker build --build-arg http_proxy --build-arg https_proxy -t utils .
+
+docker test:
+  stage: test
+  tags:
+    - runner-gitlab-9.0
+  script:
+    - docker run utils flake8
+    - docker run utils python -m pytest --cov=ab_models

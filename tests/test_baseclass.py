@@ -18,7 +18,7 @@ def test_can_change_config():
 
 
 def test_linear_model_returns_a_result(regression):
-    result = regression.test_model()
+    result = regression.result
 
     assert isinstance(result, Result)
     assert result.model == regression.model
@@ -30,7 +30,7 @@ def test_linear_model_returns_a_result(regression):
 
 
 def test_regression_model_returns_a_result(classifier):
-    result = classifier.test_model()
+    result = classifier.result
     assert isinstance(result, Result)
     assert result.model == classifier.model
     assert result.cross_val_mean > 0

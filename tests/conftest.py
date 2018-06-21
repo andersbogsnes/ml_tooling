@@ -6,16 +6,20 @@ from ab_models import BaseClassModel
 from sklearn.datasets import load_iris
 
 
-class IrisModel(BaseClassModel):
-    def get_prediction_data(self, *args):
-        x, _ = load_iris(return_X_y=True)
-        idx = np.random.randint(len(x))
-        return x[idx]
+@pytest.fixture(name='base', scope='session')
+def _base():
+    class IrisModel(BaseClassModel):
+        def get_prediction_data(self, *args):
+            x, _ = load_iris(return_X_y=True)
+            idx = np.random.randint(len(x))
+            return x[idx]
 
-    def get_training_data(self):
-        x, y = load_iris(return_X_y=True)
-        y = np.where(y == 1, 1, 0)  # default roc_auc doesn't support multiclass
-        return x, y
+        def get_training_data(self):
+            x, y = load_iris(return_X_y=True)
+            y = np.where(y == 1, 1, 0)  # default roc_auc doesn't support multiclass
+            return x, y
+
+    return IrisModel
 
 
 @pytest.fixture(name='categorical')
@@ -44,15 +48,17 @@ def dates_data():
                                               '2018-03-01'], format='%Y-%m-%d')})
 
 
-@pytest.fixture(name='regression')
-def _linear_regression():
-    model = IrisModel(LinearRegression())
+@pytest.fixture(name='regression', scope='session')
+def _linear_regression(base):
+    model = base(LinearRegression())
     model.set_config({"CROSS_VALIDATION": 2})
+    model.test_model()
     return model
 
 
-@pytest.fixture(name='classifier')
-def _logistic_regression():
-    model = IrisModel(LogisticRegression())
+@pytest.fixture(name='classifier', scope='session')
+def _logistic_regression(base):
+    model = base(LogisticRegression())
     model.set_config({"CROSS_VALIDATION": 2})
+    model.test_model()
     return model

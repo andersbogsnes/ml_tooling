@@ -55,7 +55,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.x = None
         self.y = None
         self.config = default_config
-        self.train_scores = []
+        self.result = None
 
     @abc.abstractmethod
     def get_training_data(self) -> tuple:
@@ -67,6 +67,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_prediction_data(self, *args):
         """Gets data to predict a given observation"""
+
+    @classmethod
+    def load_model(cls, path):
+        model = joblib.load(path)
+        return cls(model)
 
     def set_config(self, config_dict):
         """
@@ -83,8 +88,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return self.x, self.y
 
     def save_model(self, path=None):
-        current_dir = pathlib.Path.cwd() if path is None else path
-        joblib.dump(self.model, current_dir.joinpath(self.model_name))
+        current_dir = pathlib.Path.cwd().joinpath(self.model_name) if path is None else path
+        joblib.dump(self.model, current_dir)
+        return self
 
     def make_prediction(self, input_data):
         x = self.get_prediction_data(input_data)
@@ -93,7 +99,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def train_model(self):
         self._load_data()
         self.model.fit(self.x, self.y)
-        return self.model
+        return self
 
     def test_model(self, metric=None):
         self._load_data()
@@ -114,7 +120,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  n_jobs=-1,
                                  verbose=self.config['VERBOSITY'])
 
-        result = Result(
+        self.result = Result(
             model=self.model,
             model_name=self.model_name,
             model_params=self.model.get_params(),
@@ -124,5 +130,4 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             cross_val_std=np.std(scores),
         )
 
-        self.train_scores.append(result)
-        return result
+        return self.result

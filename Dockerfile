@@ -5,6 +5,7 @@ ARG http_proxy
 ARG https_proxy
 
 ENV no_proxy="localhost,127.0.0.1,.alm.brand.dk,.almbrand.dk"
+ENV DISPLAY=:0
 
 COPY httpproxy.crt /usr/local/share/ca-certificates/
 

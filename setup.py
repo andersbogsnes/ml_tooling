@@ -42,5 +42,6 @@ setup(
     package_dir={'': 'src'},
     install_requires=REQUIRED,
     tests_require=TESTS_REQUIRED,
-    license='MIT'
+    license='MIT',
+    package_data={'': ['*.mplstyle']}
 )

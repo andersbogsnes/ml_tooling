@@ -4,7 +4,7 @@ import pathlib
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
 import numpy as np
-from .config import default_config
+from ..config import default_config
 from ..visualizations import ClassificationVisualize, RegressionVisualize
 
 

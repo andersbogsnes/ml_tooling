@@ -114,7 +114,7 @@ class ClassificationVisualize:
         self._test_y = test_y
 
     def confusion_matrix(self, normalized=True):
-        with plt.style.context(self._config["STYLESHEET"]):
+        with plt.style.context(self._config['STYLE_SHEET']):
             title = f'Confusion Matrix - {self._model_name}'
             y_pred = self._model.predict(self._test_x)
             return plot_confusion_matrix(self._test_y, y_pred, normalized, title)
@@ -123,7 +123,7 @@ class ClassificationVisualize:
         if not hasattr(self._model, 'predict_proba'):
             raise VizError("Model must provide a 'predict_proba' method")
 
-        with plt.style.context(self._config["STYLESHEET"]):
+        with plt.style.context(self._config['STYLE_SHEET']):
             title = f'ROC AUC - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
             return plot_roc_auc(self._test_y, y_proba, title=title)

@@ -1,0 +1,39 @@
+lines.linewidth: 4
+lines.solid_capstyle: butt
+
+legend.fancybox: true
+
+axes.prop_cycle: cycler('color', ['011f40', '0098db', '007c92', 'cce5e9', '97233f', 'e10e49', 'fcd900', '666666'])
+axes.facecolor: white
+axes.labelsize: large
+axes.axisbelow: true
+axes.edgecolor: white
+axes.linewidth: 3.0
+axes.titlesize: x-large
+axes.grid: False
+
+patch.edgecolor: f0f0f0
+patch.linewidth: 0.5
+
+svg.fonttype: path
+
+grid.linestyle: -
+grid.linewidth: 1.0
+grid.color: cbcbcb
+
+
+xtick.major.size: 0
+xtick.minor.size: 0
+ytick.major.size: 0
+ytick.minor.size: 0
+
+font.size:14.0
+
+savefig.edgecolor: white
+savefig.facecolor: white
+
+figure.subplot.left: 0.08
+figure.subplot.right: 0.95
+figure.subplot.bottom: 0.07
+figure.facecolor: white
+figure.figsize: 15, 10

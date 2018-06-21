@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
 import numpy as np
 from .config import default_config
+from ..visualizations import ClassificationVisualize, RegressionVisualize
 
 
 @total_ordering
@@ -17,6 +18,7 @@ class Result:
     def __init__(self,
                  model,
                  model_name,
+                 viz,
                  model_params=None,
                  cross_val_scores=None,
                  cross_val_mean=None,
@@ -30,6 +32,7 @@ class Result:
         self.cross_val_std = cross_val_std
         self.model_params = model_params
         self.metric = metric
+        self.plot = viz
 
     def __eq__(self, other):
         return self.cross_val_mean == other.cross_val_mean
@@ -52,10 +55,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.model = model
         self.model_type = model._estimator_type
         self.model_name = model.__class__.__name__
+        self.config = default_config
         self.x = None
         self.y = None
-        self.config = default_config
         self.result = None
+        self._plotter = None
+
+        if self.model_type == 'classifier':
+            self._plotter = ClassificationVisualize
+        if self.model_type == 'regressor':
+            self._plotter = RegressionVisualize
 
     @abc.abstractmethod
     def get_training_data(self) -> tuple:
@@ -104,13 +113,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def test_model(self, metric=None):
         self._load_data()
 
-        if metric is None:
-            if self.model_type == 'classifier':
-                metric = self.config['CLASSIFIER_METRIC']
-            else:
-                metric = self.config['REGRESSION_METRIC']
+        if self.model_type == 'classifier':
+            metric = self.config['CLASSIFIER_METRIC'] if metric is None else metric
+            stratify = self.y
+        else:
+            metric = self.config['REGRESSION_METRIC'] if metric is None else metric
+            stratify = None
 
-        train_x, test_x, train_y, test_y = train_test_split(self.x, self.y)
+        train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
 
         scores = cross_val_score(self.model,
                                  train_x,
@@ -120,8 +130,18 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  n_jobs=-1,
                                  verbose=self.config['VERBOSITY'])
 
+        self.model.fit(train_x, train_y)
+
+        viz = self._plotter(model=self.model,
+                            config=self.config,
+                            train_x=train_x,
+                            train_y=train_y,
+                            test_x=test_x,
+                            test_y=test_y)
+
         self.result = Result(
             model=self.model,
+            viz=viz,
             model_name=self.model_name,
             model_params=self.model.get_params(),
             metric=metric,

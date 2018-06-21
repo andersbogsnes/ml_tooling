@@ -13,7 +13,7 @@ REQUIRED = [
     'scikit-learn',
     'scipy',
     'pandas',
-    'numpy'
+    'numpy',
 ]
 
 TESTS_REQUIRED = [

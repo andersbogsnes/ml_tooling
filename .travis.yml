@@ -4,7 +4,7 @@ python:
 
 cache: pip
 env:
-  - TOXENV=py36
+  - TOXENV=py36,coverage-report
 
 install:
   - pip install tox coveralls

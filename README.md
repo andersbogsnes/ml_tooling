@@ -1,5 +1,6 @@
 # Model Utility library for Alm Brand
-
+[![Build Status](https://travis-ci.org/andersbogsnes/ml_utils.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_utils)
+[![Coverage Status](https://coveralls.io/repos/github/andersbogsnes/ml_utils/badge.svg?branch=master)](https://coveralls.io/github/andersbogsnes/ml_utils?branch=master)
 ## Contents
 * Transformers
     A library of transformers for use with Scikit-learn pipelines
@@ -23,7 +24,7 @@ Must define two methods:
 Define a class using BaseClassModel and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
-from ab_models import BaseClassModel
+from ml_utils import BaseClassModel
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression
 
@@ -41,6 +42,10 @@ class BostonModel(BaseClassModel):
 linear_boston = BostonModel(LinearRegression())
 
 results = linear_boston.train_model()
+
+# Visualize results
+results.plot.residuals()
+results.plot.prediction_error()
 
 # Save our model
 linear_boston.save_model('.')

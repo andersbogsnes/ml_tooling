@@ -14,6 +14,7 @@ REQUIRED = [
     'scipy',
     'pandas',
     'numpy',
+    'matplotlib'
 ]
 
 TESTS_REQUIRED = [

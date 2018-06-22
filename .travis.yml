@@ -1,10 +1,13 @@
 language: python
-python:
-  - "3.6"
+cache: pip
+env:
+  - TOXENV=py36
+
 install:
-  - pip install pytest pytest-cov coveralls
-  - pip install .
+  - pip install tox coveralls
 
 script:
-  - pytest --cov ml_utils -p no:warnings
+  - tox -e $TOXENV
+
+after_success:
   - coveralls

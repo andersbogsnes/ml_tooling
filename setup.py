@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-NAME = 'ab_models'
+NAME = 'ml_utils'
 DESCRIPTION = 'A library for machine learning utilities'
 URL = 'https://lspgitlab01.alm.brand.dk/abanbn/ab_models'
 EMAIL = 'abanbn@almbrand.dk'

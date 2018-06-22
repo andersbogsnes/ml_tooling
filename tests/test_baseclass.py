@@ -1,5 +1,5 @@
-from ab_models.baseclass.baseclass import Result
-from ab_models import BaseClassModel
+from ml_utils.baseclass.baseclass import Result
+from ml_utils import BaseClassModel
 from sklearn.linear_model import LinearRegression
 
 

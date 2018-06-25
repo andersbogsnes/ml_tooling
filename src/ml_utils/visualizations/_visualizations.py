@@ -108,21 +108,31 @@ def plot_prediction_error(y_true, y_pred, title=None):
     return ax
 
 
-def plot_feature_importance(importance, labels, title=None):
+def plot_feature_importance(importance, labels, values=None, title=None):
     """
     Plot a horizontal bar chart of labelled feature importance
     :param importance: Importance measure - typically feature importance or coefficient
     :param labels: Name of feature
     :param title: Plot title
+    :param values: Add value labels to end of each bar
     :return: matplotlib.Axes
     """
     fig, ax = plt.subplots()
     title = f"Feature Importance" if title is None else title
-    idx = np.argsort(importance)
-    ax.barh(len(labels), importance[idx], tick_label=labels[idx])
+    idx = np.argsort(np.abs(importance))
+    y_values, x_values = labels[idx], importance[idx]
+    ax.barh(y_values, np.abs(x_values))
     ax.set_title(title)
-    ax.set_xlabel('Features')
-    ax.set_ylabel('Importance')
+    ax.set_ylabel('Features')
+    ax.set_xlabel('Importance')
+    if values:
+        for (i, patch) in enumerate(ax.patches):
+            y = patch.get_y()
+            width = patch.get_width()
+            height = y + (patch.get_height() / 2)
+            padding = ax.get_xbound()[1] * 0.005
+            ax.text(width + padding, height, f"{x_values[i]:.2f}", va='center')
+
     return ax
 
 
@@ -139,26 +149,33 @@ class BaseVisualize:
         self._train_y = train_y
         self._test_y = test_y
 
-    def feature_importance(self):
+    def feature_importance(self, values=True):
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
         or coef_ attribute
+        :param values: Toggles value labels on end of each bar
         :return: matplotlib.Axes
         """
         labels = self._train_x.columns
 
-        if hasattr(self._model, 'feature_importance_'):
-            importance = self._model.feature_importance_
+        if hasattr(self._model, 'feature_importances_'):
+            importance = self._model.feature_importances_
 
         elif hasattr(self._model, 'coef_'):
             importance = self._model.coef_
+            if importance.ndim > 1:
+                importance = importance[0]
 
         else:
-            raise VizError(f"{self._model_name} does not have either coef_ or feature_importance_")
+            raise VizError(f"{self._model_name} does not have either coef_ or feature_importances_")
+
+        if len(labels) != len(importance):
+            raise VizError(f"Must have equal number of labels as features: "
+                           f"You have {len(labels)} labels and {len(importance)} features")
 
         title = f"Feature Importance - {self._model_name}"
         with plt.style.context(self._config['STYLE_SHEET']):
-            return plot_feature_importance(importance, labels, title=title)
+            return plot_feature_importance(importance, labels, values=values, title=title)
 
 
 class RegressionVisualize(BaseVisualize):

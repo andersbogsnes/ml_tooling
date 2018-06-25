@@ -1,12 +1,14 @@
+from sklearn.pipeline import make_pipeline
+
 from ml_utils.transformers import (Select,
-                                    FillNA,
-                                    ToCategorical,
-                                    FuncTransformer,
-                                    Binner,
-                                    Renamer,
-                                    TransformerError,
-                                    DateEncoder,
-                                    FreqFeature)
+                                   FillNA,
+                                   ToCategorical,
+                                   FuncTransformer,
+                                   Binner,
+                                   Renamer,
+                                   TransformerError,
+                                   DateEncoder,
+                                   FreqFeature, DFFeatureUnion)
 import pytest
 import pandas as pd
 import numpy as np
@@ -15,29 +17,29 @@ np.random.seed(42)
 
 
 def test_df_selector_returns_correct_dataframe(categorical):
-    select = Select(['a'])
+    select = Select(['category_a'])
     result = select.fit_transform(categorical)
 
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
-    assert {'a'} == set(result.columns)
+    assert {'category_a'} == set(result.columns)
 
 
 def test_df_selector_with_nonlist(categorical):
-    select = Select('a')
+    select = Select('category_a')
     result = select.fit_transform(categorical)
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
-    assert {'a'} == set(result.columns)
+    assert {'category_a'} == set(result.columns)
 
 
 def test_df_selector_with_multiple_columns(categorical):
-    select = Select(['a', 'b'])
+    select = Select(['category_a', 'category_b'])
     result = select.fit_transform(categorical)
 
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
-    assert {'a', 'b'} == set(result.columns)
+    assert {'category_a', 'category_b'} == set(result.columns)
 
 
 def test_imputer_returns_correct_dataframe(categorical_na):
@@ -46,7 +48,7 @@ def test_imputer_returns_correct_dataframe(categorical_na):
 
     assert isinstance(result, pd.DataFrame)
     assert len(categorical_na) == len(result)
-    assert {'a', 'b'} == set(result.columns)
+    assert {'category_a', 'category_b'} == set(result.columns)
     assert 'Unknown' == result.iloc[0, 1]
     assert 'Unknown' == result.iloc[1, 0]
 
@@ -57,14 +59,19 @@ def test_imputer_returns_dataframe_unchanged_if_no_nans(categorical):
 
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
-    assert {'a', 'b'} == set(result.columns)
+    assert {'category_a', 'category_b'} == set(result.columns)
     assert ~result.isin(['Unknown']).any().any()
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):
     to_cat = ToCategorical()
     result = to_cat.fit_transform(categorical)
-    expected_cols = ['a_a1', 'a_a2', 'a_a3', 'b_b1', 'b_b2', 'b_b3']
+    expected_cols = ['category_a_a1',
+                     'category_a_a2',
+                     'category_a_a3',
+                     'category_b_b1',
+                     'category_b_b2',
+                     'category_b_b3']
 
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
@@ -76,11 +83,16 @@ def test_to_categorical_returns_correct_dataframe(categorical):
 def test_to_categorical_discards_unseen_values(categorical):
     to_cat = ToCategorical()
     to_cat.fit(categorical)
-    new_data = pd.DataFrame({"a": ["a1", "a2", "ab1"],
-                             "b": ["b1", "b2", "ab2"]})
+    new_data = pd.DataFrame({"category_a": ["a1", "a2", "ab1"],
+                             "category_b": ["b1", "b2", "ab2"]})
 
     result = to_cat.transform(new_data)
-    expected_cols = ['a_a1', 'a_a2', 'a_a3', 'b_b1', 'b_b2', 'b_b3']
+    expected_cols = ['category_a_a1',
+                     'category_a_a2',
+                     'category_a_a3',
+                     'category_b_b1',
+                     'category_b_b2',
+                     'category_b_b3']
 
     assert isinstance(result, pd.DataFrame)
     assert 0 == result.isna().sum().sum()
@@ -100,21 +112,21 @@ def test_func_transformer_returns_correctly(categorical):
 def test_binner_returns_correctly(numerical):
     labels = ['1', '2', '3', '4']
     binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
-    result = binner.fit_transform(numerical[['a']])
+    result = binner.fit_transform(numerical[['number_a']])
 
     assert isinstance(result, pd.DataFrame)
     assert len(numerical) == len(result)
-    assert pd.api.types.is_categorical_dtype(result['a'])
-    assert 4 == len(result['a'].cat.categories)
-    assert set(labels) == set(result['a'].cat.categories)
+    assert pd.api.types.is_categorical_dtype(result['number_a'])
+    assert 4 == len(result['number_a'].cat.categories)
+    assert set(labels) == set(result['number_a'].cat.categories)
 
 
 def test_binner_returns_nan_on_unseen_data(numerical):
     labels = ['1', '2', '3', '4']
     binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
-    binner.fit(numerical[['a']])
+    binner.fit(numerical[['number_a']])
 
-    new_data = pd.DataFrame({"a": [5, 6, 7, 8]})
+    new_data = pd.DataFrame({"number_a": [5, 6, 7, 8]})
     result = binner.transform(new_data)
 
     assert isinstance(result, pd.DataFrame)
@@ -148,7 +160,7 @@ def test_date_encoder_returns_correctly(dates):
     assert len(dates) == len(result)
     for col in result.columns:
         assert pd.api.types.is_numeric_dtype(result[col])
-    assert 'a' not in result.columns
+    assert 'date_a' not in result.columns
 
 
 def test_freqfeature_returns_correctly(categorical):
@@ -179,9 +191,25 @@ def test_freq_features_returns_0_when_unseen_value_is_given(categorical):
     freq_feature = FreqFeature()
     freq_feature.fit(categorical)
 
-    new_data = pd.DataFrame({"a": ["a1", "a2", "c25"]})
+    new_data = pd.DataFrame({"category_a": ["a1", "a2", "c25"]})
     result = freq_feature.transform(new_data)
 
     assert isinstance(result, pd.DataFrame)
     assert len(new_data) == len(result)
     assert 0 == result.iloc[-1, 0]
+
+
+def test_featureunion_returns_concatenated_df(categorical, numerical):
+    df = pd.concat([categorical, numerical], axis=1)
+    first_pipe = make_pipeline(Select(['category_a', 'category_b']),
+                               ToCategorical()
+                               )
+    union = DFFeatureUnion([
+        ('category', first_pipe),
+        ('number', Select(['number_a', 'number_b']))
+    ])
+
+    transform_df = union.fit_transform(df)
+
+    assert isinstance(transform_df, pd.DataFrame)
+    assert 8 == len(transform_df.columns)

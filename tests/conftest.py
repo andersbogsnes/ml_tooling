@@ -27,28 +27,28 @@ def _base():
 
 @pytest.fixture(name='categorical')
 def categorical_data():
-    return pd.DataFrame({"a": ["a1", "a2", "a3"],
-                         "b": ["b1", "b2", "b3"]})
+    return pd.DataFrame({"category_a": ["a1", "a2", "a3"],
+                         "category_b": ["b1", "b2", "b3"]})
 
 
 @pytest.fixture(name='categorical_na')
 def categorical_na_data(categorical):
-    categorical.loc[1, "a"] = np.nan
-    categorical.loc[0, "b"] = np.nan
+    categorical.loc[1, "category_a"] = np.nan
+    categorical.loc[0, "category_b"] = np.nan
     return categorical
 
 
 @pytest.fixture(name='numerical')
 def numerical_data():
-    return pd.DataFrame({"a": [1, 2, 3, 4],
-                         "b": [5, 6, 7, 8]})
+    return pd.DataFrame({"number_a": [1, 2, 3, 4],
+                         "number_b": [5, 6, 7, 8]})
 
 
 @pytest.fixture(name='dates')
 def dates_data():
-    return pd.DataFrame({"a": pd.to_datetime(['2018-01-01',
-                                              '2018-02-01',
-                                              '2018-03-01'], format='%Y-%m-%d')})
+    return pd.DataFrame({"date_a": pd.to_datetime(['2018-01-01',
+                                                   '2018-02-01',
+                                                   '2018-03-01'], format='%Y-%m-%d')})
 
 
 @pytest.fixture(name='regression', scope='session')

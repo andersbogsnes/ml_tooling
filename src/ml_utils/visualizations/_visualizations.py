@@ -108,6 +108,24 @@ def plot_prediction_error(y_true, y_pred, title=None):
     return ax
 
 
+def plot_feature_importance(importance, labels, title=None):
+    """
+    Plot a horizontal bar chart of labelled feature importance
+    :param importance: Importance measure - typically feature importance or coefficient
+    :param labels: Name of feature
+    :param title: Plot title
+    :return: matplotlib.Axes
+    """
+    fig, ax = plt.subplots()
+    title = f"Feature Importance" if title is None else title
+    idx = np.argsort(importance)
+    ax.barh(len(labels), importance[idx], tick_label=labels[idx])
+    ax.set_title(title)
+    ax.set_xlabel('Features')
+    ax.set_ylabel('Importance')
+    return ax
+
+
 class BaseVisualize:
     """
     Base class for visualizers
@@ -120,6 +138,27 @@ class BaseVisualize:
         self._test_x = test_x
         self._train_y = train_y
         self._test_y = test_y
+
+    def feature_importance(self):
+        """
+        Visualizes feature importance of the model. Model must have either feature_importance_
+        or coef_ attribute
+        :return: matplotlib.Axes
+        """
+        labels = self._train_x.columns
+
+        if hasattr(self._model, 'feature_importance_'):
+            importance = self._model.feature_importance_
+
+        elif hasattr(self._model, 'coef_'):
+            importance = self._model.coef_
+
+        else:
+            raise VizError(f"{self._model_name} does not have either coef_ or feature_importance_")
+
+        title = f"Feature Importance - {self._model_name}"
+        with plt.style.context(self._config['STYLE_SHEET']):
+            return plot_feature_importance(importance, labels, title=title)
 
 
 class RegressionVisualize(BaseVisualize):

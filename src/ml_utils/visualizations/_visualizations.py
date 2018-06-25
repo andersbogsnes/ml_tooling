@@ -82,7 +82,7 @@ def plot_prediction_error(y_true, y_pred, title=None):
     return ax
 
 
-class RegressionVisualize:
+class BaseVisualize:
     def __init__(self, model, config, train_x, train_y, test_x, test_y):
         self._model = model
         self._model_name = model.__class__.__name__
@@ -92,6 +92,8 @@ class RegressionVisualize:
         self._train_y = train_y
         self._test_y = test_y
 
+
+class RegressionVisualize(BaseVisualize):
     def residuals(self):
         title = f"Residual Plot - {self._model_name}"
         y_pred = self._model.predict(self._test_x)
@@ -103,16 +105,7 @@ class RegressionVisualize:
         return plot_prediction_error(self._test_y, y_pred, title=title)
 
 
-class ClassificationVisualize:
-    def __init__(self, model, config, train_x, train_y, test_x, test_y):
-        self._model = model
-        self._model_name = model.__class__.__name__
-        self._config = config
-        self._train_x = train_x
-        self._test_x = test_x
-        self._train_y = train_y
-        self._test_y = test_y
-
+class ClassificationVisualize(BaseVisualize):
     def confusion_matrix(self, normalized=True):
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f'Confusion Matrix - {self._model_name}'

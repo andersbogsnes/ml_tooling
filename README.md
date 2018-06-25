@@ -2,6 +2,10 @@
 [![Build Status](https://travis-ci.org/andersbogsnes/ml_utils.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_utils)
 [![Coverage Status](https://coveralls.io/repos/github/andersbogsnes/ml_utils/badge.svg?branch=master)](https://coveralls.io/github/andersbogsnes/ml_utils?branch=master)
 
+# Installation
+Use pip to install
+`pip install git+https://git@github.com/andersbogsnes/ml_utils.git`
+
 # Contents
 * Transformers
     A library of transformers for use with Scikit-learn pipelines

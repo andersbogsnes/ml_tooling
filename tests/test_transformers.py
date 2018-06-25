@@ -144,6 +144,16 @@ def test_renamer_returns_correctly(numerical):
     assert set(new_col_names) == set(result.columns)
 
 
+def test_renamer_works_correctly_if_only_given_string(numerical):
+    single_column = numerical.iloc[:, 1].to_frame()
+    renamer = Renamer('test')
+    result = renamer.fit_transform(single_column)
+
+    assert isinstance(result, pd.DataFrame)
+    assert ['test'] == result.columns
+    assert len(numerical) == len(result)
+
+
 def test_mismatched_no_of_names_raises(numerical):
     new_col_names = ['test_a']
     renamer = Renamer(new_col_names)

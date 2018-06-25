@@ -1,4 +1,5 @@
 # flake8: noqa
-from .visualizations import plot_roc_auc
-from .visualizations import plot_confusion_matrix
-from .visualizations import ClassificationVisualize, RegressionVisualize
+from ._visualizations import plot_roc_auc
+from ._visualizations import plot_confusion_matrix
+from ._visualizations import plot_prediction_error
+from ._visualizations import plot_residuals

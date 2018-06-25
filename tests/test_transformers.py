@@ -1,3 +1,6 @@
+import pytest
+import pandas as pd
+import numpy as np
 from sklearn.pipeline import make_pipeline
 
 from ml_utils.transformers import (Select,
@@ -9,9 +12,6 @@ from ml_utils.transformers import (Select,
                                    TransformerError,
                                    DateEncoder,
                                    FreqFeature, DFFeatureUnion)
-import pytest
-import pandas as pd
-import numpy as np
 
 np.random.seed(42)
 

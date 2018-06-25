@@ -1,6 +1,6 @@
 import pytest
 from matplotlib.axes import Axes
-from ml_utils.visualizations.visualizations import RegressionVisualize, ClassificationVisualize, \
+from ml_utils.visualizations._visualizations import RegressionVisualize, ClassificationVisualize, \
     VizError
 from sklearn.svm import SVC
 

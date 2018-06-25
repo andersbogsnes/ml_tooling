@@ -5,7 +5,11 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
 import numpy as np
 from ..config import default_config
-from ..visualizations import ClassificationVisualize, RegressionVisualize
+from ..visualizations._visualizations import ClassificationVisualize, RegressionVisualize
+
+
+class MLUtilsError(Exception):
+    pass
 
 
 @total_ordering
@@ -79,6 +83,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
     @classmethod
     def load_model(cls, path):
+        """Load previously saved model from path"""
         model = joblib.load(path)
         return cls(model)
 
@@ -97,20 +102,39 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return self.x, self.y
 
     def save_model(self, path=None):
+        """
+        Save model to disk. Defaults to current directory.
+        :param path: Full path to save the model
+        :return:
+        """
         current_dir = pathlib.Path.cwd().joinpath(self.model_name) if path is None else path
         joblib.dump(self.model, current_dir)
         return self
 
     def make_prediction(self, input_data):
         x = self.get_prediction_data(input_data)
-        return self.model.predict(x)
+
+        try:
+            return self.model.predict(x)
+
+        except NotFittedError as e:
+            message = f"You haven't fitted the model. Call 'train_model' or 'test_model' first"
+            raise MLUtilsError(message) from e
 
     def train_model(self):
         self._load_data()
         self.model.fit(self.x, self.y)
         return self
 
-    def test_model(self, metric=None):
+    def test_model(self, metric=None, cv=None):
+        """
+        Loads training data and returns a Result object containing
+        visualization and cross-validated scores
+        :param metric: Metric to score model on. Any sklearn-compatible string or scoring function
+        :param cv: Cross validator to use. Number of folds if an int is passed,
+                   else any sklearn compatible CV instance
+        :return: Result
+        """
         self._load_data()
 
         if self.model_type == 'classifier':

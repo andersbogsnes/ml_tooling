@@ -1,4 +1,6 @@
-from ml_utils.baseclass.baseclass import Result
+import pytest
+
+from ml_utils.baseclass._baseclass import Result, MLUtilsError
 from ml_utils import BaseClassModel
 from sklearn.linear_model import LinearRegression
 

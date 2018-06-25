@@ -1,9 +1,12 @@
 import abc
 from functools import total_ordering
 import pathlib
+import numpy as np
+
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
-import numpy as np
+from sklearn.exceptions import NotFittedError
+
 from ..config import default_config
 from ..visualizations._visualizations import ClassificationVisualize, RegressionVisualize
 
@@ -22,7 +25,7 @@ class Result:
     def __init__(self,
                  model,
                  model_name,
-                 viz,
+                 viz=None,
                  model_params=None,
                  cross_val_scores=None,
                  cross_val_mean=None,
@@ -146,10 +149,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
 
+        cv = self.config['CROSS_VALIDATION'] if cv is None else cv
         scores = cross_val_score(self.model,
                                  train_x,
                                  train_y,
-                                 cv=self.config['CROSS_VALIDATION'],
+                                 cv=cv,
                                  scoring=metric,
                                  n_jobs=self.config['N_JOBS'],
                                  verbose=self.config['VERBOSITY'])

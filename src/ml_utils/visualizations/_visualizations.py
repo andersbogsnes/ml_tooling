@@ -63,7 +63,7 @@ def plot_residuals(y_true, y_pred, title=None):
 
     fig, ax = plt.subplots()
     ax.scatter(y_pred, residuals, label=f'$R^2 = {r2:0.3f}$')
-    ax.axhline(y=0)
+    ax.axhline(y=0, color='grey', linestyle='--')
     ax.set_ylabel('Residuals')
     ax.set_xlabel('Predicted Value')
     ax.set_title(title)
@@ -79,6 +79,9 @@ def plot_prediction_error(y_true, y_pred, title=None):
     ax.set_ylabel('$\hat{y}$')
     ax.set_xlabel('$y$')
     ax.set_title(title)
+    min_x, min_y = np.min(y_true), np.min(y_pred)
+    max_x, max_y = np.max(y_true), np.max(y_pred)
+    ax.plot((min_x, max_x), (min_y, max_y), c='grey', linestyle='--')
     return ax
 
 

@@ -6,5 +6,6 @@ default_config = {
     "CLASSIFIER_METRIC": 'roc_auc',
     "REGRESSION_METRIC": 'r2',
     "CROSS_VALIDATION": 10,
-    "STYLE_SHEET": str(BASE_PATH.joinpath('almbrand.mplstyle'))
+    "STYLE_SHEET": str(BASE_PATH.joinpath('almbrand.mplstyle')),
+    "N_JOBS": -1
 }

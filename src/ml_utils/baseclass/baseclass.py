@@ -127,7 +127,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  train_y,
                                  cv=self.config['CROSS_VALIDATION'],
                                  scoring=metric,
-                                 n_jobs=-1,
+                                 n_jobs=self.config['N_JOBS'],
                                  verbose=self.config['VERBOSITY'])
 
         self.model.fit(train_x, train_y)

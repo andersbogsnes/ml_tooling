@@ -1,4 +1,6 @@
-import matplotlib; matplotlib.use('Agg')  # noqa
+import matplotlib;
+
+matplotlib.use('Agg')  # noqa
 import pytest
 import pandas as pd
 import numpy as np
@@ -52,7 +54,7 @@ def dates_data():
 @pytest.fixture(name='regression', scope='session')
 def _linear_regression(base):
     model = base(LinearRegression())
-    model.set_config({"CROSS_VALIDATION": 2})
+    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.test_model()
     return model
 
@@ -60,6 +62,6 @@ def _linear_regression(base):
 @pytest.fixture(name='classifier', scope='session')
 def _logistic_regression(base):
     model = base(LogisticRegression())
-    model.set_config({"CROSS_VALIDATION": 2})
+    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.test_model()
     return model

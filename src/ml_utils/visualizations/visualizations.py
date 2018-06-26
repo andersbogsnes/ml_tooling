@@ -136,10 +136,42 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     return ax
 
 
+def plot_lift_chart(y_true, y_proba, title=None):
+    """
+    Plot a lift chart from results.
+    :param y_true: True labels
+    :param y_proba: Model's predicted probability
+    :param title: Plot title
+    :return: matplotlib.Axes
+    """
+
+    if y_proba.ndim > 1:
+        raise VizError("Only works in binary classification. Pass a 1d list")
+
+    fig, ax = plt.subplots()
+    title = "Lift Curve" if title is None else title
+
+    n = len(y_true)
+    n_true = np.sum(y_true)
+
+    idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
+    cum_gains = np.cumsum(y_true[idx]) / n_true
+    percents = np.arange(1, n + 1) / n
+
+    ax.plot(percents, cum_gains / percents, label='Lift')
+    ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')
+    ax.set_title(title)
+    ax.set_ylabel("Lift")
+    ax.set_xlabel("% of Data")
+    ax.legend()
+    return ax
+
+
 class BaseVisualize:
     """
     Base class for visualizers
     """
+
     def __init__(self, model, config, train_x, train_y, test_x, test_y):
         self._model = model
         self._model_name = model.__class__.__name__
@@ -182,6 +214,7 @@ class RegressionVisualize(BaseVisualize):
     """
     Visualization class for Regression models
     """
+
     def residuals(self):
         """
         Visualizes residuals of a regression model
@@ -207,6 +240,7 @@ class ClassificationVisualize(BaseVisualize):
     """
     Visualization class for Classification models
     """
+
     def confusion_matrix(self, normalized=True):
         """
         Visualize a confusion matrix for a classification model
@@ -231,3 +265,14 @@ class ClassificationVisualize(BaseVisualize):
             title = f'ROC AUC - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
             return plot_roc_auc(self._test_y, y_proba, title=title)
+
+    def lift_curve(self):
+        """
+        Visualize a Lift Curve for a classification model
+        Model must implement a `predict_proba` method
+        :return: matplotlib.Axes
+        """
+        with plt.style.context(self._config["STYLE_SHEET"]):
+            title = f'Lift Curve - {self._model_name}'
+            y_proba = self._model.predict_proba(self._test_x)[:, 1]
+            return plot_lift_chart(self._test_y, y_proba, title=title)

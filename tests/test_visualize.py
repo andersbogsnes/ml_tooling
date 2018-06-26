@@ -22,7 +22,7 @@ def test_regression_visualize_has_all_plots(attr, regression):
     assert isinstance(plotter, Axes)
 
 
-@pytest.mark.parametrize('attr', ['confusion_matrix', 'roc_curve'])
+@pytest.mark.parametrize('attr', ['confusion_matrix', 'roc_curve', 'lift_curve'])
 def test_classifier_visualize_has_all_plots(attr, classifier):
     result = classifier.result.plot
     plotter = getattr(result, attr)()

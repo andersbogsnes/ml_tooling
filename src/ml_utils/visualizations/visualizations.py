@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, r2_score
+from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
 import itertools
 from . import helpers
@@ -44,6 +44,7 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
     :param y_pred: Predicted labels from model
     :param normalized: Whether to normalize counts in matrix
     :param title: Title for plot
+    :param ax: Pass your own ax
     :return: matplotlib.Axes
     """
 
@@ -79,6 +80,7 @@ def plot_residuals(y_true, y_pred, title=None, ax=None):
     :param y_true: True value
     :param y_pred: Models predicted value
     :param title: Plot title
+    :param ax: Pass your own ax
     :return: matplotlib.Axes
     """
     title = f'Residual Plot' if title is None else title
@@ -104,6 +106,7 @@ def plot_prediction_error(y_true, y_pred, title=None, ax=None):
     :param y_true: True values
     :param y_pred: Model's predicted values
     :param title: Plot title
+    :param ax: Pass your own ax
     :return: matplotlib.Axes
     """
     if ax is None:
@@ -130,6 +133,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
     :param labels: Name of feature
     :param title: Plot title
     :param values: Add value labels to end of each bar
+    :param ax: Pass your own ax
     :return: matplotlib.Axes
     """
     if ax is None:
@@ -156,6 +160,7 @@ def plot_lift_chart(y_true, y_proba, title=None, ax=None):
     :param y_true: True labels
     :param y_proba: Model's predicted probability
     :param title: Plot title
+    :param ax: Pass your own ax
     :return: matplotlib.Axes
     """
 

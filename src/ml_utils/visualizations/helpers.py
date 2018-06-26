@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
+
 def cum_gain_curve(y_true, y_proba):
     n = len(y_true)
     n_true = np.sum(y_true)

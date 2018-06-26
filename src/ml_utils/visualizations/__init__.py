@@ -1,6 +1,12 @@
 # flake8: noqa
-from ._visualizations import plot_roc_auc
-from ._visualizations import plot_confusion_matrix
-from ._visualizations import plot_prediction_error
-from ._visualizations import plot_residuals
-from ._visualizations import plot_feature_importance
+from .visualizations import plot_roc_auc
+from .visualizations import plot_confusion_matrix
+from .visualizations import plot_prediction_error
+from .visualizations import plot_residuals
+from .visualizations import plot_feature_importance
+
+__all__ = ['plot_roc_auc',
+           'plot_confusion_matrix',
+           'plot_prediction_error',
+           'plot_residuals',
+           'plot_feature_importance']

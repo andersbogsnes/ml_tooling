@@ -1,2 +1,4 @@
 # flake8: noqa
-from .baseclass._baseclass import BaseClassModel
+from .baseclass.baseclass import BaseClassModel
+
+__all__ = ['BaseClassModel']

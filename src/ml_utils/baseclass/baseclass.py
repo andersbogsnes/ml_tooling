@@ -8,7 +8,7 @@ from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
 from ..config import default_config
-from ..visualizations._visualizations import ClassificationVisualize, RegressionVisualize
+from ..visualizations.visualizations import ClassificationVisualize, RegressionVisualize
 
 
 class MLUtilsError(Exception):

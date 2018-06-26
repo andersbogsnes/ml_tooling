@@ -9,9 +9,10 @@ from ml_utils.transformers import (Select,
                                    FuncTransformer,
                                    Binner,
                                    Renamer,
-                                   TransformerError,
                                    DateEncoder,
                                    FreqFeature, DFFeatureUnion)
+
+from ml_utils.transformers.pandas_transformers import TransformerError
 
 np.random.seed(42)
 

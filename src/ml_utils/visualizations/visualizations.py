@@ -191,18 +191,23 @@ class BaseVisualize:
         self._test_x = test_x
         self._train_y = train_y
         self._test_y = test_y
+        self.feature_labels = self._get_labels()
 
-    def feature_importance(self, values=True):
+    def _get_labels(self):
+        if hasattr(self._train_x, 'columns'):
+            labels = self._train_x.columns
+        else:
+            labels = np.arange(self._train_x.shape[1])
+
+        return labels
+
+    def feature_importance(self, values=True, **kwargs):
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
         or coef_ attribute
         :param values: Toggles value labels on end of each bar
         :return: matplotlib.Axes
         """
-        if hasattr(self._train_x, 'columns'):
-            labels = self._train_x.columns
-        else:
-            labels = np.arange(self._train_x.shape[1])
 
         if hasattr(self._model, 'feature_importances_'):
             importance = self._model.feature_importances_
@@ -211,13 +216,13 @@ class BaseVisualize:
             importance = self._model.coef_
             if importance.ndim > 1:
                 importance = importance[0]
-
         else:
             raise VizError(f"{self._model_name} does not have either coef_ or feature_importances_")
 
-        if len(labels) != len(importance):
-            raise VizError(f"Must have equal number of labels as features: "
-                           f"You have {len(labels)} labels and {len(importance)} features")
+        if len(self.feature_labels) != len(importance):
+            message = f"Must have equal number of labels as features: " \
+                      f"You have {len(self.feature_labels)} labels and {len(importance)} features"
+            raise VizError(message)
 
         title = f"Feature Importance - {self._model_name}"
 

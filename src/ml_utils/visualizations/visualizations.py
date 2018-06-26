@@ -220,8 +220,13 @@ class BaseVisualize:
                            f"You have {len(labels)} labels and {len(importance)} features")
 
         title = f"Feature Importance - {self._model_name}"
+
         with plt.style.context(self._config['STYLE_SHEET']):
-            return plot_feature_importance(importance, labels, values=values, title=title)
+            return plot_feature_importance(importance,
+                                           self.feature_labels,
+                                           values=values,
+                                           title=title,
+                                           **kwargs)
 
 
 class RegressionVisualize(BaseVisualize):
@@ -229,7 +234,7 @@ class RegressionVisualize(BaseVisualize):
     Visualization class for Regression models
     """
 
-    def residuals(self):
+    def residuals(self, **kwargs):
         """
         Visualizes residuals of a regression model
         :return: matplotlib.Axes
@@ -237,9 +242,9 @@ class RegressionVisualize(BaseVisualize):
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f"Residual Plot - {self._model_name}"
             y_pred = self._model.predict(self._test_x)
-            return plot_residuals(self._test_y, y_pred, title)
+            return plot_residuals(self._test_y, y_pred, title, **kwargs)
 
-    def prediction_error(self):
+    def prediction_error(self, **kwargs):
         """
         Visualizes prediction error of a regression model
         :return: matplotlib.Axes
@@ -247,7 +252,7 @@ class RegressionVisualize(BaseVisualize):
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f"Prediction Error - {self._model_name}"
             y_pred = self._model.predict(self._test_x)
-            return plot_prediction_error(self._test_y, y_pred, title=title)
+            return plot_prediction_error(self._test_y, y_pred, title=title, **kwargs)
 
 
 class ClassificationVisualize(BaseVisualize):
@@ -255,7 +260,7 @@ class ClassificationVisualize(BaseVisualize):
     Visualization class for Classification models
     """
 
-    def confusion_matrix(self, normalized=True):
+    def confusion_matrix(self, normalized=True, **kwargs):
         """
         Visualize a confusion matrix for a classification model
         :param normalized: Whether or not to normalize annotated class counts
@@ -264,9 +269,9 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f'Confusion Matrix - {self._model_name}'
             y_pred = self._model.predict(self._test_x)
-            return plot_confusion_matrix(self._test_y, y_pred, normalized, title)
+            return plot_confusion_matrix(self._test_y, y_pred, normalized, title, **kwargs)
 
-    def roc_curve(self):
+    def roc_curve(self, **kwargs):
         """
         Visualize a ROC curve for a classification model.
         Model must implement a `predict_proba` method
@@ -278,9 +283,9 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f'ROC AUC - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_roc_auc(self._test_y, y_proba, title=title)
+            return plot_roc_auc(self._test_y, y_proba, title=title, **kwargs)
 
-    def lift_curve(self):
+    def lift_curve(self, **kwargs):
         """
         Visualize a Lift Curve for a classification model
         Model must implement a `predict_proba` method
@@ -289,4 +294,4 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(self._config["STYLE_SHEET"]):
             title = f'Lift Curve - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_lift_chart(self._test_y, y_proba, title=title)
+            return plot_lift_chart(self._test_y, y_proba, title=title, **kwargs)

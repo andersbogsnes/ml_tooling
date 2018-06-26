@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, r2_score
 import numpy as np
 import itertools
+from . import helpers
 
 
 class VizError(Exception):
@@ -119,20 +120,43 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     """
     fig, ax = plt.subplots()
     title = f"Feature Importance" if title is None else title
-    idx = np.argsort(np.abs(importance))
-    y_values, x_values = labels[idx], importance[idx]
-    ax.barh(y_values, np.abs(x_values))
+
+    labels, importance = helpers.sorted_feature_importance(labels, importance)
+
+    ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')
     ax.set_xlabel('Importance')
     if values:
-        for (i, patch) in enumerate(ax.patches):
-            y = patch.get_y()
-            width = patch.get_width()
-            height = y + (patch.get_height() / 2)
-            padding = ax.get_xbound()[1] * 0.005
-            ax.text(width + padding, height, f"{x_values[i]:.2f}", va='center')
+        for i, (x, y) in enumerate(helpers.generate_text_labels(ax)):
+            ax.text(x, y, f"{importance[i]:.2f}", va='center')
 
+    return ax
+
+
+def plot_lift_chart(y_true, y_proba, title=None):
+    """
+    Plot a lift chart from results.
+    :param y_true: True labels
+    :param y_proba: Model's predicted probability
+    :param title: Plot title
+    :return: matplotlib.Axes
+    """
+
+    if y_proba.ndim > 1:
+        raise VizError("Only works in binary classification. Pass a 1d list")
+
+    fig, ax = plt.subplots()
+    title = "Lift Curve" if title is None else title
+
+    percents, gains = helpers.cum_gain_curve(y_true, y_proba)
+
+    ax.plot(percents, gains / percents, label='Lift')
+    ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')
+    ax.set_title(title)
+    ax.set_ylabel("Lift")
+    ax.set_xlabel("% of Data")
+    ax.legend()
     return ax
 
 
@@ -140,6 +164,7 @@ class BaseVisualize:
     """
     Base class for visualizers
     """
+
     def __init__(self, model, config, train_x, train_y, test_x, test_y):
         self._model = model
         self._model_name = model.__class__.__name__
@@ -182,6 +207,7 @@ class RegressionVisualize(BaseVisualize):
     """
     Visualization class for Regression models
     """
+
     def residuals(self):
         """
         Visualizes residuals of a regression model
@@ -207,6 +233,7 @@ class ClassificationVisualize(BaseVisualize):
     """
     Visualization class for Classification models
     """
+
     def confusion_matrix(self, normalized=True):
         """
         Visualize a confusion matrix for a classification model
@@ -231,3 +258,14 @@ class ClassificationVisualize(BaseVisualize):
             title = f'ROC AUC - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
             return plot_roc_auc(self._test_y, y_proba, title=title)
+
+    def lift_curve(self):
+        """
+        Visualize a Lift Curve for a classification model
+        Model must implement a `predict_proba` method
+        :return: matplotlib.Axes
+        """
+        with plt.style.context(self._config["STYLE_SHEET"]):
+            title = f'Lift Curve - {self._model_name}'
+            y_proba = self._model.predict_proba(self._test_x)[:, 1]
+            return plot_lift_chart(self._test_y, y_proba, title=title)

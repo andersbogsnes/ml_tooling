@@ -39,7 +39,7 @@ def test_regression_model_returns_a_result(classifier):
     assert result.model == classifier.model
     assert result.cross_val_mean > 0
     assert result.cross_val_std > 0
-    assert 'roc_auc' == result.metric
+    assert 'accuracy' == result.metric
     assert 'LogisticRegression' == result.model_name
     assert 2 == len(result.cross_val_scores)
 

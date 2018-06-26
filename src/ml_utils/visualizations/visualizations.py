@@ -42,14 +42,17 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None):
     :param title: Title for plot
     :return: matplotlib.Axes
     """
-    cm = confusion_matrix(y_true, y_pred)
+
     title = 'Confusion Matrix' if title is None else title
 
-    if normalized is True:
+    if normalized:
         title = f"{title} - Normalized"
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
-    fig, ax = plt.subplots()
+    cm = helpers.create_confusion_matrix(y_true, y_pred, normalized=normalized)
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
     ax.imshow(cm, interpolation='nearest')
     ax.set_ylabel('True Label')
     ax.set_xlabel('Predicted Label')

@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 
 def cum_gain_curve(y_true, y_proba):
@@ -32,3 +33,10 @@ def generate_text_labels(ax, horizontal=False, padding=0.005):
             y_value = height + padded
 
         yield x_value, y_value
+
+
+def create_confusion_matrix(y_true, y_pred, normalized=True):
+    cm = confusion_matrix(y_true, y_pred)
+    if normalized is True:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    return cm

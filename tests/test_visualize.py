@@ -44,6 +44,13 @@ def test_roc_curve_fails_correctly_without_predict_proba(base):
         result.plot.roc_curve()
 
 
+def test_feature_importance_fails_correctly_without_predict_proba(base):
+    svc = base(SVC())
+    result = svc.test_model()
+    with pytest.raises(VizError):
+        result.plot.feature_importance()
+
+
 def test_lift_chart_fails_correctly_with_2d_proba():
     x, y = load_iris(return_X_y=True)
     clf = LogisticRegression()

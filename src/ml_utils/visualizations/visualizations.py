@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, confusion_matrix, r2_score
 import numpy as np
 import itertools
+from . import helpers
 
 
 class VizError(Exception):
@@ -151,14 +152,9 @@ def plot_lift_chart(y_true, y_proba, title=None):
     fig, ax = plt.subplots()
     title = "Lift Curve" if title is None else title
 
-    n = len(y_true)
-    n_true = np.sum(y_true)
+    percents, gains = helpers.cum_gain_curve(y_true, y_proba)
 
-    idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
-    cum_gains = np.cumsum(y_true[idx]) / n_true
-    percents = np.arange(1, n + 1) / n
-
-    ax.plot(percents, cum_gains / percents, label='Lift')
+    ax.plot(percents, gains / percents, label='Lift')
     ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')
     ax.set_title(title)
     ax.set_ylabel("Lift")

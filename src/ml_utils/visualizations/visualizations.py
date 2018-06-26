@@ -128,7 +128,7 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     ax.set_ylabel('Features')
     ax.set_xlabel('Importance')
     if values:
-        for i, (x, y) in enumerate(helpers.generate_text_labels(ax)):
+        for i, (x, y) in enumerate(helpers.generate_text_labels(ax, horizontal=True)):
             ax.text(x, y, f"{importance[i]:.2f}", va='center')
 
     return ax
@@ -181,7 +181,10 @@ class BaseVisualize:
         :param values: Toggles value labels on end of each bar
         :return: matplotlib.Axes
         """
-        labels = self._train_x.columns
+        if hasattr(self._train_x, 'columns'):
+            labels = self._train_x.columns
+        else:
+            labels = np.arange(self._train_x.shape[1])
 
         if hasattr(self._model, 'feature_importances_'):
             importance = self._model.feature_importances_

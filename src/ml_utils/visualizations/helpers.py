@@ -16,7 +16,7 @@ def sorted_feature_importance(labels, importance):
     return labels[idx], importance[idx]
 
 
-def generate_text_labels(ax, horizontal=True, padding=0.005):
+def generate_text_labels(ax, horizontal=False, padding=0.005):
     for (i, patch) in enumerate(ax.patches):
         width = patch.get_width()
         height = patch.get_height()

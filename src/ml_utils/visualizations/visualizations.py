@@ -10,19 +10,23 @@ class VizError(Exception):
     pass
 
 
-def plot_roc_auc(y_true, y_proba, title=None):
+def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     """
     Plot ROC AUC curve. Works only with probabilities
     :param y_true: True labels
     :param y_proba: Probability estimate from model
     :param title: Plot title
+    :param ax: Pass in your own ax
     :return: matplotlib.Axes
     """
     title = 'ROC AUC curve' if title is None else title
 
     fpr, tpr, _ = roc_curve(y_true, y_proba)
     score = roc_auc_score(y_true, y_proba)
-    fig, ax = plt.subplots()
+
+    if ax is None:
+        fig, ax = plt.subplots()
+
     ax.plot(fpr, tpr, label=f"ROC Score: {score}")
     ax.plot([0, 1], '--')
     ax.set_title(title)
@@ -33,7 +37,7 @@ def plot_roc_auc(y_true, y_proba, title=None):
     return ax
 
 
-def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None):
+def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
     """
     Plots a confusion matrix of predicted labels vs actual labels
     :param y_true: True labels
@@ -69,7 +73,7 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None):
     return ax
 
 
-def plot_residuals(y_true, y_pred, title=None):
+def plot_residuals(y_true, y_pred, title=None, ax=None):
     """
     Plots residuals from a regression.
     :param y_true: True value
@@ -77,11 +81,14 @@ def plot_residuals(y_true, y_pred, title=None):
     :param title: Plot title
     :return: matplotlib.Axes
     """
-    residuals = y_pred - y_true
     title = f'Residual Plot' if title is None else title
+
+    residuals = y_pred - y_true
     r2 = r2_score(y_true, y_pred)
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+
     ax.scatter(y_pred, residuals, label=f'$R^2 = {r2:0.3f}$')
     ax.axhline(y=0, color='grey', linestyle='--')
     ax.set_ylabel('Residuals')
@@ -91,7 +98,7 @@ def plot_residuals(y_true, y_pred, title=None):
     return ax
 
 
-def plot_prediction_error(y_true, y_pred, title=None):
+def plot_prediction_error(y_true, y_pred, title=None, ax=None):
     """
     Plots prediction error of regression model
     :param y_true: True values
@@ -99,9 +106,13 @@ def plot_prediction_error(y_true, y_pred, title=None):
     :param title: Plot title
     :return: matplotlib.Axes
     """
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+
     title = f"Prediction Error" if title is None else title
+
     r2 = r2_score(y_true, y_pred)
+
     ax.scatter(y_true, y_pred, label=f"$R^2 = {r2}$")
     ax.set_ylabel('$\hat{y}$')
     ax.set_xlabel('$y$')
@@ -112,7 +123,7 @@ def plot_prediction_error(y_true, y_pred, title=None):
     return ax
 
 
-def plot_feature_importance(importance, labels, values=None, title=None):
+def plot_feature_importance(importance, labels, values=None, title=None, ax=None):
     """
     Plot a horizontal bar chart of labelled feature importance
     :param importance: Importance measure - typically feature importance or coefficient
@@ -121,7 +132,9 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     :param values: Add value labels to end of each bar
     :return: matplotlib.Axes
     """
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+
     title = f"Feature Importance" if title is None else title
 
     labels, importance = helpers.sorted_feature_importance(labels, importance)
@@ -137,7 +150,7 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     return ax
 
 
-def plot_lift_chart(y_true, y_proba, title=None):
+def plot_lift_chart(y_true, y_proba, title=None, ax=None):
     """
     Plot a lift chart from results.
     :param y_true: True labels
@@ -149,7 +162,9 @@ def plot_lift_chart(y_true, y_proba, title=None):
     if y_proba.ndim > 1:
         raise VizError("Only works in binary classification. Pass a 1d list")
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+
     title = "Lift Curve" if title is None else title
 
     percents, gains = helpers.cum_gain_curve(y_true, y_proba)

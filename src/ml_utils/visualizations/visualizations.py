@@ -120,19 +120,16 @@ def plot_feature_importance(importance, labels, values=None, title=None):
     """
     fig, ax = plt.subplots()
     title = f"Feature Importance" if title is None else title
-    idx = np.argsort(np.abs(importance))
-    y_values, x_values = labels[idx], importance[idx]
-    ax.barh(y_values, np.abs(x_values))
+
+    labels, importance = helpers.sorted_feature_importance(labels, importance)
+
+    ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')
     ax.set_xlabel('Importance')
     if values:
-        for (i, patch) in enumerate(ax.patches):
-            y = patch.get_y()
-            width = patch.get_width()
-            height = y + (patch.get_height() / 2)
-            padding = ax.get_xbound()[1] * 0.005
-            ax.text(width + padding, height, f"{x_values[i]:.2f}", va='center')
+        for i, (x, y) in enumerate(helpers.generate_text_labels(ax)):
+            ax.text(x, y, f"{importance[i]:.2f}", va='center')
 
     return ax
 

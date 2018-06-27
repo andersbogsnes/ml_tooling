@@ -2,9 +2,9 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 
 
-def cum_gain_curve(y_true, y_proba):
+def cum_gain_curve(y_true, y_proba, positive_label=1):
     n = len(y_true)
-    n_true = np.sum(y_true)
+    n_true = np.sum(y_true == positive_label)
 
     idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
     cum_gains = np.cumsum(y_true[idx]) / n_true

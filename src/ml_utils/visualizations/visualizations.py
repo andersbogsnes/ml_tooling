@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
 import itertools
+
 from . import helpers
+from .. import metrics
 
 
 class VizError(Exception):
@@ -53,7 +55,7 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
     if normalized:
         title = f"{title} - Normalized"
 
-    cm = helpers.create_confusion_matrix(y_true, y_pred, normalized=normalized)
+    cm = metrics.confusion_matrix(y_true, y_pred, normalized=normalized)
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -141,7 +143,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
 
     title = f"Feature Importance" if title is None else title
 
-    labels, importance = helpers.sorted_feature_importance(labels, importance)
+    labels, importance = metrics.sorted_feature_importance(labels, importance)
 
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
@@ -156,7 +158,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
 
 def plot_lift_chart(y_true, y_proba, title=None, ax=None):
     """
-    Plot a lift chart from results.
+    Plot a lift chart from results. Also calculates lift score based on a .5 threshold
     :param y_true: True labels
     :param y_proba: Model's predicted probability
     :param title: Plot title
@@ -173,8 +175,10 @@ def plot_lift_chart(y_true, y_proba, title=None, ax=None):
     title = "Lift Curve" if title is None else title
 
     percents, gains = helpers.cum_gain_curve(y_true, y_proba)
+    positives = np.where(y_proba > .5, 1, 0)
+    score = metrics.lift_score(y_true, positives)
 
-    ax.plot(percents, gains / percents, label='Lift')
+    ax.plot(percents, gains / percents, label=f'$Lift = {score:.2f}$ ')
     ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')
     ax.set_title(title)
     ax.set_ylabel("Lift")

@@ -8,9 +8,9 @@ Use pip to install
 
 # Contents
 * Transformers
-    A library of transformers for use with Scikit-learn pipelines
+    - A library of transformers for use with Scikit-learn pipelines
 * Model base classes
-    Production baseclasses for subclassing - guarantees interface for use in API
+    - Production baseclasses for subclassing - guarantees interface for use in API
         
 ## BaseClassModel
 A base Class for defining your model. 
@@ -20,7 +20,7 @@ Your subclass must define two methods:
  
     Function that, given an input, fetches corresponding features. Used for predicting an unseen observation
  
-- `get_training_data`
+- `get_training_data()`
     
     Function that retrieves all training data. Used for training and evaluating the model
 

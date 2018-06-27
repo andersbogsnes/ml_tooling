@@ -27,5 +27,3 @@ def generate_text_labels(ax, horizontal=False, padding=0.005):
             y_value = height + padded
 
         yield x_value, y_value
-
-

@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_curve
 
 from ml_utils.visualizations import plot_lift_chart
 from ml_utils.visualizations.visualizations import (RegressionVisualize,
@@ -26,6 +27,16 @@ def test_result_classification_gets_correct_visualizers(classifier):
 @pytest.mark.parametrize('attr', ['residuals', 'prediction_error', 'feature_importance'])
 def test_regression_visualize_has_all_plots(attr, regression):
     result = regression.result.plot
+    plotter = getattr(result, attr)()
+    assert isinstance(plotter, Axes)
+
+
+@pytest.mark.parametrize('attr', ['confusion_matrix',
+                                  'roc_curve',
+                                  'lift_curve',
+                                  'feature_importance'])
+def test_classifier_visualize_has_all_plots(attr, classifier):
+    result = classifier.result.plot
     plotter = getattr(result, attr)()
     assert isinstance(plotter, Axes)
 
@@ -59,16 +70,45 @@ def test_lift_curve_have_correct_data(classifier):
     assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
     assert pytest.approx(48.67, rel=.0001) == np.sum(ax.lines[0].get_ydata())
 
-def test
 
-@pytest.mark.parametrize('attr', ['confusion_matrix',
-                                  'roc_curve',
-                                  'lift_curve',
-                                  'feature_importance'])
-def test_classifier_visualize_has_all_plots(attr, classifier):
-    result = classifier.result.plot
-    plotter = getattr(result, attr)()
-    assert isinstance(plotter, Axes)
+def test_prediction_error_plots_have_correct_data(regression):
+    ax = regression.result.plot.prediction_error()
+    x, y = regression.result.plot._test_x, regression.result.plot._test_y
+    y_pred = regression.result.model.predict(x)
+
+    assert 'Prediction Error - LinearRegression' == ax.title._text
+    assert '$\hat{y}$' == ax.get_ylabel()
+    assert '$y$' == ax.get_xlabel()
+
+    assert (y_pred == ax.collections[0].get_offsets()[:, 1]).all()
+    assert (y == ax.collections[0].get_offsets()[:, 0]).all()
+
+
+def test_residual_plots_have_correct_data(regression):
+    ax = regression.result.plot.residuals()
+    x, y = regression.result.plot._test_x, regression.result.plot._test_y
+    y_pred = regression.result.model.predict(x)
+    expected = y_pred - y
+
+    assert 'Residual Plot - LinearRegression' == ax.title._text
+    assert 'Residuals' == ax.get_ylabel()
+    assert 'Predicted Value' == ax.get_xlabel()
+
+    assert (expected == ax.collections[0].get_offsets()[:, 1]).all()
+    assert (y_pred == ax.collections[0].get_offsets()[:, 0]).all()
+
+
+def test_roc_curve_have_correct_data(classifier):
+    ax = classifier.result.plot.roc_curve()
+    x, y = classifier.result.plot._test_x, classifier.result.plot._test_y
+    y_proba = classifier.model.predict_proba(x)[:, 1]
+    fpr, tpr, _ = roc_curve(y, y_proba)
+
+    assert 'ROC AUC - LogisticRegression' == ax.title._text
+    assert 'True Positive Rate' == ax.get_ylabel()
+    assert 'False Positive Rate' == ax.get_xlabel()
+    assert (fpr == ax.lines[0].get_xdata()).all()
+    assert (tpr == ax.lines[0].get_ydata()).all()
 
 
 def test_roc_curve_fails_correctly_without_predict_proba(base):

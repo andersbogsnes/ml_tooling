@@ -16,5 +16,3 @@ def test_add_text_labels_horizontal_returns_correct():
     x_values, y_values = next(generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
     assert (100 + 105 * .005) == x_values
-
-

@@ -172,6 +172,62 @@ def test_date_encoder_returns_correctly(dates):
     for col in result.columns:
         assert pd.api.types.is_numeric_dtype(result[col])
     assert 'date_a' not in result.columns
+    assert 'date_a_year' in result.columns
+    assert 'date_a_day' in result.columns
+    assert 'date_a_month' in result.columns
+    assert 'date_a_week' in result.columns
+
+
+def test_date_encoder_returns_only_year(dates):
+    year_coder = DateEncoder(day=False, month=False, week=False, year=True)
+    result = year_coder.fit_transform(dates)
+
+    assert isinstance(result, pd.DataFrame)
+    assert 1 == len(result.columns)
+    assert len(dates) == len(result)
+    assert 'date_a_year' in result.columns
+    assert 'date_a_day' not in result.columns
+    assert 'date_a_month' not in result.columns
+    assert 'date_a_week' not in result.columns
+
+
+def test_date_encoder_returns_only_month(dates):
+    month_coder = DateEncoder(day=False, month=True, week=False, year=False)
+    result = month_coder.fit_transform(dates)
+
+    assert isinstance(result, pd.DataFrame)
+    assert 1 == len(result.columns)
+    assert len(dates) == len(result)
+    assert 'date_a_year' not in result.columns
+    assert 'date_a_day' not in result.columns
+    assert 'date_a_month' in result.columns
+    assert 'date_a_week' not in result.columns
+
+
+def test_date_encoder_returns_only_day(dates):
+    date_coder = DateEncoder(day=True, month=False, week=False, year=False)
+    result = date_coder.fit_transform(dates)
+
+    assert isinstance(result, pd.DataFrame)
+    assert 1 == len(result.columns)
+    assert len(dates) == len(result)
+    assert 'date_a_year' not in result.columns
+    assert 'date_a_day' in result.columns
+    assert 'date_a_month' not in result.columns
+    assert 'date_a_week' not in result.columns
+
+
+def test_date_encoder_returns_only_week(dates):
+    week_coder = DateEncoder(day=False, month=False, week=True, year=False)
+    result = week_coder.fit_transform(dates)
+
+    assert isinstance(result, pd.DataFrame)
+    assert 1 == len(result.columns)
+    assert len(dates) == len(result)
+    assert 'date_a_year' not in result.columns
+    assert 'date_a_day' not in result.columns
+    assert 'date_a_month' not in result.columns
+    assert 'date_a_week' in result.columns
 
 
 def test_freqfeature_returns_correctly(categorical):

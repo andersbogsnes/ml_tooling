@@ -200,7 +200,7 @@ class BaseVisualize:
         self._test_x = test_x
         self._train_y = train_y
         self._test_y = test_y
-        self.feature_labels = self._get_labels()
+        self._feature_labels = self._get_labels()
 
     def _get_labels(self):
         if hasattr(self._train_x, 'columns'):
@@ -210,13 +210,7 @@ class BaseVisualize:
 
         return labels
 
-    def feature_importance(self, values=True, **kwargs):
-        """
-        Visualizes feature importance of the model. Model must have either feature_importance_
-        or coef_ attribute
-        :param values: Toggles value labels on end of each bar
-        :return: matplotlib.Axes
-        """
+    def _get_feature_importance(self):
 
         if hasattr(self._model, 'feature_importances_'):
             importance = self._model.feature_importances_
@@ -228,16 +222,27 @@ class BaseVisualize:
         else:
             raise VizError(f"{self._model_name} does not have either coef_ or feature_importances_")
 
-        if len(self.feature_labels) != len(importance):
+        if len(self._feature_labels) != len(importance):
             message = f"Must have equal number of labels as features: " \
-                      f"You have {len(self.feature_labels)} labels and {len(importance)} features"
+                      f"You have {len(self._feature_labels)} labels and {len(importance)} features"
             raise VizError(message)
 
+        return importance
+
+    def feature_importance(self, values=True, **kwargs):
+        """
+        Visualizes feature importance of the model. Model must have either feature_importance_
+        or coef_ attribute
+        :param values: Toggles value labels on end of each bar
+        :return: matplotlib.Axes
+        """
+
         title = f"Feature Importance - {self._model_name}"
+        importance = self._get_feature_importance()
 
         with plt.style.context(self._config['STYLE_SHEET']):
             return plot_feature_importance(importance,
-                                           self.feature_labels,
+                                           self._feature_labels,
                                            values=values,
                                            title=title,
                                            **kwargs)

@@ -46,7 +46,7 @@ class BostonModel(BaseClassModel):
 # Use our new class to implement a given model - any sklearn compatible estimator
 linear_boston = BostonModel(LinearRegression())
 
-results = linear_boston.train_model()
+results = linear_boston.score_model()
 
 # Visualize results
 results.plot.residuals()
@@ -65,10 +65,10 @@ The BaseClass implements a number of useful methods
 #### `save_model()`
 Saves the model as a binary file
    
-### `load_model()` 
+#### `load_model()` 
 Instantiates the class with a joblib pickled model
    
-#### `test_model()`
+#### `score_model()`
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
 
@@ -92,11 +92,13 @@ That object has number of visualization options depending on the type of model:
    
 - `roc_curve()`
 - `confusion_matrix()`
+- `feature_importance()`
    
 ### Regressors
    
 - `prediction_error()`
 - `residuals()`
+- `feature_importance()`
 
 # Transformers
 The library also provides a number of transformers for working with DataFrames in a pipeline

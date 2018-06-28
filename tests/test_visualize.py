@@ -39,14 +39,14 @@ def test_classifier_visualize_has_all_plots(attr, classifier):
 
 def test_roc_curve_fails_correctly_without_predict_proba(base):
     svc = base(SVC())
-    result = svc.test_model()
+    result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.roc_curve()
 
 
 def test_feature_importance_fails_correctly_without_predict_proba(base):
     svc = base(SVC())
-    result = svc.test_model()
+    result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.feature_importance()
 

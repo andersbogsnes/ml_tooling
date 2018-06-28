@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
@@ -55,10 +56,18 @@ def test_feature_importance_plots_have_correct_data(classifier):
     ax = classifier.result.plot.feature_importance()
 
     expected = {'-1.76', '-0.83', '0.34', '0.60'}
-    assert 'Feature Importance - LogisticRegression' == ax.title._text
     assert expected == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_have_no_labels_if_value_is_false(classifier):
+    ax = classifier.result.plot.feature_importance(values=False)
+    assert 0 == len(ax.texts)
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+    assert 'Feature Importance - LogisticRegression' == ax.title._text
 
 
 def test_lift_curve_have_correct_data(classifier):
@@ -143,3 +152,28 @@ def test_viz_get_feature_importance_returns_coef_from_regression(regression):
                               regression.y)
     importance = viz._get_feature_importance()
     assert np.all(regression.model.coef_ == importance)
+
+
+def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):
+    classifier = base(RandomForestClassifier())
+    result = classifier.score_model()
+    viz = ClassificationVisualize(classifier.model,
+                                  classifier.config,
+                                  classifier.x,
+                                  classifier.y,
+                                  classifier.x,
+                                  classifier.y)
+    importance = viz._get_feature_importance()
+    assert np.all(result.model.feature_importances_ == importance)
+
+
+def test_viz_get_labels_returns_array_if_there_are_no_columns(regression):
+    input_data = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+    viz = RegressionVisualize(regression.model,
+                              regression.config,
+                              input_data,
+                              regression.y,
+                              input_data,
+                              regression.y)
+    labels = viz._get_labels()
+    assert np.all(np.arange(input_data.shape[1]) == labels)

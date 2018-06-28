@@ -1,10 +1,12 @@
-import pytest
-
-from ml_utils.baseclass.baseclass import Result, MLUtilsError
-from ml_utils import BaseClassModel
-from sklearn.linear_model import LinearRegression
-import numpy as np
 import os
+
+import numpy as np
+import pytest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression
+
+from ml_utils import BaseClassModel
+from ml_utils.baseclass.baseclass import Result, MLUtilsError
 
 
 def test_can_change_config():
@@ -46,7 +48,7 @@ def test_regression_model_returns_a_result(classifier):
 
 def test_regression_model_can_be_saved(classifier, tmpdir, base):
     path = tmpdir.join('test.pkl')
-    classifier.test_model()
+    classifier.score_model()
     classifier.save_model(str(path))
     assert os.path.exists(path)
     loaded_model = base.load_model(str(path))
@@ -75,8 +77,25 @@ def test_make_prediction_errors_when_model_is_not_fitted(base):
         model.make_prediction(5)
 
 
-def test_train_model_works_as_expected(regression):
+def test_train_model_saves_x_and_y_as_expected(regression):
     expected_x, expected_y = regression.get_training_data()
     regression.train_model()
     assert np.all(expected_x == regression.x)
     assert np.all(expected_y == regression.y)
+
+
+def test_model_selection_works_as_expected(base):
+    models = [LogisticRegression(), RandomForestClassifier()]
+    best_model, results = base.test_models(models)
+    assert models[1] is best_model.model
+    assert 2 == len(results)
+    assert results[0].cross_val_mean >= results[1].cross_val_mean
+    for result in results:
+        assert isinstance(result, Result)
+
+
+def test_model_selection_with_nonstandard_metric_works_as_expected(base):
+    models = [LogisticRegression(), RandomForestClassifier()]
+    best_model, results = base.test_models(models, metric='roc_auc')
+    for result in results:
+        assert result.metric == 'roc_auc'

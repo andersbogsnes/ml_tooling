@@ -13,13 +13,15 @@ from sklearn.datasets import load_iris
 def _base():
     class IrisModel(BaseClassModel):
         def get_prediction_data(self, *args):
-            x, _ = load_iris(return_X_y=True)
-            idx = np.random.randint(len(x))
-            return x[idx]
+            data = load_iris()
+            df = pd.DataFrame(data.data, columns=data.feature_names)
+            idx = np.random.randint(len(df)-1)
+            return df.iloc[[idx]]
 
         def get_training_data(self):
-            x, y = load_iris(return_X_y=True)
-            y = np.where(y == 1, 1, 0)  # default roc_auc doesn't support multiclass
+            data = load_iris()
+            y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
+            x = pd.DataFrame(data.data, columns=data.feature_names)
             return x, y
 
     return IrisModel
@@ -55,7 +57,7 @@ def dates_data():
 def _linear_regression(base):
     model = base(LinearRegression())
     model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
-    model.test_model()
+    model.score_model()
     return model
 
 
@@ -63,5 +65,5 @@ def _linear_regression(base):
 def _logistic_regression(base):
     model = base(LogisticRegression())
     model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
-    model.test_model()
+    model.score_model()
     return model

@@ -1,7 +1,10 @@
 import abc
 from functools import total_ordering
 import pathlib
+from typing import Union, List, Tuple
+
 import numpy as np
+import pandas as pd
 
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
@@ -13,6 +16,9 @@ from ..visualizations.visualizations import ClassificationVisualize, RegressionV
 
 class MLUtilsError(Exception):
     pass
+
+
+Data = Union[pd.DataFrame, np.ndarray]
 
 
 @total_ordering
@@ -54,7 +60,7 @@ class Result:
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):
-    """
+    """res = sorted(results)
     Base class for Models
     """
 
@@ -74,23 +80,23 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self._plotter = RegressionVisualize
 
     @abc.abstractmethod
-    def get_training_data(self) -> tuple:
+    def get_training_data(self) -> Tuple[Data, Data]:
         """
         Gets training data, returning features and labels
         :return: features, labels
         """
 
     @abc.abstractmethod
-    def get_prediction_data(self, *args):
+    def get_prediction_data(self, *args) -> Data:
         """Gets data to predict a given observation"""
 
     @classmethod
-    def load_model(cls, path):
+    def load_model(cls, path) -> 'BaseClassModel':
         """Load previously saved model from path"""
         model = joblib.load(path)
         return cls(model)
 
-    def set_config(self, config_dict):
+    def set_config(self, config_dict) -> 'BaseClassModel':
         """
         Update configuration using a dictionary of values
         :param config_dict: dict of config values
@@ -99,12 +105,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.config.update(config_dict)
         return self
 
-    def _load_data(self):
+    def _load_data(self) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.DataFrame, np.ndarray]]:
         if self.x is None or self.y is None:
             self.x, self.y = self.get_training_data()
         return self.x, self.y
 
-    def save_model(self, path=None):
+    def save_model(self, path=None) -> 'BaseClassModel':
         """
         Save model to disk. Defaults to current directory.
         :param path: Full path to save the model
@@ -114,22 +120,39 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         joblib.dump(self.model, current_dir)
         return self
 
-    def make_prediction(self, input_data):
+    def make_prediction(self, input_data) -> np.ndarray:
         x = self.get_prediction_data(input_data)
 
         try:
             return self.model.predict(x)
 
         except NotFittedError as e:
-            message = f"You haven't fitted the model. Call 'train_model' or 'test_model' first"
+            message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLUtilsError(message) from e
 
-    def train_model(self):
+    @classmethod
+    def test_models(cls, models: Union[list, tuple], metric=None) -> Tuple['BaseClassModel', List[Result]]:
+        """
+        Trains each model passed and returns a sorted list of results
+        :param models: List of models to train
+        :return: List of Result
+        """
+        results = []
+        for model in models:
+            challenger_model = cls(model)
+            result = challenger_model.score_model(metric=metric)
+            results.append(result)
+        results.sort(reverse=True)
+        best_model = results[0].model
+
+        return cls(best_model), results
+
+    def train_model(self) -> 'BaseClassModel':
         self._load_data()
         self.model.fit(self.x, self.y)
         return self
 
-    def test_model(self, metric=None, cv=None):
+    def score_model(self, metric=None, cv=None) -> 'Result':
         """
         Loads training data and returns a Result object containing
         visualization and cross-validated scores

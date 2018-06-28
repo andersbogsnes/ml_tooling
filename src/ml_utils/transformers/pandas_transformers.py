@@ -7,6 +7,7 @@ class TransformerError(Exception):
     pass
 
 
+# noinspection PyUnusedLocal
 class Select(BaseEstimator, TransformerMixin):
     """
     Selects columns from DataFrame
@@ -24,6 +25,7 @@ class Select(BaseEstimator, TransformerMixin):
         return X[self.columns]
 
 
+# noinspection PyUnusedLocal
 class FillNA(BaseEstimator, TransformerMixin):
     """
     Fills NA values with given value
@@ -40,6 +42,7 @@ class FillNA(BaseEstimator, TransformerMixin):
         return X.fillna(self.value)
 
 
+# noinspection PyUnusedLocal
 class ToCategorical(BaseEstimator, TransformerMixin):
     """
     Converts a column into a one-hot encoded column through pd.Categorical
@@ -63,6 +66,7 @@ class ToCategorical(BaseEstimator, TransformerMixin):
         return pd.get_dummies(X)
 
 
+# noinspection PyUnusedLocal
 class FuncTransformer(BaseEstimator, TransformerMixin):
     """
     Applies a given function to each column
@@ -81,6 +85,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
+# noinspection PyUnusedLocal
 class DFFeatureUnion(BaseEstimator, TransformerMixin):
     """
     Merges together two pipelines based on index
@@ -100,6 +105,7 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
         return Xunion
 
 
+# noinspection PyUnusedLocal
 class Binner(BaseEstimator, TransformerMixin):
     """
     Bins data according to passed bins and labels
@@ -119,6 +125,7 @@ class Binner(BaseEstimator, TransformerMixin):
         return X
 
 
+# noinspection PyUnusedLocal
 class Renamer(BaseEstimator, TransformerMixin):
     """
     Renames columns to passed names
@@ -142,6 +149,7 @@ class Renamer(BaseEstimator, TransformerMixin):
         return X
 
 
+# noinspection PyUnusedLocal
 class DateEncoder(BaseEstimator, TransformerMixin):
     """
     Converts a date column into multiple day-month-year columns
@@ -171,6 +179,7 @@ class DateEncoder(BaseEstimator, TransformerMixin):
         return X
 
 
+# noinspection PyUnusedLocal
 class FreqFeature(BaseEstimator, TransformerMixin):
     """
     Converts a column into its frequencies

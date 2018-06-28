@@ -1,9 +1,7 @@
 import abc
 from functools import total_ordering
 import pathlib
-
 from typing import Union, List, Tuple, Optional, Sequence
-
 
 import numpy as np
 import pandas as pd

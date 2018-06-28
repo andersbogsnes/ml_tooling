@@ -23,7 +23,9 @@ def lift_score(y_target, y_predicted):
 def confusion_matrix(y_true, y_pred, normalized=True):
     cm = metrics.confusion_matrix(y_true, y_pred)
     if normalized is True:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = cm / cm.sum(axis=1)[:, np.newaxis]
+        cm = np.around(cm, 2)
+        cm[np.isnan(cm)] = 0.0
     return cm
 
 

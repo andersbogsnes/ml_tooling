@@ -1,7 +1,7 @@
 import abc
 from functools import total_ordering
 import pathlib
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -131,10 +131,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             raise MLUtilsError(message) from e
 
     @classmethod
-    def test_models(cls, models: Union[list, tuple], metric=None) -> Tuple['BaseClassModel', List[Result]]:
+    def test_models(cls,
+                    models: Sequence,
+                    metric: Optional[str] = None) -> Tuple['BaseClassModel', List[Result]]:
         """
         Trains each model passed and returns a sorted list of results
         :param models: List of models to train
+        :param metric: Metric to use in scoring of model
         :return: List of Result
         """
         results = []

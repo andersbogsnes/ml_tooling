@@ -72,14 +72,14 @@ Instantiates the class with a joblib pickled model
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
 
-### `train_model()`
+#### `train_model()`
 Loads all training data and trains the model on all data. 
 Typically used as the last step when model tuning is complete
 
-### `set_config()`
+#### `set_config()`
 Set configuration options - existing configuration options can be seen using the `.config` property
    
-### `make_prediction(*args)`
+#### `make_prediction(*args)`
 Makes a prediction given an input. For example a customer number. 
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
    
@@ -241,7 +241,7 @@ A FeatureUnion equivalent for DataFrames. Concatenates the result of multiple tr
 
 ```python
 from ml_utils.transformers import FreqFeature, Binner, Select, DFFeatureUnion
-from from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import make_pipeline
 import pandas as pd
 
 df = pd.DataFrame({

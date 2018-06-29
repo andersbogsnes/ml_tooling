@@ -77,6 +77,20 @@ def test_make_prediction_errors_when_model_is_not_fitted(base):
         model.make_prediction(5)
 
 
+def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(base):
+    with pytest.raises(MLUtilsError, match="LinearRegression doesn't have a `predict_proba`"):
+        model = base(LinearRegression())
+        model.train_model()
+        model.make_prediction(5, proba=True)
+
+
+def test_make_prediction_returns_proba_if_proba_is_true(classifier):
+    results = classifier.make_prediction(5, proba=True)
+    assert isinstance(results, np.ndarray)
+    assert 2 == results.ndim
+    assert np.all((results <= 1) & (results >= 0))
+
+
 def test_train_model_saves_x_and_y_as_expected(regression):
     expected_x, expected_y = regression.get_training_data()
     regression.train_model()

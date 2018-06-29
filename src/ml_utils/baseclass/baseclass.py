@@ -146,15 +146,34 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         joblib.dump(self.model, current_dir)
         return self
 
-    def make_prediction(self, input_data) -> np.ndarray:
+    def make_prediction(self, input_data, proba=False) -> np.ndarray:
+        """
+        Returns model prediction for given input data
+
+        :param input_data:
+            Defined in .get_prediction_data
+
+        :param proba:
+            Whether prediction is returned as a probability or not.
+            Note that the return value is an n-dimensional array where n = number of classes
+
+        :return:
+            Class prediction
+        """
+        if proba is True and not hasattr(self.model, 'predict_proba'):
+            raise MLUtilsError(f"{self.model_name} doesn't have a `predict_proba` method")
+
         x = self.get_prediction_data(input_data)
 
         try:
-            return self.model.predict(x)
+            if proba is True:
+                return self.model.predict_proba(x)
+            else:
+                return self.model.predict(x)
 
         except NotFittedError as e:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
-            raise MLUtilsError(message) from e
+            raise MLUtilsError(message) from None
 
     @classmethod
     def test_models(cls,

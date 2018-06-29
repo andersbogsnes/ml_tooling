@@ -1,6 +1,11 @@
 import numpy as np
 
 
+class VizError(Exception):
+    """Base Exception for visualization errors"""
+    pass
+
+
 def cum_gain_curve(y_true, y_proba, positive_label=1):
     n = len(y_true)
     n_true = np.sum(y_true == positive_label)

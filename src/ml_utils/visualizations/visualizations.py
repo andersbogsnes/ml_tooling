@@ -5,11 +5,10 @@ import itertools
 
 from . import helpers
 from .. import metrics
+from .helpers import VizError
 
 
-class VizError(Exception):
-    """Base Exception for visualization errors"""
-    pass
+
 
 
 def plot_roc_auc(y_true, y_proba, title=None, ax=None):

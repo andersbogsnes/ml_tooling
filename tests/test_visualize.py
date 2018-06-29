@@ -12,7 +12,7 @@ from sklearn.metrics import roc_curve
 from ml_utils.visualizations import plot_lift_curve
 from ml_utils.visualizations.visualizations import (RegressionVisualize,
                                                     ClassificationVisualize,
-                                                    )
+                                                    plot_confusion_matrix)
 from ml_utils.visualizations.helpers import (VizError,
                                              get_feature_importance)
 from sklearn.svm import SVC
@@ -55,6 +55,24 @@ def test_confusion_matrix_plots_have_correct_data(classifier):
     assert {'0.16', '0.38', '0.62', '0.84'} == result
     assert 'True Label' == ax.get_ylabel()
     assert 'Predicted Label' == ax.get_xlabel()
+
+
+def test_confusion_matrix_plots_have_correct_data_when_not_normalized(classifier):
+    ax = classifier.result.plot.confusion_matrix(normalized=False)
+
+    assert 'Confusion Matrix - LogisticRegression' == ax.title._text
+    result = {text._text for text in ax.texts}
+    assert {'21', '4', '5', '8'} == result
+    assert 'True Label' == ax.get_ylabel()
+    assert 'Predicted Label' == ax.get_xlabel()
+
+
+def test_confusion_matrix_has_custom_labels():
+    ax = plot_confusion_matrix(y_true=[1, 1, 0, 1], y_pred=[1, 1, 1, 1], labels=['Pos', 'Neg'])
+
+    assert 'Confusion Matrix - Normalized' == ax.title._text
+    assert ['', 'Pos', 'Neg', ''] == [x._text for x in ax.get_xticklabels()]
+    assert ['', 'Pos', 'Neg', ''] == [y._text for y in ax.get_yticklabels()]
 
 
 def test_feature_importance_plots_have_correct_data(classifier):

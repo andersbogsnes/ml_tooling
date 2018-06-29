@@ -15,11 +15,21 @@ from .helpers import VizError
 def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     """
     Plot ROC AUC curve. Works only with probabilities
-    :param y_true: True labels
-    :param y_proba: Probability estimate from model
-    :param title: Plot title
-    :param ax: Pass in your own ax
-    :return: matplotlib.Axes
+
+    :param y_true:
+        True labels
+
+    :param y_proba:
+        Probability estimate from model
+
+    :param title:
+        Plot title
+
+    :param ax:
+        Pass in your own ax
+
+    :return:
+        matplotlib.Axes
     """
     title = 'ROC AUC curve' if title is None else title
 
@@ -39,15 +49,30 @@ def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     return ax
 
 
-def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
+def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None, labels=None):
     """
     Plots a confusion matrix of predicted labels vs actual labels
-    :param y_true: True labels
-    :param y_pred: Predicted labels from model
-    :param normalized: Whether to normalize counts in matrix
-    :param title: Title for plot
-    :param ax: Pass your own ax
-    :return: matplotlib.Axes
+
+    :param y_true:
+        True labels
+
+    :param y_pred:
+        Predicted labels from model
+
+    :param normalized:
+        Whether to normalize counts in matrix
+
+    :param title:
+        Title for plot
+
+    :param ax:
+        Pass your own ax
+
+    :param labels:
+        Pass custom list of labels
+
+    :return:
+        matplotlib.Axes
     """
 
     title = 'Confusion Matrix' if title is None else title
@@ -60,11 +85,22 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.imshow(cm, interpolation='nearest')
+    if labels is None:
+        unique_labels = np.unique(y_true)
+        labels = list(unique_labels)
+
+    cax = ax.matshow(cm, interpolation='nearest', cmap=plt.get_cmap('Blues'))
+
     ax.set_ylabel('True Label')
     ax.set_xlabel('Predicted Label')
-    ax.set_title(title)
 
+    labels.insert(0, '')
+    ax.set_title(title)
+    ax.set_yticklabels(labels)
+    ax.set_xticklabels(labels)
+    ax.xaxis.set_ticks_position('bottom')
+
+    plt.colorbar(cax, ax=ax)
     fmt = '.2f' if normalized else 'd'
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
@@ -79,11 +115,21 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
 def plot_residuals(y_true, y_pred, title=None, ax=None):
     """
     Plots residuals from a regression.
-    :param y_true: True value
-    :param y_pred: Models predicted value
-    :param title: Plot title
-    :param ax: Pass your own ax
-    :return: matplotlib.Axes
+
+    :param y_true:
+        True values
+
+    :param y_pred:
+        Models predicted value
+
+    :param title:
+        Plot title
+
+    :param ax:
+        Pass your own ax
+
+    :return:
+        matplotlib.Axes
     """
     title = f'Residual Plot' if title is None else title
 
@@ -105,11 +151,21 @@ def plot_residuals(y_true, y_pred, title=None, ax=None):
 def plot_prediction_error(y_true, y_pred, title=None, ax=None):
     """
     Plots prediction error of regression model
-    :param y_true: True values
-    :param y_pred: Model's predicted values
-    :param title: Plot title
-    :param ax: Pass your own ax
-    :return: matplotlib.Axes
+
+    :param y_true:
+        True values
+
+    :param y_pred:
+        Model's predicted values
+
+    :param title:
+        Plot title
+
+    :param ax:
+        Pass your own ax
+
+    :return:
+        matplotlib.Axes
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -131,12 +187,24 @@ def plot_prediction_error(y_true, y_pred, title=None, ax=None):
 def plot_feature_importance(importance, labels, values=None, title=None, ax=None):
     """
     Plot a horizontal bar chart of labelled feature importance
-    :param importance: Importance measure - typically feature importance or coefficient
-    :param labels: Name of feature
-    :param title: Plot title
-    :param values: Add value labels to end of each bar
-    :param ax: Pass your own ax
-    :return: matplotlib.Axes
+
+    :param importance:
+        Importance measure - typically feature importance or coefficient
+
+    :param labels:
+        Name of feature
+
+    :param title:
+        Plot title
+
+    :param values:
+        Add value labels to end of each bar
+
+    :param ax:
+        Pass your own ax
+
+    :return:
+        matplotlib.Axes
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -159,11 +227,21 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
 def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     """
     Plot a lift chart from results. Also calculates lift score based on a .5 threshold
-    :param y_true: True labels
-    :param y_proba: Model's predicted probability
-    :param title: Plot title
-    :param ax: Pass your own ax
-    :return: matplotlib.Axes
+
+    :param y_true:
+        True labels
+
+    :param y_proba:
+        Model's predicted probability
+
+    :param title:
+        Plot title
+
+    :param ax:
+        Pass your own ax
+
+    :return:
+        matplotlib.Axes
     """
 
     if y_proba.ndim > 1:
@@ -214,8 +292,12 @@ class BaseVisualize:
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
         or coef_ attribute
-        :param values: Toggles value labels on end of each bar
-        :return: matplotlib.Axes
+
+        :param values:
+            Toggles value labels on end of each bar
+
+        :return:
+            matplotlib.Axes
         """
 
         title = f"Feature Importance - {self._model_name}"
@@ -237,7 +319,9 @@ class RegressionVisualize(BaseVisualize):
     def residuals(self, **kwargs):
         """
         Visualizes residuals of a regression model
-        :return: matplotlib.Axes
+
+        :return:
+            matplotlib.Axes
         """
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f"Residual Plot - {self._model_name}"
@@ -247,7 +331,9 @@ class RegressionVisualize(BaseVisualize):
     def prediction_error(self, **kwargs):
         """
         Visualizes prediction error of a regression model
-        :return: matplotlib.Axes
+
+        :return:
+            matplotlib.Axes
         """
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f"Prediction Error - {self._model_name}"
@@ -263,8 +349,12 @@ class ClassificationVisualize(BaseVisualize):
     def confusion_matrix(self, normalized=True, **kwargs):
         """
         Visualize a confusion matrix for a classification model
-        :param normalized: Whether or not to normalize annotated class counts
-        :return: matplotlib.Axes
+
+        :param normalized:
+            Whether or not to normalize annotated class counts
+
+        :return:
+            matplotlib.Axes
         """
         with plt.style.context(self._config['STYLE_SHEET']):
             title = f'Confusion Matrix - {self._model_name}'
@@ -275,7 +365,9 @@ class ClassificationVisualize(BaseVisualize):
         """
         Visualize a ROC curve for a classification model.
         Model must implement a `predict_proba` method
-        :return: matplotlib.Axes
+
+        :return:
+            matplotlib.Axes
         """
         if not hasattr(self._model, 'predict_proba'):
             raise VizError("Model must provide a 'predict_proba' method")
@@ -289,7 +381,9 @@ class ClassificationVisualize(BaseVisualize):
         """
         Visualize a Lift Curve for a classification model
         Model must implement a `predict_proba` method
-        :return: matplotlib.Axes
+
+        :return:
+            matplotlib.Axes
         """
         with plt.style.context(self._config["STYLE_SHEET"]):
             title = f'Lift Curve - {self._model_name}'

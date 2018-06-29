@@ -65,6 +65,27 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
     return cm
 
 
-def sorted_feature_importance(labels, importance):
+def sorted_feature_importance(labels: np.ndarray, importance: np.ndarray, ascending=False):
+    """
+    Calculates a sorted array of importances and corresponding labels by absolute values
+
+    :param labels:
+        List of feature labels
+
+    :param importance:
+        List of importance values
+
+    :param ascending:
+        Whether or not to sort in descending order
+    :return:
+        List of labels and list of feature importances sorted by importance
+    """
+    if not isinstance(labels, np.ndarray):
+        labels = np.array(labels)
+
     idx = np.argsort(np.abs(importance))
+
+    if ascending is False:
+        idx = idx[::-1]
+
     return labels[idx], importance[idx]

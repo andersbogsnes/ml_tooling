@@ -49,7 +49,7 @@ def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     return ax
 
 
-def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
+def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None, labels=None):
     """
     Plots a confusion matrix of predicted labels vs actual labels
 
@@ -85,11 +85,22 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None):
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.imshow(cm, interpolation='nearest')
+    if labels is None:
+        unique_labels = np.unique(y_true)
+        labels = list(unique_labels)
+
+    cax = ax.matshow(cm, interpolation='nearest', cmap=plt.get_cmap('Blues'))
+
     ax.set_ylabel('True Label')
     ax.set_xlabel('Predicted Label')
-    ax.set_title(title)
 
+    labels.insert(0, '')
+    ax.set_title(title)
+    ax.set_yticklabels(labels)
+    ax.set_xticklabels(labels)
+    ax.xaxis.set_ticks_position('bottom')
+
+    plt.colorbar(cax, ax=ax)
     fmt = '.2f' if normalized else 'd'
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):

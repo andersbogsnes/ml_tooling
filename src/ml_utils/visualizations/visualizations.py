@@ -1,3 +1,7 @@
+"""
+Contains all viz functions
+"""
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np

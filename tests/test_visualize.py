@@ -1,3 +1,6 @@
+"""
+Test file for vizualisations
+"""
 import pytest
 import numpy as np
 from matplotlib.axes import Axes

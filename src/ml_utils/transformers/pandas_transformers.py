@@ -1,9 +1,14 @@
+"""
+Transformers for use in sklearn Pipelines.
+Mainly deals with DataFrames
+"""
 from sklearn.base import TransformerMixin, BaseEstimator
 import pandas as pd
 from functools import reduce
 
 
 class TransformerError(Exception):
+    """Error which occurs during a transform"""
     pass
 
 

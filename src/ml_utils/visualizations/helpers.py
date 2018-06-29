@@ -1,3 +1,6 @@
+"""
+Helper functions for vizualisations
+"""
 import numpy as np
 
 

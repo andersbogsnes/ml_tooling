@@ -209,25 +209,6 @@ class BaseVisualize:
 
         return labels
 
-    def _get_feature_importance(self):
-
-        if hasattr(self._model, 'feature_importances_'):
-            importance = self._model.feature_importances_
-
-        elif hasattr(self._model, 'coef_'):
-            importance = self._model.coef_
-            if importance.ndim > 1:
-                importance = importance[0]
-        else:
-            raise VizError(f"{self._model_name} does not have either coef_ or feature_importances_")
-
-        if len(self._feature_labels) != len(importance):
-            message = f"Must have equal number of labels as features: " \
-                      f"You have {len(self._feature_labels)} labels and {len(importance)} features"
-            raise VizError(message)
-
-        return importance
-
     def feature_importance(self, values=True, **kwargs):
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
@@ -237,7 +218,7 @@ class BaseVisualize:
         """
 
         title = f"Feature Importance - {self._model_name}"
-        importance = self._get_feature_importance()
+        importance = helpers.get_feature_importance(self._model)
 
         with plt.style.context(self._config['STYLE_SHEET']):
             return plot_feature_importance(importance,

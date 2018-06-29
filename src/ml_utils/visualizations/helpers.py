@@ -32,3 +32,17 @@ def generate_text_labels(ax, horizontal=False, padding=0.005):
             y_value = height + padded
 
         yield x_value, y_value
+
+
+def get_feature_importance(model):
+    if hasattr(model, 'feature_importances_'):
+        importance = model.feature_importances_
+
+    elif hasattr(model, 'coef_'):
+        importance = model.coef_
+        if importance.ndim > 1:
+            importance = importance[0]
+    else:
+        raise VizError(f"{model.__class__.__name__} does not have either coef_ or feature_importances_")
+
+    return importance

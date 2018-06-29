@@ -8,9 +8,6 @@ from .. import metrics
 from .helpers import VizError
 
 
-
-
-
 def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     """
     Plot ROC AUC curve. Works only with probabilities
@@ -155,7 +152,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
     return ax
 
 
-def plot_lift_chart(y_true, y_proba, title=None, ax=None):
+def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     """
     Plot a lift chart from results. Also calculates lift score based on a .5 threshold
     :param y_true: True labels
@@ -293,4 +290,4 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(self._config["STYLE_SHEET"]):
             title = f'Lift Curve - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_lift_chart(self._test_y, y_proba, title=title, **kwargs)
+            return plot_lift_curve(self._test_y, y_proba, title=title, **kwargs)

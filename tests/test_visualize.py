@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_utils.visualizations import plot_lift_chart
+from ml_utils.visualizations import plot_lift_curve
 from ml_utils.visualizations.visualizations import (RegressionVisualize,
                                                     ClassificationVisualize,
                                                     )
@@ -142,7 +142,7 @@ def test_lift_chart_fails_correctly_with_2d_proba():
     clf.fit(x, y)
     proba = clf.predict_proba(x)
     with pytest.raises(VizError):
-        plot_lift_chart(y, proba)
+        plot_lift_curve(y, proba)
 
 
 def test_viz_get_feature_importance_returns_coef_from_regression(regression):

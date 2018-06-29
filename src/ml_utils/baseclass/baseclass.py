@@ -60,7 +60,7 @@ class Result:
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):
-    """res = sorted(results)
+    """
     Base class for Models
     """
 
@@ -83,29 +83,51 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def get_training_data(self) -> Tuple[Data, Data]:
         """
         Gets training data, returning features and labels
-        :return: features, labels
+
+        :return:
+            features, labels
         """
 
     @abc.abstractmethod
     def get_prediction_data(self, *args) -> Data:
-        """Gets data to predict a given observation"""
+        """
+        Gets data to predict a given observation
+
+        :return:
+            features
+        """
 
     @classmethod
     def load_model(cls, path) -> 'BaseClassModel':
-        """Load previously saved model from path"""
+        """
+        Load previously saved model from path
+
+        :return:
+            cls
+        """
         model = joblib.load(path)
         return cls(model)
 
     def set_config(self, config_dict) -> 'BaseClassModel':
         """
         Update configuration using a dictionary of values
-        :param config_dict: dict of config values
-        :return: None
+
+        :param config_dict:
+            dict of config values
+
+        :return:
+            self
         """
         self.config.update(config_dict)
         return self
 
-    def _load_data(self) -> Tuple[Union[pd.DataFrame, np.ndarray], Union[pd.DataFrame, np.ndarray]]:
+    def _load_data(self) -> Tuple[Data, Data]:
+        """
+        Internal method for loading data into class
+
+        :return:
+            self.x, self.y
+        """
         if self.x is None or self.y is None:
             self.x, self.y = self.get_training_data()
         return self.x, self.y
@@ -113,8 +135,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def save_model(self, path=None) -> 'BaseClassModel':
         """
         Save model to disk. Defaults to current directory.
-        :param path: Full path to save the model
+
+        :param path:
+            Full path to save the model
+
         :return:
+            self
         """
         current_dir = pathlib.Path.cwd().joinpath(self.model_name) if path is None else path
         joblib.dump(self.model, current_dir)
@@ -136,9 +162,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                     metric: Optional[str] = None) -> Tuple['BaseClassModel', List[Result]]:
         """
         Trains each model passed and returns a sorted list of results
-        :param models: List of models to train
-        :param metric: Metric to use in scoring of model
-        :return: List of Result
+
+        :param models:
+            List of models to train
+
+        :param metric:
+            Metric to use in scoring of model
+
+        :return:
+            List of Result
         """
         results = []
         for model in models:
@@ -159,10 +191,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         Loads training data and returns a Result object containing
         visualization and cross-validated scores
-        :param metric: Metric to score model on. Any sklearn-compatible string or scoring function
-        :param cv: Cross validator to use. Number of folds if an int is passed,
-                   else any sklearn compatible CV instance
-        :return: Result
+
+        :param metric:
+            Metric to score model on. Any sklearn-compatible string or scoring function
+
+        :param cv:
+            Cross validator to use. Number of folds if an int is passed,
+            else any sklearn compatible CV instance
+
+        :return:
+            Result
         """
         self._load_data()
 

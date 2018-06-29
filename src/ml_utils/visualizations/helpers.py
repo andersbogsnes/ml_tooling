@@ -46,6 +46,7 @@ def get_feature_importance(model):
         if importance.ndim > 1:
             importance = importance[0]
     else:
-        raise VizError(f"{model.__class__.__name__} does not have either coef_ or feature_importances_")
+        model_name = model.__class__.__name__
+        raise VizError(f"{model_name} does not have either coef_ or feature_importances_")
 
     return importance

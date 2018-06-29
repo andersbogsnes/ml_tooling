@@ -1,3 +1,7 @@
+"""
+Contains all viz functions
+"""
+
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
@@ -5,11 +9,7 @@ import itertools
 
 from . import helpers
 from .. import metrics
-
-
-class VizError(Exception):
-    """Base Exception for visualization errors"""
-    pass
+from .helpers import VizError
 
 
 def plot_roc_auc(y_true, y_proba, title=None, ax=None):
@@ -156,7 +156,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
     return ax
 
 
-def plot_lift_chart(y_true, y_proba, title=None, ax=None):
+def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     """
     Plot a lift chart from results. Also calculates lift score based on a .5 threshold
     :param y_true: True labels
@@ -210,25 +210,6 @@ class BaseVisualize:
 
         return labels
 
-    def _get_feature_importance(self):
-
-        if hasattr(self._model, 'feature_importances_'):
-            importance = self._model.feature_importances_
-
-        elif hasattr(self._model, 'coef_'):
-            importance = self._model.coef_
-            if importance.ndim > 1:
-                importance = importance[0]
-        else:
-            raise VizError(f"{self._model_name} does not have either coef_ or feature_importances_")
-
-        if len(self._feature_labels) != len(importance):
-            message = f"Must have equal number of labels as features: " \
-                      f"You have {len(self._feature_labels)} labels and {len(importance)} features"
-            raise VizError(message)
-
-        return importance
-
     def feature_importance(self, values=True, **kwargs):
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
@@ -238,7 +219,7 @@ class BaseVisualize:
         """
 
         title = f"Feature Importance - {self._model_name}"
-        importance = self._get_feature_importance()
+        importance = helpers.get_feature_importance(self._model)
 
         with plt.style.context(self._config['STYLE_SHEET']):
             return plot_feature_importance(importance,
@@ -313,4 +294,4 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(self._config["STYLE_SHEET"]):
             title = f'Lift Curve - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_lift_chart(self._test_y, y_proba, title=title, **kwargs)
+            return plot_lift_curve(self._test_y, y_proba, title=title, **kwargs)

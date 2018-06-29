@@ -1,3 +1,6 @@
+"""
+Test file for helpers.py
+"""
 import matplotlib.pyplot as plt
 from ml_utils.visualizations.helpers import generate_text_labels
 

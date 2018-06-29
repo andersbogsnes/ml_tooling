@@ -1,3 +1,6 @@
+"""
+Test file for vizualisations
+"""
 import pytest
 import numpy as np
 from matplotlib.axes import Axes
@@ -6,10 +9,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_utils.visualizations import plot_lift_chart
+from ml_utils.visualizations import plot_lift_curve
 from ml_utils.visualizations.visualizations import (RegressionVisualize,
                                                     ClassificationVisualize,
-                                                    VizError)
+                                                    )
+from ml_utils.visualizations.helpers import (VizError,
+                                             get_feature_importance)
 from sklearn.svm import SVC
 
 np.random.seed(42)
@@ -140,30 +145,18 @@ def test_lift_chart_fails_correctly_with_2d_proba():
     clf.fit(x, y)
     proba = clf.predict_proba(x)
     with pytest.raises(VizError):
-        plot_lift_chart(y, proba)
+        plot_lift_curve(y, proba)
 
 
 def test_viz_get_feature_importance_returns_coef_from_regression(regression):
-    viz = RegressionVisualize(regression.model,
-                              regression.config,
-                              regression.x,
-                              regression.y,
-                              regression.x,
-                              regression.y)
-    importance = viz._get_feature_importance()
+    importance = get_feature_importance(regression.model)
     assert np.all(regression.model.coef_ == importance)
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):
     classifier = base(RandomForestClassifier())
     result = classifier.score_model()
-    viz = ClassificationVisualize(classifier.model,
-                                  classifier.config,
-                                  classifier.x,
-                                  classifier.y,
-                                  classifier.x,
-                                  classifier.y)
-    importance = viz._get_feature_importance()
+    importance = get_feature_importance(classifier.model)
     assert np.all(result.model.feature_importances_ == importance)
 
 

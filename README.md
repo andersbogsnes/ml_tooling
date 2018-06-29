@@ -31,7 +31,7 @@ Here we simply implement a linear regression on the Boston dataset using sklearn
 ```python
 from ml_utils import BaseClassModel
 from sklearn.datasets import load_boston
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, LassoLars
 
 # Define a new class
 
@@ -58,6 +58,13 @@ linear_boston.save_model('.')
 # Recreate model
 BostonModel.load_model('./LinearRegression')
 
+# Train Different models and get the best performing
+models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+
+# best_model will be BostonModel instantiated with the highest scoring model. all_results is a list of all results 
+best_model, alL_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+print(alL_results)
+
 ```
 
 The BaseClass implements a number of useful methods
@@ -76,13 +83,17 @@ Returns a Result object containing all result parameters
 Loads all training data and trains the model on all data. 
 Typically used as the last step when model tuning is complete
 
-#### `set_config()`
+#### `set_config({'CONFIG_KEY': 'VALUE'})`
 Set configuration options - existing configuration options can be seen using the `.config` property
    
 #### `make_prediction(*args)`
 Makes a prediction given an input. For example a customer number. 
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
    
+
+#### `test_models([model1, model2], metric='accuracy')`
+Runs `score_model()` on each model, saving the result.
+Returns the best model as well as a list of all results
 
 ## Visualizing results
 When a model is trained, it returns a Result object. 
@@ -93,6 +104,7 @@ That object has number of visualization options depending on the type of model:
 - `roc_curve()`
 - `confusion_matrix()`
 - `feature_importance()`
+- `lift_curve()`
    
 ### Regressors
    

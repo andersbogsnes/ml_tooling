@@ -211,7 +211,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
 
     title = f"Feature Importance" if title is None else title
 
-    labels, importance = metrics.sorted_feature_importance(labels, importance)
+    labels, importance = metrics.sorted_feature_importance(labels, importance, ascending=True)
 
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)

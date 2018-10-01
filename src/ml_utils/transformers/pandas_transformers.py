@@ -105,6 +105,9 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        if isinstance(X, pd.DataFrame):
+            X = X.reset_index(drop=True)
+
         Xts = [t.transform(X) for _, t in self.transformer_list]
         Xunion = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), Xts)
         return Xunion

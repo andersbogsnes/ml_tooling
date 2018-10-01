@@ -12,10 +12,9 @@ from sklearn.datasets import load_iris
 @pytest.fixture(name='base', scope='session')
 def _base():
     class IrisModel(BaseClassModel):
-        def get_prediction_data(self, *args):
+        def get_prediction_data(self, idx):
             data = load_iris()
             df = pd.DataFrame(data.data, columns=data.feature_names)
-            idx = np.random.randint(len(df)-1)
             return df.iloc[[idx]]
 
         def get_training_data(self):

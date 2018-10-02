@@ -280,3 +280,4 @@ def test_featureunion_returns_concatenated_df(categorical, numerical):
 
     assert isinstance(transform_df, pd.DataFrame)
     assert 8 == len(transform_df.columns)
+    assert len(df) == len(transform_df)

@@ -113,3 +113,14 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
     best_model, results = base.test_models(models, metric='roc_auc')
     for result in results:
         assert result.metric == 'roc_auc'
+
+
+def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_utils.baseclass.baseclass.Repo.head.object.hexsha', mockreturn)
+    save_dir = tmpdir.mkdir('model')
+    classifier.save_model(save_dir)
+    expected_name = 'IrisModel_1234.pkl'
+    assert save_dir.join(expected_name).check()

@@ -59,7 +59,7 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
     """
     cm = metrics.confusion_matrix(y_true, y_pred)
     if normalized is True:
-        cm = cm / cm.sum(axis=1)[:, np.newaxis]
+        cm = cm / cm.sum()
         cm = np.around(cm, 2)
         cm[np.isnan(cm)] = 0.0
     return cm

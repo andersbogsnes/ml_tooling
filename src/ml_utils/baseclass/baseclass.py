@@ -254,7 +254,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  scoring=metric,
                                  n_jobs=self.config['N_JOBS'],
                                  verbose=self.config['VERBOSITY'],
-                                 error_score=np.nan)
+                                 )
 
         self.model.fit(train_x, train_y)
 

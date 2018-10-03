@@ -21,11 +21,13 @@ def test_lift_score_returns_correctly():
 def test_normalized_confusion_matrix_between_0_and_1():
     cm = confusion_matrix(np.array([1, 1, 1, 1]), np.array([1, 1, 1, 1]), normalized=True)
     assert (cm >= 0).all() & (cm <= 1).all()
+    assert 1 == np.sum(cm)
 
 
 def test_confusion_matrix_returns_as_expected():
     cm = confusion_matrix(np.array([1, 1, 1, 0]), np.array([1, 1, 1, 1]), normalized=False)
     assert np.all(np.array([[0, 1], [0, 3]]) == cm)
+    assert 4 == np.sum(cm)
 
 
 def test_sorted_feature_importance_returns_as_expected():

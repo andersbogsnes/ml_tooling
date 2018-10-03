@@ -112,10 +112,10 @@ def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
     path = tmpdir.mkdir('model')
     classifier.score_model()
     classifier.save_model(path)
+    expected_path = path.join('IrisModel_LogisticRegression_1234.pkl')
+    assert expected_path.check()
 
-    assert path.join('IrisModel_LogisticRegression_1234.pkl').check()
-
-    loaded_model = base.load_model(path)
+    loaded_model = base.load_model(str(expected_path))
     assert loaded_model.model.get_params() == classifier.model.get_params()
 
 

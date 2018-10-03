@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier
@@ -115,7 +113,7 @@ def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
     classifier.score_model()
     classifier.save_model(path)
 
-    assert path.join('IrisModel_1234.pkl').check()
+    assert path.join('IrisModel_LogisticRegression_1234.pkl').check()
 
     loaded_model = base.load_model(path)
     assert loaded_model.model.get_params() == classifier.model.get_params()
@@ -128,5 +126,5 @@ def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
     save_dir = tmpdir.mkdir('model')
     classifier.save_model(save_dir)
-    expected_name = 'IrisModel_1234.pkl'
+    expected_name = 'IrisModel_LogisticRegression_1234.pkl'
     assert save_dir.join(expected_name).check()

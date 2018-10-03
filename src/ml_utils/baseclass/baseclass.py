@@ -151,7 +151,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             self
         """
-        save_name = f"{self.model_name}_{get_git_hash()}.pkl"
+        save_name = f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
 
         current_dir = pathlib.Path.cwd() if path is None else pathlib.Path(path)
         joblib.dump(self.model, current_dir.joinpath(save_name))

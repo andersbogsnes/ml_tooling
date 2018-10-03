@@ -2,6 +2,7 @@ import abc
 from functools import total_ordering
 import pathlib
 from typing import Union, List, Tuple, Optional, Sequence
+from git import Repo, InvalidGitRepositoryError
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,14 @@ class MLUtilsError(Exception):
 
 
 Data = Union[pd.DataFrame, np.ndarray]
+
+
+def get_git_hash():
+    try:
+        repo = Repo(search_parent_directories=True)
+    except InvalidGitRepositoryError:
+        return ''
+    return repo.head.object.hexsha
 
 
 @total_ordering
@@ -142,8 +151,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             self
         """
-        current_dir = pathlib.Path.cwd().joinpath(self.model_name) if path is None else path
-        joblib.dump(self.model, current_dir)
+        save_name = f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
+
+        current_dir = pathlib.Path.cwd() if path is None else pathlib.Path(path)
+        joblib.dump(self.model, current_dir.joinpath(save_name))
         return self
 
     def make_prediction(self, input_data, proba=False) -> np.ndarray:
@@ -243,7 +254,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  scoring=metric,
                                  n_jobs=self.config['N_JOBS'],
                                  verbose=self.config['VERBOSITY'],
-                                 error_score=np.nan)
+                                 )
 
         self.model.fit(train_x, train_y)
 

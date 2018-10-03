@@ -1,12 +1,10 @@
-import os
-
 import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from ml_utils import BaseClassModel
-from ml_utils.baseclass.baseclass import Result, MLUtilsError
+from ml_utils.baseclass.baseclass import Result, MLUtilsError, get_git_hash
 
 
 def test_can_change_config():
@@ -44,15 +42,6 @@ def test_regression_model_returns_a_result(classifier):
     assert 'accuracy' == result.metric
     assert 'LogisticRegression' == result.model_name
     assert 2 == len(result.cross_val_scores)
-
-
-def test_regression_model_can_be_saved(classifier, tmpdir, base):
-    path = tmpdir.join('test.pkl')
-    classifier.score_model()
-    classifier.save_model(str(path))
-    assert os.path.exists(path)
-    loaded_model = base.load_model(str(path))
-    assert loaded_model.model.get_params() == classifier.model.get_params()
 
 
 def test_result_equality_operators():
@@ -113,3 +102,35 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
     best_model, results = base.test_models(models, metric='roc_auc')
     for result in results:
         assert result.metric == 'roc_auc'
+
+
+def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
+    path = tmpdir.mkdir('model')
+    classifier.score_model()
+    classifier.save_model(path)
+    expected_path = path.join('IrisModel_LogisticRegression_1234.pkl')
+    assert expected_path.check()
+
+    loaded_model = base.load_model(str(expected_path))
+    assert loaded_model.model.get_params() == classifier.model.get_params()
+
+
+def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
+    save_dir = tmpdir.mkdir('model')
+    classifier.save_model(save_dir)
+    expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+    assert save_dir.join(expected_name).check()
+
+
+def test_get_git_hash_returns_correctly():
+    hash = get_git_hash()
+    assert isinstance(hash, str)
+    assert 10 < len(hash)

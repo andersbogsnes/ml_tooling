@@ -62,7 +62,7 @@ def _linear_regression(base):
 
 @pytest.fixture(name='classifier', scope='session')
 def _logistic_regression(base):
-    model = base(LogisticRegression())
+    model = base(LogisticRegression(solver='liblinear'))
     model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model

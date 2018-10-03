@@ -46,15 +46,6 @@ def test_regression_model_returns_a_result(classifier):
     assert 2 == len(result.cross_val_scores)
 
 
-def test_regression_model_can_be_saved(classifier, tmpdir, base):
-    path = tmpdir.join('test.pkl')
-    classifier.score_model()
-    classifier.save_model(str(path))
-    assert os.path.exists(path)
-    loaded_model = base.load_model(str(path))
-    assert loaded_model.model.get_params() == classifier.model.get_params()
-
-
 def test_result_equality_operators():
     first_result = Result(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
     second_result = Result(model=None, model_name='test2', cross_val_mean=.5, cross_val_std=.2)
@@ -115,11 +106,26 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
         assert result.metric == 'roc_auc'
 
 
+def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
+    path = tmpdir.mkdir('model')
+    classifier.score_model()
+    classifier.save_model(path)
+
+    assert path.join('IrisModel_1234.pkl').check()
+
+    loaded_model = base.load_model(path)
+    assert loaded_model.model.get_params() == classifier.model.get_params()
+
+
 def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_utils.baseclass.baseclass.Repo.head.object.hexsha', mockreturn)
+    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
     save_dir = tmpdir.mkdir('model')
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_1234.pkl'

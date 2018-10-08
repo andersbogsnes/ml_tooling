@@ -216,7 +216,8 @@ class DFSimpleImputer(SimpleImputer):
     For help on usage see 'help(DFSimpelImputer)'
     """
 
-    def __init__(self, missing_values=np.nan, strategy='mean', fill_value=None, verbose=0, copy=True):
+    def __init__(self, missing_values=np.nan, strategy='mean', fill_value=None, verbose=0,
+                 copy=True):
         SimpleImputer.__init__(self, missing_values=missing_values, strategy=strategy,
                                fill_value=fill_value, verbose=verbose, copy=copy)
         self.cols = []

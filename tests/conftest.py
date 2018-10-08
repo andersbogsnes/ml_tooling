@@ -45,6 +45,12 @@ def numerical_data():
                          "number_b": [5, 6, 7, 8]})
 
 
+@pytest.fixture(name='numerical_na')
+def numerical_na_data():
+    return pd.DataFrame({"number_a": [1, 2, np.nan, 4],
+                         "number_b": [np.nan, 6, 7, 8]})
+
+
 @pytest.fixture(name='dates')
 def dates_data():
     return pd.DataFrame({"date_a": pd.to_datetime(['2018-01-01',

@@ -3,7 +3,9 @@ Transformers for use in sklearn Pipelines.
 Mainly deals with DataFrames
 """
 from sklearn.base import TransformerMixin, BaseEstimator
+from sklearn.impute import SimpleImputer
 import pandas as pd
+import numpy as np
 from functools import reduce
 
 
@@ -205,4 +207,26 @@ class FreqFeature(BaseEstimator, TransformerMixin):
         X = X.copy()
         for col in X.columns:
             X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
+        return X
+
+
+class DFSimpleImputer(SimpleImputer):
+    """
+    Based on scikit-learns's SimpelImputer it returns a pandas DataFrame instead of an array.
+    For help on usage see 'help(DFSimpelImputer)'
+    """
+
+    def __init__(self, missing_values=np.nan, strategy='mean', fill_value=None, verbose=0, copy=True):
+        SimpleImputer.__init__(self, missing_values=missing_values, strategy=strategy, fill_value=fill_value,
+                               verbose=verbose, copy=copy)
+        self.cols = []
+
+    def fit(self, X, y=None):
+        SimpleImputer.fit(self, X, y)
+        self.cols = [c for c in X.columns]
+        return self
+
+    def transform(self, X):
+        X = SimpleImputer.transform(self, X)
+        X = pd.DataFrame(X, columns=self.cols)
         return X

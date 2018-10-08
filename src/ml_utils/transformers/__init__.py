@@ -8,6 +8,7 @@ from .pandas_transformers import Binner
 from .pandas_transformers import Renamer
 from .pandas_transformers import DateEncoder
 from .pandas_transformers import FreqFeature
+from .pandas_transformers import DFSimpleImputer
 
 __all__ = ['Select',
            'FillNA',
@@ -17,4 +18,5 @@ __all__ = ['Select',
            'Binner',
            'Renamer',
            'DateEncoder',
-           'FreqFeature']
+           'FreqFeature',
+           'DFSimpleImputer']

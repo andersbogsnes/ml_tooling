@@ -10,7 +10,9 @@ from ml_utils.transformers import (Select,
                                    Binner,
                                    Renamer,
                                    DateEncoder,
-                                   FreqFeature, DFFeatureUnion)
+                                   FreqFeature,
+                                   DFFeatureUnion,
+                                   DFSimpleImputer)
 
 from ml_utils.transformers.pandas_transformers import TransformerError
 
@@ -281,3 +283,38 @@ def test_featureunion_returns_concatenated_df(categorical, numerical):
     assert isinstance(transform_df, pd.DataFrame)
     assert 8 == len(transform_df.columns)
     assert len(df) == len(transform_df)
+
+
+def test_dfsimpleimputer_stores_and_returns_correct_values(numerical_na, categorical_na):
+    means = list(np.mean(numerical_na, axis=0))
+
+    imputer_numerical = DFSimpleImputer(strategy='mean')
+    transform_numerical = imputer_numerical.fit_transform(numerical_na)
+
+    numerical_na.iloc[:, 0].fillna(means[0], inplace=True)
+    numerical_na.iloc[:, 1].fillna(means[1], inplace=True)
+
+    imputer_categorical = DFSimpleImputer(strategy='constant', fill_value='missing')
+    transform_categorical = imputer_categorical.fit_transform(categorical_na)
+
+    assert means == list(imputer_numerical.statistics_)
+    assert numerical_na.equals(transform_numerical)
+    assert 2 == (transform_categorical == 'missing').sum().sum()
+
+
+def test_dfsimpleimputer_returns_dataframe(numerical_na):
+    pipe1 = make_pipeline(Select('number_a'),
+                          DFSimpleImputer()
+                          )
+
+    pipe2 = make_pipeline(Select(['number_a', 'number_b']),
+                          DFSimpleImputer()
+                          )
+
+    transform_df1 = pipe1.fit_transform(numerical_na)
+    transform_df2 = pipe2.fit_transform(numerical_na)
+
+    assert isinstance(transform_df1, pd.DataFrame)
+    assert 1 == len(transform_df1.columns)
+    assert isinstance(transform_df2, pd.DataFrame)
+    assert 2 == len(transform_df2.columns)

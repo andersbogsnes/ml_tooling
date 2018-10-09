@@ -210,24 +210,58 @@ class FreqFeature(BaseEstimator, TransformerMixin):
         return X
 
 
-class DFSimpleImputer(SimpleImputer):
+# noinspection PyUnusedLocal
+class DFSimpleImputer(BaseEstimator, TransformerMixin):
     """
-    Based on scikit-learns's SimpelImputer it returns a pandas DataFrame instead of an array.
-    For help on usage see 'help(DFSimpelImputer)'
+    Based on scikit-learns's SimpelImputer it imputes missing values
+    and returns a pandas DataFrame instead of an array.
+
+    See sklearn.impute.SimpleImputer for the complete docstring including an example etc.
+
+    Parameters
+    ----------------------------------------------
+    missing_values : number, string, np.nan (default) or None
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed.
+
+    strategy : string, optional (default="mean")
+        The imputation strategy.
+
+        - If "mean", then replace missing values using the mean along
+          each column. Can only be used with numeric data.
+        - If "median", then replace missing values using the median along
+          each column. Can only be used with numeric data.
+        - If "most_frequent", then replace missing using the most frequent
+          value along each column. Can be used with strings or numeric data.
+        - If "constant", then replace missing values with fill_value. Can be
+          used with strings or numeric data.
+
+    fill_value : string or numerical value, optional (default=None)
+        When strategy == "constant", fill_value is used to replace all
+        occurrences of missing_values.
+        If left to the default, fill_value will be 0 when imputing numerical
+        data and "missing_value" for strings or object data types.
+
+    Notes
+    -----
+    Columns which only contained missing values at `fit` are discarded upon
+    `transform` if strategy is not "constant".
+
     """
 
-    def __init__(self, missing_values=np.nan, strategy='mean', fill_value=None, verbose=0,
-                 copy=True):
-        SimpleImputer.__init__(self, missing_values=missing_values, strategy=strategy,
-                               fill_value=fill_value, verbose=verbose, copy=copy)
+    def __init__(self, missing_values=np.nan, strategy='mean', fill_value=None):
         self.cols = []
+        self.idx = []
+        self.simpleimputer = SimpleImputer(missing_values=missing_values, strategy=strategy,
+                                           fill_value=fill_value, verbose=0, copy=True)
 
     def fit(self, X, y=None):
-        SimpleImputer.fit(self, X, y)
-        self.cols = [c for c in X.columns]
+        self.simpleimputer.fit(X, y=y)
+        self.cols = X.columns
+        self.idx = X.index
         return self
 
     def transform(self, X):
-        X = SimpleImputer.transform(self, X)
-        X = pd.DataFrame(X, columns=self.cols)
+        X = self.simpleimputer.transform(X)
+        X = pd.DataFrame(X, columns=self.cols, index=self.idx)
         return X

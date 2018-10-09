@@ -267,3 +267,29 @@ binned = make_pipeline(Select('sales'), Binner(bins=[0, 1000, 2000, 8000]))
 union = DFFeatureUnion([freq, binned])
 union.fit_transform(df)
 ```
+
+### DFSimpleImputer
+Imputes missing values - NaNs (default) or specified - according to a chosen strategy. 
+The transformer returns a DataFrame.
+
+```python
+from ml_utils.transformers import DFSimpleImputer, DFFeatureUnion, Select
+from sklearn.pipeline import make_pipeline
+import pandas as pd
+
+df = pd.DataFrame({
+    "sales": [4000, 6000, -1, 5500],
+    "month": ["june", "july", "august", "september"]
+})
+
+
+impute = make_pipeline(Select("sales"),
+                       DFSimpleImputer(missing_values=-1)
+                       )
+
+union = DFFeatureUnion([('impute_sales', impute),
+                        ('select_month', Select('month'))
+                        ])
+                        
+union.fit_transform(df)
+```

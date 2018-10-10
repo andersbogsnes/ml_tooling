@@ -256,7 +256,7 @@ class DFSimpleImputer(BaseEstimator, TransformerMixin):
                                            fill_value=fill_value, verbose=0, copy=True)
 
     def fit(self, X, y=None):
-        self.simpleimputer.fit(X, y=y)
+        self.simpleimputer.fit(X, y)
         self.cols = X.columns
         self.idx = X.index
         return self

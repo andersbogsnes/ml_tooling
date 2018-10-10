@@ -4,7 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from ml_utils import BaseClassModel
-from ml_utils.baseclass.baseclass import Result, MLUtilsError, get_git_hash
+from ml_utils.baseclass.result import Result
+from ml_utils.baseclass.utils import MLUtilsError
 
 
 def test_can_change_config():
@@ -130,7 +131,3 @@ def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     assert save_dir.join(expected_name).check()
 
 
-def test_get_git_hash_returns_correctly():
-    hash = get_git_hash()
-    assert isinstance(hash, str)
-    assert 10 < len(hash)

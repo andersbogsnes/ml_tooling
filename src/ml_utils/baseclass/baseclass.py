@@ -26,7 +26,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def __init__(self, model):
         self.model = model
         self.model_type = model._estimator_type
-        self.model_name = model.__class__.__name__
+        self.model_name = get_model_name(model)
         self.config = default_config
         self.x = None
         self.y = None
@@ -64,7 +64,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             cls
         """
-        model = joblib.load(path)
+
+        model_file = find_model_file(path)
+        model = joblib.load(model_file)
         return cls(model)
 
     def set_config(self, config_dict) -> 'BaseClassModel':
@@ -91,6 +93,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self.x, self.y = self.get_training_data()
         return self.x, self.y
 
+    def _generate_filename(self):
+        return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
+
     def save_model(self, path=None) -> 'BaseClassModel':
         """
         Save model to disk. Defaults to current directory.
@@ -101,10 +106,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             self
         """
-        save_name = f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
-
+        save_name = self._generate_filename()
         current_dir = pathlib.Path.cwd() if path is None else pathlib.Path(path)
-        joblib.dump(self.model, current_dir.joinpath(save_name))
+
+        if not current_dir.exists():
+            current_dir.mkdir(parents=True)
+
+        model_file = current_dir.joinpath(save_name)
+        joblib.dump(self.model, model_file)
         return self
 
     def make_prediction(self, input_data, proba=False) -> np.ndarray:

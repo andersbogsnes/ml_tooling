@@ -1,4 +1,4 @@
-from ml_tools.baseclass.utils import get_git_hash, find_model_file
+from ml_tooling.baseclass.utils import get_git_hash, find_model_file
 
 
 def test_get_git_hash_returns_correctly():
@@ -11,7 +11,7 @@ def test_find_model_file_with_given_model_returns_correctly(tmpdir, monkeypatch)
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_tools.baseclass.utils.get_git_hash', mockreturn)
+    monkeypatch.setattr('ml_tooling.baseclass.utils.get_git_hash', mockreturn)
 
     model_folder = tmpdir.mkdir('model')
     model1 = 'TestModel1_1234.pkl'
@@ -31,7 +31,7 @@ def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_tools.baseclass.utils.get_git_hash', mockreturn)
+    monkeypatch.setattr('ml_tooling.baseclass.utils.get_git_hash', mockreturn)
 
     model_folder = tmpdir.mkdir('model')
     model1 = 'TestModel1_1234.pkl'

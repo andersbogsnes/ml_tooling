@@ -10,7 +10,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 REQUIRED = [
-    'scikit-learn',
+    'scikit-learn>=0.20.0',
     'scipy',
     'pandas',
     'numpy',

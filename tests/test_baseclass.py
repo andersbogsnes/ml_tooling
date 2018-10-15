@@ -3,9 +3,9 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
-from ml_utils import BaseClassModel
-from ml_utils.baseclass.result import Result
-from ml_utils.baseclass.utils import MLUtilsError
+from ml_tools import BaseClassModel
+from ml_tools.baseclass.result import Result
+from ml_tools.baseclass.utils import MLUtilsError
 
 
 def test_can_change_config():
@@ -109,7 +109,7 @@ def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
+    monkeypatch.setattr('ml_tools.baseclass.baseclass.get_git_hash', mockreturn)
     path = tmpdir.mkdir('model')
     classifier.score_model()
     classifier.save_model(path)
@@ -124,7 +124,7 @@ def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_utils.baseclass.baseclass.get_git_hash', mockreturn)
+    monkeypatch.setattr('ml_tools.baseclass.baseclass.get_git_hash', mockreturn)
     save_dir = tmpdir.mkdir('model')
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_LogisticRegression_1234.pkl'

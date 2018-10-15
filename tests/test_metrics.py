@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from ml_utils.metrics import lift_score, confusion_matrix, sorted_feature_importance
-from ml_utils.metrics.metrics import MetricError
+from ml_tools.metrics import lift_score, confusion_matrix, sorted_feature_importance
+from ml_tools.metrics.metrics import MetricError
 
 
 # noinspection PyTypeChecker

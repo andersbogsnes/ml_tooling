@@ -5,7 +5,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression, LogisticRegression
-from ml_utils import BaseClassModel
+from ml_tools import BaseClassModel
 from sklearn.datasets import load_iris
 
 

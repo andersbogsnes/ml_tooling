@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.pipeline import make_pipeline
 
-from ml_utils.transformers import (Select,
+from ml_tools.transformers import (Select,
                                    FillNA,
                                    ToCategorical,
                                    FuncTransformer,
@@ -12,7 +12,7 @@ from ml_utils.transformers import (Select,
                                    DateEncoder,
                                    FreqFeature, DFFeatureUnion)
 
-from ml_utils.transformers.pandas_transformers import TransformerError
+from ml_tools.transformers.pandas_transformers import TransformerError
 
 np.random.seed(42)
 

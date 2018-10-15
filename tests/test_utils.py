@@ -1,4 +1,4 @@
-from ml_utils.baseclass.utils import get_git_hash, get_model_name, find_model_file
+from ml_utils.baseclass.utils import get_git_hash, find_model_file
 
 
 def test_get_git_hash_returns_correctly():

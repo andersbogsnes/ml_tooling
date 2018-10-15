@@ -129,5 +129,3 @@ def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_LogisticRegression_1234.pkl'
     assert save_dir.join(expected_name).check()
-
-

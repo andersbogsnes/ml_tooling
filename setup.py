@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-NAME = 'ml_tools'
+NAME = 'ml_tooling'
 DESCRIPTION = 'A library for machine learning utilities'
 URL = 'https://github.com/andersbogsnes/ml_utils'
 EMAIL = 'abanbn@almbrand.dk'

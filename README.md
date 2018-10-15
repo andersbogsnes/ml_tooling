@@ -1,17 +1,21 @@
-# Model Utility library for Alm Brand
+# Model Tooling library
 [![Build Status](https://travis-ci.org/andersbogsnes/ml_utils.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_utils)
 [![Coverage Status](https://coveralls.io/repos/github/andersbogsnes/ml_utils/badge.svg?branch=master)](https://coveralls.io/github/andersbogsnes/ml_utils?branch=master)
 
 # Installation
-Use pip to install
-`pip install git+https://git@github.com/andersbogsnes/ml_utils.git`
+Use pip to install: 
+`pip install ml-tooling`
 
 # Contents
 * Transformers
-    - A library of transformers for use with Scikit-learn pipelines
+    * A library of transformers for use with Scikit-learn pipelines
+
 * Model base classes
-    - Production baseclasses for subclassing - guarantees interface for use in API
-        
+    * Production baseclasses for subclassing - guarantees interface for use in API
+
+* Plotting functions
+    * Functions for producing nice, commonly used plots such as roc_curves and confusion matrices 
+
 ## BaseClassModel
 A base Class for defining your model. 
 Your subclass must define two methods:
@@ -29,7 +33,7 @@ Your subclass must define two methods:
 Define a class using BaseClassModel and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
-from ml_utils import BaseClassModel
+from ml_tooling import BaseClassModel
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression, Ridge, LassoLars
 
@@ -53,10 +57,10 @@ results.plot.residuals()
 results.plot.prediction_error()
 
 # Save our model
-linear_boston.save_model('.')
+linear_boston.save_model()
 
 # Recreate model
-BostonModel.load_model('./LinearRegression')
+BostonModel.load_model('.')
 
 # Train Different models and get the best performing
 models_to_try = [LinearRegression(), Ridge(), LassoLars()]
@@ -118,7 +122,7 @@ The library also provides a number of transformers for working with DataFrames i
 A column selector - Provide a list of columns to be passed on in the pipeline
 #### Example
 ```python
-from ml_utils.transformers import Select
+from ml_tooling.transformers import Select
 import pandas as pd
 
 df = pd.DataFrame({
@@ -131,12 +135,20 @@ df = pd.DataFrame({
 select = Select(['id', 'status'])
 select.fit_transform(df)
 ```
+```
+Out[1]: 
+   id status
+0   1     OK
+1   2  Error
+2   3     OK
+3   4  Error
+```
 
 ### FillNA
 Fills NA values with instantiated value - passed to df.fillna()
 #### Example
 ```python
-from ml_utils.transformers import FillNA
+from ml_tooling.transformers import FillNA
 import pandas as pd
 import numpy as np
 
@@ -150,14 +162,22 @@ df = pd.DataFrame({
 fill_na = FillNA(0)
 fill_na.fit_transform(df)
 ```
+```
+Out[1]: 
+   id status   sales
+0   1     OK  2000.0
+1   2  Error  3000.0
+2   3     OK  4000.0
+3   4  Error     0.0
 
+```
 ### ToCategorical
 Performs one-hot encoding of categorical values through pd.Categorical. 
 All categorical values not found in training data will be set to 0 
 
 #### Example
 ```python
-from ml_utils.transformers import ToCategorical
+from ml_tooling.transformers import ToCategorical
 import pandas as pd
 
 df = pd.DataFrame({
@@ -168,21 +188,37 @@ df = pd.DataFrame({
 onehot = ToCategorical()
 onehot.fit_transform(df)
 ```
+```
+Out[1]: 
+   status_Error  status_OK
+0             0          1
+1             1          0
+2             0          1
+3             1          0
+```
 
 ### FuncTransformer
 Applies a given function to each column
 
 #### Example
 ```python
-from ml_utils.transformers import FuncTransformer
+from ml_tooling.transformers import FuncTransformer
 import pandas as pd
 
 df = pd.DataFrame({
     "status": ["OK", "Error", "OK", "Error"]
 })
 
-uppercase = FuncTransformer(lambda x: x.str.upper)
+uppercase = FuncTransformer(lambda x: x.str.upper())
 uppercase.fit_transform(df)
+```
+```
+Out[1]: 
+  status
+0     OK
+1  ERROR
+2     OK
+3  ERROR
 ```
 
 ### Binner
@@ -190,7 +226,7 @@ Bins numerical data into supplied bins
 
 #### Example
 ```python
-from ml_utils.transformers import Binner
+from ml_tooling.transformers import Binner
 import pandas as pd
 
 df = pd.DataFrame({
@@ -200,13 +236,21 @@ df = pd.DataFrame({
 binned = Binner(bins=[0, 1000, 2000, 8000])
 binned.fit_transform(df)
 ```
+```
+Out[1]: 
+          sales
+0  (1000, 2000]
+1  (1000, 2000]
+2  (2000, 8000]
+3  (2000, 8000]
+```
 
 ### Renamer
 Renames columns to be equal to the passed list - must be in order
 
 #### Example
 ```python
-from ml_utils.transformers import Renamer
+from ml_tooling.transformers import Renamer
 import pandas as pd
 
 df = pd.DataFrame({
@@ -217,12 +261,20 @@ rename = Renamer(['sales'])
 rename.fit_transform(df)
 ```
 
+```
+Out[1]: 
+   sales
+0   1500
+1   2000
+2   2250
+3   7830
+```
 
 ### DateEncoder
 Adds year, month, day, week columns based on a datefield. Each date type can be toggled in the initializer
 
 ```python
-from ml_utils.transformers import DateEncoder
+from ml_tooling.transformers import DateEncoder
 import pandas as pd
 
 df = pd.DataFrame({
@@ -233,11 +285,18 @@ dates = DateEncoder(week=False)
 dates.fit_transform(df)
 ```
 
+```
+Out[1]: 
+   sales_date_day  sales_date_month  sales_date_year
+0               1                 1             2018
+1               2                 2             2018
+```
+
 ### FreqFeature
 Converts a column into a normalized frequencies
 
 ```python
-from ml_utils.transformers import FreqFeature
+from ml_tooling.transformers import FreqFeature
 import pandas as pd
 
 df = pd.DataFrame({
@@ -247,23 +306,51 @@ df = pd.DataFrame({
 freq = FreqFeature()
 freq.fit_transform(df)
 ```
+```
+Out[1]: 
+   sales_category
+0        0.666667
+1        0.666667
+2        0.333333
+```
 
 ### DFFeatureUnion
 A FeatureUnion equivalent for DataFrames. Concatenates the result of multiple transformers
 
 ```python
-from ml_utils.transformers import FreqFeature, Binner, Select, DFFeatureUnion
-from sklearn.pipeline import make_pipeline
+from ml_tooling.transformers import FreqFeature, Binner, Select, DFFeatureUnion
+from sklearn.pipeline import Pipeline
 import pandas as pd
 
+
 df = pd.DataFrame({
-    "sales_category": ['Sale', 'Sale', 'Not Sale'],
+    "sales_category": ['Sale', 'Sale', 'Not Sale', 'Not Sale'],
     "sales": [1500, 2000, 2250, 7830]
 })
 
-freq = make_pipeline(Select('sales_category') ,FreqFeature())
-binned = make_pipeline(Select('sales'), Binner(bins=[0, 1000, 2000, 8000]))
 
-union = DFFeatureUnion([freq, binned])
+freq = Pipeline([
+    ('select', Select('sales_category')), 
+    ('freq', FreqFeature())
+])
+
+binned = Pipeline([
+    ('select', Select('sales')), 
+    ('bin', Binner(bins=[0, 1000, 2000, 8000]))
+    ])
+
+
+union = DFFeatureUnion([
+    ('sales_category', freq), 
+    ('sales', binned)
+])
 union.fit_transform(df)
+```
+```
+Out[1]: 
+   sales_category         sales
+0             0.5  (1000, 2000]
+1             0.5  (1000, 2000]
+2             0.5  (2000, 8000]
+3             0.5  (2000, 8000]
 ```

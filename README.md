@@ -1,4 +1,4 @@
-# Model Utility library for Alm Brand
+# Model Tooling library
 [![Build Status](https://travis-ci.org/andersbogsnes/ml_utils.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_utils)
 [![Coverage Status](https://coveralls.io/repos/github/andersbogsnes/ml_utils/badge.svg?branch=master)](https://coveralls.io/github/andersbogsnes/ml_utils?branch=master)
 
@@ -8,10 +8,14 @@ Use pip to install:
 
 # Contents
 * Transformers
-    - A library of transformers for use with Scikit-learn pipelines
+    * A library of transformers for use with Scikit-learn pipelines
+
 * Model base classes
-    - Production baseclasses for subclassing - guarantees interface for use in API
-        
+    * Production baseclasses for subclassing - guarantees interface for use in API
+
+* Plotting functions
+    * Functions for producing nice, commonly used plots such as roc_curves and confusion matrices 
+
 ## BaseClassModel
 A base Class for defining your model. 
 Your subclass must define two methods:

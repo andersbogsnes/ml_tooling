@@ -33,6 +33,9 @@ else:
     about['__version__'] = VERSION
 
 
+with open('README.md', 'r') as f:
+    long_description = f.read()
+
 setup(
     name=NAME,
     version=about['__version__'],
@@ -40,10 +43,20 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=REQUIRED,
     tests_require=TESTS_REQUIRED,
     license='MIT',
-    package_data={'': ['*.mplstyle']}
+    package_data={'': ['*.mplstyle']},
+    classifiers=[
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    keywords='ml framework tooling'
 )

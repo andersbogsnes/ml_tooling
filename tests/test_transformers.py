@@ -3,16 +3,16 @@ import pandas as pd
 import numpy as np
 from sklearn.pipeline import make_pipeline
 
-from ml_utils.transformers import (Select,
-                                   FillNA,
-                                   ToCategorical,
-                                   FuncTransformer,
-                                   Binner,
-                                   Renamer,
-                                   DateEncoder,
-                                   FreqFeature, DFFeatureUnion)
+from ml_tooling.transformers import (Select,
+                                     FillNA,
+                                     ToCategorical,
+                                     FuncTransformer,
+                                     Binner,
+                                     Renamer,
+                                     DateEncoder,
+                                     FreqFeature, DFFeatureUnion)
 
-from ml_utils.transformers.pandas_transformers import TransformerError
+from ml_tooling.transformers.pandas_transformers import TransformerError
 
 np.random.seed(42)
 

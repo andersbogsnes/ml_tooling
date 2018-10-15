@@ -2,7 +2,7 @@
 Test file for helpers.py
 """
 import matplotlib.pyplot as plt
-from ml_utils.visualizations.helpers import generate_text_labels
+from ml_tooling.visualizations.helpers import generate_text_labels
 
 
 def test_add_text_labels_vertical_returns_correct():

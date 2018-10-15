@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 import os
 
-NAME = 'ml_utils'
+NAME = 'ml_tooling'
 DESCRIPTION = 'A library for machine learning utilities'
-URL = 'https://lspgitlab01.alm.brand.dk/abanbn/ab_models'
+URL = 'https://github.com/andersbogsnes/ml_utils'
 EMAIL = 'abanbn@almbrand.dk'
 AUTHOR = 'Anders Bogsnes'
 REQUIRES_PYTHON = '>=3.6.0'

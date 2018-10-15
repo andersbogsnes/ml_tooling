@@ -9,12 +9,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_utils.visualizations import plot_lift_curve
-from ml_utils.visualizations.visualizations import (RegressionVisualize,
-                                                    ClassificationVisualize,
-                                                    plot_confusion_matrix)
-from ml_utils.visualizations.helpers import (VizError,
-                                             get_feature_importance)
+from ml_tooling.visualizations import plot_lift_curve
+from ml_tooling.visualizations.visualizations import (RegressionVisualize,
+                                                      ClassificationVisualize,
+                                                      plot_confusion_matrix)
+from ml_tooling.visualizations.helpers import (VizError,
+                                               get_feature_importance)
 from sklearn.svm import SVC
 
 np.random.seed(42)

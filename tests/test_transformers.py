@@ -10,7 +10,9 @@ from ml_tooling.transformers import (Select,
                                      Binner,
                                      Renamer,
                                      DateEncoder,
-                                     FreqFeature, DFFeatureUnion)
+                                     FreqFeature,
+                                     DFStandardScaler,
+                                     DFFeatureUnion)
 
 from ml_tooling.transformers.pandas_transformers import TransformerError
 

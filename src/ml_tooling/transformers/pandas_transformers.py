@@ -206,3 +206,26 @@ class FreqFeature(BaseEstimator, TransformerMixin):
         for col in X.columns:
             X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
         return X
+
+
+class DFStandardScaler(BaseEstimator, TransformerMixin):
+    """
+    Implementation of the StandardScaler from scikit-learn for Pandas DataFrames
+    """
+
+    def __init__(self):
+        self.mean = None
+        self.std = None
+
+    def fit(self, X: pd.DataFrame, y=None):
+        self.mean = X.mean()
+        self.std = X.std()
+        if any(self.std == 0):
+            pos_zero = self.std == 0
+            self.std[pos_zero] = 1
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        X = (X - self.mean) / self.std
+        return X

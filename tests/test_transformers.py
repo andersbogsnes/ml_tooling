@@ -281,3 +281,17 @@ def test_featureunion_returns_concatenated_df(categorical, numerical):
     assert isinstance(transform_df, pd.DataFrame)
     assert 8 == len(transform_df.columns)
     assert len(df) == len(transform_df)
+
+
+def test_DFStandardScaler_returns_correct_dataframe(numerical):
+    numerical_scaled = numerical
+    numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.290994
+    numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.290994
+
+    scaler = DFStandardScaler()
+    result = scaler.fit_transform(numerical)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    pd.testing.assert_frame_equal(result, numerical_scaled)

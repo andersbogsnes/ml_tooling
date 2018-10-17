@@ -67,6 +67,65 @@ def test_imputer_returns_dataframe_unchanged_if_no_nans(categorical):
     assert ~result.isin(['Unknown']).any().any()
 
 
+def test_imputer_returns_correct_dataframe_mean(numerical_na):
+    imputer = FillNA(strategy='mean')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 3 == result.loc[0, "number_a"]
+    assert 6 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_median(numerical_na):
+    imputer = FillNA(strategy='median')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 3 == result.loc[0, "number_a"]
+    assert 6 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_max(numerical_na):
+    imputer = FillNA(strategy='max')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 4 == result.loc[0, "number_a"]
+    assert 7 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_min(numerical_na):
+    imputer = FillNA(strategy='min')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 2 == result.loc[0, "number_a"]
+    assert 5 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_most_freq(categorical):
+    categorical.loc[1, "category_a"] = np.nan
+    categorical.loc[0, "category_b"] = np.nan
+    categorical.loc[1, "category_b"] = "b3"
+
+    imputer = FillNA(strategy='most_freq')
+    result = imputer.fit_transform(categorical)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(categorical) == len(result)
+    assert {'category_a', 'category_b'} == set(result.columns)
+    assert 'a1' == result.loc[1, "category_a"]
+    assert 'b3' == result.loc[0, "category_b"]
+
+
 def test_to_categorical_returns_correct_dataframe(categorical):
     to_cat = ToCategorical()
     result = to_cat.fit_transform(categorical)

@@ -33,8 +33,9 @@ class Select(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class FillNA(BaseEstimator, TransformerMixin):
     """
-    Fills NA values with given value or strategy. If no value or strategy are supplied missings are imputed with zero.
-    If both a value and a strategy are supplied the strategy will be used.
+    Fills NA values with given value or strategy. If no value or strategy are
+    supplied missings are imputed with zero. If both a value and a strategy
+    are supplied the strategy will be used.
     """
 
     def most_freq(X):
@@ -53,7 +54,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
         if self.strategy is not None:
-            func = __class__.func_map_[self.strategy]
+            func = FillNA.func_map_[self.strategy]
             self.column_values_ = func(X)
         return self
 

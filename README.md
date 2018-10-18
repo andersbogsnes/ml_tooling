@@ -1,6 +1,8 @@
 # Model Tooling library
 [![Build Status](https://travis-ci.org/andersbogsnes/ml_utils.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_utils)
 [![Coverage Status](https://coveralls.io/repos/github/andersbogsnes/ml_utils/badge.svg?branch=master)](https://coveralls.io/github/andersbogsnes/ml_utils?branch=master)
+[![Python 3](https://pyup.io/repos/github/andersbogsnes/ml_tooling/python-3-shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
+[![Updates](https://pyup.io/repos/github/andersbogsnes/ml_tooling/shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 
 # Installation
 Use pip to install: 

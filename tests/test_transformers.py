@@ -295,3 +295,21 @@ def test_DFStandardScaler_returns_correct_dataframe(numerical):
     result = scaler.fit_transform(numerical)
 
     pd.testing.assert_frame_equal(result, numerical_scaled)
+
+
+def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(categorical, numerical):
+    numerical_scaled = numerical.copy()
+    numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.118033988749895
+    numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.118033988749895
+
+    union = DFFeatureUnion([
+        ('number_a', Select(['number_a'])),
+        ('number_b', Select(['number_b']))
+    ])
+
+    pipeline = make_pipeline(union,
+                             DFStandardScaler(),
+                             )
+    result = pipeline.fit_transform(numerical)
+
+    pd.testing.assert_frame_equal(result, numerical_scaled)

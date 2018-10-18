@@ -294,7 +294,4 @@ def test_DFStandardScaler_returns_correct_dataframe(numerical):
     scaler = DFStandardScaler()
     result = scaler.fit_transform(numerical)
 
-    assert isinstance(result, pd.DataFrame)
-    assert len(numerical) == len(result)
-    assert {'number_a', 'number_b'} == set(result.columns)
     pd.testing.assert_frame_equal(result, numerical_scaled)

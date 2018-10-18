@@ -211,7 +211,8 @@ class FreqFeature(BaseEstimator, TransformerMixin):
 
 class DFStandardScaler(BaseEstimator, TransformerMixin):
     """
-    Wrapping of the StandardScaler from scikit-learn for Pandas DataFrames
+    Wrapping of the StandardScaler from scikit-learn for Pandas DataFrames. See:
+    http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
     """
 
     def __init__(self, copy=True, with_mean=True, with_std=True):

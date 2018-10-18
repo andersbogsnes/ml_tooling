@@ -287,7 +287,7 @@ def test_featureunion_returns_concatenated_df(categorical, numerical):
 
 
 def test_DFStandardScaler_returns_correct_dataframe(numerical):
-    numerical_scaled = numerical
+    numerical_scaled = numerical.copy()
     numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.290994
     numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.290994
 

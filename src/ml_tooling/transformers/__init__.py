@@ -19,4 +19,5 @@ __all__ = ['Select',
            'Renamer',
            'DateEncoder',
            'FreqFeature',
-           'DFStandardScaler']
+           'DFStandardScaler',
+           ]

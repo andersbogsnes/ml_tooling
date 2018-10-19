@@ -60,7 +60,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             self.column_values_ = func(X)
         return self
 
-    def transform(self, X: pd.DataFrame):
+    def transform(self, X: pd.DataFrame, y=None):
         X = X.copy()
         if self.strategy is not None:
             result = X.fillna(self.column_values_)

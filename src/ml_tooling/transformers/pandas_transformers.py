@@ -3,6 +3,7 @@ Transformers for use in sklearn Pipelines.
 Mainly deals with DataFrames
 """
 from sklearn.base import TransformerMixin, BaseEstimator
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 from functools import reduce
 
@@ -230,22 +231,17 @@ class FreqFeature(BaseEstimator, TransformerMixin):
 
 class DFStandardScaler(BaseEstimator, TransformerMixin):
     """
-    Implementation of the StandardScaler from scikit-learn for Pandas DataFrames
+    Wrapping of the StandardScaler from scikit-learn for Pandas DataFrames. See:
+    http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
     """
 
-    def __init__(self):
-        self.mean = None
-        self.std = None
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        self.scaler = StandardScaler(copy=copy, with_mean=with_mean, with_std=with_std)
 
-    def fit(self, X: pd.DataFrame, y=None):
-        self.mean = X.mean()
-        self.std = X.std()
-        if any(self.std == 0):
-            pos_zero = self.std == 0
-            self.std[pos_zero] = 1
+    def fit(self, X, y=None):
+        self.scaler.fit(X, y)
         return self
 
     def transform(self, X):
-        X = X.copy()
-        X = (X - self.mean) / self.std
-        return X
+        data = self.scaler.transform(X)
+        return pd.DataFrame(data=data, columns=X.columns, index=X.index)

@@ -4,23 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from ml_tooling import BaseClassModel
 from ml_tooling.result import Result
 from ml_tooling.utils import MLToolingError
-
-
-def test_can_change_config():
-    class SomeModel(BaseClassModel):
-        def get_training_data(self):
-            pass
-
-        def get_prediction_data(self, *args):
-            pass
-
-    test_model = SomeModel(LinearRegression())
-    assert 10 == test_model.config["CROSS_VALIDATION"]
-    test_model.set_config({"CROSS_VALIDATION": 2})
-    assert test_model.config["CROSS_VALIDATION"] == 2
 
 
 def test_linear_model_returns_a_result(regression):

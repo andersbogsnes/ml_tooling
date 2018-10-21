@@ -1,12 +1,20 @@
-import matplotlib
+from sklearn.dummy import DummyClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-matplotlib.use('Agg')  # noqa
 import pytest
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from ml_tooling import BaseClassModel
 from sklearn.datasets import load_iris
+import random as rand
+
+
+@pytest.fixture(autouse=True)
+def random():
+    rand.seed(42)
+    np.random.seed(42)
 
 
 @pytest.fixture(name='base', scope='session')
@@ -65,6 +73,42 @@ def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
     model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
+    return model
+
+
+@pytest.fixture
+def pipeline_logistic(base):
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', LogisticRegression(solver='liblinear'))
+    ])
+
+    model = base(pipe)
+    model.set_config({'N_JOBS': 1})
+    return model
+
+
+@pytest.fixture
+def pipeline_linear(base):
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', LinearRegression())
+    ])
+
+    model = base(pipe)
+    model.set_config({'N_JOBS': 1})
+    return model
+
+
+@pytest.fixture
+def pipeline_dummy_classifier(base):
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', DummyClassifier())
+    ])
+
+    model = base(pipe)
+    model.set_config({'N_JOBS': 1})
     return model
 
 

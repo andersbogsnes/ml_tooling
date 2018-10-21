@@ -10,11 +10,9 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
 REQUIRED = [
-    'scikit-learn>=0.20.0',
-    'scipy',
+    'scikit-learn[alldeps]>=0.20.0',
     'pandas',
-    'numpy',
-    'matplotlib',
+    'matplotlib>=3.0.0',
     'gitpython'
 ]
 
@@ -48,7 +46,9 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=REQUIRED,
-    tests_require=TESTS_REQUIRED,
+    extras_require={
+        "test": TESTS_REQUIRED
+    },
     license='MIT',
     package_data={'': ['*.mplstyle']},
     classifiers=[

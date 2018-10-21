@@ -142,14 +142,14 @@ def test_roc_curve_have_correct_data(classifier):
 
 
 def test_roc_curve_fails_correctly_without_predict_proba(base):
-    svc = base(SVC())
+    svc = base(SVC(gamma='scale'))
     result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.roc_curve()
 
 
 def test_feature_importance_fails_correctly_without_predict_proba(base):
-    svc = base(SVC())
+    svc = base(SVC(gamma='scale'))
     result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.feature_importance()
@@ -157,7 +157,7 @@ def test_feature_importance_fails_correctly_without_predict_proba(base):
 
 def test_lift_chart_fails_correctly_with_2d_proba():
     x, y = load_iris(return_X_y=True)
-    clf = LogisticRegression()
+    clf = LogisticRegression(solver='liblinear', multi_class='auto')
     clf.fit(x, y)
     proba = clf.predict_proba(x)
     with pytest.raises(VizError):
@@ -170,7 +170,7 @@ def test_viz_get_feature_importance_returns_coef_from_regression(regression):
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):
-    classifier = base(RandomForestClassifier())
+    classifier = base(RandomForestClassifier(n_estimators=10))
     result = classifier.score_model()
     importance = _get_feature_importance(classifier.model)
     assert np.all(result.model.feature_importances_ == importance)

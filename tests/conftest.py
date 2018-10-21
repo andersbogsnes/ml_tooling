@@ -31,7 +31,11 @@ def _base():
             x = pd.DataFrame(data.data, columns=data.feature_names)
             return x, y
 
-    return IrisModel
+    IrisModel.config.CROSS_VALIDATION = 2
+    IrisModel.config.N_JOBS = 1
+    yield IrisModel
+    IrisModel.config.CROSS_VALIDATION = 10
+    IrisModel.config.N_JOBS = -1
 
 
 @pytest.fixture(name='categorical')
@@ -63,7 +67,6 @@ def dates_data():
 @pytest.fixture(name='regression', scope='session')
 def _linear_regression(base):
     model = base(LinearRegression())
-    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model
 
@@ -71,7 +74,6 @@ def _linear_regression(base):
 @pytest.fixture(name='classifier', scope='session')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model
 
@@ -83,33 +85,27 @@ def pipeline_logistic(base):
         ('clf', LogisticRegression(solver='liblinear'))
     ])
 
-    model = base(pipe)
-    model.set_config({'N_JOBS': 1})
-    return model
+    return pipe
 
 
 @pytest.fixture
-def pipeline_linear(base):
+def pipeline_linear():
     pipe = Pipeline([
         ('scale', StandardScaler()),
         ('clf', LinearRegression())
     ])
 
-    model = base(pipe)
-    model.set_config({'N_JOBS': 1})
-    return model
+    return pipe
 
 
 @pytest.fixture
-def pipeline_dummy_classifier(base):
+def pipeline_dummy_classifier():
     pipe = Pipeline([
         ('scale', StandardScaler()),
         ('clf', DummyClassifier())
     ])
 
-    model = base(pipe)
-    model.set_config({'N_JOBS': 1})
-    return model
+    return pipe
 
 
 @pytest.fixture

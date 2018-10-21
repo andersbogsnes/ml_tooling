@@ -105,11 +105,8 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
         assert result.metric == 'roc_auc'
 
 
-def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
-    def mockreturn():
-        return '1234'
-
-    monkeypatch.setattr('ml_tooling.baseclass.baseclass.get_git_hash', mockreturn)
+@pytest.mark.usefixtures('monkeypatch_git_hash')
+def test_regression_model_can_be_saved(classifier, tmpdir, base):
     path = tmpdir.mkdir('model')
     classifier.score_model()
     classifier.save_model(path)
@@ -120,11 +117,8 @@ def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
     assert loaded_model.model.get_params() == classifier.model.get_params()
 
 
-def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
-    def mockreturn():
-        return '1234'
-
-    monkeypatch.setattr('ml_tooling.baseclass.baseclass.get_git_hash', mockreturn)
+@pytest.mark.usefixtures('monkeypatch_git_hash')
+def test_save_model_saves_correctly(classifier, tmpdir):
     save_dir = tmpdir.mkdir('model')
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_LogisticRegression_1234.pkl'

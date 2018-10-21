@@ -1,15 +1,14 @@
 """
 Contains all viz functions
 """
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
 import itertools
 
-from . import helpers
-from .. import metrics
-from .helpers import VizError
+from . import metrics
 
 
 def plot_roc_auc(y_true, y_proba, title=None, ax=None):
@@ -218,7 +217,7 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
     ax.set_ylabel('Features')
     ax.set_xlabel('Importance')
     if values:
-        for i, (x, y) in enumerate(helpers.generate_text_labels(ax, horizontal=True)):
+        for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
             ax.text(x, y, f"{importance[i]:.2f}", va='center')
 
     return ax
@@ -252,7 +251,7 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
 
     title = "Lift Curve" if title is None else title
 
-    percents, gains = helpers.cum_gain_curve(y_true, y_proba)
+    percents, gains = _cum_gain_curve(y_true, y_proba)
     positives = np.where(y_proba > .5, 1, 0)
     score = metrics.lift_score(y_true, positives)
 
@@ -265,127 +264,92 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     return ax
 
 
-class BaseVisualize:
-    """
-    Base class for visualizers
-    """
+class VizError(Exception):
+    """Base Exception for visualization errors"""
+    pass
 
-    def __init__(self, model, config, train_x, train_y, test_x, test_y):
-        self._model = model
-        self._model_name = model.__class__.__name__
-        self._config = config
-        self._train_x = train_x
-        self._test_x = test_x
-        self._train_y = train_y
-        self._test_y = test_y
-        self._feature_labels = self._get_labels()
 
-    def _get_labels(self):
-        if hasattr(self._train_x, 'columns'):
-            labels = self._train_x.columns
+def _cum_gain_curve(y_true: np.ndarray,
+                    y_proba: np.ndarray,
+                    positive_label=1) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Calculate a cumulative gain curve of how many positives are captured
+    per percent of sorted data.
+
+    :param y_true:
+        True labels
+
+    :param y_proba:
+        Predicted label
+
+    :param positive_label:
+        Which class is considered positive class in multiclass settings
+
+    :return:
+        array of data percents and cumulative gain
+    """
+    n = len(y_true)
+    n_true = np.sum(y_true == positive_label)
+
+    idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
+    cum_gains = np.cumsum(y_true[idx]) / n_true
+    percents = np.arange(1, n + 1) / n
+    return percents, cum_gains
+
+
+def _generate_text_labels(ax, horizontal=False, padding=0.005):
+    """
+    Helper for generating text labels for bar charts
+
+    :param ax:
+        Ax which has patches on it
+
+    :param horizontal:
+        Whether or not the graph is a barh or a regular bar
+
+    :param padding:
+        How much padding to multiply by
+
+    :return:
+        x and y values for ax.text
+    """
+    for (i, patch) in enumerate(ax.patches):
+        width = patch.get_width()
+        height = patch.get_height()
+        x, y = patch.get_xy()
+
+        if horizontal is True:
+            padded = ax.get_xbound()[1] * padding
+            x_value = width + padded
+            y_value = y + (height / 2)
         else:
-            labels = np.arange(self._train_x.shape[1])
+            padded = ax.get_ybound()[1] * padding
+            x_value = x + (width / 2)
+            y_value = height + padded
 
-        return labels
-
-    def feature_importance(self, values=True, **kwargs):
-        """
-        Visualizes feature importance of the model. Model must have either feature_importance_
-        or coef_ attribute
-
-        :param values:
-            Toggles value labels on end of each bar
-
-        :return:
-            matplotlib.Axes
-        """
-
-        title = f"Feature Importance - {self._model_name}"
-        importance = helpers.get_feature_importance(self._model)
-
-        with plt.style.context(self._config['STYLE_SHEET']):
-            return plot_feature_importance(importance,
-                                           self._feature_labels,
-                                           values=values,
-                                           title=title,
-                                           **kwargs)
+        yield x_value, y_value
 
 
-class RegressionVisualize(BaseVisualize):
+def _get_feature_importance(model) -> np.ndarray:
     """
-    Visualization class for Regression models
+    Helper function for extracting importances.
+    Checks for coef_ or feature_importances_ on model
+
+    :param model:
+        A sklearn estimator
+
+    :return:
+        array of importances
     """
+    if hasattr(model, 'feature_importances_'):
+        importance = model.feature_importances_
 
-    def residuals(self, **kwargs):
-        """
-        Visualizes residuals of a regression model
+    elif hasattr(model, 'coef_'):
+        importance = model.coef_
+        if importance.ndim > 1:
+            importance = importance[0]
+    else:
+        model_name = model.__class__.__name__
+        raise VizError(f"{model_name} does not have either coef_ or feature_importances_")
 
-        :return:
-            matplotlib.Axes
-        """
-        with plt.style.context(self._config['STYLE_SHEET']):
-            title = f"Residual Plot - {self._model_name}"
-            y_pred = self._model.predict(self._test_x)
-            return plot_residuals(self._test_y, y_pred, title, **kwargs)
-
-    def prediction_error(self, **kwargs):
-        """
-        Visualizes prediction error of a regression model
-
-        :return:
-            matplotlib.Axes
-        """
-        with plt.style.context(self._config['STYLE_SHEET']):
-            title = f"Prediction Error - {self._model_name}"
-            y_pred = self._model.predict(self._test_x)
-            return plot_prediction_error(self._test_y, y_pred, title=title, **kwargs)
-
-
-class ClassificationVisualize(BaseVisualize):
-    """
-    Visualization class for Classification models
-    """
-
-    def confusion_matrix(self, normalized=True, **kwargs):
-        """
-        Visualize a confusion matrix for a classification model
-
-        :param normalized:
-            Whether or not to normalize annotated class counts
-
-        :return:
-            matplotlib.Axes
-        """
-        with plt.style.context(self._config['STYLE_SHEET']):
-            title = f'Confusion Matrix - {self._model_name}'
-            y_pred = self._model.predict(self._test_x)
-            return plot_confusion_matrix(self._test_y, y_pred, normalized, title, **kwargs)
-
-    def roc_curve(self, **kwargs):
-        """
-        Visualize a ROC curve for a classification model.
-        Model must implement a `predict_proba` method
-
-        :return:
-            matplotlib.Axes
-        """
-        if not hasattr(self._model, 'predict_proba'):
-            raise VizError("Model must provide a 'predict_proba' method")
-
-        with plt.style.context(self._config['STYLE_SHEET']):
-            title = f'ROC AUC - {self._model_name}'
-            y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_roc_auc(self._test_y, y_proba, title=title, **kwargs)
-
-    def lift_curve(self, **kwargs):
-        """
-        Visualize a Lift Curve for a classification model
-        Model must implement a `predict_proba` method
-
-        :return:
-            matplotlib.Axes
-        """
-        with plt.style.context(self._config["STYLE_SHEET"]):
-            title = f'Lift Curve - {self._model_name}'
-            y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_lift_curve(self._test_y, y_proba, title=title, **kwargs)
+    return importance

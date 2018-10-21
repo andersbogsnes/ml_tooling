@@ -10,10 +10,9 @@ from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
 from .result import Result
-from .utils import MLUtilsError, get_git_hash, find_model_file, get_model_name
-from ..config import default_config
-from ..visualizations.visualizations import ClassificationVisualize, RegressionVisualize
-
+from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name
+from .config import default_config
+from .result import RegressionVisualize, ClassificationVisualize
 
 Data = Union[pd.DataFrame, np.ndarray]
 
@@ -131,7 +130,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLUtilsError(f"{self.model_name} doesn't have a `predict_proba` method")
+            raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 
@@ -143,7 +142,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         except NotFittedError as e:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
-            raise MLUtilsError(message) from None
+            raise MLToolingError(message) from None
 
     @classmethod
     def test_models(cls,

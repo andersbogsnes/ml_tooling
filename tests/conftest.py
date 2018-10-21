@@ -73,4 +73,4 @@ def monkeypatch_git_hash(monkeypatch):
     def mockreturn():
         return '1234'
 
-    monkeypatch.setattr('ml_tooling.baseclass.baseclass.get_git_hash', mockreturn)
+    monkeypatch.setattr('ml_tooling.utils.get_git_hash', mockreturn)

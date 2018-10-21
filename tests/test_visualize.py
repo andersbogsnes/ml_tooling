@@ -9,12 +9,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_tooling.visualizations import plot_lift_curve
-from ml_tooling.visualizations.visualizations import (RegressionVisualize,
-                                                      ClassificationVisualize,
-                                                      plot_confusion_matrix)
-from ml_tooling.visualizations.helpers import (VizError,
-                                               get_feature_importance)
+from ml_tooling.plots import plot_lift_curve, VizError, _get_feature_importance
+from ml_tooling.plots import (plot_confusion_matrix)
+from ml_tooling.result import RegressionVisualize, ClassificationVisualize
 from sklearn.svm import SVC
 
 np.random.seed(42)
@@ -168,14 +165,14 @@ def test_lift_chart_fails_correctly_with_2d_proba():
 
 
 def test_viz_get_feature_importance_returns_coef_from_regression(regression):
-    importance = get_feature_importance(regression.model)
+    importance = _get_feature_importance(regression.model)
     assert np.all(regression.model.coef_ == importance)
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):
     classifier = base(RandomForestClassifier())
     result = classifier.score_model()
-    importance = get_feature_importance(classifier.model)
+    importance = _get_feature_importance(classifier.model)
     assert np.all(result.model.feature_importances_ == importance)
 
 

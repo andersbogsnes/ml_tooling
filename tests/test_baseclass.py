@@ -4,8 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 
 from ml_tooling import BaseClassModel
-from ml_tooling.baseclass.result import Result
-from ml_tooling.baseclass.utils import MLUtilsError
+from ml_tooling.result import Result
+from ml_tooling.utils import MLToolingError
 
 
 def test_can_change_config():
@@ -62,13 +62,13 @@ def test_max_works_with_result():
 
 
 def test_make_prediction_errors_when_model_is_not_fitted(base):
-    with pytest.raises(MLUtilsError, match="You haven't fitted the model"):
+    with pytest.raises(MLToolingError, match="You haven't fitted the model"):
         model = base(LinearRegression())
         model.make_prediction(5)
 
 
 def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(base):
-    with pytest.raises(MLUtilsError, match="LinearRegression doesn't have a `predict_proba`"):
+    with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
         model = base(LinearRegression())
         model.train_model()
         model.make_prediction(5, proba=True)
@@ -105,8 +105,11 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
         assert result.metric == 'roc_auc'
 
 
-@pytest.mark.usefixtures('monkeypatch_git_hash')
-def test_regression_model_can_be_saved(classifier, tmpdir, base):
+def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
     path = tmpdir.mkdir('model')
     classifier.score_model()
     classifier.save_model(path)
@@ -117,8 +120,11 @@ def test_regression_model_can_be_saved(classifier, tmpdir, base):
     assert loaded_model.model.get_params() == classifier.model.get_params()
 
 
-@pytest.mark.usefixtures('monkeypatch_git_hash')
-def test_save_model_saves_correctly(classifier, tmpdir):
+def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
     save_dir = tmpdir.mkdir('model')
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_LogisticRegression_1234.pkl'

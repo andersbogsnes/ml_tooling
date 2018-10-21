@@ -2,15 +2,14 @@
 Transformers for use in sklearn Pipelines.
 Mainly deals with DataFrames
 """
+from typing import Union, Callable
+
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 from functools import reduce
 
-
-class TransformerError(Exception):
-    """Error which occurs during a transform"""
-    pass
+from .utils import listify, TransformerError
 
 
 # noinspection PyUnusedLocal
@@ -20,9 +19,7 @@ class Select(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, columns):
-        if isinstance(columns, str):
-            columns = [columns]
-        self.columns = columns
+        self.columns = listify(columns)
 
     def fit(self, X, y=None):
         return self
@@ -40,10 +37,10 @@ class FillNA(BaseEstimator, TransformerMixin):
     def __init__(self, value):
         self.value = value
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         return X.fillna(self.value)
 
@@ -57,12 +54,12 @@ class ToCategorical(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.cat_map_ = None
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         self.cat_map_ = {col: X[col].astype('category').cat for
                          col in X.columns}
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
 
         for col in X.columns:
@@ -78,13 +75,13 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[[pd.DataFrame], pd.DataFrame]):
         self.func = func
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         for col in X.columns:
             X[col] = self.func(X[col])
@@ -97,17 +94,16 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
     Merges together two pipelines based on index
     """
 
-    def __init__(self, transformer_list):
+    def __init__(self, transformer_list: list):
         self.transformer_list = transformer_list
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         for (name, t) in self.transformer_list:
             t.fit(X, y)
         return self
 
-    def transform(self, X):
-        if isinstance(X, pd.DataFrame):
-            X = X.reset_index(drop=True)
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        X = X.reset_index(drop=True)
 
         Xts = [t.transform(X) for _, t in self.transformer_list]
         Xunion = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), Xts)
@@ -120,14 +116,14 @@ class Binner(BaseEstimator, TransformerMixin):
     Bins data according to passed bins and labels
     """
 
-    def __init__(self, bins=None, labels=None):
+    def __init__(self, bins: list=None, labels: list=None):
         self.bins = bins
         self.labels = labels
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         for col in X.columns:
             X[col] = pd.cut(X[col], bins=self.bins, labels=self.labels)
@@ -140,16 +136,13 @@ class Renamer(BaseEstimator, TransformerMixin):
     Renames columns to passed names
     """
 
-    def __init__(self, column_names):
-        if isinstance(column_names, str):
-            column_names = [column_names]
+    def __init__(self, column_names: Union[list, str]):
+        self.column_names = listify(column_names)
 
-        self.column_names = column_names
-
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         if len(self.column_names) != len(X.columns):
             raise TransformerError(f"X has {len(X.columns)} columns - "
@@ -170,10 +163,10 @@ class DateEncoder(BaseEstimator, TransformerMixin):
         self.week = week
         self.year = year
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         for col in X.columns:
             if self.day:
@@ -191,18 +184,18 @@ class DateEncoder(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class FreqFeature(BaseEstimator, TransformerMixin):
     """
-    Converts a column into its frequencies
+    Converts a column into its normalized value count
     """
 
     def __init__(self):
         self.frequencies = {}
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         for col in X.columns:
             self.frequencies[col] = X[col].str.upper().value_counts(normalize=True).to_dict()
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame):
         X = X.copy()
         for col in X.columns:
             X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
@@ -218,10 +211,10 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.scaler = StandardScaler(copy=copy, with_mean=with_mean, with_std=with_std)
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         self.scaler.fit(X, y)
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         data = self.scaler.transform(X)
         return pd.DataFrame(data=data, columns=X.columns, index=X.index)

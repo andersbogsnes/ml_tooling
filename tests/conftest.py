@@ -66,3 +66,11 @@ def _logistic_regression(base):
     model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model
+
+
+@pytest.fixture
+def monkeypatch_git_hash(monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_tooling.baseclass.baseclass.get_git_hash', mockreturn)

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from ml_tooling import BaseClassModel
 from ml_tooling.result import Result
@@ -43,6 +44,20 @@ def test_regression_model_returns_a_result(classifier):
     assert 'accuracy' == result.metric
     assert 'LogisticRegression' == result.model_name
     assert 2 == len(result.cross_val_scores)
+
+
+def test_pipeline_regression_returns_correct_result(pipeline_linear):
+    result = pipeline_linear.score_model()
+    assert isinstance(result, Result)
+    assert 'LinearRegression' == result.model_name
+    assert isinstance(result.model, Pipeline)
+
+
+def test_pipeline_logistic_returns_correct_result(pipeline_logistic):
+    result = pipeline_logistic.score_model()
+    assert isinstance(result, Result)
+    assert 'LogisticRegression' == result.model_name
+    assert isinstance(result.model, Pipeline)
 
 
 def test_result_equality_operators():
@@ -103,6 +118,18 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
     best_model, results = base.test_models(models, metric='roc_auc')
     for result in results:
         assert result.metric == 'roc_auc'
+
+
+def test_model_selection_with_pipeline_works_as_expected(base,
+                                                         pipeline_logistic,
+                                                         pipeline_dummy_classifier):
+    models = [pipeline_logistic.model, pipeline_dummy_classifier.model]
+    best_model, results = base.test_models(models)
+
+    for result in results:
+        assert result.model_name == result.model.steps[-1][1].__class__.__name__
+
+    assert best_model.model == models[0]
 
 
 def test_regression_model_can_be_saved(classifier, tmpdir, base, monkeypatch):

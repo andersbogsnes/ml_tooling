@@ -15,7 +15,7 @@ from ml_tooling.transformers import (Select,
                                      DFFeatureUnion,
                                      )
 
-from ml_tooling.transformers.pandas_transformers import TransformerError
+from ml_tooling.utils import TransformerError
 
 np.random.seed(42)
 

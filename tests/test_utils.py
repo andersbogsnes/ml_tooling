@@ -2,10 +2,9 @@ from ml_tooling.baseclass.utils import get_git_hash, find_model_file
 
 
 def test_get_git_hash_returns_correctly():
-    hash = get_git_hash()
-    assert isinstance(hash, str)
-    assert 10 < len(hash)
-
+    git_hash = get_git_hash()
+    assert isinstance(git_hash, str)
+    assert 10 < len(git_hash)
 
 def test_find_model_file_with_given_model_returns_correctly(tmpdir, monkeypatch):
     def mockreturn():

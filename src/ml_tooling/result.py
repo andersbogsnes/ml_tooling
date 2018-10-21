@@ -79,7 +79,7 @@ class BaseVisualize:
 
         return labels
 
-    def feature_importance(self, values: bool=True, **kwargs) -> plt.Axes:
+    def feature_importance(self, values: bool = True, **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
         or coef_ attribute
@@ -94,7 +94,7 @@ class BaseVisualize:
         title = f"Feature Importance - {self._model_name}"
         importance = _get_feature_importance(self._model)
 
-        with plt.style.context(self._config['STYLE_SHEET']):
+        with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(importance,
                                            self._feature_labels,
                                            values=values,
@@ -115,7 +115,7 @@ class RegressionVisualize(BaseVisualize):
         :return:
             matplotlib.Axes
         """
-        with plt.style.context(self._config['STYLE_SHEET']):
+        with plt.style.context(self._config.STYLE_SHEET):
             title = f"Residual Plot - {self._model_name}"
             y_pred = self._model.predict(self._test_x)
             return plot_residuals(self._test_y, y_pred, title, **kwargs)
@@ -127,7 +127,7 @@ class RegressionVisualize(BaseVisualize):
         :return:
             matplotlib.Axes
         """
-        with plt.style.context(self._config['STYLE_SHEET']):
+        with plt.style.context(self._config.STYLE_SHEET):
             title = f"Prediction Error - {self._model_name}"
             y_pred = self._model.predict(self._test_x)
             return plot_prediction_error(self._test_y, y_pred, title=title, **kwargs)
@@ -138,7 +138,7 @@ class ClassificationVisualize(BaseVisualize):
     Visualization class for Classification models
     """
 
-    def confusion_matrix(self, normalized: bool=True, **kwargs) -> plt.Axes:
+    def confusion_matrix(self, normalized: bool = True, **kwargs) -> plt.Axes:
         """
         Visualize a confusion matrix for a classification model
         Any kwargs are passed onto matplotlib
@@ -148,7 +148,7 @@ class ClassificationVisualize(BaseVisualize):
         :return:
             matplotlib.Axes
         """
-        with plt.style.context(self._config['STYLE_SHEET']):
+        with plt.style.context(self._config.STYLE_SHEET):
             title = f'Confusion Matrix - {self._model_name}'
             y_pred = self._model.predict(self._test_x)
             return plot_confusion_matrix(self._test_y, y_pred, normalized, title, **kwargs)
@@ -164,7 +164,7 @@ class ClassificationVisualize(BaseVisualize):
         if not hasattr(self._model, 'predict_proba'):
             raise VizError("Model must provide a 'predict_proba' method")
 
-        with plt.style.context(self._config['STYLE_SHEET']):
+        with plt.style.context(self._config.STYLE_SHEET):
             title = f'ROC AUC - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
             return plot_roc_auc(self._test_y, y_proba, title=title, **kwargs)
@@ -177,7 +177,7 @@ class ClassificationVisualize(BaseVisualize):
         :return:
             matplotlib.Axes
         """
-        with plt.style.context(self._config["STYLE_SHEET"]):
+        with plt.style.context(self._config.STYLE_SHEET):
             title = f'Lift Curve - {self._model_name}'
             y_proba = self._model.predict_proba(self._test_x)[:, 1]
             return plot_lift_curve(self._test_y, y_proba, title=title, **kwargs)

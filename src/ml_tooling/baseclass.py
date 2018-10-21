@@ -11,7 +11,7 @@ from sklearn.exceptions import NotFittedError
 
 from .result import Result
 from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name
-from .config import default_config
+from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
 
 Data = Union[pd.DataFrame, np.ndarray]
@@ -22,11 +22,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     Base class for Models
     """
 
+    config = DefaultConfig()
+
     def __init__(self, model):
         self.model = model
         self.model_type = model._estimator_type
         self.model_name = get_model_name(model)
-        self.config = default_config
         self.x = None
         self.y = None
         self.result = None
@@ -67,19 +68,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model_file = find_model_file(path)
         model = joblib.load(model_file)
         return cls(model)
-
-    def set_config(self, config_dict) -> 'BaseClassModel':
-        """
-        Update configuration using a dictionary of values
-
-        :param config_dict:
-            dict of config values
-
-        :return:
-            self
-        """
-        self.config.update(config_dict)
-        return self
 
     def _load_data(self) -> Tuple[Data, Data]:
         """
@@ -193,10 +181,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self._load_data()
 
         if self.model_type == 'classifier':
-            metric = self.config['CLASSIFIER_METRIC'] if metric is None else metric
+            metric = self.config.CLASSIFIER_METRIC if metric is None else metric
             stratify = self.y
         else:
-            metric = self.config['REGRESSION_METRIC'] if metric is None else metric
+            metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None
 
         train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
@@ -204,14 +192,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             train_x = train_x.reset_index(drop=True)
             test_x = test_x.reset_index(drop=True)
 
-        cv = self.config['CROSS_VALIDATION'] if cv is None else cv
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
         scores = cross_val_score(self.model,
                                  train_x,
                                  train_y,
                                  cv=cv,
                                  scoring=metric,
-                                 n_jobs=self.config['N_JOBS'],
-                                 verbose=self.config['VERBOSITY'],
+                                 n_jobs=self.config.N_JOBS,
+                                 verbose=self.config.VERBOSITY,
                                  )
 
         self.model.fit(train_x, train_y)
@@ -235,6 +223,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         )
 
         return self.result
+
+    @classmethod
+    def reset_config(cls):
+        """
+        Reset configuration to default
+        """
+        cls.config = DefaultConfig()
+        return cls
 
     def __repr__(self):
         return f"<{self.__class__.__name__}: {self.model_name}>"

@@ -1,12 +1,23 @@
 import pathlib
+
 BASE_PATH = pathlib.Path(__file__).parent
 MPL_STYLESHEET = str(BASE_PATH.joinpath('almbrand.mplstyle'))
 
-default_config = {
-    "VERBOSITY": 0,
-    "CLASSIFIER_METRIC": 'accuracy',
-    "REGRESSION_METRIC": 'r2',
-    "CROSS_VALIDATION": 10,
-    "STYLE_SHEET": MPL_STYLESHEET,
-    "N_JOBS": -1
-}
+
+class DefaultConfig:
+    """
+    Configuration for a given Baseclass. Configs propagate through each instance
+    """
+    def __init__(self):
+        self.VERBOSITY = 0
+        self.CLASSIFIER_METRIC = 'accuracy'
+        self.REGRESSION_METRIC = 'r2'
+        self.CROSS_VALIDATION = 10
+        self.STYLE_SHEET = MPL_STYLESHEET
+        self.N_JOBS = -1
+
+    def __repr__(self):
+        attrs = '\n'.join([f"{attr}: {value}"
+                           for attr, value in self.__dict__.items()
+                           if '__' not in attr])
+        return f'<Config: \n{attrs}\n>'

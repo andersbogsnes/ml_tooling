@@ -4,23 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 
-from ml_tooling import BaseClassModel
 from ml_tooling.result import Result
 from ml_tooling.utils import MLToolingError
-
-
-def test_can_change_config():
-    class SomeModel(BaseClassModel):
-        def get_training_data(self):
-            pass
-
-        def get_prediction_data(self, *args):
-            pass
-
-    test_model = SomeModel(LinearRegression())
-    assert 10 == test_model.config["CROSS_VALIDATION"]
-    test_model.set_config({"CROSS_VALIDATION": 2})
-    assert test_model.config["CROSS_VALIDATION"] == 2
 
 
 def test_linear_model_returns_a_result(regression):
@@ -46,15 +31,17 @@ def test_regression_model_returns_a_result(classifier):
     assert 2 == len(result.cross_val_scores)
 
 
-def test_pipeline_regression_returns_correct_result(pipeline_linear):
-    result = pipeline_linear.score_model()
+def test_pipeline_regression_returns_correct_result(base, pipeline_linear):
+    model = base(pipeline_linear)
+    result = model.score_model()
     assert isinstance(result, Result)
     assert 'LinearRegression' == result.model_name
     assert isinstance(result.model, Pipeline)
 
 
-def test_pipeline_logistic_returns_correct_result(pipeline_logistic):
-    result = pipeline_logistic.score_model()
+def test_pipeline_logistic_returns_correct_result(base, pipeline_logistic):
+    model = base(pipeline_logistic)
+    result = model.score_model()
     assert isinstance(result, Result)
     assert 'LogisticRegression' == result.model_name
     assert isinstance(result.model, Pipeline)
@@ -123,7 +110,7 @@ def test_model_selection_with_nonstandard_metric_works_as_expected(base):
 def test_model_selection_with_pipeline_works_as_expected(base,
                                                          pipeline_logistic,
                                                          pipeline_dummy_classifier):
-    models = [pipeline_logistic.model, pipeline_dummy_classifier.model]
+    models = [pipeline_logistic, pipeline_dummy_classifier]
     best_model, results = base.test_models(models)
 
     for result in results:

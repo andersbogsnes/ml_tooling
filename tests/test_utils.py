@@ -6,12 +6,8 @@ def test_get_git_hash_returns_correctly():
     assert isinstance(git_hash, str)
     assert 10 < len(git_hash)
 
-def test_find_model_file_with_given_model_returns_correctly(tmpdir, monkeypatch):
-    def mockreturn():
-        return '1234'
 
-    monkeypatch.setattr('ml_tooling.baseclass.utils.get_git_hash', mockreturn)
-
+def test_find_model_file_with_given_model_returns_correctly(tmpdir):
     model_folder = tmpdir.mkdir('model')
     model1 = 'TestModel1_1234.pkl'
     model1_file = model_folder.join(model1)

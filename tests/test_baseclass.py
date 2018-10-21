@@ -89,7 +89,7 @@ def test_train_model_saves_x_and_y_as_expected(regression):
 
 
 def test_model_selection_works_as_expected(base):
-    models = [LogisticRegression(), RandomForestClassifier()]
+    models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
     best_model, results = base.test_models(models)
     assert models[1] is best_model.model
     assert 2 == len(results)
@@ -99,7 +99,7 @@ def test_model_selection_works_as_expected(base):
 
 
 def test_model_selection_with_nonstandard_metric_works_as_expected(base):
-    models = [LogisticRegression(), RandomForestClassifier()]
+    models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
     best_model, results = base.test_models(models, metric='roc_auc')
     for result in results:
         assert result.metric == 'roc_auc'

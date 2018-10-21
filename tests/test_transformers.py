@@ -20,18 +20,11 @@ from ml_tooling.transformers.pandas_transformers import TransformerError
 np.random.seed(42)
 
 
-def test_df_selector_returns_correct_dataframe(categorical):
-    select = Select(['category_a'])
+@pytest.mark.parametrize('container', [['category_a'], 'category_a', ('category_a',)])
+def test_df_selector_returns_correct_dataframe(categorical, container):
+    select = Select(container)
     result = select.fit_transform(categorical)
 
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical) == len(result)
-    assert {'category_a'} == set(result.columns)
-
-
-def test_df_selector_with_nonlist(categorical):
-    select = Select('category_a')
-    result = select.fit_transform(categorical)
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
     assert {'category_a'} == set(result.columns)

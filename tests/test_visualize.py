@@ -9,12 +9,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_tooling.plots import plot_lift_curve, VizError, _get_feature_importance
-from ml_tooling.plots import (plot_confusion_matrix)
+from ml_tooling.plots import (plot_lift_curve,
+                              VizError,
+                              _get_feature_importance,
+                              plot_confusion_matrix,
+                              )
+
 from ml_tooling.result import RegressionVisualize, ClassificationVisualize
 from sklearn.svm import SVC
-
-np.random.seed(42)
 
 
 def test_result_regression_gets_correct_visualizers(regression):
@@ -48,9 +50,9 @@ def test_confusion_matrix_plots_have_correct_data(classifier):
     ax = classifier.result.plot.confusion_matrix()
 
     assert 'Confusion Matrix - LogisticRegression - Normalized' == ax.title._text
-    result = {text._text for text in ax.texts}
-    assert 1.0 == pytest.approx(np.sum([float(x) for x in result]))
-    assert {'0.55', '0.11', '0.26', '0.08'} == result
+    result = [text._text for text in ax.texts]
+    assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
+    assert {'0.61', '0.32', '0.05', '0.03'} == set(result)
     assert 'True Label' == ax.get_ylabel()
     assert 'Predicted Label' == ax.get_xlabel()
 
@@ -60,7 +62,7 @@ def test_confusion_matrix_plots_have_correct_data_when_not_normalized(classifier
 
     assert 'Confusion Matrix - LogisticRegression' == ax.title._text
     result = {text._text for text in ax.texts}
-    assert {'21', '4', '3', '10'} == result
+    assert {'23', '1', '2', '12'} == result
     assert 'True Label' == ax.get_ylabel()
     assert 'Predicted Label' == ax.get_xlabel()
 
@@ -76,7 +78,7 @@ def test_confusion_matrix_has_custom_labels():
 def test_feature_importance_plots_have_correct_data(classifier):
     ax = classifier.result.plot.feature_importance()
 
-    expected = {'-1.52', '-0.83', '0.38', '0.44'}
+    expected = {'-1.24', '-1.51', '0.38', '0.58'}
     assert expected == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression' == ax.title._text
     assert 'Features' == ax.get_ylabel()
@@ -98,7 +100,7 @@ def test_lift_curve_have_correct_data(classifier):
     assert 'Lift' == ax.get_ylabel()
     assert '% of Data' == ax.get_xlabel()
     assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
-    assert pytest.approx(45.149, rel=.0001) == np.sum(ax.lines[0].get_ydata())
+    assert pytest.approx(49.849, rel=.0001) == np.sum(ax.lines[0].get_ydata())
 
 
 def test_prediction_error_plots_have_correct_data(regression):

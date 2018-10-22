@@ -36,7 +36,6 @@ class FillNA(BaseEstimator, TransformerMixin):
     are supplied the strategy will be used.
     """
 
-    @staticmethod
     def most_freq(X):
         return pd.DataFrame.mode(X).iloc[0]
 
@@ -63,7 +62,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             self.column_values_ = func(X)
         return self
 
-    def transform(self, X: pd.DataFrame, y=None):
+    def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
         if self.strategy is not None:
             result = X.fillna(self.column_values_)
@@ -143,7 +142,7 @@ class Binner(BaseEstimator, TransformerMixin):
     Bins data according to passed bins and labels
     """
 
-    def __init__(self, bins: list=None, labels: list=None):
+    def __init__(self, bins: list = None, labels: list = None):
         self.bins = bins
         self.labels = labels
 

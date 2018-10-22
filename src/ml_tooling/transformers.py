@@ -36,7 +36,6 @@ class FillNA(BaseEstimator, TransformerMixin):
     are supplied the strategy will be used.
     """
 
-    @staticmethod
     def most_freq(X):
         return pd.DataFrame.mode(X).iloc[0]
 

@@ -14,4 +14,4 @@ script:
   - flake8
 
 after_success:
-- codecov
+  - codecov

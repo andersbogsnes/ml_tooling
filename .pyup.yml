@@ -4,3 +4,4 @@
 update: all
 assignees: andersbogsnes
 label_prs: update
+branch: develop

@@ -118,18 +118,12 @@ def test_imputer_returns_correct_dataframe_most_freq(categorical):
     assert 'a1' == result.loc[1, "category_a"]
     assert 'b3' == result.loc[0, "category_b"]
 
-<<<<<<< HEAD
 
 def test_imputer_with_none_raises_error(numerical_na):
-=======
-def test_imputer_with_none_raises_error(numerical_na):
-
->>>>>>> 0cb9c3301025fee86aeb0e60eb4d4136d24fa469
     imputer = FillNA()
     with pytest.raises(TransformerError):
         imputer.fit_transform(numerical_na)
 
-<<<<<<< HEAD
 
 def test_imputer_with_both_raises_error(numerical_na):
     imputer = FillNA(value=0, strategy='mean')
@@ -137,13 +131,6 @@ def test_imputer_with_both_raises_error(numerical_na):
         imputer.fit_transform(numerical_na)
 
 
-=======
-def test_imputer_with_both_raises_error(numerical_na):
-    imputer = FillNA(value=0,  strategy='mean')
-    with pytest.raises(TransformerError):
-        imputer.fit_transform(numerical_na)
-
->>>>>>> 0cb9c3301025fee86aeb0e60eb4d4136d24fa469
 def test_to_categorical_returns_correct_dataframe(categorical):
     to_cat = ToCategorical()
     result = to_cat.fit_transform(categorical)

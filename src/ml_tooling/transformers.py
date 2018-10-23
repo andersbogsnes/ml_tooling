@@ -31,9 +31,7 @@ class Select(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class FillNA(BaseEstimator, TransformerMixin):
     """
-    Fills NA values with given value or strategy. If no value or strategy are
-    supplied missings are imputed with zero. If both a value and a strategy
-    are supplied the strategy will be used.
+    Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
     def most_freq(X):

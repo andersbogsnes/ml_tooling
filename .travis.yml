@@ -7,11 +7,11 @@ env:
   - TOXENV=py36
 
 install:
-  - pip install tox coveralls flake8
+  - pip install tox codecov flake8
 
 script:
   - tox -e $TOXENV
   - flake8
 
 after_success:
-  - coveralls
+  - codecov

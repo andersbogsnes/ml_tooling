@@ -236,7 +236,11 @@ def plot_feature_importance(importance: Data,
 
     title = f"Feature Importance" if title is None else title
 
-    labels, importance = metrics.sorted_feature_importance(labels, importance, ascending=True)
+    labels, importance = metrics.sorted_feature_importance(labels,
+                                                           importance,
+                                                           top_n,
+                                                           bottom_n
+                                                           )
 
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)

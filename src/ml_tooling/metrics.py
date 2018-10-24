@@ -1,5 +1,10 @@
+import math
+from typing import Union
+
 import numpy as np
 from sklearn import metrics
+
+from ml_tooling.utils import _is_percent
 
 
 class MetricError(Exception):
@@ -65,7 +70,10 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
     return cm
 
 
-def sorted_feature_importance(labels: np.ndarray, importance: np.ndarray, ascending=False):
+def sorted_feature_importance(labels: np.ndarray,
+                              importance: np.ndarray,
+                              top_n: Union[int, float] = None,
+                              bottom_n: Union[int, float] = None):
     """
     Calculates a sorted array of importances and corresponding labels by absolute values
 
@@ -75,17 +83,35 @@ def sorted_feature_importance(labels: np.ndarray, importance: np.ndarray, ascend
     :param importance:
         List of importance values
 
-    :param ascending:
-        Whether or not to sort in descending order
+    :param top_n:
+        If top_n is an int return top n features
+        If top_n is a float between 0 and 1 return top top_n percent of features
+
+    :param bottom_n:
+        If bottom_n is an int return bottom n features
+        If bottom_n is a float between 0 and 1 return bottom bottom_n percent of features
+
     :return:
         List of labels and list of feature importances sorted by importance
     """
     if not isinstance(labels, np.ndarray):
         labels = np.array(labels)
 
-    idx = np.argsort(np.abs(importance))
+    idx = np.argsort(np.abs(importance))[::-1]
 
-    if ascending is False:
-        idx = idx[::-1]
+    sorted_idx = []
+
+    if top_n:
+        if _is_percent(top_n):
+            top_n = math.floor(top_n * len(idx))
+        sorted_idx.extend(idx[:top_n])
+
+    if bottom_n:
+        if _is_percent(bottom_n):
+            bottom_n = math.floor(bottom_n * len(idx))
+        sorted_idx.extend(idx[::-1][:bottom_n])
+
+    if sorted_idx:
+        idx = sorted_idx
 
     return labels[idx], importance[idx]

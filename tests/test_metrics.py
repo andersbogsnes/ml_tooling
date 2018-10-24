@@ -39,12 +39,61 @@ def test_sorted_feature_importance_returns_as_expected():
     assert np.all(importance == result_importance)
 
 
-def test_sorted_feature_importance_ascending_returns_as_expected():
-    labels = np.array(['Feature 1', 'Feature 2'])
-    importance = np.array([.8, .7])
+def test_sorted_feature_importance_top_n_int_returns_as_expected():
+    labels = np.array(['Feature 1', 'Features 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
+
+    result_labels, result_importance = sorted_feature_importance(labels, importance, top_n=2)
+    assert ['Feature 5', 'Feature 4'] == list(result_labels)
+    assert [.5, .4] == list(result_importance)
+
+
+def test_sorted_feature_importance_top_n_percent_returns_as_expected():
+    labels = np.array(['Feature 1', 'Features 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
+
+    result_labels, result_importance = sorted_feature_importance(labels, importance, top_n=.2)
+    assert ['Feature 5'] == list(result_labels)
+    assert [.5] == list(result_importance)
+
+
+def test_sorted_feature_importance_bottom_n_int_returns_as_expected():
+    labels = np.array(['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
+
+    result_labels, result_importance = sorted_feature_importance(labels, importance, bottom_n=2)
+    assert ['Feature 1', 'Feature 2'] == list(result_labels)
+    assert [.1, .2] == list(result_importance)
+
+
+def test_sorted_feature_importance_bottom_n_percent_returns_as_expected():
+    labels = np.array(['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
+
+    result_labels, result_importance = sorted_feature_importance(labels, importance, bottom_n=.2)
+    assert ['Feature 1'] == list(result_labels)
+    assert [.1] == list(result_importance)
+
+
+def test_sorted_feature_importance_bottom_and_top_n_int_returns_as_expected():
+    labels = np.array(['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
 
     result_labels, result_importance = sorted_feature_importance(labels,
                                                                  importance,
-                                                                 ascending=True)
-    assert np.all(np.array(['Feature 2', 'Feature 1']) == result_labels)
-    assert np.all(np.array([.7, .8]) == result_importance)
+                                                                 bottom_n=2,
+                                                                 top_n=1)
+    assert ['Feature 5', 'Feature 1', 'Feature 2'] == list(result_labels)
+    assert [.5, .1, .2] == list(result_importance)
+
+
+def test_sorted_feature_importance_bottom_and_top_n_percent_returns_as_expected():
+    labels = np.array(['Feature 1', 'Feature 2', 'Feature 3', 'Feature 4', 'Feature 5'])
+    importance = np.array([.1, .2, .3, .4, .5])
+
+    result_labels, result_importance = sorted_feature_importance(labels,
+                                                                 importance,
+                                                                 bottom_n=.2,
+                                                                 top_n=.2)
+    assert ['Feature 5', 'Feature 1'] == list(result_labels)
+    assert [.5, .1] == list(result_importance)

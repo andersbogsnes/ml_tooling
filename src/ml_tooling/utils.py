@@ -1,3 +1,7 @@
+from typing import Union
+
+import numpy as np
+import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
 
@@ -38,9 +42,9 @@ def find_model_file(path: str) -> pathlib.Path:
         return path
 
     git_hash = get_git_hash()
-    all_models = path.glob(f'*_{git_hash}.pkl')
+    all_models = list(path.glob(f'*_{git_hash}.pkl'))
 
-    if all_models is None:
+    if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")
 
     newest_match = max(all_models, key=lambda x: x.stat().st_mtime)
@@ -75,3 +79,14 @@ def listify(collection) -> list:
         collection = list(collection)
 
     return collection
+
+
+def _is_percent(number):
+    if isinstance(number, float):
+        if number > 1 or number < 0:
+            raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
+        return True
+    return False
+
+
+Data = Union[pd.DataFrame, np.ndarray]

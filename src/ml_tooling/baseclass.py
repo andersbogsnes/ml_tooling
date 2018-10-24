@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import Union, List, Tuple, Optional, Sequence
+from typing import List, Tuple, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -10,11 +10,9 @@ from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
 from .result import Result
-from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name
+from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name, Data
 from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
-
-Data = Union[pd.DataFrame, np.ndarray]
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):

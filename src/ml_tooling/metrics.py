@@ -103,12 +103,12 @@ def sorted_feature_importance(labels: np.ndarray,
 
     if top_n:
         if _is_percent(top_n):
-            top_n = math.floor(top_n * len(idx))
+            top_n = math.floor(top_n * len(idx)) or 1  # If floor rounds to 0, use 1 instead
         sorted_idx.extend(idx[:top_n])
 
     if bottom_n:
         if _is_percent(bottom_n):
-            bottom_n = math.floor(bottom_n * len(idx))
+            bottom_n = math.floor(bottom_n * len(idx)) or 1  # If floor rounds to 0, use 1 instead
         sorted_idx.extend(idx[::-1][:bottom_n])
 
     if sorted_idx:

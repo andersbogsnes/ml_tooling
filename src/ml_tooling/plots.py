@@ -1,17 +1,19 @@
 """
 Contains all viz functions
 """
-from typing import Tuple
+from typing import Tuple, Sequence, Union
 
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
 import itertools
+from matplotlib.axes import Axes
 
 from . import metrics
+from .utils import Data
 
 
-def plot_roc_auc(y_true, y_proba, title=None, ax=None):
+def plot_roc_auc(y_true: Data, y_proba: Data, title: str = None, ax: Axes = None) -> Axes:
     """
     Plot ROC AUC curve. Works only with probabilities
 
@@ -48,7 +50,12 @@ def plot_roc_auc(y_true, y_proba, title=None, ax=None):
     return ax
 
 
-def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None, labels=None):
+def plot_confusion_matrix(y_true: Data,
+                          y_pred: Data,
+                          normalized: bool = True,
+                          title: str = None,
+                          ax: Axes = None,
+                          labels: Sequence[str] = None) -> Axes:
     """
     Plots a confusion matrix of predicted labels vs actual labels
 
@@ -111,7 +118,10 @@ def plot_confusion_matrix(y_true, y_pred, normalized=True, title=None, ax=None, 
     return ax
 
 
-def plot_residuals(y_true, y_pred, title=None, ax=None):
+def plot_residuals(y_true: Data,
+                   y_pred: Data,
+                   title: str = None,
+                   ax: Axes = None) -> Axes:
     """
     Plots residuals from a regression.
 
@@ -147,7 +157,10 @@ def plot_residuals(y_true, y_pred, title=None, ax=None):
     return ax
 
 
-def plot_prediction_error(y_true, y_pred, title=None, ax=None):
+def plot_prediction_error(y_true: Data,
+                          y_pred: Data,
+                          title: str = None,
+                          ax: Axes = None) -> Axes:
     """
     Plots prediction error of regression model
 
@@ -183,7 +196,16 @@ def plot_prediction_error(y_true, y_pred, title=None, ax=None):
     return ax
 
 
-def plot_feature_importance(importance, labels, values=None, title=None, ax=None):
+
+
+def plot_feature_importance(importance: Data,
+                            labels: Data,
+                            values: bool = None,
+                            title: str = None,
+                            ax: Axes = None,
+                            top_n: Union[int, float] = None,
+                            bottom_n: Union[int, float] = None
+                            ) -> Axes:
     """
     Plot a horizontal bar chart of labelled feature importance
 
@@ -202,9 +224,13 @@ def plot_feature_importance(importance, labels, values=None, title=None, ax=None
     :param ax:
         Pass your own ax
 
+    :param top_n:
+        If top_n is an integer,
+
     :return:
         matplotlib.Axes
     """
+
     if ax is None:
         fig, ax = plt.subplots()
 

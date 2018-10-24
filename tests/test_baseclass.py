@@ -1,11 +1,14 @@
 import numpy as np
 import pytest
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from ml_tooling.result import Result
 from ml_tooling.utils import MLToolingError
+from ml_tooling import BaseClassModel
 
 
 def test_linear_model_returns_a_result(regression):
@@ -143,3 +146,29 @@ def test_save_model_saves_correctly(classifier, tmpdir, monkeypatch):
     classifier.save_model(save_dir)
     expected_name = 'IrisModel_LogisticRegression_1234.pkl'
     assert save_dir.join(expected_name).check()
+
+
+def test_setup_model_raises_not_implemented_error(base):
+    with pytest.raises(NotImplementedError):
+        base.setup_model()
+
+
+def test_setup_model_works_when_implemented():
+    class DummyModel(BaseClassModel):
+        def get_prediction_data(self, idx):
+            pass
+
+        def get_training_data(self):
+            pass
+
+        @classmethod
+        def setup_model(cls):
+            pipeline = Pipeline([
+                ('scaler', StandardScaler()),
+                ('clf', LogisticRegression(solver='lbgfs'))
+            ])
+            return cls(pipeline)
+
+    model = DummyModel.setup_model()
+    assert model.model_name == 'LogisticRegression'
+    assert hasattr(model, 'coef_') is False

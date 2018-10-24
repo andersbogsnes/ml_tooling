@@ -1,4 +1,6 @@
-from ml_tooling.utils import get_git_hash, find_model_file
+import pytest
+
+from ml_tooling.utils import get_git_hash, find_model_file, _is_percent
 
 
 def test_get_git_hash_returns_correctly():
@@ -42,3 +44,14 @@ def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
     result = find_model_file(model_folder)
 
     assert model2_file == result
+
+
+@pytest.mark.parametrize('number, is_percent', [
+    (0.2, True),
+    (1, False),
+    (10, False),
+    (.00000000001, True),
+    (1000000, False)
+])
+def test_is_percent_returns_correctly(number, is_percent):
+    assert _is_percent(number) is is_percent

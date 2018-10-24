@@ -31,18 +31,42 @@ class Select(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class FillNA(BaseEstimator, TransformerMixin):
     """
-    Fills NA values with given value
+    Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def __init__(self, value):
+    def most_freq(X):
+        return pd.DataFrame.mode(X).iloc[0]
+
+    func_map_ = {'mean': pd.DataFrame.mean,
+                 'median': pd.DataFrame.median,
+                 'most_freq': most_freq,
+                 'max': pd.DataFrame.max,
+                 'min': pd.DataFrame.min}
+
+    def __init__(self, value=None, strategy=None):
         self.value = value
+        self.strategy = strategy
+        self.column_values_ = None
 
     def fit(self, X: pd.DataFrame, y=None):
+        if self.value is None and self.strategy is None:
+            raise TransformerError(f"Both value and strategy are set to None."
+                                   f"Please select either a value or a strategy.")
+        if self.value is not None and self.strategy is not None:
+            raise TransformerError(f"Both a value and a strategy have been selected."
+                                   f"Please select either a value or a strategy.")
+        if self.strategy is not None:
+            func = self.func_map_[self.strategy]
+            self.column_values_ = func(X)
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
-        return X.fillna(self.value)
+        if self.strategy is not None:
+            result = X.fillna(self.column_values_)
+        else:
+            result = X.fillna(self.value)
+        return result
 
 
 # noinspection PyUnusedLocal
@@ -116,7 +140,7 @@ class Binner(BaseEstimator, TransformerMixin):
     Bins data according to passed bins and labels
     """
 
-    def __init__(self, bins: list=None, labels: list=None):
+    def __init__(self, bins: list = None, labels: list = None):
         self.bins = bins
         self.labels = labels
 

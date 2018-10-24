@@ -1,11 +1,9 @@
-import pandas as pd
 import numpy as np
 import pytest
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 
 from ml_tooling.result import Result
@@ -156,17 +154,12 @@ def test_setup_model_raises_not_implemented_error(base):
 
 
 def test_setup_model_works_when_implemented():
-    class IrisModel(BaseClassModel):
+    class DummyModel(BaseClassModel):
         def get_prediction_data(self, idx):
-            data = load_iris()
-            df = pd.DataFrame(data.data, columns=data.feature_names)
-            return df.iloc[[idx]]
+            pass
 
         def get_training_data(self):
-            data = load_iris()
-            y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
-            x = pd.DataFrame(data.data, columns=data.feature_names)
-            return x, y
+            pass
 
         @classmethod
         def setup_model(cls):
@@ -176,6 +169,6 @@ def test_setup_model_works_when_implemented():
             ])
             return cls(pipeline)
 
-    model = IrisModel.setup_model()
+    model = DummyModel.setup_model()
     assert model.model_name == 'LogisticRegression'
     assert hasattr(model, 'coef_') is False

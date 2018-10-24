@@ -128,7 +128,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             else:
                 return self.model.predict(x)
 
-        except NotFittedError as e:
+        except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLToolingError(message) from None
 

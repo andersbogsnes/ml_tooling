@@ -101,6 +101,41 @@ Passed to the implemented `get_prediction_data()` method and calls `.predict()` 
 Runs `score_model()` on each model, saving the result.
 Returns the best model as well as a list of all results
 
+### `setup_model()`
+To be implemented by the user - setup_model is a classmethod which loads up an untrained model.
+Typically this would setup a pipeline and the selected model for easy training
+
+Returning to our previous example of the BostonModel, let us implement a setup_model method
+```python
+from ml_tooling import BaseClassModel
+from sklearn.datasets import load_boston
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import Pipeline
+
+class BostonModel(BaseClassModel):
+    def get_prediction_data(self, idx):
+        x, _ = load_boston(return_X_y=True)
+        return x[idx] # Return given observation
+        
+    def get_training_data(self):
+        return load_boston(return_X_y=True)
+    
+    @classmethod
+    def setup_model(cls):
+        pipeline = Pipeline([
+        ('scaler', StandardScaler()),
+        ('clf', LinearRegression())
+        ])
+        return cls(pipeline)
+```
+
+Given this extra setup, it becomes easy to load the untrained model to train it:
+```python
+model = BostonModel.setup_model()
+model.train_model()
+```
+
 ## Visualizing results
 When a model is trained, it returns a Result object. 
 That object has number of visualization options depending on the type of model:

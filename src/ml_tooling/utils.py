@@ -1,3 +1,7 @@
+from typing import Union
+
+import numpy as np
+import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
 
@@ -75,3 +79,14 @@ def listify(collection) -> list:
         collection = list(collection)
 
     return collection
+
+
+def _is_percent(number):
+    if isinstance(number, float):
+        if number > 1 or number < 0:
+            raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
+        return True
+    return False
+
+
+Data = Union[pd.DataFrame, np.ndarray]

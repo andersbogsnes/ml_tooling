@@ -113,6 +113,8 @@ class BaseVisualize:
                                            self._feature_labels,
                                            values=values,
                                            title=title,
+                                           top_n=top_n,
+                                           bottom_n=bottom_n,
                                            **kwargs)
 
 

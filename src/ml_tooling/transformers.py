@@ -25,7 +25,11 @@ class Select(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        return X[self.columns]
+        try:
+            return X[self.columns]
+        except KeyError:
+            cols_error = list(set(self.columns) - set(X.columns))
+            raise TransformerError(f"The DataFrame does not include the columns: {cols_error}")
 
 
 # noinspection PyUnusedLocal

@@ -39,6 +39,13 @@ def test_df_selector_with_multiple_columns(categorical):
     assert {'category_a', 'category_b'} == set(result.columns)
 
 
+def test_df_selector_raise_missing_column(categorical):
+    select = Select(['category_a', 'category_b', 'category_c'])
+
+    with pytest.raises(TransformerError):
+        select.fit_transform(categorical)
+
+
 def test_imputer_returns_correct_dataframe(categorical_na):
     imputer = FillNA('Unknown')
     result = imputer.fit_transform(categorical_na)

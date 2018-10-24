@@ -96,7 +96,7 @@ def test_feature_importance_plots_have_no_labels_if_value_is_false(classifier):
 def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_set(classifier):
     ax = classifier.result.plot.feature_importance(top_n=2)
     assert 2 == len(ax.texts)
-    assert {'0.38', '0.58'} == {text._text for text in ax.texts}
+    assert {'-1.24', '-1.51'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Top 2' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -105,7 +105,7 @@ def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_se
 def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_percent(classifier):
     ax = classifier.result.plot.feature_importance(top_n=.2)
     assert 1 == len(ax.texts)
-    assert {'0.58'} == {text._text for text in ax.texts}
+    assert {'-1.51'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Top 20%' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -114,7 +114,7 @@ def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_pe
 def test_feature_importance_plots_have_correct_number_of_labels_when_bottom_n_is_int(classifier):
     ax = classifier.result.plot.feature_importance(bottom_n=2)
     assert 2 == len(ax.texts)
-    assert {'-1.51', '-1.24'} == {text._text for text in ax.texts}
+    assert {'0.38', '0.58'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Bottom 2' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -124,7 +124,7 @@ def test_feature_importance_plots_have_correct_number_of_labels_when_bottom_n_is
         classifier):
     ax = classifier.result.plot.feature_importance(bottom_n=.2)
     assert 1 == len(ax.texts)
-    assert {'-1.51'} == {text._text for text in ax.texts}
+    assert {'0.38'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Bottom 20%' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -133,7 +133,7 @@ def test_feature_importance_plots_have_correct_number_of_labels_when_bottom_n_is
 def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_int(classifier):
     ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
     assert 2 == len(ax.texts)
-    assert {'0.58', '-1.51'} == {text._text for text in ax.texts}
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 1' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -142,7 +142,7 @@ def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_int(
 def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(classifier):
     ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=.2)
     assert 2 == len(ax.texts)
-    assert {'0.58', '-1.51'} == {text._text for text in ax.texts}
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 20%' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()
@@ -151,7 +151,7 @@ def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_perc
 def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(classifier):
     ax = classifier.result.plot.feature_importance(top_n=.2, bottom_n=1)
     assert 2 == len(ax.texts)
-    assert {'0.58', '-1.51'} == {text._text for text in ax.texts}
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression - Top 20% - Bottom 1' == ax.title._text
     assert 'Features' == ax.get_ylabel()
     assert 'Importance' == ax.get_xlabel()

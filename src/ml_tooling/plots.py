@@ -10,7 +10,7 @@ import itertools
 from matplotlib.axes import Axes
 
 from . import metrics
-from .utils import Data
+from .utils import Data, _is_percent
 
 
 def plot_roc_auc(y_true: Data, y_proba: Data, title: str = None, ax: Axes = None) -> Axes:
@@ -196,8 +196,6 @@ def plot_prediction_error(y_true: Data,
     return ax
 
 
-
-
 def plot_feature_importance(importance: Data,
                             labels: Data,
                             values: bool = None,
@@ -225,7 +223,13 @@ def plot_feature_importance(importance: Data,
         Pass your own ax
 
     :param top_n:
-        If top_n is an integer,
+        If top_n is an integer, return top_n features
+        If top_n is a float between 0 and 1, return top_n percent of features
+
+    :param bottom_n:
+        If bottom_n is an integer, return bottom_n features
+        If bottom_n is a float between 0 and 1, return bottom_n percent of features
+
 
     :return:
         matplotlib.Axes
@@ -235,6 +239,18 @@ def plot_feature_importance(importance: Data,
         fig, ax = plt.subplots()
 
     title = f"Feature Importance" if title is None else title
+
+    if top_n:
+        if _is_percent(top_n):
+            title = f"{title} - Top {top_n:.0%}"
+        else:
+            title = f"{title} - Top {top_n}"
+
+    if bottom_n:
+        if _is_percent(bottom_n):
+            title = f"{title} - Bottom {bottom_n:.0%}"
+        else:
+            title = f"{title} - Bottom {bottom_n}"
 
     labels, importance = metrics.sorted_feature_importance(labels,
                                                            importance,

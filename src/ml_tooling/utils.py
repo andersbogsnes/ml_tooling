@@ -42,9 +42,9 @@ def find_model_file(path: str) -> pathlib.Path:
         return path
 
     git_hash = get_git_hash()
-    all_models = path.glob(f'*_{git_hash}.pkl')
+    all_models = list(path.glob(f'*_{git_hash}.pkl'))
 
-    if all_models is None:
+    if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")
 
     newest_match = max(all_models, key=lambda x: x.stat().st_mtime)

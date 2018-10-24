@@ -1,6 +1,6 @@
 import pytest
 
-from ml_tooling.utils import get_git_hash, find_model_file, _is_percent
+from ml_tooling.utils import get_git_hash, find_model_file, _is_percent, MLToolingError
 
 
 def test_get_git_hash_returns_correctly():
@@ -22,6 +22,11 @@ def test_find_model_file_with_given_model_returns_correctly(tmpdir):
     result = find_model_file(model1_file)
 
     assert model1_file == result
+
+
+def test_find_model_raise_when_no_model_found():
+    with pytest.raises(MLToolingError, match="No models found - check your directory: nonsense"):
+        find_model_file('nonsense')
 
 
 def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
@@ -55,3 +60,8 @@ def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
 ])
 def test_is_percent_returns_correctly(number, is_percent):
     assert _is_percent(number) is is_percent
+
+
+def test_is_percent_raises_correctly_if_given_large_float():
+    with pytest.raises(ValueError, match='Floats only valid between 0 and 1. Got 100.0'):
+        _is_percent(100.0)

@@ -167,6 +167,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return cls(best_model), results
 
     def train_model(self) -> 'BaseClassModel':
+        """
+        Trains the model on the full dataset.
+        Used to prepare for production
+        :return:
+            self
+        """
         self._load_data()
         self.model.fit(self.x, self.y)
         return self

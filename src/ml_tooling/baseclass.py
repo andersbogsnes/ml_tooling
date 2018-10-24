@@ -57,6 +57,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @classmethod
+    def setup_model(cls):
+        """
+        Setup an untrained model from scratch - create pipeline and model and load the class
+        :return:
+        """
+        raise NotImplementedError
+
+    @classmethod
     def load_model(cls, path) -> 'BaseClassModel':
         """
         Load previously saved model from path

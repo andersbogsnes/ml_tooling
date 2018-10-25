@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import Union, List, Tuple, Optional, Sequence
+from typing import List, Tuple, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -10,12 +10,9 @@ from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
 from .result import Result
-from .utils import MLUtilsError, get_git_hash, find_model_file, get_model_name
-from ..config import default_config
-from ..visualizations.visualizations import ClassificationVisualize, RegressionVisualize
-
-
-Data = Union[pd.DataFrame, np.ndarray]
+from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name, Data
+from .config import DefaultConfig
+from .result import RegressionVisualize, ClassificationVisualize
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):
@@ -23,11 +20,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     Base class for Models
     """
 
+    config = DefaultConfig()
+
     def __init__(self, model):
         self.model = model
         self.model_type = model._estimator_type
         self.model_name = get_model_name(model)
-        self.config = default_config
         self.x = None
         self.y = None
         self.result = None
@@ -57,6 +55,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @classmethod
+    def setup_model(cls):
+        """
+        Setup an untrained model from scratch - create pipeline and model and load the class
+        :return:
+        """
+        raise NotImplementedError
+
+    @classmethod
     def load_model(cls, path) -> 'BaseClassModel':
         """
         Load previously saved model from path
@@ -68,19 +74,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model_file = find_model_file(path)
         model = joblib.load(model_file)
         return cls(model)
-
-    def set_config(self, config_dict) -> 'BaseClassModel':
-        """
-        Update configuration using a dictionary of values
-
-        :param config_dict:
-            dict of config values
-
-        :return:
-            self
-        """
-        self.config.update(config_dict)
-        return self
 
     def _load_data(self) -> Tuple[Data, Data]:
         """
@@ -131,7 +124,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLUtilsError(f"{self.model_name} doesn't have a `predict_proba` method")
+            raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 
@@ -141,9 +134,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             else:
                 return self.model.predict(x)
 
-        except NotFittedError as e:
+        except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
-            raise MLUtilsError(message) from None
+            raise MLToolingError(message) from None
 
     @classmethod
     def test_models(cls,
@@ -172,6 +165,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return cls(best_model), results
 
     def train_model(self) -> 'BaseClassModel':
+        """
+        Trains the model on the full dataset.
+        Used to prepare for production
+        :return:
+            self
+        """
         self._load_data()
         self.model.fit(self.x, self.y)
         return self
@@ -194,10 +193,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self._load_data()
 
         if self.model_type == 'classifier':
-            metric = self.config['CLASSIFIER_METRIC'] if metric is None else metric
+            metric = self.config.CLASSIFIER_METRIC if metric is None else metric
             stratify = self.y
         else:
-            metric = self.config['REGRESSION_METRIC'] if metric is None else metric
+            metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None
 
         train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
@@ -205,14 +204,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             train_x = train_x.reset_index(drop=True)
             test_x = test_x.reset_index(drop=True)
 
-        cv = self.config['CROSS_VALIDATION'] if cv is None else cv
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
         scores = cross_val_score(self.model,
                                  train_x,
                                  train_y,
                                  cv=cv,
                                  scoring=metric,
-                                 n_jobs=self.config['N_JOBS'],
-                                 verbose=self.config['VERBOSITY'],
+                                 n_jobs=self.config.N_JOBS,
+                                 verbose=self.config.VERBOSITY,
                                  )
 
         self.model.fit(train_x, train_y)
@@ -236,6 +235,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         )
 
         return self.result
+
+    @classmethod
+    def reset_config(cls):
+        """
+        Reset configuration to default
+        """
+        cls.config = DefaultConfig()
+        return cls
 
     def __repr__(self):
         return f"<{self.__class__.__name__}: {self.model_name}>"

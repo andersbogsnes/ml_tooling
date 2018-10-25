@@ -1,12 +1,20 @@
-import matplotlib
+from sklearn.dummy import DummyClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
-matplotlib.use('Agg')  # noqa
 import pytest
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from ml_tooling import BaseClassModel
 from sklearn.datasets import load_iris
+import random as rand
+
+
+@pytest.fixture(autouse=True)
+def random():
+    rand.seed(42)
+    np.random.seed(42)
 
 
 @pytest.fixture(name='base', scope='session')
@@ -23,7 +31,11 @@ def _base():
             x = pd.DataFrame(data.data, columns=data.feature_names)
             return x, y
 
-    return IrisModel
+    IrisModel.config.CROSS_VALIDATION = 2
+    IrisModel.config.N_JOBS = 1
+    yield IrisModel
+    IrisModel.config.CROSS_VALIDATION = 10
+    IrisModel.config.N_JOBS = -1
 
 
 @pytest.fixture(name='categorical')
@@ -45,6 +57,13 @@ def numerical_data():
                          "number_b": [5, 6, 7, 8]})
 
 
+@pytest.fixture(name='numerical_na')
+def _numerical_na_data(numerical):
+    numerical.loc[0, "number_a"] = np.nan
+    numerical.loc[3, "number_b"] = np.nan
+    return numerical
+
+
 @pytest.fixture(name='dates')
 def dates_data():
     return pd.DataFrame({"date_a": pd.to_datetime(['2018-01-01',
@@ -55,7 +74,6 @@ def dates_data():
 @pytest.fixture(name='regression', scope='session')
 def _linear_regression(base):
     model = base(LinearRegression())
-    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model
 
@@ -63,6 +81,43 @@ def _linear_regression(base):
 @pytest.fixture(name='classifier', scope='session')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.set_config({"CROSS_VALIDATION": 2, "N_JOBS": 1})
     model.score_model()
     return model
+
+
+@pytest.fixture
+def pipeline_logistic(base):
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', LogisticRegression(solver='liblinear'))
+    ])
+
+    return pipe
+
+
+@pytest.fixture
+def pipeline_linear():
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', LinearRegression())
+    ])
+
+    return pipe
+
+
+@pytest.fixture
+def pipeline_dummy_classifier():
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', DummyClassifier())
+    ])
+
+    return pipe
+
+
+@pytest.fixture
+def monkeypatch_git_hash(monkeypatch):
+    def mockreturn():
+        return '1234'
+
+    monkeypatch.setattr('ml_tooling.utils.get_git_hash', mockreturn)

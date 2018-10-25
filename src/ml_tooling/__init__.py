@@ -1,4 +1,7 @@
 # flake8: noqa
-from .baseclass.baseclass import BaseClassModel
+from .baseclass import BaseClassModel
+import pkg_resources
 
 __all__ = ['BaseClassModel']
+
+__version__ = pkg_resources.get_distribution('ml_tooling').version

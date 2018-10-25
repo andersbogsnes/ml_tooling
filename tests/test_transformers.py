@@ -15,23 +15,16 @@ from ml_tooling.transformers import (Select,
                                      DFFeatureUnion,
                                      )
 
-from ml_tooling.transformers.pandas_transformers import TransformerError
+from ml_tooling.utils import TransformerError
 
 np.random.seed(42)
 
 
-def test_df_selector_returns_correct_dataframe(categorical):
-    select = Select(['category_a'])
+@pytest.mark.parametrize('container', [['category_a'], 'category_a', ('category_a',)])
+def test_df_selector_returns_correct_dataframe(categorical, container):
+    select = Select(container)
     result = select.fit_transform(categorical)
 
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical) == len(result)
-    assert {'category_a'} == set(result.columns)
-
-
-def test_df_selector_with_nonlist(categorical):
-    select = Select('category_a')
-    result = select.fit_transform(categorical)
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
     assert {'category_a'} == set(result.columns)
@@ -44,6 +37,15 @@ def test_df_selector_with_multiple_columns(categorical):
     assert isinstance(result, pd.DataFrame)
     assert len(categorical) == len(result)
     assert {'category_a', 'category_b'} == set(result.columns)
+
+
+def test_df_selector_raise_missing_column(categorical):
+    select = Select(['category_a', 'category_b', 'category_c'])
+
+    with pytest.raises(TransformerError,
+                       message="Expecting TransformerError but no error occurred",
+                       match="The DataFrame does not include the columns:"):
+        select.fit_transform(categorical)
 
 
 def test_imputer_returns_correct_dataframe(categorical_na):
@@ -65,6 +67,77 @@ def test_imputer_returns_dataframe_unchanged_if_no_nans(categorical):
     assert len(categorical) == len(result)
     assert {'category_a', 'category_b'} == set(result.columns)
     assert ~result.isin(['Unknown']).any().any()
+
+
+def test_imputer_returns_correct_dataframe_mean(numerical_na):
+    imputer = FillNA(strategy='mean')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 3 == result.loc[0, "number_a"]
+    assert 6 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_median(numerical_na):
+    imputer = FillNA(strategy='median')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 3 == result.loc[0, "number_a"]
+    assert 6 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_max(numerical_na):
+    imputer = FillNA(strategy='max')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 4 == result.loc[0, "number_a"]
+    assert 7 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_min(numerical_na):
+    imputer = FillNA(strategy='min')
+    result = imputer.fit_transform(numerical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(numerical_na) == len(result)
+    assert {'number_a', 'number_b'} == set(result.columns)
+    assert 2 == result.loc[0, "number_a"]
+    assert 5 == result.loc[3, "number_b"]
+
+
+def test_imputer_returns_correct_dataframe_most_freq(categorical):
+    categorical.loc[1, "category_a"] = np.nan
+    categorical.loc[0, "category_b"] = np.nan
+    categorical.loc[1, "category_b"] = "b3"
+
+    imputer = FillNA(strategy='most_freq')
+    result = imputer.fit_transform(categorical)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(categorical) == len(result)
+    assert {'category_a', 'category_b'} == set(result.columns)
+    assert 'a1' == result.loc[1, "category_a"]
+    assert 'b3' == result.loc[0, "category_b"]
+
+
+def test_imputer_with_none_raises_error(numerical_na):
+    imputer = FillNA()
+    with pytest.raises(TransformerError):
+        imputer.fit_transform(numerical_na)
+
+
+def test_imputer_with_both_raises_error(numerical_na):
+    imputer = FillNA(value=0, strategy='mean')
+    with pytest.raises(TransformerError):
+        imputer.fit_transform(numerical_na)
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):

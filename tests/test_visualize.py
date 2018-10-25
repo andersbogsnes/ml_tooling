@@ -9,15 +9,14 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 
-from ml_tooling.visualizations import plot_lift_curve
-from ml_tooling.visualizations.visualizations import (RegressionVisualize,
-                                                      ClassificationVisualize,
-                                                      plot_confusion_matrix)
-from ml_tooling.visualizations.helpers import (VizError,
-                                               get_feature_importance)
-from sklearn.svm import SVC
+from ml_tooling.plots import (plot_lift_curve,
+                              VizError,
+                              _get_feature_importance,
+                              plot_confusion_matrix,
+                              )
 
-np.random.seed(42)
+from ml_tooling.result import RegressionVisualize, ClassificationVisualize
+from sklearn.svm import SVC
 
 
 def test_result_regression_gets_correct_visualizers(regression):
@@ -51,9 +50,9 @@ def test_confusion_matrix_plots_have_correct_data(classifier):
     ax = classifier.result.plot.confusion_matrix()
 
     assert 'Confusion Matrix - LogisticRegression - Normalized' == ax.title._text
-    result = {text._text for text in ax.texts}
-    assert 1.0 == pytest.approx(np.sum([float(x) for x in result]))
-    assert {'0.55', '0.11', '0.26', '0.08'} == result
+    result = [text._text for text in ax.texts]
+    assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
+    assert {'0.61', '0.32', '0.05', '0.03'} == set(result)
     assert 'True Label' == ax.get_ylabel()
     assert 'Predicted Label' == ax.get_xlabel()
 
@@ -63,7 +62,7 @@ def test_confusion_matrix_plots_have_correct_data_when_not_normalized(classifier
 
     assert 'Confusion Matrix - LogisticRegression' == ax.title._text
     result = {text._text for text in ax.texts}
-    assert {'21', '4', '3', '10'} == result
+    assert {'23', '1', '2', '12'} == result
     assert 'True Label' == ax.get_ylabel()
     assert 'Predicted Label' == ax.get_xlabel()
 
@@ -79,7 +78,7 @@ def test_confusion_matrix_has_custom_labels():
 def test_feature_importance_plots_have_correct_data(classifier):
     ax = classifier.result.plot.feature_importance()
 
-    expected = {'-1.52', '-0.83', '0.38', '0.44'}
+    expected = {'-1.24', '-1.51', '0.38', '0.58'}
     assert expected == {text._text for text in ax.texts}
     assert 'Feature Importance - LogisticRegression' == ax.title._text
     assert 'Features' == ax.get_ylabel()
@@ -94,6 +93,70 @@ def test_feature_importance_plots_have_no_labels_if_value_is_false(classifier):
     assert 'Feature Importance - LogisticRegression' == ax.title._text
 
 
+def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_set(classifier):
+    ax = classifier.result.plot.feature_importance(top_n=2)
+    assert 2 == len(ax.texts)
+    assert {'-1.24', '-1.51'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Top 2' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_have_correct_number_of_labels_when_top_n_is_percent(classifier):
+    ax = classifier.result.plot.feature_importance(top_n=.2)
+    assert 1 == len(ax.texts)
+    assert {'-1.51'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Top 20%' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_have_correct_number_of_labels_when_bottom_n_is_int(classifier):
+    ax = classifier.result.plot.feature_importance(bottom_n=2)
+    assert 2 == len(ax.texts)
+    assert {'0.38', '0.58'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Bottom 2' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_have_correct_number_of_labels_when_bottom_n_is_percent(
+        classifier):
+    ax = classifier.result.plot.feature_importance(bottom_n=.2)
+    assert 1 == len(ax.texts)
+    assert {'0.38'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Bottom 20%' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_int(classifier):
+    ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
+    assert 2 == len(ax.texts)
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 1' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(classifier):
+    ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=.2)
+    assert 2 == len(ax.texts)
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 20%' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
+def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(classifier):
+    ax = classifier.result.plot.feature_importance(top_n=.2, bottom_n=1)
+    assert 2 == len(ax.texts)
+    assert {'0.38', '-1.51'} == {text._text for text in ax.texts}
+    assert 'Feature Importance - LogisticRegression - Top 20% - Bottom 1' == ax.title._text
+    assert 'Features' == ax.get_ylabel()
+    assert 'Importance' == ax.get_xlabel()
+
+
 def test_lift_curve_have_correct_data(classifier):
     ax = classifier.result.plot.lift_curve()
 
@@ -101,7 +164,7 @@ def test_lift_curve_have_correct_data(classifier):
     assert 'Lift' == ax.get_ylabel()
     assert '% of Data' == ax.get_xlabel()
     assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
-    assert pytest.approx(45.149, rel=.0001) == np.sum(ax.lines[0].get_ydata())
+    assert pytest.approx(49.849, rel=.0001) == np.sum(ax.lines[0].get_ydata())
 
 
 def test_prediction_error_plots_have_correct_data(regression):
@@ -145,14 +208,14 @@ def test_roc_curve_have_correct_data(classifier):
 
 
 def test_roc_curve_fails_correctly_without_predict_proba(base):
-    svc = base(SVC())
+    svc = base(SVC(gamma='scale'))
     result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.roc_curve()
 
 
 def test_feature_importance_fails_correctly_without_predict_proba(base):
-    svc = base(SVC())
+    svc = base(SVC(gamma='scale'))
     result = svc.score_model()
     with pytest.raises(VizError):
         result.plot.feature_importance()
@@ -160,7 +223,7 @@ def test_feature_importance_fails_correctly_without_predict_proba(base):
 
 def test_lift_chart_fails_correctly_with_2d_proba():
     x, y = load_iris(return_X_y=True)
-    clf = LogisticRegression()
+    clf = LogisticRegression(solver='liblinear', multi_class='auto')
     clf.fit(x, y)
     proba = clf.predict_proba(x)
     with pytest.raises(VizError):
@@ -168,14 +231,14 @@ def test_lift_chart_fails_correctly_with_2d_proba():
 
 
 def test_viz_get_feature_importance_returns_coef_from_regression(regression):
-    importance = get_feature_importance(regression.model)
+    importance = _get_feature_importance(regression.model)
     assert np.all(regression.model.coef_ == importance)
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):
-    classifier = base(RandomForestClassifier())
+    classifier = base(RandomForestClassifier(n_estimators=10))
     result = classifier.score_model()
-    importance = get_feature_importance(classifier.model)
+    importance = _get_feature_importance(classifier.model)
     assert np.all(result.model.feature_importances_ == importance)
 
 

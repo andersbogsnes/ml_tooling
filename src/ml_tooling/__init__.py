@@ -4,4 +4,4 @@ import pkg_resources
 
 __all__ = ['BaseClassModel']
 
-__version__ = pkg_resources.get_distribution('pip').version
+__version__ = pkg_resources.get_distribution('ml_tooling').version

@@ -43,7 +43,8 @@ def test_df_selector_raise_missing_column(categorical):
     select = Select(['category_a', 'category_b', 'category_c'])
 
     with pytest.raises(TransformerError,
-                       match="The DataFrame does not include the columns: category_c"):
+                       message="Expecting TransformerError but no error occurred",
+                       match="The DataFrame does not include the columns: ['category_c']"):
         select.fit_transform(categorical)
 
 

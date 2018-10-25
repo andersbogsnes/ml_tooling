@@ -1,4 +1,6 @@
 from functools import total_ordering
+from typing import Union
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -79,13 +81,25 @@ class BaseVisualize:
 
         return labels
 
-    def feature_importance(self, values: bool = True, **kwargs) -> plt.Axes:
+    def feature_importance(self,
+                           values: bool = True,
+                           top_n: Union[int, float] = None,
+                           bottom_n: Union[int, float] = None,
+                           **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
         or coef_ attribute
 
         :param values:
             Toggles value labels on end of each bar
+
+        :param top_n:
+            If top_n is an integer, return top_n features.
+            If top_n is a float between (0, 1), return top_n percent features
+
+        :param bottom_n:
+            If bottom_n is an integer, return bottom_n features.
+            If bottom_n is a float between (0, 1), return bottom_n percent features
 
         :return:
             matplotlib.Axes
@@ -99,6 +113,8 @@ class BaseVisualize:
                                            self._feature_labels,
                                            values=values,
                                            title=title,
+                                           top_n=top_n,
+                                           bottom_n=bottom_n,
                                            **kwargs)
 
 

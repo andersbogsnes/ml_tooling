@@ -9,10 +9,10 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
-from .result import Result
-from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name, Data
-from .config import DefaultConfig
-from .result import RegressionVisualize, ClassificationVisualize
+from ml_tooling.result import Result
+from ml_tooling.utils import MLToolingError, get_git_hash, find_model_file, get_model_name, Data
+from ml_tooling.config import DefaultConfig
+from ml_tooling.result import RegressionVisualize, ClassificationVisualize
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):

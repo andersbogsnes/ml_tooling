@@ -2,6 +2,7 @@ import math
 from typing import Union
 
 import numpy as np
+import pandas as pd
 from sklearn import metrics
 
 from .utils import _is_percent
@@ -68,6 +69,44 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
         cm = np.around(cm, 2)
         cm[np.isnan(cm)] = 0.0
     return cm
+
+
+def permuted_feature_importance(model,
+                                x,
+                                y,
+                                refit=True,
+                                metric=None):
+    """
+    Calculates feature importance by randomly permuting features and comparing result to baseline
+    :param y:
+        DataFrame of trainining features
+    :param x:
+        DataFrame of testing features
+    :param model:
+        A sklearn-compatible estimator
+    :param refit:
+        Refit the model to get baseline score
+
+    :param metric:
+        Metric to use
+    :return:
+    """
+
+    if refit:
+        model.fit(x, y)
+
+    baseline_score = model.score(x, y)
+    importances = {}
+
+    for column in x.columns:
+        original_data = x[column].copy()
+        x[column] = np.random.permutation(x[column])
+        column_score = model.score(x, y)
+        importances[column] = baseline_score - column_score
+        x[column] = original_data
+
+    importance_df = pd.DataFrame.from_dict(importances, orient='index', columns=['importance'])
+    return importance_df.sort_values(by='importance')
 
 
 def sorted_feature_importance(labels: np.ndarray,

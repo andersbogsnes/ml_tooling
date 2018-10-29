@@ -241,8 +241,19 @@ def test_get_feature_importance_returns_coef_from_regression_pipeline(base, pipe
     model.train_model()
 
     importance = _get_feature_importance(model.model)
+    expected_importance = model.model.steps[-1][1].coef_
 
-    assert np.all(model.model.steps[-1].coef_ == importance)
+    assert np.all(expected_importance == importance)
+
+
+def test_get_feature_importance_returns_importance_from_regression_pipeline(base, pipeline_linear):
+    model = base(pipeline_linear)
+    model.train_model()
+
+    importance = _get_feature_importance(model.model)
+    expected_importance = model.model.steps[-1][1].coef_
+
+    assert np.all(expected_importance == importance)
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):

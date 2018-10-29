@@ -389,7 +389,7 @@ def _get_feature_importance(model) -> np.ndarray:
         array of importances
     """
     if isinstance(model, Pipeline):
-        model = model.steps[-1]
+        model = model.steps[-1][1]
 
     if hasattr(model, 'feature_importances_'):
         importance = model.feature_importances_

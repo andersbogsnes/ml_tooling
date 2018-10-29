@@ -4,7 +4,7 @@ from typing import Union
 import numpy as np
 from sklearn import metrics
 
-from ml_tooling.utils import _is_percent
+from .utils import _is_percent
 
 
 class MetricError(Exception):

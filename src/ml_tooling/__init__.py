@@ -1,5 +1,5 @@
 # flake8: noqa
-from ml_tooling.baseclass import BaseClassModel
+from .baseclass import BaseClassModel
 import pkg_resources
 
 __all__ = ['BaseClassModel']

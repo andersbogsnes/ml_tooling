@@ -4,15 +4,15 @@ from typing import Union
 import numpy as np
 from matplotlib import pyplot as plt
 
-from ml_tooling.plots import (_get_feature_importance,
-                              plot_feature_importance,
-                              plot_residuals,
-                              plot_prediction_error,
-                              plot_confusion_matrix,
-                              VizError,
-                              plot_roc_auc,
-                              plot_lift_curve,
-                              )
+from .plots import (_get_feature_importance,
+                    plot_feature_importance,
+                    plot_residuals,
+                    plot_prediction_error,
+                    plot_confusion_matrix,
+                    VizError,
+                    plot_roc_auc,
+                    plot_lift_curve,
+                    )
 
 
 @total_ordering

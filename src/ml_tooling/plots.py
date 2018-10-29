@@ -9,8 +9,8 @@ import numpy as np
 import itertools
 from matplotlib.axes import Axes
 
-from ml_tooling import metrics
-from ml_tooling.utils import Data, _is_percent
+from . import metrics
+from .utils import Data, _is_percent
 
 
 def plot_roc_auc(y_true: Data, y_proba: Data, title: str = None, ax: Axes = None) -> Axes:

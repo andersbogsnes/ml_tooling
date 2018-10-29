@@ -252,11 +252,11 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
 class DFRowFunc(BaseEstimator, TransformerMixin):
     """
     Row-wise operation on Pandas DataFrame. Strategy can either be one of
-    the predefined or a callable.    If some elements in the row is NaN these
-    elements are ignored for the build-in strategies.
+    the predefined or a callable.    If some elements in the row are NaN these
+    elements are ignored for the built-in strategies.
     """
 
-    func_map_ = {'sum': np.sum,
+    _func_map = {'sum': np.sum,
                  'min': np.min,
                  'max': np.max}
 

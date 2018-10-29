@@ -3,7 +3,6 @@ import pathlib
 from typing import List, Tuple, Optional, Sequence
 
 import numpy as np
-import pandas as pd
 
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.externals import joblib
@@ -200,9 +199,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             stratify = None
 
         train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
-        if isinstance(train_x, pd.DataFrame) and isinstance(test_x, pd.DataFrame):
-            train_x = train_x.reset_index(drop=True)
-            test_x = test_x.reset_index(drop=True)
 
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         scores = cross_val_score(self.model,

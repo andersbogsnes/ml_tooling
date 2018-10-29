@@ -39,19 +39,19 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def most_freq(X):
-        return pd.DataFrame.mode(X).iloc[0]
-
-    func_map_ = {'mean': pd.DataFrame.mean,
-                 'median': pd.DataFrame.median,
-                 'most_freq': most_freq,
-                 'max': pd.DataFrame.max,
-                 'min': pd.DataFrame.min}
-
-    def __init__(self, value=None, strategy=None):
+    def __init__(self, value: int = None, strategy: str = None):
         self.value = value
         self.strategy = strategy
         self.column_values_ = None
+
+        def _most_freq(X):
+            return pd.DataFrame.mode(X).iloc[0]
+
+        self.func_map_ = {'mean': pd.DataFrame.mean,
+                          'median': pd.DataFrame.median,
+                          'most_freq': _most_freq,
+                          'max': pd.DataFrame.max,
+                          'min': pd.DataFrame.min}
 
     def fit(self, X: pd.DataFrame, y=None):
         if self.value is None and self.strategy is None:

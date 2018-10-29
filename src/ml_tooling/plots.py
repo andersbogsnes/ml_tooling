@@ -8,6 +8,7 @@ from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
 import itertools
 from matplotlib.axes import Axes
+from sklearn.pipeline import Pipeline
 
 from . import metrics
 from .utils import Data, _is_percent
@@ -387,6 +388,9 @@ def _get_feature_importance(model) -> np.ndarray:
     :return:
         array of importances
     """
+    if isinstance(model, Pipeline):
+        model = model.steps[-1][1]
+
     if hasattr(model, 'feature_importances_'):
         importance = model.feature_importances_
 

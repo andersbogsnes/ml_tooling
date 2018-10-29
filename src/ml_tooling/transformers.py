@@ -276,7 +276,6 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         else:
             self.func = strategy
 
-
     def fit(self, X: pd.DataFrame, y=None):
         return self
 

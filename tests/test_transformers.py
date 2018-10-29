@@ -13,6 +13,7 @@ from ml_tooling.transformers import (Select,
                                      FreqFeature,
                                      DFStandardScaler,
                                      DFFeatureUnion,
+                                     DFRowFunc,
                                      )
 
 from ml_tooling.utils import TransformerError
@@ -386,3 +387,52 @@ def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(categorical, num
     result = pipeline.fit_transform(numerical)
 
     pd.testing.assert_frame_equal(result, numerical_scaled)
+
+
+def test_dfrowfunc_no_strategy(numerical_na):
+    with pytest.raises(TransformerError,
+                       message="Expecting TransformerError but no error occurred",
+                       match="No strategy is specified."):
+        DFRowFunc()
+
+
+def test_dfrowfunc_strategy_is_string_not_in_map(numerical_na):
+    strategy = 'avg'
+
+    with pytest.raises(TransformerError,
+                       message="Expecting TransformerError but no error occurred",
+                       match=f"Strategy {strategy} is not a the predefined strategy."):
+        DFRowFunc(strategy=strategy)
+
+
+def test_dfrowfunc_strategy_is_not_string_nor_callable(numerical_na):
+    strategy = 1337
+
+    with pytest.raises(TransformerError,
+                       message="Expecting TransformerError but no error occurred",
+                       match=f"{strategy} is not a callable or a string."):
+        DFRowFunc(strategy=strategy)
+
+
+def test_dfrowfunc_sum(numerical_na):
+    dfrowfunc = DFRowFunc(strategy='sum')
+    result = dfrowfunc.fit_transform(numerical_na)
+    expected = pd.DataFrame([5., 8., 10., 4.])
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_dfrowfunc_min(numerical_na):
+    dfrowfunc = DFRowFunc(strategy='min')
+    result = dfrowfunc.fit_transform(numerical_na)
+    expected = pd.DataFrame([5., 2., 3., 4.])
+
+    pd.testing.assert_frame_equal(result, expected)
+
+
+def test_dfrowfunc_max(numerical_na):
+    dfrowfunc = DFRowFunc(strategy='max')
+    result = dfrowfunc.fit_transform(numerical_na)
+    expected = pd.DataFrame([5., 6., 7., 4.])
+
+    pd.testing.assert_frame_equal(result, expected)

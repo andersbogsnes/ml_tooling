@@ -7,6 +7,7 @@ from typing import Union, Callable
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import numpy as np
 from functools import reduce
 
 from .utils import listify, TransformerError
@@ -246,3 +247,41 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         data = self.scaler.transform(X)
         return pd.DataFrame(data=data, columns=X.columns, index=X.index)
+
+
+class DFRowFunc(BaseEstimator, TransformerMixin):
+    """
+    Row-wise operation on Pandas DataFrame. Strategy can either be one of
+    the predefined or a callable.    If some elements in the row is NaN these
+    elements are ignored for the build-in strategies.
+    """
+
+    func_map_ = {'sum': np.sum,
+                 'min': np.min,
+                 'max': np.max}
+
+    def __init__(self, strategy=None):
+
+        if strategy is None:
+            raise TransformerError("No strategy is specified.")
+
+        if not isinstance(strategy, str) and not callable(strategy):
+            raise TransformerError(f"{strategy} is not a callable or a string.")
+
+        elif isinstance(strategy, str) and strategy not in self.func_map_.keys():
+            raise TransformerError(f"Strategy {strategy} is not a the predefined strategy.")
+
+        if isinstance(strategy, str):
+            self.func = self.func_map_[strategy]
+        else:
+            self.func = strategy
+
+        return
+
+    def fit(self, X: pd.DataFrame, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        X = pd.DataFrame(X.apply(self.func, axis=1))
+        return X

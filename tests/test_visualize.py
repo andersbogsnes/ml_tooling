@@ -68,7 +68,8 @@ def test_confusion_matrix_plots_have_correct_data_when_not_normalized(classifier
 
 
 def test_confusion_matrix_has_custom_labels():
-    ax = plot_confusion_matrix(y_true=[1, 1, 0, 1], y_pred=[1, 1, 1, 1], labels=['Pos', 'Neg'])
+    ax = plot_confusion_matrix(y_true=np.array([1, 1, 0, 1]),
+                               y_pred=np.array([1, 1, 1, 1]), labels=['Pos', 'Neg'])
 
     assert 'Confusion Matrix - Normalized' == ax.title._text
     assert ['', 'Pos', 'Neg', ''] == [x._text for x in ax.get_xticklabels()]
@@ -190,8 +191,8 @@ def test_residual_plots_have_correct_data(regression):
     assert 'Residuals' == ax.get_ylabel()
     assert 'Predicted Value' == ax.get_xlabel()
 
-    assert (expected == ax.collections[0].get_offsets()[:, 1]).all()
-    assert (y_pred == ax.collections[0].get_offsets()[:, 0]).all()
+    assert np.all(expected == ax.collections[0].get_offsets()[:, 1])
+    assert np.all(y_pred == ax.collections[0].get_offsets()[:, 0])
 
 
 def test_roc_curve_have_correct_data(classifier):
@@ -203,8 +204,8 @@ def test_roc_curve_have_correct_data(classifier):
     assert 'ROC AUC - LogisticRegression' == ax.title._text
     assert 'True Positive Rate' == ax.get_ylabel()
     assert 'False Positive Rate' == ax.get_xlabel()
-    assert (fpr == ax.lines[0].get_xdata()).all()
-    assert (tpr == ax.lines[0].get_ydata()).all()
+    assert np.all(fpr == ax.lines[0].get_xdata())
+    assert np.all(tpr == ax.lines[0].get_ydata())
 
 
 def test_roc_curve_fails_correctly_without_predict_proba(base):
@@ -233,6 +234,26 @@ def test_lift_chart_fails_correctly_with_2d_proba():
 def test_viz_get_feature_importance_returns_coef_from_regression(regression):
     importance = _get_feature_importance(regression.model)
     assert np.all(regression.model.coef_ == importance)
+
+
+def test_get_feature_importance_returns_coef_from_regression_pipeline(base, pipeline_linear):
+    model = base(pipeline_linear)
+    model.train_model()
+
+    importance = _get_feature_importance(model.model)
+    expected_importance = model.model.steps[-1][1].coef_
+
+    assert np.all(expected_importance == importance)
+
+
+def test_get_feature_importance_returns_importance_from_regression_pipeline(base, pipeline_linear):
+    model = base(pipeline_linear)
+    model.train_model()
+
+    importance = _get_feature_importance(model.model)
+    expected_importance = model.model.steps[-1][1].coef_
+
+    assert np.all(expected_importance == importance)
 
 
 def test_viz_get_feature_importance_returns_feature_importance_from_classifier(base):

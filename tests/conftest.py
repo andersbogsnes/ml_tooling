@@ -1,4 +1,5 @@
 from sklearn.dummy import DummyClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -110,6 +111,16 @@ def pipeline_dummy_classifier():
     pipe = Pipeline([
         ('scale', StandardScaler()),
         ('clf', DummyClassifier())
+    ])
+
+    return pipe
+
+
+@pytest.fixture
+def pipeline_forest_classifier():
+    pipe = Pipeline([
+        ('scale', StandardScaler()),
+        ('clf', RandomForestClassifier(n_estimators=10))
     ])
 
     return pipe

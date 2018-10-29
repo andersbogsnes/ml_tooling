@@ -436,3 +436,11 @@ def test_dfrowfunc_max(numerical_na):
     expected = pd.DataFrame([5., 6., 7., 4.])
 
     pd.testing.assert_frame_equal(result, expected)
+
+
+def test_dfrowfunc_callable(numerical_na):
+    dfrowfunc = DFRowFunc(strategy=np.mean)
+    result = dfrowfunc.fit_transform(numerical_na)
+    expected = pd.DataFrame([5., 4., 5., 4.])
+
+    pd.testing.assert_frame_equal(result, expected)

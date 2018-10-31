@@ -182,8 +182,8 @@ Out[1]:
 ```
 
 ### FillNA
-Fills NA values with instantiated value - passed to df.fillna()
-#### Example
+Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
+#### Example for value
 ```python
 from ml_tooling.transformers import FillNA
 import pandas as pd
@@ -196,7 +196,7 @@ df = pd.DataFrame({
 
 })
 
-fill_na = FillNA(0)
+fill_na = FillNA(value = 0)
 fill_na.fit_transform(df)
 ```
 ```
@@ -208,6 +208,24 @@ Out[1]:
 3   4  Error     0.0
 
 ```
+
+#### Example for strategy
+The build-in strategies are 'mean', 'median', 'most_freq', 'max' and 'min. An example of 'mean' are
+```python
+
+fill_na = FillNA(value = 'mean')
+fill_na.fit_transform(df)
+```
+```
+Out[1]: 
+   id status   sales
+0   1     OK  2000.0
+1   2  Error  3000.0
+2   3     OK  4000.0
+3   4  Error  3000.0
+
+```
+
 ### ToCategorical
 Performs one-hot encoding of categorical values through pd.Categorical. 
 All categorical values not found in training data will be set to 0 

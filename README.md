@@ -391,3 +391,45 @@ Out[1]:
 2             0.5  (2000, 8000]
 3             0.5  (2000, 8000]
 ```
+
+### DFRowFunc
+Row-wise operation on Pandas DataFrame. Strategy can either be one of the predefined or a callable. If some elements in the row are NaN these elements are ignored for the built-in strategies.
+
+```python
+from ml_tooling.transformers import DFRowFunc
+import pandas as pd
+
+df = pd.DataFrame({
+    "number_1": [1, np.nan, 3, 4],
+    "number_2": [1, 3, 2, 4]
+
+})
+
+rowfunc = DFRowFunc(strategy = 'sum')
+rowfunc.fit_transform(df)
+```
+```
+Out[1]: 
+         0
+0        2
+1        3
+2        5
+3        8
+```
+
+Other built-in strategies are 'min' and 'max'. A strategy can also be a callable:
+
+```python
+
+rowfunc = DFRowFunc(strategy = np.mean)
+rowfunc.fit_transform(df)
+```
+```
+Out[1]: 
+         0
+0        1
+1        3
+2        2.5
+3        4
+
+```

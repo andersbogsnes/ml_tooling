@@ -268,7 +268,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         if not isinstance(strategy, str) and not callable(strategy):
             raise TransformerError(f"{strategy} is not a callable or a string.")
 
-        if isinstance(strategy, str) and strategy not in self._func_map.keys():
+        if isinstance(strategy, str) and strategy not in self._func_map:
             raise TransformerError(f"Strategy {strategy} is not a predefined strategy.")
 
         if isinstance(strategy, str):

@@ -210,7 +210,7 @@ Out[1]:
 ```
 
 #### Example for strategy
-The build-in strategies are 'mean', 'median', 'most_freq', 'max' and 'min. An example of 'mean' are
+The built-in strategies are 'mean', 'median', 'most_freq', 'max' and 'min. An example of 'mean' would be:
 ```python
 
 fill_na = FillNA(value = 'mean')

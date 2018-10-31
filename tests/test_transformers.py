@@ -13,6 +13,7 @@ from ml_tooling.transformers import (Select,
                                      FreqFeature,
                                      DFStandardScaler,
                                      DFFeatureUnion,
+                                     DFRowFunc,
                                      )
 
 from ml_tooling.utils import TransformerError
@@ -386,3 +387,27 @@ def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(categorical, num
     result = pipeline.fit_transform(numerical)
 
     pd.testing.assert_frame_equal(result, numerical_scaled)
+
+
+@pytest.mark.parametrize('strategy, match', [
+    (None, "No strategy is specified."),
+    ('avg', "Strategy avg is not a predefined strategy"),
+    (1337, "1337 is not a callable or a string")
+])
+def test_dfrowfunc_test_strategy_input(strategy, match):
+    with pytest.raises(TransformerError,
+                       message="Expecting TransformerError but no error occurred",
+                       match=match):
+        DFRowFunc(strategy=strategy)
+
+
+@pytest.mark.parametrize('strategy, expected', [
+    ('sum', pd.DataFrame([5., 8., 10., 4.])),
+    ('min', pd.DataFrame([5., 2., 3., 4.])),
+    ('max', pd.DataFrame([5., 6., 7., 4.])),
+    (np.mean, pd.DataFrame([5., 4., 5., 4.]))
+])
+def test_dfrowfunc_sum_built_in_and_callable(numerical_na, strategy, expected):
+    dfrowfunc = DFRowFunc(strategy=strategy)
+    result = dfrowfunc.fit_transform(numerical_na)
+    pd.testing.assert_frame_equal(result, expected)

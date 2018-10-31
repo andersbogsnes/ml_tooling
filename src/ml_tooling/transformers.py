@@ -62,6 +62,7 @@ class FillNA(BaseEstimator, TransformerMixin):
                           'min': pd.DataFrame.min}
 
     def fit(self, X: pd.DataFrame, y=None):
+
         if self.strategy is not None:
             func = self.func_map_[self.strategy]
             self.column_values_ = func(X)

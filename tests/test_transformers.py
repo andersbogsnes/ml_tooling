@@ -147,14 +147,14 @@ def test_imputer_returns_correct_categorial(value, strategy, res_1, res_2, categ
     assert res_2 == result.loc[0, "category_b"]
 
 
-def test_imputer_with_none_raises_error():
+@pytest.mark.parametrize('value, strategy', [
+    (None, None),
+    (0, 'mean')
+])
+def test_imputer_raises_error(numerical_na, value, strategy):
     with pytest.raises(TransformerError):
-        imputer = FillNA()
-
-
-def test_imputer_with_both_raises_error():
-    with pytest.raises(TransformerError):
-        imputer = FillNA(value=0, strategy='mean')
+        imputer = FillNA(value=value, strategy=strategy)
+        imputer.fit(numerical_na)
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):

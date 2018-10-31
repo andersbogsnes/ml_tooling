@@ -129,16 +129,32 @@ def test_imputer_returns_correct_dataframe_most_freq(categorical):
     assert 'b3' == result.loc[0, "category_b"]
 
 
-def test_imputer_with_none_raises_error(numerical_na):
-    imputer = FillNA()
-    with pytest.raises(TransformerError):
-        imputer.fit_transform(numerical_na)
+@pytest.mark.parametrize('value, strategy, res_1, res_2', [
+    ('Unknown', None, 'Unknown', 'Unknown'),
+    (None, 'most_freq', 'a1', 'b2')
+])
+def test_imputer_returns_correct_categorial(value, strategy, res_1, res_2, categorical_na):
+    categorical_na['category_a'] = categorical_na['category_a'].astype('category')
+    categorical_na['category_b'] = categorical_na['category_b'].astype('category')
+
+    imputer = FillNA(value=value, strategy=strategy)
+    result = imputer.fit_transform(categorical_na)
+
+    assert isinstance(result, pd.DataFrame)
+    assert len(categorical_na) == len(result)
+    assert {'category_a', 'category_b'} == set(result.columns)
+    assert res_1 == result.loc[1, "category_a"]
+    assert res_2 == result.loc[0, "category_b"]
 
 
-def test_imputer_with_both_raises_error(numerical_na):
-    imputer = FillNA(value=0, strategy='mean')
+def test_imputer_with_none_raises_error():
     with pytest.raises(TransformerError):
-        imputer.fit_transform(numerical_na)
+        imputer = FillNA()
+
+
+def test_imputer_with_both_raises_error():
+    with pytest.raises(TransformerError):
+        imputer = FillNA(value=0, strategy='mean')
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):

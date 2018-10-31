@@ -39,9 +39,17 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def __init__(self, value: int = None, strategy: str = None):
-        self.value = value
+    def __init__(self, value=None, strategy: str = None):
+
+        if value is None and strategy is None:
+            raise TransformerError(f"Both value and strategy are set to None."
+                                   f"Please select either a value or a strategy.")
+        if value is not None and strategy is not None:
+            raise TransformerError(f"Both a value and a strategy have been selected."
+                                   f"Please select either a value or a strategy.")
+
         self.strategy = strategy
+        self.value = value
         self.column_values_ = None
 
         def _most_freq(X):
@@ -54,23 +62,22 @@ class FillNA(BaseEstimator, TransformerMixin):
                           'min': pd.DataFrame.min}
 
     def fit(self, X: pd.DataFrame, y=None):
-        if self.value is None and self.strategy is None:
-            raise TransformerError(f"Both value and strategy are set to None."
-                                   f"Please select either a value or a strategy.")
-        if self.value is not None and self.strategy is not None:
-            raise TransformerError(f"Both a value and a strategy have been selected."
-                                   f"Please select either a value or a strategy.")
         if self.strategy is not None:
             func = self.func_map_[self.strategy]
             self.column_values_ = func(X)
+        else:
+            self.column_values_ = pd.Series([self.value] * X.shape[1], index=X.columns)
         return self
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
-        if self.strategy is not None:
-            result = X.fillna(self.column_values_)
-        else:
-            result = X.fillna(self.value)
+
+        for col in X.columns:
+            if pd.api.types.is_categorical_dtype(X[col]) is True and \
+                    self.column_values_[col] not in X[col].cat.categories:
+                X[col].cat.add_categories(self.column_values_[col], inplace=True)
+
+        result = X.fillna(self.column_values_)
         return result
 
 

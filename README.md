@@ -417,7 +417,7 @@ Out[1]:
 3        8
 ```
 
-Other built-in strategies are 'min' and 'max'. A strategy can also be a callable:
+The built-in strategies are 'sum', 'min' and 'max'. A strategy can also be a callable:
 
 ```python
 

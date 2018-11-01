@@ -1,6 +1,7 @@
 from sklearn.linear_model import LinearRegression
 
 from ml_tooling import BaseClassModel
+from ml_tooling.config import DefaultConfig
 
 
 def test_config_is_set_globally(pipeline_dummy_classifier, pipeline_linear):
@@ -39,3 +40,10 @@ def test_can_change_config():
     assert 10 == test_model.config.CROSS_VALIDATION
     test_model.config.CROSS_VALIDATION = 2
     assert test_model.config.CROSS_VALIDATION == 2
+
+
+def test_config_repr_works():
+    config = DefaultConfig()
+    for key in ['VERBOSITY', 'CLASSIFIER_METRIC', 'REGRESSION_METRIC', 'CROSS_VALIDATION',
+                'STYLE_SHEET', 'N_JOBS', 'TRAIN_SIZE', 'RANDOM_STATE']:
+        assert key in config.__repr__()

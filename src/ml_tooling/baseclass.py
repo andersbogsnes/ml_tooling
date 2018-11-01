@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import List, Tuple, Optional, Sequence
+from typing import List, Tuple, Optional, Sequence, Union
 
 import numpy as np
 
@@ -8,14 +8,15 @@ from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
-from .result import Result
+from .result import Result, CVResult
 from .utils import (
     MLToolingError,
     get_model_name,
     get_git_hash,
-    create_train_test,
+    DataType,
+    find_model_file,
     Data,
-    find_model_file
+    get_scoring_func,
 )
 from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
@@ -32,8 +33,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.model = model
         self.model_type = model._estimator_type
         self.model_name = get_model_name(model)
-        self.x = None
-        self.y = None
+        self.data = None
         self.result = None
         self._plotter = None
 
@@ -43,7 +43,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self._plotter = RegressionVisualize
 
     @abc.abstractmethod
-    def get_training_data(self) -> Tuple[Data, Data]:
+    def get_training_data(self) -> Tuple[DataType, DataType]:
         """
         Gets training data, returning features and labels
 
@@ -52,7 +52,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_prediction_data(self, *args) -> Data:
+    def get_prediction_data(self, *args) -> DataType:
         """
         Gets data to predict a given observation
 
@@ -81,16 +81,17 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model = joblib.load(model_file)
         return cls(model)
 
-    def _load_data(self) -> Tuple[Data, Data]:
+    def _load_data(self) -> Data:
         """
         Internal method for loading data into class
 
         :return:
             self.x, self.y
         """
-        if self.x is None or self.y is None:
-            self.x, self.y = self.get_training_data()
-        return self.x, self.y
+        if self.data is None:
+            x, y = self.get_training_data()
+            self.data = Data(x, y)
+        return self.data
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
@@ -147,7 +148,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @classmethod
     def test_models(cls,
                     models: Sequence,
-                    metric: Optional[str] = None) -> Tuple['BaseClassModel', List[Result]]:
+                    metric: Optional[str] = None,
+                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', List[Result]]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -157,13 +159,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param metric:
             Metric to use in scoring of model
 
+        :param cv:
+            Whether or not to use cross-validation. If an int is passed, use that many folds
+
         :return:
             List of Result
         """
         results = []
         for model in models:
             challenger_model = cls(model)
-            result = challenger_model.score_model(metric=metric)
+            result = challenger_model.score_model(metric=metric, cv=cv)
             results.append(result)
         results.sort(reverse=True)
         best_model = results[0].model
@@ -178,10 +183,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         self._load_data()
-        self.model.fit(self.x, self.y)
+        self.model.fit(self.data.x, self.data.y)
         return self
 
-    def score_model(self, metric=None, cv=None) -> 'Result':
+    def score_model(self, metric=None, cv=False) -> 'Result':
         """
         Loads training data and returns a Result object containing
         visualization and cross-validated scores
@@ -190,8 +195,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Metric to score model on. Any sklearn-compatible string or scoring function
 
         :param cv:
-            Cross validator to use. Number of folds if an int is passed,
-            else any sklearn compatible CV instance
+            Whether or not to use cross validation. Number of folds if an int is passed
+            If False, don't use cross validation
 
         :return:
             Result
@@ -200,30 +205,69 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         if self.model_type == 'classifier':
             metric = self.config.CLASSIFIER_METRIC if metric is None else metric
-            stratify = self.y
+            stratify = self.data.y
+
         else:
             metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None
 
-        data = create_train_test(self.x, self.y, stratify=stratify)
+        self.data.create_train_test(stratify=stratify)
+        self.model.fit(self.data.train_x, self.data.train_y)
 
+        if cv:  # TODO handle case of Sklearn CV class
+            return self._score_model_cv(metric, cv)
+
+        return self._score_model(metric)
+
+    def _score_model(self, metric: str) -> Result:
+        """
+        Scores model with a given score function.
+        :param metric:
+            string of which scoring function to use
+        :return:
+        """
+        # TODO support any given sklearn scorer - must check that it is a scorer
+        scoring_func = get_scoring_func(metric)
+
+        score = scoring_func(self.model, self.data.test_x, self.data.test_y)
+        viz = self._plotter(model=self.model,
+                            config=self.config,
+                            data=self.data)
+
+        self.result = Result(model=self.model,
+                             model_name=self.model_name,
+                             viz=viz,
+                             model_params=self.model.get_params(),
+                             score=score,
+                             metric=metric)
+
+        return self.result
+
+    def _score_model_cv(self, metric: Optional[str] = None, cv: Optional[int] = None) -> CVResult:
+        """
+        Scores model with given metric using cross-validation
+        :param metric:
+            string of which scoring function to use
+        :param cv:
+            How many folds to use - if None, use default configuration
+        :return:
+        """
         cv = self.config.CROSS_VALIDATION if cv is None else cv
+
         scores = cross_val_score(self.model,
-                                 data.train_x,
-                                 data.train_y,
+                                 self.data.train_x,
+                                 self.data.train_y,
                                  cv=cv,
                                  scoring=metric,
                                  n_jobs=self.config.N_JOBS,
                                  verbose=self.config.VERBOSITY,
                                  )
 
-        self.model.fit(data.train_x, data.train_y)
-
         viz = self._plotter(model=self.model,
                             config=self.config,
-                            data=data)
+                            data=self.data)
 
-        self.result = Result(
+        self.result = CVResult(
             model=self.model,
             viz=viz,
             model_name=self.model_name,
@@ -232,6 +276,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             cross_val_scores=scores,
             cross_val_mean=np.mean(scores),
             cross_val_std=np.std(scores),
+            cv=cv
         )
 
         return self.result

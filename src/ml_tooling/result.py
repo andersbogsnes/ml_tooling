@@ -17,6 +17,33 @@ from .plots import (_get_feature_importance,
 
 @total_ordering
 class Result:
+    def __init__(self,
+                 model,
+                 model_name,
+                 viz=None,
+                 model_params=None,
+                 score=None,
+                 metric=None
+                 ):
+        self.model = model
+        self.model_name = model_name
+        self.score = score
+        self.model_params = model_params
+        self.metric = metric
+        self.plot = viz
+
+    def __eq__(self, other):
+        return self.score == other.score
+
+    def __lt__(self, other):
+        return self.score < other.score
+
+    def __repr__(self):
+        return f"<Result {self.model_name}: " \
+               f"{self.metric}: {np.round(self.score, 2)} >"
+
+
+class CVResult(Result):
     """
     Data class for holding results of model testing.
     Also implements comparison operators for finding max mean score
@@ -26,30 +53,22 @@ class Result:
                  model,
                  model_name,
                  viz=None,
+                 cv=None,
                  model_params=None,
                  cross_val_scores=None,
                  cross_val_mean=None,
                  cross_val_std=None,
                  metric=None
                  ):
-        self.model = model
-        self.model_name = model_name
+        super().__init__(model, model_name, viz, model_params, cross_val_mean, metric)
+        self.cv = cv
         self.cross_val_scores = cross_val_scores
-        self.cross_val_mean = cross_val_mean
         self.cross_val_std = cross_val_std
-        self.model_params = model_params
-        self.metric = metric
-        self.plot = viz
-
-    def __eq__(self, other):
-        return self.cross_val_mean == other.cross_val_mean
-
-    def __lt__(self, other):
-        return self.cross_val_mean < other.cross_val_mean
 
     def __repr__(self):
+        cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
         return f"<Result {self.model_name}: " \
-               f"Cross-validated {self.metric}: {np.round(self.cross_val_mean, 2)} " \
+               f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
                f"± {np.round(self.cross_val_std, 2)}>"
 
 

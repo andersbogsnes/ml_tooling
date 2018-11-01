@@ -75,33 +75,44 @@ print(alL_results)
 
 The BaseClass implements a number of useful methods
 
-#### `save_model()`
-Saves the model as a binary file
+`save_model(path=None)`
+---
+Saves the model as a binary file. Defaults to current working directory, 
+with a filename of `<class_name>_<model_name>_<git_hash>.pkl`
+
+`load_model(path)`
+---
+Instantiates the class with a joblib pickled model.
+If no path is given, searches path for the newest file that matches the pattern 
    
-#### `load_model()` 
-Instantiates the class with a joblib pickled model
-   
-#### `score_model()`
+`score_model(metric='accuracy', cv=False)`
+---
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
+Defaults to non-cross-validated scoring. If you want to cross-validate, pass number of folds to cv
 
-#### `train_model()`
+`train_model()`
+---
 Loads all training data and trains the model on all data. 
 Typically used as the last step when model tuning is complete
 
-#### `set_config({'CONFIG_KEY': 'VALUE'})`
+`set_config({'CONFIG_KEY': 'VALUE'})`
+---
 Set configuration options - existing configuration options can be seen using the `.config` property
    
-#### `make_prediction(*args)`
+`make_prediction(*args)`
+---
 Makes a prediction given an input. For example a customer number. 
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
    
 
-#### `test_models([model1, model2], metric='accuracy')`
+`test_models([model1, model2], metric='accuracy')`
+---
 Runs `score_model()` on each model, saving the result.
 Returns the best model as well as a list of all results
 
-### `setup_model()`
+`setup_model()`
+---
 To be implemented by the user - setup_model is a classmethod which loads up an untrained model.
 Typically this would setup a pipeline and the selected model for easy training
 

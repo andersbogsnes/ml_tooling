@@ -39,16 +39,6 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def validate_input(self):
-
-        if self.value is None and self.strategy is None:
-            raise TransformerError(f"Both value and strategy are set to None."
-                                   f"Please select either a value or a strategy.")
-
-        if self.value is not None and self.strategy is not None:
-            raise TransformerError(f"Both a value and a strategy have been selected."
-                                   f"Please select either a value or a strategy.")
-
     def __init__(self, value=None, strategy: str = None):
 
         self.value = value
@@ -64,6 +54,16 @@ class FillNA(BaseEstimator, TransformerMixin):
                           'max': pd.DataFrame.max,
                           'min': pd.DataFrame.min}
 
+    def validate_input(self):
+
+        if self.value is None and self.strategy is None:
+            raise TransformerError(f"Both value and strategy are set to None."
+                                   f"Please select either a value or a strategy.")
+
+        if self.value is not None and self.strategy is not None:
+            raise TransformerError(f"Both a value and a strategy have been selected."
+                                   f"Please select either a value or a strategy.")
+
     def fit(self, X: pd.DataFrame, y=None):
 
         self.validate_input()
@@ -74,15 +74,21 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         else:
             self.value_map_ = {col: self.value for col in X.columns}
-            
+
         return self
+
+    def col_is_categorical_and_is_missing_category(self, col, X):
+        if pd.api.types.is_categorical_dtype(X[col]) is True and \
+                self.value_map_[col] not in X[col].cat.categories:
+            return True
+        else:
+            return False
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
 
         for col in X.columns:
-            if pd.api.types.is_categorical_dtype(X[col]) is True and \
-                    self.value_map_[col] not in X[col].cat.categories:
+            if self.col_is_categorical_and_is_missing_category(col, X):
                 X[col].cat.add_categories(self.value_map_[col], inplace=True)
 
         result = X.fillna(value=self.value_map_)

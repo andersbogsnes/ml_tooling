@@ -6,32 +6,50 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling.result import Result
+from ml_tooling.result import CVResult, Result
 from ml_tooling.utils import MLToolingError
 from ml_tooling import BaseClassModel
 
 
-def test_linear_model_returns_a_result(regression):
-    result = regression.result
+@pytest.mark.parametrize('cv', ['with_cv', 'without_cv'])
+def test_linear_model_returns_a_result(regression, regression_cv, cv):
+    if cv == 'with_cv':
+        result = regression_cv.result
+        assert isinstance(result, CVResult)
+        assert 2 == len(result.cross_val_scores)
+        assert 2 == result.cv
+        assert '2-fold Cross-validated' in result.__repr__()
+        assert result.model == regression_cv.model
+    else:
+        result = regression.result
+        assert isinstance(result, Result)
+        assert hasattr(result, 'cross_val_std') is False
+        assert result.model == regression.model
 
-    assert isinstance(result, Result)
-    assert result.model == regression.model
-    assert result.cross_val_mean > 0
-    assert result.cross_val_std > 0
+    assert result.score > 0
     assert 'r2' == result.metric
     assert 'LinearRegression' == result.model_name
-    assert 2 == len(result.cross_val_scores)
 
 
-def test_regression_model_returns_a_result(classifier):
-    result = classifier.result
-    assert isinstance(result, Result)
-    assert result.model == classifier.model
-    assert result.cross_val_mean > 0
-    assert result.cross_val_std > 0
+@pytest.mark.parametrize('cv', ['with_cv', 'without_cv'])
+def test_regression_model_returns_a_result(classifier, classifier_cv, cv):
+    if cv == 'with_cv':
+        result = classifier_cv.result
+        assert isinstance(result, CVResult)
+        assert 2 == len(result.cross_val_scores)
+        assert 2 == result.cv
+        assert '2-fold Cross-validated' in result.__repr__()
+        assert result.model == classifier_cv.model
+
+    else:
+        result = classifier.result
+        assert isinstance(result, Result)
+        assert hasattr(result, 'cross_val_std') is False
+        assert result.model == classifier.model
+
+    assert result.score > 0
     assert 'accuracy' == result.metric
     assert 'LogisticRegression' == result.model_name
-    assert 2 == len(result.cross_val_scores)
 
 
 def test_pipeline_regression_returns_correct_result(base, pipeline_linear):
@@ -50,16 +68,32 @@ def test_pipeline_logistic_returns_correct_result(base, pipeline_logistic):
     assert isinstance(result.model, Pipeline)
 
 
-def test_result_equality_operators():
-    first_result = Result(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-    second_result = Result(model=None, model_name='test2', cross_val_mean=.5, cross_val_std=.2)
+def test_cvresult_equality_operators():
+    first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
+    second_result = CVResult(model=None, model_name='test2', cross_val_mean=.5, cross_val_std=.2)
 
     assert first_result > second_result
 
 
+def test_result_equality_operators():
+    first_result = Result(model=None, model_name='test', score=.7)
+    second_result = Result(model=None, model_name='test2', score=.5)
+
+    assert first_result > second_result
+
+
+def test_max_works_with_cv_result():
+    first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
+    second_result = CVResult(model_name='test', model=None, cross_val_mean=.5, cross_val_std=.2)
+
+    max_result = max([first_result, second_result])
+
+    assert first_result is max_result
+
+
 def test_max_works_with_result():
-    first_result = Result(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-    second_result = Result(model_name='test', model=None, cross_val_mean=.5, cross_val_std=.2)
+    first_result = Result(model=None, model_name='test', score=.7)
+    second_result = Result(model_name='test', model=None, score=.5)
 
     max_result = max([first_result, second_result])
 
@@ -84,13 +118,14 @@ def test_make_prediction_returns_proba_if_proba_is_true(classifier):
     assert isinstance(results, np.ndarray)
     assert 2 == results.ndim
     assert np.all((results <= 1) & (results >= 0))
+    assert np.all(np.sum(results, axis=1) == 1)
 
 
 def test_train_model_saves_x_and_y_as_expected(regression):
     expected_x, expected_y = regression.get_training_data()
     regression.train_model()
-    assert np.all(expected_x == regression.x)
-    assert np.all(expected_y == regression.y)
+    assert np.all(expected_x == regression.data.x)
+    assert np.all(expected_y == regression.data.y)
 
 
 def test_model_selection_works_as_expected(base):
@@ -98,7 +133,7 @@ def test_model_selection_works_as_expected(base):
     best_model, results = base.test_models(models)
     assert models[1] is best_model.model
     assert 2 == len(results)
-    assert results[0].cross_val_mean >= results[1].cross_val_mean
+    assert results[0].score >= results[1].score
     for result in results:
         assert isinstance(result, Result)
 

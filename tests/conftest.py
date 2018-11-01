@@ -34,9 +34,7 @@ def _base():
 
     IrisModel.config.CROSS_VALIDATION = 2
     IrisModel.config.N_JOBS = 1
-    yield IrisModel
-    IrisModel.config.CROSS_VALIDATION = 10
-    IrisModel.config.N_JOBS = -1
+    return IrisModel
 
 
 @pytest.fixture(name='categorical')
@@ -79,10 +77,24 @@ def _linear_regression(base):
     return model
 
 
+@pytest.fixture(name='regression_cv', scope='session')
+def _linear_regression_cv(base):
+    model = base(LinearRegression())
+    model.score_model(cv=2)
+    return model
+
+
 @pytest.fixture(name='classifier', scope='session')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
     model.score_model()
+    return model
+
+
+@pytest.fixture(name='classifier_cv', scope='session')
+def _logistic_regression_cv(base):
+    model = base(LogisticRegression(solver='liblinear'))
+    model.score_model(cv=2)
     return model
 
 

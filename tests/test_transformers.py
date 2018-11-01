@@ -49,111 +49,65 @@ def test_df_selector_raise_missing_column(categorical):
         select.fit_transform(categorical)
 
 
-def test_imputer_returns_correct_dataframe(categorical_na):
-    imputer = FillNA('Unknown')
-    result = imputer.fit_transform(categorical_na)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical_na) == len(result)
-    assert {'category_a', 'category_b'} == set(result.columns)
-    assert 'Unknown' == result.iloc[0, 1]
-    assert 'Unknown' == result.iloc[1, 0]
-
-
-def test_imputer_returns_dataframe_unchanged_if_no_nans(categorical):
-    imputer = FillNA('Unknown')
-    result = imputer.fit_transform(categorical)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical) == len(result)
-    assert {'category_a', 'category_b'} == set(result.columns)
-    assert ~result.isin(['Unknown']).any().any()
-
-
-def test_imputer_returns_correct_dataframe_mean(numerical_na):
-    imputer = FillNA(strategy='mean')
-    result = imputer.fit_transform(numerical_na)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(numerical_na) == len(result)
-    assert {'number_a', 'number_b'} == set(result.columns)
-    assert 3 == result.loc[0, "number_a"]
-    assert 6 == result.loc[3, "number_b"]
-
-
-def test_imputer_returns_correct_dataframe_median(numerical_na):
-    imputer = FillNA(strategy='median')
-    result = imputer.fit_transform(numerical_na)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(numerical_na) == len(result)
-    assert {'number_a', 'number_b'} == set(result.columns)
-    assert 3 == result.loc[0, "number_a"]
-    assert 6 == result.loc[3, "number_b"]
-
-
-def test_imputer_returns_correct_dataframe_max(numerical_na):
-    imputer = FillNA(strategy='max')
-    result = imputer.fit_transform(numerical_na)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(numerical_na) == len(result)
-    assert {'number_a', 'number_b'} == set(result.columns)
-    assert 4 == result.loc[0, "number_a"]
-    assert 7 == result.loc[3, "number_b"]
-
-
-def test_imputer_returns_correct_dataframe_min(numerical_na):
-    imputer = FillNA(strategy='min')
-    result = imputer.fit_transform(numerical_na)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(numerical_na) == len(result)
-    assert {'number_a', 'number_b'} == set(result.columns)
-    assert 2 == result.loc[0, "number_a"]
-    assert 5 == result.loc[3, "number_b"]
-
-
-def test_imputer_returns_correct_dataframe_most_freq(categorical):
-    categorical.loc[1, "category_a"] = np.nan
-    categorical.loc[0, "category_b"] = np.nan
-    categorical.loc[1, "category_b"] = "b3"
-
-    imputer = FillNA(strategy='most_freq')
-    result = imputer.fit_transform(categorical)
-
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical) == len(result)
-    assert {'category_a', 'category_b'} == set(result.columns)
-    assert 'a1' == result.loc[1, "category_a"]
-    assert 'b3' == result.loc[0, "category_b"]
-
-
-@pytest.mark.parametrize('value, strategy, res_1, res_2', [
-    ('Unknown', None, 'Unknown', 'Unknown'),
-    (None, 'most_freq', 'a1', 'b2')
+@pytest.mark.parametrize('value, strategy', [
+    (None, None),
+    (0, 'mean')
 ])
-def test_imputer_returns_correct_categorial(value, strategy, res_1, res_2, categorical_na):
+def test_fillna_raises_error(value, strategy):
+    with pytest.raises(TransformerError):
+        FillNA(value=value, strategy=strategy)
+
+
+def test_fillna_returns_dataframe_unchanged_if_no_nans(categorical):
+    imputer = FillNA('Unknown')
+    result = imputer.fit_transform(categorical)
+    pd.testing.assert_frame_equal(result, categorical)
+
+
+@pytest.mark.parametrize('value, strategy, expected', [
+    ('Unknown', None,
+     pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3'], 'category_b': ['Unknown', 'b2', 'b3']})),
+    (None, 'most_freq',
+     pd.DataFrame({'category_a': ['a1', 'a1', 'a3'], 'category_b': ['b2', 'b2', 'b3']})),
+])
+def test_fillna_imputes_categorical_na_correct(categorical_na, value, strategy, expected):
+    imputer = FillNA(value=value, strategy=strategy)
+    result = imputer.fit_transform(categorical_na)
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.parametrize('value, strategy, expected', [
+    (None, 'mean',
+     pd.DataFrame({'number_a': [3.0, 2.0, 3.0, 4.0], 'number_b': [5.0, 6.0, 7.0, 6.0]})),
+    (None, 'median',
+     pd.DataFrame({'number_a': [3.0, 2.0, 3.0, 4.0], 'number_b': [5.0, 6.0, 7.0, 6.0]})),
+    (None, 'max',
+     pd.DataFrame({'number_a': [4.0, 2.0, 3.0, 4.0], 'number_b': [5.0, 6.0, 7.0, 7.0]})),
+    (None, 'min',
+     pd.DataFrame({'number_a': [2.0, 2.0, 3.0, 4.0], 'number_b': [5.0, 6.0, 7.0, 5.0]})),
+])
+def test_FillNA_imputes_numerical_na_correct(numerical_na, value, strategy, expected):
+    imputer = FillNA(value=value, strategy=strategy)
+    result = imputer.fit_transform(numerical_na)
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.parametrize('value, strategy, expected', [
+    ('Unknown', None,
+     pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3'], 'category_b': ['Unknown', 'b2', 'b3']},
+                  dtype="category")),
+    (None, 'most_freq',
+     pd.DataFrame({'category_a': ['a1', 'a1', 'a3'], 'category_b': ['b2', 'b2', 'b3']},
+                  dtype="category")),
+])
+def test_fillna_imputes_pandas_categorical_correct(value, strategy, expected, categorical_na):
     categorical_na['category_a'] = categorical_na['category_a'].astype('category')
     categorical_na['category_b'] = categorical_na['category_b'].astype('category')
 
     imputer = FillNA(value=value, strategy=strategy)
     result = imputer.fit_transform(categorical_na)
 
-    assert isinstance(result, pd.DataFrame)
-    assert len(categorical_na) == len(result)
-    assert {'category_a', 'category_b'} == set(result.columns)
-    assert res_1 == result.loc[1, "category_a"]
-    assert res_2 == result.loc[0, "category_b"]
-
-
-@pytest.mark.parametrize('value, strategy', [
-    (None, None),
-    (0, 'mean')
-])
-def test_imputer_raises_error(value, strategy):
-    with pytest.raises(TransformerError):
-        FillNA(value=value, strategy=strategy)
+    pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):
@@ -386,7 +340,7 @@ def test_DFStandardScaler_returns_correct_dataframe(numerical):
     pd.testing.assert_frame_equal(result, numerical_scaled)
 
 
-def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(categorical, numerical):
+def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(numerical):
     numerical_scaled = numerical.copy()
     numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.118033988749895
     numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.118033988749895

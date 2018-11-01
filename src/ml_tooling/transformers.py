@@ -63,7 +63,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
 
-        if self.strategy is not None:
+        if self.strategy:
             impute_values = self.func_map_[self.strategy](X)
             self.value_map_ = {col: impute_values[col] for col in X.columns}
 

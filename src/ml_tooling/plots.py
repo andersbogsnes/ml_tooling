@@ -11,10 +11,10 @@ from matplotlib.axes import Axes
 from sklearn.pipeline import Pipeline
 
 from . import metrics
-from .utils import Data, _is_percent
+from .utils import DataType, _is_percent
 
 
-def plot_roc_auc(y_true: Data, y_proba: Data, title: str = None, ax: Axes = None) -> Axes:
+def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
     """
     Plot ROC AUC curve. Works only with probabilities
 
@@ -51,8 +51,8 @@ def plot_roc_auc(y_true: Data, y_proba: Data, title: str = None, ax: Axes = None
     return ax
 
 
-def plot_confusion_matrix(y_true: Data,
-                          y_pred: Data,
+def plot_confusion_matrix(y_true: DataType,
+                          y_pred: DataType,
                           normalized: bool = True,
                           title: str = None,
                           ax: Axes = None,
@@ -119,8 +119,8 @@ def plot_confusion_matrix(y_true: Data,
     return ax
 
 
-def plot_residuals(y_true: Data,
-                   y_pred: Data,
+def plot_residuals(y_true: DataType,
+                   y_pred: DataType,
                    title: str = None,
                    ax: Axes = None) -> Axes:
     """
@@ -158,8 +158,8 @@ def plot_residuals(y_true: Data,
     return ax
 
 
-def plot_prediction_error(y_true: Data,
-                          y_pred: Data,
+def plot_prediction_error(y_true: DataType,
+                          y_pred: DataType,
                           title: str = None,
                           ax: Axes = None) -> Axes:
     """
@@ -197,8 +197,8 @@ def plot_prediction_error(y_true: Data,
     return ax
 
 
-def plot_feature_importance(importance: Data,
-                            labels: Data,
+def plot_feature_importance(importance: DataType,
+                            labels: DataType,
                             values: bool = None,
                             title: str = None,
                             ax: Axes = None,

@@ -9,7 +9,7 @@ from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
-from ml_tooling.utils import Train_Test
+from ml_tooling.utils import Data
 from ml_tooling.plots import (plot_lift_curve,
                               VizError,
                               _get_feature_importance,
@@ -282,11 +282,11 @@ def test_viz_get_feature_importance_returns_feature_importance_from_classifier(b
 
 
 def test_viz_get_labels_returns_array_if_there_are_no_columns(regression):
-    input_data = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-
-    test_data = Train_Test(input_data, input_data, regression.y, regression.y)
+    test_x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
+    test_y = np.array([0, 1])
+    test_data = Data.with_train_test(test_x, test_y)
     viz = RegressionVisualize(regression.model,
                               regression.config,
                               test_data)
     labels = viz._get_labels()
-    assert np.all(np.arange(input_data.shape[1]) == labels)
+    assert np.all(np.arange(test_x.shape[1]) == labels)

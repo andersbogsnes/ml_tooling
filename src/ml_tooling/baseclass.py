@@ -13,7 +13,8 @@ from .utils import (
     MLToolingError,
     get_model_name,
     get_git_hash,
-    create_train_test,
+    DataType,
+    find_model_file,
     Data,
     find_model_file
 )
@@ -42,7 +43,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self._plotter = RegressionVisualize
 
     @abc.abstractmethod
-    def get_training_data(self) -> Tuple[Data, Data]:
+    def get_training_data(self) -> Tuple[DataType, DataType]:
         """
         Gets training data, returning features and labels
 
@@ -51,7 +52,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_prediction_data(self, *args) -> Data:
+    def get_prediction_data(self, *args) -> DataType:
         """
         Gets data to predict a given observation
 

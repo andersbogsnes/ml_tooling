@@ -50,7 +50,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         self.strategy = strategy
         self.value = value
-        self.column_values_ = None
+        self.value_map_ = None
 
         def _most_freq(X):
             return pd.DataFrame.mode(X).iloc[0]
@@ -64,10 +64,11 @@ class FillNA(BaseEstimator, TransformerMixin):
     def fit(self, X: pd.DataFrame, y=None):
 
         if self.strategy is not None:
-            func = self.func_map_[self.strategy]
-            self.column_values_ = func(X)
+            impute_values = self.func_map_[self.strategy](X)
+            self.value_map_ = {col: impute_values[col] for col in X.columns}
+
         else:
-            self.column_values_ = pd.Series([self.value] * X.shape[1], index=X.columns)
+            self.value_map_ = {col: self.value for col in X.columns}
         return self
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
@@ -75,10 +76,10 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         for col in X.columns:
             if pd.api.types.is_categorical_dtype(X[col]) is True and \
-                    self.column_values_[col] not in X[col].cat.categories:
-                X[col].cat.add_categories(self.column_values_[col], inplace=True)
+                    self.value_map_[col] not in X[col].cat.categories:
+                X[col].cat.add_categories(self.value_map_[col], inplace=True)
 
-        result = X.fillna(self.column_values_)
+        result = X.fillna(value=self.value_map_)
         return result
 
 

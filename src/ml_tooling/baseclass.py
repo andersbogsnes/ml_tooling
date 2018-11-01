@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import List, Tuple, Optional, Sequence
+from typing import List, Tuple, Optional, Sequence, Union
 
 import numpy as np
 
@@ -148,7 +148,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @classmethod
     def test_models(cls,
                     models: Sequence,
-                    metric: Optional[str] = None) -> Tuple['BaseClassModel', List[Result]]:
+                    metric: Optional[str] = None,
+                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', List[Result]]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -158,13 +159,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param metric:
             Metric to use in scoring of model
 
+        :param cv:
+            Whether or not to use cross-validation. If an int is passed, use that many folds
+
         :return:
             List of Result
         """
         results = []
         for model in models:
             challenger_model = cls(model)
-            result = challenger_model.score_model(metric=metric)
+            result = challenger_model.score_model(metric=metric, cv=cv)
             results.append(result)
         results.sort(reverse=True)
         best_model = results[0].model
@@ -191,8 +195,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Metric to score model on. Any sklearn-compatible string or scoring function
 
         :param cv:
-            Cross validator to use. Number of folds if an int is passed,
-            else any sklearn compatible CV instance
+            Whether or not to use cross validation. Number of folds if an int is passed
+            If False, don't use cross validation
 
         :return:
             Result
@@ -210,13 +214,19 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.data.create_train_test(stratify=stratify)
         self.model.fit(self.data.train_x, self.data.train_y)
 
-        if cv:
+        if cv:  # TODO handle case of Sklearn CV class
             return self._score_model_cv(metric, cv)
 
-        else:
-            return self._score_model(metric)
+        return self._score_model(metric)
 
-    def _score_model(self, metric):
+    def _score_model(self, metric: str) -> Result:
+        """
+        Scores model with a given score function.
+        :param metric:
+            string of which scoring function to use
+        :return:
+        """
+        # TODO support any given sklearn scorer - must check that it is a scorer
         scoring_func = get_scoring_func(metric)
 
         score = scoring_func(self.model, self.data.test_x, self.data.test_y)
@@ -233,7 +243,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         return self.result
 
-    def _score_model_cv(self, metric=None, cv=None):
+    def _score_model_cv(self, metric: Optional[str] = None, cv: Optional[int] = None) -> CVResult:
+        """
+        Scores model with given metric using cross-validation
+        :param metric:
+            string of which scoring function to use
+        :param cv:
+            How many folds to use - if None, use default configuration
+        :return:
+        """
         cv = self.config.CROSS_VALIDATION if cv is None else cv
 
         scores = cross_val_score(self.model,

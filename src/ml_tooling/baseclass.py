@@ -8,7 +8,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
-from .result import Result
+from .result import Result, CVResult
 from .utils import (
     MLToolingError,
     get_model_name,
@@ -182,7 +182,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.model.fit(self.data.x, self.data.y)
         return self
 
-    def score_model(self, metric=None, cv=None) -> 'Result':
+    def score_model(self, metric=None, cv=False) -> 'Result':
         """
         Loads training data and returns a Result object containing
         visualization and cross-validated scores
@@ -207,25 +207,49 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None
 
-        data = create_train_test(self.x, self.y, stratify=stratify)
+        self.data.create_train_test(stratify=stratify)
+        self.model.fit(self.data.train_x, self.data.train_y)
 
+        if cv:
+            return self._score_model_cv(metric, cv)
+
+        else:
+            return self._score_model(metric)
+
+    def _score_model(self, metric):
+        scoring_func = get_scoring_func(metric)
+
+        score = scoring_func(self.model, self.data.test_x, self.data.test_y)
+        viz = self._plotter(model=self.model,
+                            config=self.config,
+                            data=self.data)
+
+        self.result = Result(model=self.model,
+                             model_name=self.model_name,
+                             viz=viz,
+                             model_params=self.model.get_params(),
+                             score=score,
+                             metric=metric)
+
+        return self.result
+
+    def _score_model_cv(self, metric=None, cv=None):
         cv = self.config.CROSS_VALIDATION if cv is None else cv
+
         scores = cross_val_score(self.model,
-                                 data.train_x,
-                                 data.train_y,
+                                 self.data.train_x,
+                                 self.data.train_y,
                                  cv=cv,
                                  scoring=metric,
                                  n_jobs=self.config.N_JOBS,
                                  verbose=self.config.VERBOSITY,
                                  )
 
-        self.model.fit(data.train_x, data.train_y)
-
         viz = self._plotter(model=self.model,
                             config=self.config,
-                            data=data)
+                            data=self.data)
 
-        self.result = Result(
+        self.result = CVResult(
             model=self.model,
             viz=viz,
             model_name=self.model_name,
@@ -234,6 +258,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             cross_val_scores=scores,
             cross_val_mean=np.mean(scores),
             cross_val_std=np.std(scores),
+            cv=cv
         )
 
         return self.result

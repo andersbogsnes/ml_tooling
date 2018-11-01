@@ -4,12 +4,19 @@ from typing import List, Tuple, Optional, Sequence
 
 import numpy as np
 
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
 from .result import Result
-from .utils import MLToolingError, get_git_hash, find_model_file, get_model_name, Data
+from .utils import (
+    MLToolingError,
+    get_model_name,
+    get_git_hash,
+    create_train_test,
+    Data,
+    find_model_file
+)
 from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
 
@@ -198,26 +205,23 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None
 
-        train_x, test_x, train_y, test_y = train_test_split(self.x, self.y, stratify=stratify)
+        data = create_train_test(self.x, self.y, stratify=stratify)
 
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         scores = cross_val_score(self.model,
-                                 train_x,
-                                 train_y,
+                                 data.train_x,
+                                 data.train_y,
                                  cv=cv,
                                  scoring=metric,
                                  n_jobs=self.config.N_JOBS,
                                  verbose=self.config.VERBOSITY,
                                  )
 
-        self.model.fit(train_x, train_y)
+        self.model.fit(data.train_x, data.train_y)
 
         viz = self._plotter(model=self.model,
                             config=self.config,
-                            train_x=train_x,
-                            train_y=train_y,
-                            test_x=test_x,
-                            test_y=test_y)
+                            data=data)
 
         self.result = Result(
             model=self.model,

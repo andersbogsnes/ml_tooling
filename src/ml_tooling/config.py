@@ -15,6 +15,8 @@ class DefaultConfig:
         self.CROSS_VALIDATION = 10
         self.STYLE_SHEET = MPL_STYLESHEET
         self.N_JOBS = -1
+        self.TRAIN_SIZE = 0.25
+        self.RANDOM_STATE = 42
 
     def __repr__(self):
         attrs = '\n'.join([f"{attr}: {value}"

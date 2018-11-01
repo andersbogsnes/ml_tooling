@@ -32,8 +32,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.model = model
         self.model_type = model._estimator_type
         self.model_name = get_model_name(model)
-        self.x = None
-        self.y = None
+        self.data = None
         self.result = None
         self._plotter = None
 
@@ -81,16 +80,17 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model = joblib.load(model_file)
         return cls(model)
 
-    def _load_data(self) -> Tuple[Data, Data]:
+    def _load_data(self) -> Data:
         """
         Internal method for loading data into class
 
         :return:
             self.x, self.y
         """
-        if self.x is None or self.y is None:
-            self.x, self.y = self.get_training_data()
-        return self.x, self.y
+        if self.data is None:
+            x, y = self.get_training_data()
+            self.data = Data(x, y)
+        return self.data
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
@@ -178,7 +178,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         self._load_data()
-        self.model.fit(self.x, self.y)
+        self.model.fit(self.data.x, self.data.y)
         return self
 
     def score_model(self, metric=None, cv=None) -> 'Result':
@@ -200,7 +200,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         if self.model_type == 'classifier':
             metric = self.config.CLASSIFIER_METRIC if metric is None else metric
-            stratify = self.y
+            stratify = self.data.y
+
         else:
             metric = self.config.REGRESSION_METRIC if metric is None else metric
             stratify = None

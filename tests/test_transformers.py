@@ -151,10 +151,9 @@ def test_imputer_returns_correct_categorial(value, strategy, res_1, res_2, categ
     (None, None),
     (0, 'mean')
 ])
-def test_imputer_raises_error(numerical_na, value, strategy):
+def test_imputer_raises_error(value, strategy):
     with pytest.raises(TransformerError):
-        imputer = FillNA(value=value, strategy=strategy)
-        imputer.fit(numerical_na)
+        FillNA(value=value, strategy=strategy)
 
 
 def test_to_categorical_returns_correct_dataframe(categorical):

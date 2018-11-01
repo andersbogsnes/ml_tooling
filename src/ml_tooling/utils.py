@@ -4,10 +4,52 @@ import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
-from collections import namedtuple
+
+from sklearn.metrics.scorer import (explained_variance_scorer,
+                                    r2_scorer,
+                                    fowlkes_mallows_scorer,
+                                    neg_median_absolute_error_scorer,
+                                    neg_mean_absolute_error_scorer,
+                                    neg_mean_squared_error_scorer,
+                                    neg_mean_squared_log_error_scorer,
+                                    accuracy_scorer,
+                                    roc_auc_scorer,
+                                    balanced_accuracy_scorer,
+                                    average_precision_scorer,
+                                    neg_log_loss_scorer,
+                                    brier_score_loss_scorer,
+                                    adjusted_rand_scorer,
+                                    homogeneity_scorer,
+                                    completeness_scorer,
+                                    v_measure_scorer,
+                                    mutual_info_scorer,
+                                    adjusted_mutual_info_scorer,
+                                    normalized_mutual_info_scorer,
+                                    )
 from sklearn.model_selection import train_test_split
 
 DataType = Union[pd.DataFrame, np.ndarray]
+
+SCORERS = dict(explained_variance=explained_variance_scorer,
+               r2=r2_scorer,
+               neg_median_absolute_error=neg_median_absolute_error_scorer,
+               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+               neg_mean_squared_error=neg_mean_squared_error_scorer,
+               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
+               accuracy=accuracy_scorer,
+               roc_auc=roc_auc_scorer,
+               balanced_accuracy=balanced_accuracy_scorer,
+               average_precision=average_precision_scorer,
+               neg_log_loss=neg_log_loss_scorer,
+               brier_score_loss=brier_score_loss_scorer,
+               adjusted_rand_score=adjusted_rand_scorer,
+               homogeneity_score=homogeneity_scorer,
+               completeness_score=completeness_scorer,
+               v_measure_score=v_measure_scorer,
+               mutual_info_score=mutual_info_scorer,
+               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
+               normalized_mutual_info_score=normalized_mutual_info_scorer,
+               fowlkes_mallows_score=fowlkes_mallows_scorer)
 
 
 class Data:
@@ -45,6 +87,13 @@ class MLToolingError(Exception):
 class TransformerError(Exception):
     """Error which occurs during a transform"""
     pass
+
+
+def get_scoring_func(metric):
+    try:
+        return SCORERS[metric]
+    except KeyError:
+        raise MLToolingError(f"Invalid metric {metric}")
 
 
 def get_git_hash() -> str:
@@ -118,21 +167,3 @@ def _is_percent(number):
             raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
         return True
     return False
-
-
-def create_train_test(x, y,
-                      stratify=None,
-                      shuffle=True,
-                      test_size=0.25,
-                      random_state=None
-                      ):
-    train_x, test_x, train_y, test_y = train_test_split(x,
-                                                        y,
-                                                        stratify=stratify,
-                                                        shuffle=shuffle,
-                                                        test_size=test_size,
-                                                        random_state=random_state)
-    return Train_Test(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
-
-
-Data = Union[pd.DataFrame, np.ndarray]

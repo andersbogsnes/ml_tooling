@@ -1,6 +1,13 @@
 import pytest
 
-from ml_tooling.utils import get_git_hash, find_model_file, _is_percent, MLToolingError
+from ml_tooling.utils import (get_git_hash,
+                              find_model_file,
+                              _is_percent,
+                              MLToolingError,
+                              get_scoring_func,
+                              )
+
+from sklearn.metrics.scorer import _PredictScorer
 
 
 def test_get_git_hash_returns_correctly():
@@ -65,3 +72,16 @@ def test_is_percent_returns_correctly(number, is_percent):
 def test_is_percent_raises_correctly_if_given_large_float():
     with pytest.raises(ValueError, match='Floats only valid between 0 and 1. Got 100.0'):
         _is_percent(100.0)
+
+
+def test_scoring_func_returns_a_scorer(classifier):
+    scorer = get_scoring_func('accuracy')
+
+    score = scorer(classifier.model, classifier.data.test_x, classifier.data.test_y)
+    assert isinstance(scorer, _PredictScorer)
+    assert score > 0.63
+
+
+def test_scoring_func_fails_if_invalid_scorer_is_given():
+    with pytest.raises(MLToolingError):
+        get_scoring_func('invalid_scorer')

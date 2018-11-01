@@ -16,7 +16,7 @@ from .utils import (
     DataType,
     find_model_file,
     Data,
-    find_model_file
+    get_scoring_func,
 )
 from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize

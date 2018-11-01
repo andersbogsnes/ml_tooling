@@ -81,8 +81,7 @@ class FillNA(BaseEstimator, TransformerMixin):
         if pd.api.types.is_categorical_dtype(X[col]) and \
                 self.value_map_[col] not in X[col].cat.categories:
             return True
-        else:
-            return False
+        return False
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()

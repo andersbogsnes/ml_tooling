@@ -39,10 +39,11 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def __init__(self, value: int = None, strategy: str = None):
+    def __init__(self, value=None, strategy: str = None):
+
         self.value = value
         self.strategy = strategy
-        self.column_values_ = None
+        self.value_map_ = None
 
         def _most_freq(X):
             return pd.DataFrame.mode(X).iloc[0]
@@ -53,24 +54,43 @@ class FillNA(BaseEstimator, TransformerMixin):
                           'max': pd.DataFrame.max,
                           'min': pd.DataFrame.min}
 
-    def fit(self, X: pd.DataFrame, y=None):
+    def validate_input(self):
+
         if self.value is None and self.strategy is None:
             raise TransformerError(f"Both value and strategy are set to None."
                                    f"Please select either a value or a strategy.")
+
         if self.value is not None and self.strategy is not None:
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
-        if self.strategy is not None:
-            func = self.func_map_[self.strategy]
-            self.column_values_ = func(X)
+
+    def fit(self, X: pd.DataFrame, y=None):
+
+        self.validate_input()
+
+        if self.strategy:
+            impute_values = self.func_map_[self.strategy](X)
+            self.value_map_ = {col: impute_values[col] for col in X.columns}
+
+        else:
+            self.value_map_ = {col: self.value for col in X.columns}
+
         return self
+
+    def col_is_categorical_and_is_missing_category(self, col, X):
+        if pd.api.types.is_categorical_dtype(X[col]) and \
+                self.value_map_[col] not in X[col].cat.categories:
+            return True
+        return False
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
-        if self.strategy is not None:
-            result = X.fillna(self.column_values_)
-        else:
-            result = X.fillna(self.value)
+
+        for col in X.columns:
+            if self.col_is_categorical_and_is_missing_category(col, X):
+                X[col].cat.add_categories(self.value_map_[col], inplace=True)
+
+        result = X.fillna(value=self.value_map_)
         return result
 
 

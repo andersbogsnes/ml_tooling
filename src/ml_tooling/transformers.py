@@ -7,6 +7,7 @@ from typing import Union, Callable
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import numpy as np
 from functools import reduce
 
 from .utils import listify, TransformerError
@@ -38,38 +39,58 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def most_freq(X):
-        return pd.DataFrame.mode(X).iloc[0]
+    def __init__(self, value=None, strategy: str = None):
 
-    func_map_ = {'mean': pd.DataFrame.mean,
-                 'median': pd.DataFrame.median,
-                 'most_freq': most_freq,
-                 'max': pd.DataFrame.max,
-                 'min': pd.DataFrame.min}
-
-    def __init__(self, value=None, strategy=None):
         self.value = value
         self.strategy = strategy
-        self.column_values_ = None
+        self.value_map_ = None
 
-    def fit(self, X: pd.DataFrame, y=None):
+        def _most_freq(X):
+            return pd.DataFrame.mode(X).iloc[0]
+
+        self.func_map_ = {'mean': pd.DataFrame.mean,
+                          'median': pd.DataFrame.median,
+                          'most_freq': _most_freq,
+                          'max': pd.DataFrame.max,
+                          'min': pd.DataFrame.min}
+
+    def validate_input(self):
+
         if self.value is None and self.strategy is None:
             raise TransformerError(f"Both value and strategy are set to None."
                                    f"Please select either a value or a strategy.")
+
         if self.value is not None and self.strategy is not None:
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
-        if self.strategy is not None:
-            func = self.func_map_[self.strategy]
-            self.column_values_ = func(X)
+
+    def fit(self, X: pd.DataFrame, y=None):
+
+        self.validate_input()
+
+        if self.strategy:
+            impute_values = self.func_map_[self.strategy](X)
+            self.value_map_ = {col: impute_values[col] for col in X.columns}
+
+        else:
+            self.value_map_ = {col: self.value for col in X.columns}
+
         return self
+
+    def col_is_categorical_and_is_missing_category(self, col, X):
+        if pd.api.types.is_categorical_dtype(X[col]) and \
+                self.value_map_[col] not in X[col].cat.categories:
+            return True
+        return False
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
-        if self.strategy is not None:
-            result = X.fillna(self.column_values_)
-        else:
-            result = X.fillna(self.value)
+
+        for col in X.columns:
+            if self.col_is_categorical_and_is_missing_category(col, X):
+                X[col].cat.add_categories(self.value_map_[col], inplace=True)
+
+        result = X.fillna(value=self.value_map_)
         return result
 
 
@@ -103,7 +124,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[pd.DataFrame], pd.DataFrame]):
+    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series]], pd.DataFrame]):
         self.func = func
 
     def fit(self, X: pd.DataFrame, y=None):
@@ -246,3 +267,39 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         data = self.scaler.transform(X)
         return pd.DataFrame(data=data, columns=X.columns, index=X.index)
+
+
+class DFRowFunc(BaseEstimator, TransformerMixin):
+    """
+    Row-wise operation on Pandas DataFrame. Strategy can either be one of
+    the predefined or a callable.    If some elements in the row are NaN these
+    elements are ignored for the built-in strategies.
+    """
+
+    _func_map = {'sum': np.sum,
+                 'min': np.min,
+                 'max': np.max}
+
+    def __init__(self, strategy=None):
+
+        if strategy is None:
+            raise TransformerError("No strategy is specified.")
+
+        if not isinstance(strategy, str) and not callable(strategy):
+            raise TransformerError(f"{strategy} is not a callable or a string.")
+
+        if isinstance(strategy, str) and strategy not in self._func_map:
+            raise TransformerError(f"Strategy {strategy} is not a predefined strategy.")
+
+        if isinstance(strategy, str):
+            self.func = self._func_map[strategy]
+        else:
+            self.func = strategy
+
+    def fit(self, X: pd.DataFrame, y=None):
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        X = pd.DataFrame(X.apply(self.func, axis=1))
+        return X

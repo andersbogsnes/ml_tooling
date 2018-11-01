@@ -17,6 +17,33 @@ from .plots import (_get_feature_importance,
 
 @total_ordering
 class Result:
+    def __init__(self,
+                 model,
+                 model_name,
+                 viz=None,
+                 model_params=None,
+                 score=None,
+                 metric=None
+                 ):
+        self.model = model
+        self.model_name = model_name
+        self.score = score
+        self.model_params = model_params
+        self.metric = metric
+        self.plot = viz
+
+    def __eq__(self, other):
+        return self.score == other.score
+
+    def __lt__(self, other):
+        return self.score < other.score
+
+    def __repr__(self):
+        return f"<Result {self.model_name}: " \
+               f"{self.metric}: {np.round(self.score, 2)} >"
+
+
+class CVResult(Result):
     """
     Data class for holding results of model testing.
     Also implements comparison operators for finding max mean score
@@ -26,30 +53,22 @@ class Result:
                  model,
                  model_name,
                  viz=None,
+                 cv=None,
                  model_params=None,
                  cross_val_scores=None,
                  cross_val_mean=None,
                  cross_val_std=None,
                  metric=None
                  ):
-        self.model = model
-        self.model_name = model_name
+        super().__init__(model, model_name, viz, model_params, cross_val_mean, metric)
+        self.cv = cv
         self.cross_val_scores = cross_val_scores
-        self.cross_val_mean = cross_val_mean
         self.cross_val_std = cross_val_std
-        self.model_params = model_params
-        self.metric = metric
-        self.plot = viz
-
-    def __eq__(self, other):
-        return self.cross_val_mean == other.cross_val_mean
-
-    def __lt__(self, other):
-        return self.cross_val_mean < other.cross_val_mean
 
     def __repr__(self):
+        cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
         return f"<Result {self.model_name}: " \
-               f"Cross-validated {self.metric}: {np.round(self.cross_val_mean, 2)} " \
+               f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
                f"± {np.round(self.cross_val_std, 2)}>"
 
 
@@ -58,14 +77,11 @@ class BaseVisualize:
     Base class for visualizers
     """
 
-    def __init__(self, model, config, train_x, train_y, test_x, test_y):
+    def __init__(self, model, config, data):
         self._model = model
         self._model_name = model.__class__.__name__
         self._config = config
-        self._train_x = train_x
-        self._test_x = test_x
-        self._train_y = train_y
-        self._test_y = test_y
+        self._data = data
         self._feature_labels = self._get_labels()
 
     def _get_labels(self):
@@ -74,10 +90,10 @@ class BaseVisualize:
         :return:
             list-like of labels
         """
-        if hasattr(self._train_x, 'columns'):
-            labels = self._train_x.columns
+        if hasattr(self._data.train_x, 'columns'):
+            labels = self._data.train_x.columns
         else:
-            labels = np.arange(self._train_x.shape[1])
+            labels = np.arange(self._data.train_x.shape[1])
 
         return labels
 
@@ -133,8 +149,8 @@ class RegressionVisualize(BaseVisualize):
         """
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Residual Plot - {self._model_name}"
-            y_pred = self._model.predict(self._test_x)
-            return plot_residuals(self._test_y, y_pred, title, **kwargs)
+            y_pred = self._model.predict(self._data.test_x)
+            return plot_residuals(self._data.test_y, y_pred, title, **kwargs)
 
     def prediction_error(self, **kwargs) -> plt.Axes:
         """
@@ -145,8 +161,8 @@ class RegressionVisualize(BaseVisualize):
         """
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Prediction Error - {self._model_name}"
-            y_pred = self._model.predict(self._test_x)
-            return plot_prediction_error(self._test_y, y_pred, title=title, **kwargs)
+            y_pred = self._model.predict(self._data.test_x)
+            return plot_prediction_error(self._data.test_y, y_pred, title=title, **kwargs)
 
 
 class ClassificationVisualize(BaseVisualize):
@@ -166,8 +182,8 @@ class ClassificationVisualize(BaseVisualize):
         """
         with plt.style.context(self._config.STYLE_SHEET):
             title = f'Confusion Matrix - {self._model_name}'
-            y_pred = self._model.predict(self._test_x)
-            return plot_confusion_matrix(self._test_y, y_pred, normalized, title, **kwargs)
+            y_pred = self._model.predict(self._data.test_x)
+            return plot_confusion_matrix(self._data.test_y, y_pred, normalized, title, **kwargs)
 
     def roc_curve(self, **kwargs) -> plt.Axes:
         """
@@ -182,8 +198,8 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f'ROC AUC - {self._model_name}'
-            y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_roc_auc(self._test_y, y_proba, title=title, **kwargs)
+            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            return plot_roc_auc(self._data.test_y, y_proba, title=title, **kwargs)
 
     def lift_curve(self, **kwargs) -> plt.Axes:
         """
@@ -195,5 +211,5 @@ class ClassificationVisualize(BaseVisualize):
         """
         with plt.style.context(self._config.STYLE_SHEET):
             title = f'Lift Curve - {self._model_name}'
-            y_proba = self._model.predict_proba(self._test_x)[:, 1]
-            return plot_lift_curve(self._test_y, y_proba, title=title, **kwargs)
+            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)

@@ -75,33 +75,44 @@ print(alL_results)
 
 The BaseClass implements a number of useful methods
 
-#### `save_model()`
-Saves the model as a binary file
+`save_model(path=None)`
+---
+Saves the model as a binary file. Defaults to current working directory, 
+with a filename of `<class_name>_<model_name>_<git_hash>.pkl`
+
+`load_model(path)`
+---
+Instantiates the class with a joblib pickled model.
+If no path is given, searches path for the newest file that matches the pattern 
    
-#### `load_model()` 
-Instantiates the class with a joblib pickled model
-   
-#### `score_model()`
+`score_model(metric='accuracy', cv=False)`
+---
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
+Defaults to non-cross-validated scoring. If you want to cross-validate, pass number of folds to cv
 
-#### `train_model()`
+`train_model()`
+---
 Loads all training data and trains the model on all data. 
 Typically used as the last step when model tuning is complete
 
-#### `set_config({'CONFIG_KEY': 'VALUE'})`
+`set_config({'CONFIG_KEY': 'VALUE'})`
+---
 Set configuration options - existing configuration options can be seen using the `.config` property
    
-#### `make_prediction(*args)`
+`make_prediction(*args)`
+---
 Makes a prediction given an input. For example a customer number. 
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
    
 
-#### `test_models([model1, model2], metric='accuracy')`
+`test_models([model1, model2], metric='accuracy')`
+---
 Runs `score_model()` on each model, saving the result.
 Returns the best model as well as a list of all results
 
-### `setup_model()`
+`setup_model()`
+---
 To be implemented by the user - setup_model is a classmethod which loads up an untrained model.
 Typically this would setup a pipeline and the selected model for easy training
 
@@ -182,8 +193,8 @@ Out[1]:
 ```
 
 ### FillNA
-Fills NA values with instantiated value - passed to df.fillna()
-#### Example
+Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
+#### Example for value
 ```python
 from ml_tooling.transformers import FillNA
 import pandas as pd
@@ -196,7 +207,7 @@ df = pd.DataFrame({
 
 })
 
-fill_na = FillNA(0)
+fill_na = FillNA(value = 0)
 fill_na.fit_transform(df)
 ```
 ```
@@ -208,6 +219,24 @@ Out[1]:
 3   4  Error     0.0
 
 ```
+
+#### Example for strategy
+The built-in strategies are 'mean', 'median', 'most_freq', 'max' and 'min. An example of 'mean' would be:
+```python
+
+fill_na = FillNA(value = 'mean')
+fill_na.fit_transform(df)
+```
+```
+Out[1]: 
+   id status   sales
+0   1     OK  2000.0
+1   2  Error  3000.0
+2   3     OK  4000.0
+3   4  Error  3000.0
+
+```
+
 ### ToCategorical
 Performs one-hot encoding of categorical values through pd.Categorical. 
 All categorical values not found in training data will be set to 0 
@@ -390,4 +419,46 @@ Out[1]:
 1             0.5  (1000, 2000]
 2             0.5  (2000, 8000]
 3             0.5  (2000, 8000]
+```
+
+### DFRowFunc
+Row-wise operation on Pandas DataFrame. Strategy can either be one of the predefined or a callable. If some elements in the row are NaN these elements are ignored for the built-in strategies.
+
+```python
+from ml_tooling.transformers import DFRowFunc
+import pandas as pd
+
+df = pd.DataFrame({
+    "number_1": [1, np.nan, 3, 4],
+    "number_2": [1, 3, 2, 4]
+
+})
+
+rowfunc = DFRowFunc(strategy = 'sum')
+rowfunc.fit_transform(df)
+```
+```
+Out[1]: 
+         0
+0        2
+1        3
+2        5
+3        8
+```
+
+The built-in strategies are 'sum', 'min' and 'max'. A strategy can also be a callable:
+
+```python
+
+rowfunc = DFRowFunc(strategy = np.mean)
+rowfunc.fit_transform(df)
+```
+```
+Out[1]: 
+         0
+0        1
+1        3
+2        2.5
+3        4
+
 ```

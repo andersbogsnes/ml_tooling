@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
+from collections import namedtuple
+from sklearn.model_selection import train_test_split
+
+Train_Test = namedtuple('Train_Test', ['train_x', 'train_y', 'test_x', 'test_y'])
 
 
 class MLToolingError(Exception):
@@ -87,6 +91,21 @@ def _is_percent(number):
             raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
         return True
     return False
+
+
+def create_train_test(x, y,
+                      stratify=None,
+                      shuffle=True,
+                      test_size=0.25,
+                      random_state=None
+                      ):
+    train_x, test_x, train_y, test_y = train_test_split(x,
+                                                        y,
+                                                        stratify=stratify,
+                                                        shuffle=shuffle,
+                                                        test_size=test_size,
+                                                        random_state=random_state)
+    return Train_Test(train_x=train_x, test_x=test_x, train_y=train_y, test_y=test_y)
 
 
 Data = Union[pd.DataFrame, np.ndarray]

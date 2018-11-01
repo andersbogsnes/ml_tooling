@@ -39,22 +39,20 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    @classmethod
-    def validate_input(cls, value, strategy):
+    def validate_input(self):
 
-        if value is None and strategy is None:
+        if self.value is None and self.strategy is None:
             raise TransformerError(f"Both value and strategy are set to None."
                                    f"Please select either a value or a strategy.")
 
-        if value is not None and strategy is not None:
+        if self.value is not None and self.strategy is not None:
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
-        return value, strategy
-
     def __init__(self, value=None, strategy: str = None):
 
-        self.value, self.strategy = FillNA.validate_input(value, strategy)
+        self.value = value
+        self.strategy = strategy
         self.value_map_ = None
 
         def _most_freq(X):
@@ -68,12 +66,15 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
 
+        self.validate_input()
+
         if self.strategy:
             impute_values = self.func_map_[self.strategy](X)
             self.value_map_ = {col: impute_values[col] for col in X.columns}
 
         else:
             self.value_map_ = {col: self.value for col in X.columns}
+            
         return self
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:

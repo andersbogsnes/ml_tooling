@@ -53,9 +53,9 @@ def test_df_selector_raise_missing_column(categorical):
     (None, None),
     (0, 'mean')
 ])
-def test_fillna_raises_error(value, strategy):
+def test_fillna_raises_error(numerical_na, value, strategy):
     with pytest.raises(TransformerError):
-        FillNA(value=value, strategy=strategy)
+        FillNA(value=value, strategy=strategy).fit(numerical_na)
 
 
 def test_fillna_returns_dataframe_unchanged_if_no_nans(categorical):

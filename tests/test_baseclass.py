@@ -27,7 +27,7 @@ class TestResult:
             assert hasattr(result, 'cross_val_std') is False
             assert result.model == regression.model
 
-        assert result.score > 0
+        assert isinstance(float, result.score)
         assert 'r2' == result.metric
         assert 'LinearRegression' == result.model_name
 

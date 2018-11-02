@@ -1,7 +1,10 @@
 import pytest
 import pandas as pd
 import numpy as np
-from sklearn.pipeline import make_pipeline
+from ml_tooling.result import CVResult
+from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline, Pipeline
 
 from ml_tooling.transformers import (Select,
                                      FillNA,
@@ -46,7 +49,48 @@ class TestDFSelector:
             select.fit_transform(categorical)
 
 
+@pytest.mark.parametrize('transformer', [Select('sepal length (cm)'),
+                                         FillNA(0),
+                                         DFRowFunc(strategy='mean'),
+                                         Binner(3),
+                                         FuncTransformer(lambda x: x),
+                                         Renamer(['1', '2', '3', '4']),
+                                         ToCategorical(),
+                                         DFStandardScaler(),
+                                         ],
+                         ids=lambda x: x.__class__.__name__)
+def test_transformer_can_be_used_in_cross_validation_numeric_data(transformer, base):
+    pipe = Pipeline([
+        ('transform', transformer),
+        ('clf', DummyClassifier())
+    ])
+
+    model = base(pipe)
+    model.config.N_JOBS = 2
+    result = model.score_model(cv=2)
+    assert isinstance(result, CVResult)
+
+
+def test_transformer_can_be_used_in_cross_validation_string_data(categorical):
+    pipe = Pipeline([
+        ('transform', FreqFeature()),
+        ('clf', DummyClassifier())
+    ])
+
+    score = cross_val_score(pipe, categorical, np.array([1, 0, 1]), cv=2)
+    assert np.all(score >= 0)
+
+
 class TestFillNA:
+    @pytest.mark.parametrize('value, strategy', [
+        (None, None),
+        (0, 'mean')
+    ])
+    def test_fillna_raises_error(self, numerical_na, value, strategy):
+        with pytest.raises(TransformerError):
+            FillNA(value=value, strategy=strategy).fit(numerical_na)
+
+
     @pytest.mark.parametrize('value, strategy', [
         (None, None),
         (0, 'mean')
@@ -370,16 +414,18 @@ class TestDFRowFunc:
         ('avg', "Strategy avg is not a predefined strategy"),
         (1337, "1337 is not a callable or a string")
     ])
-    def test_dfrowfunc_test_strategy_input(self, strategy, match):
+    def test_dfrowfunc_test_strategy_input(self, strategy, match, numerical_na):
         with pytest.raises(TransformerError,
                            message="Expecting TransformerError but no error occurred",
                            match=match):
-            DFRowFunc(strategy=strategy)
+            DFRowFunc(strategy=strategy).fit(numerical_na)
 
     @pytest.mark.parametrize('strategy, expected', [
         ('sum', pd.DataFrame([5., 8., 10., 4.])),
         ('min', pd.DataFrame([5., 2., 3., 4.])),
         ('max', pd.DataFrame([5., 6., 7., 4.])),
+        ('mean', pd.DataFrame([5., 4., 5., 4.])),
+        (lambda x: np.mean(x), pd.DataFrame([5., 4., 5., 4.])),
         (np.mean, pd.DataFrame([5., 4., 5., 4.]))
     ])
     def test_dfrowfunc_sum_built_in_and_callable(self, numerical_na, strategy, expected):

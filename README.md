@@ -1,6 +1,6 @@
 # Model Tooling library
 [![Build Status](https://travis-ci.org/andersbogsnes/ml_tooling.svg?branch=master)](https://travis-ci.org/andersbogsnes/ml_tooling)
-[![Coverage Status](https://codecov.io/gh/andersbogsnes/ml_tooling/branch/master/graph/badge.svg)](https://codecov.io/gh/andersbogsnes/ml_tooling/branch/master)
+[![codecov](https://codecov.io/gh/andersbogsnes/ml_tooling/branch/develop/graph/badge.svg)](https://codecov.io/gh/andersbogsnes/ml_tooling)
 [![Python 3](https://pyup.io/repos/github/andersbogsnes/ml_tooling/python-3-shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 [![Updates](https://pyup.io/repos/github/andersbogsnes/ml_tooling/shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 

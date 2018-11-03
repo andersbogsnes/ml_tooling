@@ -1,13 +1,13 @@
 import pytest
-
+import matplotlib.pyplot as plt
+from sklearn.metrics.scorer import _PredictScorer
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
                               _is_percent,
                               MLToolingError,
                               get_scoring_func,
                               )
-
-from sklearn.metrics.scorer import _PredictScorer
+from ml_tooling.plots import _generate_text_labels
 
 
 def test_get_git_hash_returns_correctly():
@@ -85,3 +85,19 @@ def test_scoring_func_returns_a_scorer(classifier):
 def test_scoring_func_fails_if_invalid_scorer_is_given():
     with pytest.raises(MLToolingError):
         get_scoring_func('invalid_scorer')
+
+
+def test_add_text_labels_vertical_returns_correct():
+    fig, ax = plt.subplots()
+    ax.bar(['value'], [100])
+    x_values, y_values = next(_generate_text_labels(ax, horizontal=False))
+    assert 0 == x_values
+    assert (100 + 105 * .005) == y_values
+
+
+def test_add_text_labels_horizontal_returns_correct():
+    fig, ax = plt.subplots()
+    ax.barh(['value'], [100])
+    x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
+    assert 0 == y_values
+    assert (100 + 105 * .005) == x_values

@@ -1,9 +1,9 @@
 import pytest
 import pandas as pd
 import numpy as np
-from ml_tooling.result import CVResult
+from ml_tooling.result import CVResult, Result
 from sklearn.dummy import DummyClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
 from ml_tooling.transformers import (Select,
@@ -22,19 +22,26 @@ from ml_tooling.transformers import (Select,
 from ml_tooling.utils import TransformerError
 
 
-# TODO Implement Gridsearch test
-
 class TransformerBase:
     @staticmethod
-    def create_pipeline(base, transformer):
+    def create_pipeline(transformer):
         pipe = Pipeline([
             ('transform', transformer),
             ('clf', DummyClassifier())
         ])
+        return pipe
 
+    def create_model(self, base, transformer):
+        pipe = self.create_pipeline(transformer)
         model = base(pipe)
         model.config.N_JOBS = 2
         return model
+
+    def create_gridsearch(self, transformer):
+        pipe = self.create_pipeline(transformer)
+        return GridSearchCV(pipe,
+                            param_grid={'clf__strategy': ['stratified', 'most_frequent']},
+                            cv=2)
 
 
 class TestDFSelector(TransformerBase):
@@ -64,9 +71,15 @@ class TestDFSelector(TransformerBase):
             select.fit_transform(categorical)
 
     def test_df_selector_works_cross_validated(self, base):
-        model = self.create_pipeline(base, Select('sepal length (cm)'))
+        model = self.create_model(base, Select('sepal length (cm)'))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_df_selector_works_gridsearch(self, base):
+        grid = self.create_gridsearch(Select('sepal length (cm)'))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestFillNA(TransformerBase):
@@ -144,9 +157,15 @@ class TestFillNA(TransformerBase):
         pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
     def test_fillna_works_cross_validated(self, base):
-        model = self.create_pipeline(base, FillNA(0))
+        model = self.create_model(base, FillNA(0))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_fillna_works_gridsearch(self, base):
+        grid = self.create_gridsearch(FillNA(0))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestToCategorical(TransformerBase):
@@ -184,10 +203,16 @@ class TestToCategorical(TransformerBase):
         assert 0 == result.isna().sum().sum()
         assert set(expected_cols) == set(result.columns)
 
-    def to_categorical_works_in_cv(self, base):
-        model = self.create_pipeline(base, ToCategorical())
+    def test_to_categorical_works_in_cv(self, base):
+        model = self.create_model(base, ToCategorical())
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_to_categorical_works_gridsearch(self, base):
+        grid = self.create_gridsearch(ToCategorical())
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestBinner(TransformerBase):
@@ -215,9 +240,15 @@ class TestBinner(TransformerBase):
         assert len(new_data) == result.isna().sum().sum()
 
     def test_binner_can_be_used_cv(self, base):
-        model = self.create_pipeline(base, Binner(3))
+        model = self.create_model(base, Binner(3))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_binner_works_gridsearch(self, base):
+        grid = self.create_gridsearch(Binner(3))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestRenamer(TransformerBase):
@@ -246,9 +277,15 @@ class TestRenamer(TransformerBase):
             renamer.fit_transform(numerical)
 
     def test_renamer_works_in_cv(self, base):
-        model = self.create_pipeline(base, Renamer(['1', '2', '3', '4']))
+        model = self.create_model(base, Renamer(['1', '2', '3', '4']))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_renamer_works_gridsearch(self, base):
+        grid = self.create_gridsearch(Renamer(['1', '2', '3', '4']))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestDateEncoder(TransformerBase):
@@ -315,6 +352,19 @@ class TestDateEncoder(TransformerBase):
         assert 'date_a_month' not in result.columns
         assert 'date_a_week' in result.columns
 
+    def test_date_encoder_works_in_cv(self, dates):
+        pipe = self.create_pipeline(DateEncoder())
+        score = cross_val_score(pipe, dates, [0, 1, 1], n_jobs=2, cv=2)
+        assert 2 == len(score)
+
+    def test_date_encoder_works_in_grid_search(self, dates):
+        pipe = self.create_pipeline(DateEncoder())
+        grid = GridSearchCV(pipe,
+                            param_grid={'clf__strategy': ['stratified', 'most_frequent']},
+                            cv=2)
+        grid.fit(dates, [0, 1, 1])
+        assert hasattr(grid, 'best_score_')
+
 
 class TestFreqFeature(TransformerBase):
     def test_freqfeature_returns_correctly(self, categorical):
@@ -350,14 +400,18 @@ class TestFreqFeature(TransformerBase):
         assert len(new_data) == len(result)
         assert 0 == result.iloc[-1, 0]
 
-    def test_transformer_can_be_used_in_cross_validation_string_data(self, categorical):
-        pipe = Pipeline([
-            ('transform', FreqFeature()),
-            ('clf', DummyClassifier())
-        ])
-
+    def test_freq_feature_can_be_used_in_cross_validation_string_data(self, categorical):
+        pipe = self.create_pipeline(FreqFeature())
         score = cross_val_score(pipe, categorical, np.array([1, 0, 1]), cv=2)
         assert np.all(score >= 0)
+
+    def test_freq_feature_can_be_used_in_grid_search(self, categorical):
+        pipe = self.create_pipeline(FreqFeature())
+        model = GridSearchCV(pipe,
+                             param_grid={'clf__strategy': ['stratified', 'most_frequent']},
+                             cv=2)
+        model.fit(categorical, [1, 0, 1])
+        assert hasattr(model, 'best_estimator_')
 
 
 class TestFeatureUnion(TransformerBase):
@@ -407,9 +461,15 @@ class TestStandardScaler(TransformerBase):
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
     def test_standard_scaler_works_in_cv(self, base):
-        model = self.create_pipeline(base, DFStandardScaler())
+        model = self.create_model(base, DFStandardScaler())
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_standard_scaler_works_in_gridsearch(self, base):
+        grid = self.create_gridsearch(DFStandardScaler())
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestDFRowFunc(TransformerBase):
@@ -438,9 +498,15 @@ class TestDFRowFunc(TransformerBase):
         pd.testing.assert_frame_equal(result, expected)
 
     def test_dfrowfunc_cross_validates_correctly(self, base):
-        model = self.create_pipeline(base, DFRowFunc(strategy='mean'))
+        model = self.create_model(base, DFRowFunc(strategy='mean'))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
+
+    def test_dfrowfunc_works_in_gridsearch(self, base):
+        grid = self.create_gridsearch(DFRowFunc(strategy='mean'))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
 
 
 class TestFuncTransformer(TransformerBase):
@@ -454,7 +520,7 @@ class TestFuncTransformer(TransformerBase):
             assert result[col].str.isupper().all()
 
     def test_func_transfomer_can_be_validated(self, base):
-        model = self.create_pipeline(base, FuncTransformer(np.sum))
+        model = self.create_model(base, FuncTransformer(np.sum))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
 
@@ -470,3 +536,9 @@ class TestFuncTransformer(TransformerBase):
         result = transformer.fit_transform(numerical)
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+    def test_func_transformer_works_in_gridsearch(self, base):
+        grid = self.create_gridsearch(FuncTransformer(np.mean))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)

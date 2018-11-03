@@ -22,7 +22,22 @@ from ml_tooling.transformers import (Select,
 from ml_tooling.utils import TransformerError
 
 
-class TestDFSelector:
+# TODO Implement Gridsearch test
+
+class TransformerBase:
+    @staticmethod
+    def create_pipeline(base, transformer):
+        pipe = Pipeline([
+            ('transform', transformer),
+            ('clf', DummyClassifier())
+        ])
+
+        model = base(pipe)
+        model.config.N_JOBS = 2
+        return model
+
+
+class TestDFSelector(TransformerBase):
     @pytest.mark.parametrize('container', [['category_a'], 'category_a', ('category_a',)])
     def test_df_selector_returns_correct_dataframe(self, categorical, container):
         select = Select(container)
@@ -48,40 +63,13 @@ class TestDFSelector:
                            match="The DataFrame does not include the columns:"):
             select.fit_transform(categorical)
 
-
-@pytest.mark.parametrize('transformer', [Select('sepal length (cm)'),
-                                         FillNA(0),
-                                         DFRowFunc(strategy='mean'),
-                                         Binner(3),
-                                         FuncTransformer(lambda x: x),
-                                         Renamer(['1', '2', '3', '4']),
-                                         ToCategorical(),
-                                         DFStandardScaler(),
-                                         ],
-                         ids=lambda x: x.__class__.__name__)
-def test_transformer_can_be_used_in_cross_validation_numeric_data(transformer, base):
-    pipe = Pipeline([
-        ('transform', transformer),
-        ('clf', DummyClassifier())
-    ])
-
-    model = base(pipe)
-    model.config.N_JOBS = 2
-    result = model.score_model(cv=2)
-    assert isinstance(result, CVResult)
+    def test_df_selector_works_cross_validated(self, base):
+        model = self.create_pipeline(base, Select('sepal length (cm)'))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
 
-def test_transformer_can_be_used_in_cross_validation_string_data(categorical):
-    pipe = Pipeline([
-        ('transform', FreqFeature()),
-        ('clf', DummyClassifier())
-    ])
-
-    score = cross_val_score(pipe, categorical, np.array([1, 0, 1]), cv=2)
-    assert np.all(score >= 0)
-
-
-class TestFillNA:
+class TestFillNA(TransformerBase):
     @pytest.mark.parametrize('value, strategy', [
         (None, None),
         (0, 'mean')
@@ -89,7 +77,6 @@ class TestFillNA:
     def test_fillna_raises_error(self, numerical_na, value, strategy):
         with pytest.raises(TransformerError):
             FillNA(value=value, strategy=strategy).fit(numerical_na)
-
 
     @pytest.mark.parametrize('value, strategy', [
         (None, None),
@@ -137,7 +124,7 @@ class TestFillNA:
          pd.DataFrame({'number_a': [2.0, 2.0, 3.0, 4.0],
                        'number_b': [5.0, 6.0, 7.0, 5.0]})),
     ])
-    def test_FillNA_imputes_numerical_na_correct(self, numerical_na, value, strategy, expected):
+    def test_fill_na_imputes_numerical_na_correct(self, numerical_na, value, strategy, expected):
         imputer = FillNA(value=value, strategy=strategy)
         result = imputer.fit_transform(numerical_na)
         pd.testing.assert_frame_equal(result, expected)
@@ -164,8 +151,13 @@ class TestFillNA:
 
         pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
+    def test_fillna_works_cross_validated(self, base):
+        model = self.create_pipeline(base, FillNA(0))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
-class TestCategorical:
+
+class TestToCategorical(TransformerBase):
     def test_to_categorical_returns_correct_dataframe(self, categorical):
         to_cat = ToCategorical()
         result = to_cat.fit_transform(categorical)
@@ -200,17 +192,13 @@ class TestCategorical:
         assert 0 == result.isna().sum().sum()
         assert set(expected_cols) == set(result.columns)
 
-    def test_func_transformer_returns_correctly(self, categorical):
-        func_transformer = FuncTransformer(lambda x: x.str.upper())
-        result = func_transformer.fit_transform(categorical)
-
-        assert isinstance(result, pd.DataFrame)
-        assert len(categorical) == len(result)
-        for col in result.columns:
-            assert result[col].str.isupper().all()
+    def to_categorical_works_in_cv(self, base):
+        model = self.create_pipeline(base, ToCategorical())
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
 
-class TestBinner:
+class TestBinner(TransformerBase):
     def test_binner_returns_correctly(self, numerical):
         labels = ['1', '2', '3', '4']
         binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
@@ -234,8 +222,13 @@ class TestBinner:
         assert len(new_data) == len(result)
         assert len(new_data) == result.isna().sum().sum()
 
+    def test_binner_can_be_used_cv(self, base):
+        model = self.create_pipeline(base, Binner(3))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
-class TestRenamer:
+
+class TestRenamer(TransformerBase):
     def test_renamer_returns_correctly(self, numerical):
         new_col_names = ['test_a', 'test_b']
         renamer = Renamer(new_col_names)
@@ -260,8 +253,13 @@ class TestRenamer:
         with pytest.raises(TransformerError):
             renamer.fit_transform(numerical)
 
+    def test_renamer_works_in_cv(self, base):
+        model = self.create_pipeline(base, Renamer(['1', '2', '3', '4']))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
-class TestDateEncoder:
+
+class TestDateEncoder(TransformerBase):
     def test_date_encoder_returns_correctly(self, dates):
         date_coder = DateEncoder()
         result = date_coder.fit_transform(dates)
@@ -326,7 +324,7 @@ class TestDateEncoder:
         assert 'date_a_week' in result.columns
 
 
-class TestFreqFeature:
+class TestFreqFeature(TransformerBase):
     def test_freqfeature_returns_correctly(self, categorical):
         freq_feature = FreqFeature()
         result = freq_feature.fit_transform(categorical)
@@ -360,8 +358,17 @@ class TestFreqFeature:
         assert len(new_data) == len(result)
         assert 0 == result.iloc[-1, 0]
 
+    def test_transformer_can_be_used_in_cross_validation_string_data(self, categorical):
+        pipe = Pipeline([
+            ('transform', FreqFeature()),
+            ('clf', DummyClassifier())
+        ])
 
-class TestFeatureUnion:
+        score = cross_val_score(pipe, categorical, np.array([1, 0, 1]), cv=2)
+        assert np.all(score >= 0)
+
+
+class TestFeatureUnion(TransformerBase):
     def test_featureunion_returns_concatenated_df(self, categorical, numerical):
         df = pd.concat([categorical, numerical], axis=1)
         first_pipe = make_pipeline(Select(['category_a', 'category_b']),
@@ -379,8 +386,8 @@ class TestFeatureUnion:
         assert len(df) == len(transform_df)
 
 
-class TestStandardScaler:
-    def test_DFStandardScaler_returns_correct_dataframe(self, numerical):
+class TestStandardScaler(TransformerBase):
+    def test_standard_scaler_returns_correct_dataframe(self, numerical):
         numerical_scaled = numerical.copy()
         numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.118033988749895
         numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.118033988749895
@@ -390,7 +397,7 @@ class TestStandardScaler:
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_DFStandardScaler_works_in_pipeline_with_DFFeatureUnion(self, numerical):
+    def test_standard_scaler_works_in_pipeline_with_feature_union(self, numerical):
         numerical_scaled = numerical.copy()
         numerical_scaled['number_a'] = (numerical['number_a'] - 2.5) / 1.118033988749895
         numerical_scaled['number_b'] = (numerical['number_b'] - 6.5) / 1.118033988749895
@@ -407,8 +414,13 @@ class TestStandardScaler:
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
+    def test_standard_scaler_works_in_cv(self, base):
+        model = self.create_pipeline(base, DFStandardScaler())
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
 
-class TestDFRowFunc:
+
+class TestDFRowFunc(TransformerBase):
     @pytest.mark.parametrize('strategy, match', [
         (None, "No strategy is specified."),
         ('avg', "Strategy avg is not a predefined strategy"),
@@ -432,3 +444,37 @@ class TestDFRowFunc:
         dfrowfunc = DFRowFunc(strategy=strategy)
         result = dfrowfunc.fit_transform(numerical_na)
         pd.testing.assert_frame_equal(result, expected)
+
+    def test_dfrowfunc_cross_validates_correctly(self, base):
+        model = self.create_pipeline(base, DFRowFunc(strategy='mean'))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
+
+
+class TestFuncTransformer(TransformerBase):
+    def test_func_transformer_returns_correctly_on_categorical(self, categorical):
+        func_transformer = FuncTransformer(lambda x: x.str.upper())
+        result = func_transformer.fit_transform(categorical)
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(categorical) == len(result)
+        for col in result.columns:
+            assert result[col].str.isupper().all()
+
+    def test_func_transfomer_can_be_validated(self, base):
+        model = self.create_pipeline(base, FuncTransformer(np.sum))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
+
+    @pytest.mark.parametrize('passed_func, expected', [
+        (np.mean, pd.DataFrame({"number_a": [2.5, 2.5, 2.5, 2.5],
+                                "number_b": [6.5, 6.5, 6.5, 6.5]})),
+        (lambda x: x * 2, pd.DataFrame({"number_a": [2, 4, 6, 8],
+                                        "number_b": [10, 12, 14, 16]}))
+
+    ])
+    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected):
+        transformer = FuncTransformer(passed_func)
+        result = transformer.fit_transform(numerical)
+
+        pd.testing.assert_frame_equal(expected, result, check_dtype=False)

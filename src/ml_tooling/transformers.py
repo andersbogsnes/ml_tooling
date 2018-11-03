@@ -124,7 +124,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series]], pd.DataFrame]):
+    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series, np.array]], pd.DataFrame]):
         self.func = func
 
     def fit(self, X: pd.DataFrame, y=None):

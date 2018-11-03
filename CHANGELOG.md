@@ -1,3 +1,6 @@
+v0.3.1
+- Fixed bug that prevented DFRowFunc from pickling properly
+
 v0.3.0
 - Added DFRowFunc Transformer
 - Updated FillNA to handle categorical values

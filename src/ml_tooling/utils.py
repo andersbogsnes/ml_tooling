@@ -155,7 +155,7 @@ def listify(collection) -> list:
     if isinstance(collection, str):
         collection = [collection]
 
-    if isinstance(collection, tuple) or isinstance(collection, set):
+    if isinstance(collection, (tuple, set)):
         collection = list(collection)
 
     return collection

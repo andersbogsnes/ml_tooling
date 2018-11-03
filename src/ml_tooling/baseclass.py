@@ -136,10 +136,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         x = self.get_prediction_data(input_data)
 
         try:
-            if proba is True:
+            if proba:
                 return self.model.predict_proba(x)
-            else:
-                return self.model.predict(x)
+
+            return self.model.predict(x)
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

@@ -155,7 +155,7 @@ def listify(collection) -> list:
     if isinstance(collection, str):
         collection = [collection]
 
-    if isinstance(collection, tuple) or isinstance(collection, set):
+    if isinstance(collection, (tuple, set)):
         collection = list(collection)
 
     return collection
@@ -167,3 +167,7 @@ def _is_percent(number):
             raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
         return True
     return False
+
+
+def _most_freq(X):
+    return pd.DataFrame.mode(X).iloc[0]

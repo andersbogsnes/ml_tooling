@@ -78,14 +78,6 @@ class TestFillNA(TransformerBase):
         with pytest.raises(TransformerError):
             FillNA(value=value, strategy=strategy).fit(numerical_na)
 
-    @pytest.mark.parametrize('value, strategy', [
-        (None, None),
-        (0, 'mean')
-    ])
-    def test_fillna_raises_error(self, numerical_na, value, strategy):
-        with pytest.raises(TransformerError):
-            FillNA(value=value, strategy=strategy).fit(numerical_na)
-
     def test_fillna_returns_dataframe_unchanged_if_no_nans(self, categorical):
         imputer = FillNA('Unknown')
         result = imputer.fit_transform(categorical)

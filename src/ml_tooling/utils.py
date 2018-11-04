@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
-
+from sklearn.pipeline import Pipeline
 from sklearn.metrics.scorer import (explained_variance_scorer,
                                     r2_scorer,
                                     fowlkes_mallows_scorer,
@@ -26,7 +26,7 @@ from sklearn.metrics.scorer import (explained_variance_scorer,
                                     adjusted_mutual_info_scorer,
                                     normalized_mutual_info_scorer,
                                     )
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, ParameterGrid
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -171,3 +171,22 @@ def _is_percent(number):
 
 def _most_freq(X):
     return pd.DataFrame.mode(X).iloc[0]
+
+
+def _create_param_grid(pipe, param_grid):
+    """
+
+    :param pipe:
+    :param param_grid:
+    :return:
+    """
+    if not isinstance(pipe, Pipeline):
+        return ParameterGrid(param_grid)
+
+    step_name, _ = pipe.steps[-1][0], pipe.steps[-1][1]
+
+    step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
+                 for param, value
+                 in param_grid.items()}
+
+    return ParameterGrid(step_dict)

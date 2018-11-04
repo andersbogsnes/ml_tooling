@@ -3,6 +3,8 @@ import pathlib
 from typing import List, Tuple, Optional, Sequence, Union
 
 import numpy as np
+from sklearn import clone
+from sklearn.base import BaseEstimator
 
 from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
@@ -17,6 +19,7 @@ from .utils import (
     find_model_file,
     Data,
     get_scoring_func,
+    _create_param_grid
 )
 from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
@@ -223,9 +226,38 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.result = self._score_model(self.model, metric)
         return self.result
 
-        return self._score_model(metric)
+    def gridsearch(self, 
+                   param_grid: dict,
+                   metric: Optional[str] = None,
+                   cv: Optional[int] = None) -> Tuple[BaseEstimator, List[CVResult]]:
+        """
+        Grid search model with parameters in param_grid.
+        Param_grid automatically adds prefix from last step if using pipeline
+        :param param_grid:
+            Parameters to use for grid search
+        :param metric:
+            metric to use for scoring
+        :param cv:
+            Cross validation to use. Defaults to 10 based on value in config
+        :return:
+        """
+        self._load_data(train_test=True)
 
-    def _score_model(self, metric: str) -> Result:
+        metric = self.default_metric if metric is None else metric
+        cv = self.config.CROSS_VALIDATION if metric is None else cv
+        param_grid = _create_param_grid(self.model, param_grid)
+        baseline_model = clone(self.model)
+
+        parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
+        results = parallel(
+            joblib.delayed(self._score_model_cv)(clone(baseline_model).set_params(**param),
+                                                 metric=metric,
+                                                 cv=cv) for param in param_grid)
+        results = sorted(results, reverse=True)
+        self.result = results
+        return results[0].model, results
+
+    def _score_model(self, model, metric: str) -> Result:
         """
         Scores model with a given score function.
         :param metric:

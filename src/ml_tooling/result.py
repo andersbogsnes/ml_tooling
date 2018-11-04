@@ -3,7 +3,6 @@ from typing import Union
 
 import numpy as np
 from matplotlib import pyplot as plt
-
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
                     plot_residuals,

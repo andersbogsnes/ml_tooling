@@ -193,3 +193,12 @@ class TestBaseClass:
         model = DummyModel.setup_model()
         assert model.model_name == 'LogisticRegression'
         assert hasattr(model, 'coef_') is False
+
+    def test_gridsearch_model_returns_as_expected(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model, results = model.gridsearch(param_grid={'penalty': ['l1', 'l2']})
+        assert isinstance(model, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, CVResult)

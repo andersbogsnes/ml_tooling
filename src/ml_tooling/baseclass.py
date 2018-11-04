@@ -36,11 +36,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.data = None
         self.result = None
         self._plotter = None
+        self.default_metric = None
 
         if self.model_type == 'classifier':
             self._plotter = ClassificationVisualize
+            self.default_metric = self.config.CLASSIFIER_METRIC
+
         if self.model_type == 'regressor':
             self._plotter = RegressionVisualize
+            self.default_metric = self.config.REGRESSION_METRIC
 
     @abc.abstractmethod
     def get_training_data(self) -> Tuple[DataType, DataType]:
@@ -81,7 +85,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model = joblib.load(model_file)
         return cls(model)
 
-    def _load_data(self) -> Data:
+    def _load_data(self, train_test=False) -> Data:
         """
         Internal method for loading data into class
 
@@ -90,7 +94,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         if self.data is None:
             x, y = self.get_training_data()
-            self.data = Data(x, y)
+            if train_test:
+                stratify = y if self.model_type == 'classifier' else None
+                self.data = Data.with_train_test(x, y,
+                                                 stratify=stratify,
+                                                 test_size=self.config.TEST_SIZE)
+            else:
+                self.data = Data(x, y)
         return self.data
 
     def _generate_filename(self):
@@ -182,7 +192,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             self
         """
-        self._load_data()
+        self._load_data(train_test=False)
         self.model.fit(self.data.x, self.data.y)
         return self
 
@@ -201,21 +211,17 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             Result
         """
-        self._load_data()
+        self._load_data(train_test=True)
+        metric = self.default_metric if metric is None else metric
 
-        if self.model_type == 'classifier':
-            metric = self.config.CLASSIFIER_METRIC if metric is None else metric
-            stratify = self.data.y
-
-        else:
-            metric = self.config.REGRESSION_METRIC if metric is None else metric
-            stratify = None
-
-        self.data.create_train_test(stratify=stratify)
         self.model.fit(self.data.train_x, self.data.train_y)
 
         if cv:  # TODO handle case of Sklearn CV class
-            return self._score_model_cv(metric, cv)
+            self.result = self._score_model_cv(self.model, metric, cv)
+            return self.result
+
+        self.result = self._score_model(self.model, metric)
+        return self.result
 
         return self._score_model(metric)
 
@@ -229,21 +235,23 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         # TODO support any given sklearn scorer - must check that it is a scorer
         scoring_func = get_scoring_func(metric)
 
-        score = scoring_func(self.model, self.data.test_x, self.data.test_y)
-        viz = self._plotter(model=self.model,
+        score = scoring_func(model, self.data.test_x, self.data.test_y)
+        viz = self._plotter(model=model,
                             config=self.config,
                             data=self.data)
 
-        self.result = Result(model=self.model,
-                             model_name=self.model_name,
-                             viz=viz,
-                             model_params=self.model.get_params(),
-                             score=score,
-                             metric=metric)
+        result = Result(model=model,
+                        viz=viz,
+                        model_params=model.get_params(),
+                        score=score,
+                        metric=metric)
 
-        return self.result
+        return result
 
-    def _score_model_cv(self, metric: Optional[str] = None, cv: Optional[int] = None) -> CVResult:
+    def _score_model_cv(self,
+                        model,
+                        metric=None,
+                        cv=None) -> CVResult:
         """
         Scores model with given metric using cross-validation
         :param metric:
@@ -254,7 +262,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         cv = self.config.CROSS_VALIDATION if cv is None else cv
 
-        scores = cross_val_score(self.model,
+        scores = cross_val_score(model,
                                  self.data.train_x,
                                  self.data.train_y,
                                  cv=cv,
@@ -263,23 +271,20 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  verbose=self.config.VERBOSITY,
                                  )
 
-        viz = self._plotter(model=self.model,
+        viz = self._plotter(model=model,
                             config=self.config,
                             data=self.data)
 
-        self.result = CVResult(
-            model=self.model,
+        result = CVResult(
+            model=model,
             viz=viz,
-            model_name=self.model_name,
-            model_params=self.model.get_params(),
+            model_params=model.get_params(),
             metric=metric,
             cross_val_scores=scores,
-            cross_val_mean=np.mean(scores),
-            cross_val_std=np.std(scores),
             cv=cv
         )
 
-        return self.result
+        return result
 
     @classmethod
     def reset_config(cls):

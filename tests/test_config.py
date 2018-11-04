@@ -45,5 +45,5 @@ def test_can_change_config():
 def test_config_repr_works():
     config = DefaultConfig()
     for key in ['VERBOSITY', 'CLASSIFIER_METRIC', 'REGRESSION_METRIC', 'CROSS_VALIDATION',
-                'STYLE_SHEET', 'N_JOBS', 'TRAIN_SIZE', 'RANDOM_STATE']:
+                'STYLE_SHEET', 'N_JOBS', 'TEST_SIZE', 'RANDOM_STATE']:
         assert key in config.__repr__()

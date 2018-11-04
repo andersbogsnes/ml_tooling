@@ -13,6 +13,7 @@ from .plots import (_get_feature_importance,
                     plot_roc_auc,
                     plot_lift_curve,
                     )
+from .utils import get_model_name
 
 
 @total_ordering

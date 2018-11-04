@@ -19,14 +19,13 @@ from .plots import (_get_feature_importance,
 class Result:
     def __init__(self,
                  model,
-                 model_name,
                  viz=None,
                  model_params=None,
                  score=None,
                  metric=None
                  ):
         self.model = model
-        self.model_name = model_name
+        self.model_name = get_model_name(model)
         self.score = score
         self.model_params = model_params
         self.metric = metric
@@ -51,19 +50,17 @@ class CVResult(Result):
 
     def __init__(self,
                  model,
-                 model_name,
                  viz=None,
                  cv=None,
                  model_params=None,
                  cross_val_scores=None,
-                 cross_val_mean=None,
-                 cross_val_std=None,
                  metric=None
                  ):
-        super().__init__(model, model_name, viz, model_params, cross_val_mean, metric)
         self.cv = cv
         self.cross_val_scores = cross_val_scores
-        self.cross_val_std = cross_val_std
+        self.cross_val_mean = np.mean(cross_val_scores)
+        self.cross_val_std = np.std(cross_val_scores)
+        super().__init__(model, viz, model_params, self.cross_val_mean, metric)
 
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
@@ -79,7 +76,7 @@ class BaseVisualize:
 
     def __init__(self, model, config, data):
         self._model = model
-        self._model_name = model.__class__.__name__
+        self._model_name = get_model_name(model)
         self._config = config
         self._data = data
         self._feature_labels = self._get_labels()

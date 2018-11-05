@@ -183,7 +183,7 @@ def _create_param_grid(pipe, param_grid):
     if not isinstance(pipe, Pipeline):
         return ParameterGrid(param_grid)
 
-    step_name, _ = pipe.steps[-1][0], pipe.steps[-1][1]
+    step_name = pipe.steps[-1][0]
 
     step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
                  for param, value

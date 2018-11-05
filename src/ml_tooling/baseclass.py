@@ -226,7 +226,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.result = self._score_model(self.model, metric)
         return self.result
 
-    def gridsearch(self, 
+    def gridsearch(self,
                    param_grid: dict,
                    metric: Optional[str] = None,
                    cv: Optional[int] = None) -> Tuple[BaseEstimator, List[CVResult]]:

@@ -190,3 +190,26 @@ def _create_param_grid(pipe, param_grid):
                  in param_grid.items()}
 
     return ParameterGrid(step_dict)
+
+
+def _get_labels(model, data):
+    """
+    If data is a DataFrame, use columns attribute - else use [0...n] np.array
+    :return:
+        list-like of labels
+    """
+    if hasattr(data, 'columns'):
+        if isinstance(model, Pipeline):
+            labels = _get_labels_from_pipeline(model, data)
+        else:
+            labels = data.columns
+    else:
+        labels = np.arange(data.shape[1])
+
+    return labels
+
+
+def _get_labels_from_pipeline(pipe, df):
+    transformers = pipe.steps[:-1]
+    transform_pipe = Pipeline(transformers)
+    return transform_pipe.transform(df).columns

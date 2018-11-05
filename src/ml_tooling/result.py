@@ -3,6 +3,7 @@ from typing import Union
 
 import numpy as np
 from matplotlib import pyplot as plt
+
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
                     plot_residuals,
@@ -12,7 +13,7 @@ from .plots import (_get_feature_importance,
                     plot_roc_auc,
                     plot_lift_curve,
                     )
-from .utils import get_model_name
+from .utils import get_model_name, _get_labels
 
 
 @total_ordering
@@ -22,7 +23,8 @@ class Result:
                  viz=None,
                  model_params=None,
                  score=None,
-                 metric=None
+                 metric=None,
+                 labels=None
                  ):
         self.model = model
         self.model_name = get_model_name(model)
@@ -30,6 +32,7 @@ class Result:
         self.model_params = model_params
         self.metric = metric
         self.plot = viz
+        self.labels = labels
 
     def __eq__(self, other):
         return self.score == other.score
@@ -54,13 +57,14 @@ class CVResult(Result):
                  cv=None,
                  model_params=None,
                  cross_val_scores=None,
-                 metric=None
+                 metric=None,
+                 labels=None
                  ):
         self.cv = cv
         self.cross_val_scores = cross_val_scores
         self.cross_val_mean = np.mean(cross_val_scores)
         self.cross_val_std = np.std(cross_val_scores)
-        super().__init__(model, viz, model_params, self.cross_val_mean, metric)
+        super().__init__(model, viz, model_params, self.cross_val_mean, metric, labels)
 
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
@@ -79,20 +83,6 @@ class BaseVisualize:
         self._model_name = get_model_name(model)
         self._config = config
         self._data = data
-        self._feature_labels = self._get_labels()
-
-    def _get_labels(self):
-        """
-        If data is a DataFrame, use columns attribute - else use [0...n] np.array
-        :return:
-            list-like of labels
-        """
-        if hasattr(self._data.train_x, 'columns'):
-            labels = self._data.train_x.columns
-        else:
-            labels = np.arange(self._data.train_x.shape[1])
-
-        return labels
 
     def feature_importance(self,
                            values: bool = True,
@@ -120,10 +110,11 @@ class BaseVisualize:
 
         title = f"Feature Importance - {self._model_name}"
         importance = _get_feature_importance(self._model)
+        labels = _get_labels(self._model, self._data.train_x)
 
         with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(importance,
-                                           self._feature_labels,
+                                           labels,
                                            values=values,
                                            title=title,
                                            top_n=top_n,

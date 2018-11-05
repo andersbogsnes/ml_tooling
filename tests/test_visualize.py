@@ -277,12 +277,4 @@ class TestGetFeatureImportance:
         assert np.all(result.model.feature_importances_ == importance)
 
 
-def test_viz_get_labels_returns_array_if_there_are_no_columns(regression):
-    test_x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-    test_y = np.array([0, 1])
-    test_data = Data.with_train_test(test_x, test_y)
-    viz = RegressionVisualize(regression.model,
-                              regression.config,
-                              test_data)
-    labels = viz._get_labels()
-    assert np.all(np.arange(test_x.shape[1]) == labels)
+

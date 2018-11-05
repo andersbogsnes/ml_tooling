@@ -1,15 +1,19 @@
 import pytest
 import matplotlib.pyplot as plt
+from ml_tooling.transformers import ToCategorical
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
+import numpy as np
 from sklearn.metrics.scorer import _PredictScorer
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
                               _is_percent,
                               MLToolingError,
                               get_scoring_func,
-                              _create_param_grid
-                              )
+                              _create_param_grid,
+                              _get_labels)
 from ml_tooling.plots import _generate_text_labels
+from sklearn.pipeline import Pipeline
 
 
 def test_get_git_hash_returns_correctly():
@@ -105,28 +109,64 @@ def test_add_text_labels_horizontal_returns_correct():
     assert (100 + 105 * .005) == x_values
 
 
-def test_create_gridsearch_params_in_pipeline_returns_correct(pipeline_forest_classifier):
-    param_grid = {"n_estimators": [5, 10, 20],
-                  "max_depth": [3, 4, 5]}
-    grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+class TestGridsearchParams:
+    def test_create_gridsearch_params_in_pipeline_returns_correct(self, pipeline_forest_classifier):
+        param_grid = {"n_estimators": [5, 10, 20],
+                      "max_depth": [3, 4, 5]}
+        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
 
-    assert [{"clf__n_estimators": [5, 10, 20],
-             "clf__max_depth": [3, 4, 5]}] == grid.param_grid
+        assert [{"clf__n_estimators": [5, 10, 20],
+                 "clf__max_depth": [3, 4, 5]}] == grid.param_grid
+
+    def test_create_gridsearch_params_returns_if_already_prepended(self,
+                                                                   pipeline_forest_classifier):
+        param_grid = {"clf__n_estimators": [5, 10, 20],
+                      "clf__max_depth": [3, 4, 5]}
+
+        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+
+        assert [param_grid] == grid.param_grid
+
+    def test_create_gridsearch_params_without_pipeline_returns_correct(self):
+        param_grid = {"n_estimators": [5, 10, 20],
+                      "max_depth": [3, 4, 5]}
+        model = RandomForestClassifier()
+        grid = _create_param_grid(model, param_grid)
+
+        assert [param_grid] == grid.param_grid
 
 
-def test_create_gridsearch_params_returns_if_already_prepended(pipeline_forest_classifier):
-    param_grid = {"clf__n_estimators": [5, 10, 20],
-                  "clf__max_depth": [3, 4, 5]}
+class TestGetLabels:
+    def test_get_labels_returns_correctly_in_pipeline(self, categorical):
+        pipe = Pipeline([
+            ('cat', ToCategorical()),
+            ('clf', DummyClassifier())
+        ])
 
-    grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+        pipe.fit(categorical, [0, 1, 0])
+        labels = _get_labels(pipe, categorical)
+        expected_cols = ['category_a_a1',
+                         'category_a_a2',
+                         'category_a_a3',
+                         'category_b_b1',
+                         'category_b_b2',
+                         'category_b_b3']
 
-    assert [param_grid] == grid.param_grid
+        assert set(expected_cols) == set(labels)
 
+    def test_get_labels_returns_array_if_there_are_no_columns(self, regression):
+        test_x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
 
-def test_create_gridsearch_params_without_pipeline_returns_correct():
-    param_grid = {"n_estimators": [5, 10, 20],
-                  "max_depth": [3, 4, 5]}
-    model = RandomForestClassifier()
-    grid = _create_param_grid(model, param_grid)
+        labels = _get_labels(regression, test_x)
+        assert np.all(np.arange(test_x.shape[1]) == labels)
 
-    assert [param_grid] == grid.param_grid
+    def test_get_labels_outside_pipeline_returns_correctly(self, regression):
+        model = regression.model
+        data = regression.data.train_x
+
+        labels = _get_labels(model, data)
+        expected_labels = {'sepal length (cm)',
+                           'sepal width (cm)',
+                           'petal length (cm)',
+                           'petal width (cm)'}
+        assert expected_labels == set(labels)

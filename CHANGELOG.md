@@ -1,3 +1,6 @@
+v0.3.2
+- Another bugfix release
+
 v0.3.1
 - Fixed bug that prevented DFRowFunc from pickling properly
 

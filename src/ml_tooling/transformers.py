@@ -2,7 +2,7 @@
 Transformers for use in sklearn Pipelines.
 Mainly deals with DataFrames
 """
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler
@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from functools import reduce
 
-from .utils import listify, TransformerError
+from .utils import listify, TransformerError, _most_freq
 
 
 # noinspection PyUnusedLocal
@@ -20,9 +20,10 @@ class Select(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, columns):
-        self.columns = listify(columns)
+        self.columns = columns
 
     def fit(self, X, y=None):
+        self.columns = listify(self.columns)
         return self
 
     def transform(self, X):
@@ -39,14 +40,13 @@ class FillNA(BaseEstimator, TransformerMixin):
     Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
     """
 
-    def __init__(self, value=None, strategy: str = None):
+    def __init__(self,
+                 value: Optional[Union[str, int]] = None,
+                 strategy: str = None):
 
         self.value = value
         self.strategy = strategy
         self.value_map_ = None
-
-        def _most_freq(X):
-            return pd.DataFrame.mode(X).iloc[0]
 
         self.func_map_ = {'mean': pd.DataFrame.mean,
                           'median': pd.DataFrame.median,
@@ -54,7 +54,7 @@ class FillNA(BaseEstimator, TransformerMixin):
                           'max': pd.DataFrame.max,
                           'min': pd.DataFrame.min}
 
-    def validate_input(self):
+    def _validate_input(self):
 
         if self.value is None and self.strategy is None:
             raise TransformerError(f"Both value and strategy are set to None."
@@ -64,9 +64,15 @@ class FillNA(BaseEstimator, TransformerMixin):
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
+    def _col_is_categorical_and_is_missing_category(self, col, X):
+        if pd.api.types.is_categorical_dtype(X[col]):
+            if self.value_map_[col] not in X[col].cat.categories:
+                return True
+        return False
+
     def fit(self, X: pd.DataFrame, y=None):
 
-        self.validate_input()
+        self._validate_input()
 
         if self.strategy:
             impute_values = self.func_map_[self.strategy](X)
@@ -77,17 +83,11 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         return self
 
-    def col_is_categorical_and_is_missing_category(self, col, X):
-        if pd.api.types.is_categorical_dtype(X[col]) and \
-                self.value_map_[col] not in X[col].cat.categories:
-            return True
-        return False
-
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
         X = X.copy()
 
         for col in X.columns:
-            if self.col_is_categorical_and_is_missing_category(col, X):
+            if self._col_is_categorical_and_is_missing_category(col, X):
                 X[col].cat.add_categories(self.value_map_[col], inplace=True)
 
         result = X.fillna(value=self.value_map_)
@@ -124,7 +124,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series]], pd.DataFrame]):
+    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series, np.array]], pd.DataFrame]):
         self.func = func
 
     def fit(self, X: pd.DataFrame, y=None):
@@ -165,7 +165,7 @@ class Binner(BaseEstimator, TransformerMixin):
     Bins data according to passed bins and labels
     """
 
-    def __init__(self, bins: list = None, labels: list = None):
+    def __init__(self, bins: Union[int, list], labels: list = None):
         self.bins = bins
         self.labels = labels
 
@@ -186,17 +186,20 @@ class Renamer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, column_names: Union[list, str]):
-        self.column_names = listify(column_names)
+        self.column_names = column_names
 
     def fit(self, X: pd.DataFrame, y=None):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
-        if len(self.column_names) != len(X.columns):
+
+        column_names = listify(self.column_names)
+
+        if len(column_names) != len(X.columns):
             raise TransformerError(f"X has {len(X.columns)} columns - "
-                                   f"You provided {len(self.column_names)} column names")
-        X.columns = self.column_names
+                                   f"You provided {len(column_names)} column names")
+        X.columns = column_names
         return X
 
 
@@ -278,10 +281,18 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
 
     _func_map = {'sum': np.sum,
                  'min': np.min,
-                 'max': np.max}
+                 'max': np.max,
+                 'mean': np.mean}
 
     def __init__(self, strategy=None):
+        self.strategy = strategy
+        self.func = None
 
+    def fit(self, X: pd.DataFrame, y=None):
+        self._validate_strategy(self.strategy)
+        return self
+
+    def _validate_strategy(self, strategy):
         if strategy is None:
             raise TransformerError("No strategy is specified.")
 
@@ -295,9 +306,6 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
             self.func = self._func_map[strategy]
         else:
             self.func = strategy
-
-    def fit(self, X: pd.DataFrame, y=None):
-        return self
 
     def transform(self, X):
         X = X.copy()

@@ -1,17 +1,26 @@
 language: python
 python:
-  - "3.6"
-
+- '3.6'
 cache: pip
+
 env:
-  - TOXENV=py36
+- TOXENV=py36
 
 install:
-  - pip install tox codecov flake8
+- pip install tox codecov flake8
 
 script:
-  - tox -e $TOXENV
-  - flake8
+- tox -e $TOXENV
+- flake8
 
 after_success:
-  - codecov
+- codecov
+
+deploy:
+  provider: pypi
+  distributions: "sdist bdist_wheel"
+  user: andersbogsnes
+  password:
+    secure: iN5Ebts9jh57A2xEibz+DSCzu1ag73yMMQwjj29UiI2lq4sSKIjfy1z8iILGVxojz9ptrv8pw5GBeIUeHIwTZu5WDM5ZxXk2GXkU7vNKro/fRFfBRXqXaRxMclfkaB+j8Pp8tCm61GgiZqwX0IQSFXUgHgIHUnLtnUIOZsZS0MSNt8O/CkuJ62GkoUEqqSKCkorg57KvVxq1B6Ew00t94o6ngMCACnRxDqYMKnVbuKUxzPpcp6QVMDUobxuljd74tadIToOXpimbOyXQZaZ1tX430qdHFijxNqS9ycy7zH+LYv8D6/X6VtQhENhX+I69uciGGFyCzYJ0urr68EzXjj82sJ2qJ5j4RjuO103boEtNBLv/QImRjrBg5MwDJeoWrvkwc9rWH/4r1GHReGs8S6Tt0RCmNnJuKZcd5ZIJwHS0s9OwLHrVYYotnZY5VWVoftRYO2KnAB5+D7AYPHO3+P2H21m/ba21boJphl3hFCwD4pdNr/miXFOCTAH8QEFzdLV2GRlRCmyKWO1slK+WHnsNzC65bWkv3Moxr5twRRdzD7cdbGDSHPTcPdnIcWFs6+Cg4BeqPBPBGLF8rxlKcqZPs0S6MHi5I3CTFFso3MjZEPvkCCbzeBFONQQLrvTXwq3AruEckN2MrWAC4J+OcF26nXWeblEBLOQUCJcj9tE=
+  on:
+    tags: true

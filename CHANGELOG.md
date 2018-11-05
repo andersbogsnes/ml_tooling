@@ -2,6 +2,9 @@ v0.4.0
 - Added gridsearch method to BaseClass. Gridsearch your model 
 and return a list of results for inspection
 
+v0.3.2
+- Another bugfix release
+
 v0.3.1
 - Fixed bug that prevented DFRowFunc from pickling properly
 

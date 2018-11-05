@@ -66,29 +66,28 @@ class TestResult:
         assert isinstance(result.model, Pipeline)
 
     def test_cvresult_equality_operators(self):
-        first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-        second_result = CVResult(model=None, model_name='test2', cross_val_mean=.5,
-                                 cross_val_std=.2)
+        first_result = CVResult(model=RandomForestClassifier(), cross_val_scores=[2, 2])
+        second_result = CVResult(model=RandomForestClassifier(), cross_val_scores=[1, 1])
 
         assert first_result > second_result
 
     def test_result_equality_operators(self):
-        first_result = Result(model=None, model_name='test', score=.7)
-        second_result = Result(model=None, model_name='test2', score=.5)
+        first_result = Result(model=RandomForestClassifier(), score=.7)
+        second_result = Result(model=RandomForestClassifier(), score=.5)
 
         assert first_result > second_result
 
     def test_max_works_with_cv_result(self):
-        first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-        second_result = CVResult(model_name='test', model=None, cross_val_mean=.5, cross_val_std=.2)
+        first_result = CVResult(model=RandomForestClassifier(), cross_val_scores=[2, 2])
+        second_result = CVResult(model=RandomForestClassifier(), cross_val_scores=[1, 1])
 
         max_result = max([first_result, second_result])
 
         assert first_result is max_result
 
     def test_max_works_with_result(self):
-        first_result = Result(model=None, model_name='test', score=.7)
-        second_result = Result(model_name='test', model=None, score=.5)
+        first_result = Result(model=RandomForestClassifier(), score=.7)
+        second_result = Result(model=RandomForestClassifier(), score=.5)
 
         max_result = max([first_result, second_result])
 
@@ -194,3 +193,12 @@ class TestBaseClass:
         model = DummyModel.setup_model()
         assert model.model_name == 'LogisticRegression'
         assert hasattr(model, 'coef_') is False
+
+    def test_gridsearch_model_returns_as_expected(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model, results = model.gridsearch(param_grid={'penalty': ['l1', 'l2']})
+        assert isinstance(model, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, CVResult)

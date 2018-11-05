@@ -1,11 +1,13 @@
 import pytest
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import _PredictScorer
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
                               _is_percent,
                               MLToolingError,
                               get_scoring_func,
+                              _create_param_grid
                               )
 from ml_tooling.plots import _generate_text_labels
 
@@ -101,3 +103,30 @@ def test_add_text_labels_horizontal_returns_correct():
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
     assert (100 + 105 * .005) == x_values
+
+
+def test_create_gridsearch_params_in_pipeline_returns_correct(pipeline_forest_classifier):
+    param_grid = {"n_estimators": [5, 10, 20],
+                  "max_depth": [3, 4, 5]}
+    grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+
+    assert [{"clf__n_estimators": [5, 10, 20],
+             "clf__max_depth": [3, 4, 5]}] == grid.param_grid
+
+
+def test_create_gridsearch_params_returns_if_already_prepended(pipeline_forest_classifier):
+    param_grid = {"clf__n_estimators": [5, 10, 20],
+                  "clf__max_depth": [3, 4, 5]}
+
+    grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+
+    assert [param_grid] == grid.param_grid
+
+
+def test_create_gridsearch_params_without_pipeline_returns_correct():
+    param_grid = {"n_estimators": [5, 10, 20],
+                  "max_depth": [3, 4, 5]}
+    model = RandomForestClassifier()
+    grid = _create_param_grid(model, param_grid)
+
+    assert [param_grid] == grid.param_grid

@@ -1,3 +1,4 @@
+from ml_tooling.transformers import DFStandardScaler
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -121,7 +122,7 @@ def pipeline_linear():
 @pytest.fixture
 def pipeline_dummy_classifier():
     pipe = Pipeline([
-        ('scale', StandardScaler()),
+        ('scale', DFStandardScaler()),
         ('clf', DummyClassifier())
     ])
 
@@ -131,7 +132,7 @@ def pipeline_dummy_classifier():
 @pytest.fixture
 def pipeline_forest_classifier():
     pipe = Pipeline([
-        ('scale', StandardScaler()),
+        ('scale', DFStandardScaler()),
         ('clf', RandomForestClassifier(n_estimators=10))
     ])
 

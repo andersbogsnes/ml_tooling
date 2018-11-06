@@ -169,4 +169,5 @@ class TestGetLabels:
                            'sepal width (cm)',
                            'petal length (cm)',
                            'petal width (cm)'}
+
         assert expected_labels == set(labels)

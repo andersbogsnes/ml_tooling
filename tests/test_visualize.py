@@ -170,6 +170,23 @@ class TestFeatureImportancePlot:
         with pytest.raises(VizError):
             result.plot.feature_importance()
 
+    def test_feature_importance_plots_correctly_in_pipeline(self, base, pipeline_forest_classifier):
+        model = base(pipeline_forest_classifier)
+        result = model.score_model()
+        ax = result.plot.feature_importance()
+        assert 'Feature Importance - RandomForestClassifier' == ax.title._text
+
+        expected_cols = {'category_a_a1',
+                         'category_a_a2',
+                         'category_a_a3',
+                         'category_b_b1',
+                         'category_b_b2',
+                         'category_b_b3'}
+
+        assert expected_cols == {text._text for text in ax.get_yticklabels())}
+        assert 6 == len(ax.get_yticklabels())
+        plt.close()
+
 
 class TestLiftCurvePlot:
     def test_lift_curve_have_correct_data(self, classifier):

@@ -3,13 +3,17 @@ Test file for vizualisations
 """
 import pytest
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
-from ml_tooling.utils import Data
+from sklearn.pipeline import Pipeline
+
+from ml_tooling import BaseClassModel
+from ml_tooling.transformers import ToCategorical
 from ml_tooling.plots import (plot_lift_curve,
                               VizError,
                               _get_feature_importance,
@@ -170,21 +174,27 @@ class TestFeatureImportancePlot:
         with pytest.raises(VizError):
             result.plot.feature_importance()
 
-    def test_feature_importance_plots_correctly_in_pipeline(self, base, pipeline_forest_classifier):
-        model = base(pipeline_forest_classifier)
+    def test_feature_importance_plots_correctly_in_pipeline(self, base, categorical):
+        pipe = Pipeline([
+            ('tocategory', ToCategorical()),
+            ('clf', RandomForestClassifier(n_estimators=10))
+        ])
+
+        class DummyModel(BaseClassModel):
+            def get_training_data(self):
+                test_data = pd.DataFrame({"col_a": ["Y", "N", "Y", "N", "Y", "N", "Y"],
+                                          "col_b": ["Y", "N", "Y", "N", "Y", "N", "Y"]})
+                return test_data, np.array([1, 0, 1, 0, 1, 0, 1])
+
+            def get_prediction_data(self, *args):
+                pass
+
+        model = DummyModel(pipe)
         result = model.score_model()
         ax = result.plot.feature_importance()
         assert 'Feature Importance - RandomForestClassifier' == ax.title._text
 
-        expected_cols = {'category_a_a1',
-                         'category_a_a2',
-                         'category_a_a3',
-                         'category_b_b1',
-                         'category_b_b2',
-                         'category_b_b3'}
-
-        assert expected_cols == {text._text for text in ax.get_yticklabels())}
-        assert 6 == len(ax.get_yticklabels())
+        assert 4 == len(ax.get_yticklabels())
         plt.close()
 
 
@@ -292,6 +302,3 @@ class TestGetFeatureImportance:
         result = classifier.score_model()
         importance = _get_feature_importance(classifier.model)
         assert np.all(result.model.feature_importances_ == importance)
-
-
-

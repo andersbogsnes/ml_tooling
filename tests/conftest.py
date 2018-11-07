@@ -40,8 +40,8 @@ def _base():
 
 @pytest.fixture(name='categorical')
 def categorical_data():
-    return pd.DataFrame({"category_a": ["a1", "a2", "a3"],
-                         "category_b": ["b1", "b2", "b3"]})
+    return pd.DataFrame({"category_a": ["a1", "a2", "a3", "a1"],
+                         "category_b": ["b1", "b2", "b3", "b1"]})
 
 
 @pytest.fixture(name='categorical_na')

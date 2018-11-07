@@ -97,6 +97,9 @@ class ResultGroup:
     def __len__(self):
         return len(self.results)
 
+    def __getitem__(self, item):
+        return self.results[item]
+
     def mean_score(self):
         return np.mean([result.score for result in self.results])
 

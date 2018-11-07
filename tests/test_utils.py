@@ -143,7 +143,7 @@ class TestGetLabels:
             ('clf', DummyClassifier())
         ])
 
-        pipe.fit(categorical, [0, 1, 0])
+        pipe.fit(categorical, [0, 1, 0, 1])
         labels = _get_labels(pipe, categorical)
         expected_cols = ['category_a_a1',
                          'category_a_a2',

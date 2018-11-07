@@ -21,8 +21,8 @@ from .utils import get_model_name, _get_labels
 class Result:
     def __init__(self,
                  model,
+                 score,
                  viz=None,
-                 score=None,
                  metric=None,
                  labels=None
                  ):

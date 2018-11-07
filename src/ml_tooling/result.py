@@ -1,7 +1,8 @@
 from functools import total_ordering
-from typing import Union
+from typing import Union, List
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.pipeline import Pipeline
 
@@ -79,6 +80,51 @@ class CVResult(Result):
         return f"<Result {self.model_name}: " \
                f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
                f"± {np.round(self.cross_val_std, 2)}>"
+
+
+class ResultGroup:
+    def __init__(self, results: List[Result]):
+        self.results = sorted(results, reverse=True)
+
+    def __getattr__(self, name):
+        return getattr(self.results[0], name)
+
+    def __dir__(self):
+        proxied_dir = dir(self.results[0])
+        custom_methods = ['to_dataframe', 'mean_score']
+        return proxied_dir + custom_methods
+
+    def __len__(self):
+        return len(self.results)
+
+    def mean_score(self):
+        return np.mean([result.score for result in self.results])
+
+    def to_dataframe(self, params=True) -> pd.DataFrame:
+        """
+        Outputs results as a DataFrame. By default, the dataframe will contain
+        all possible model parameters. This behaviour can be toggled using `params=False`
+
+        :param params:
+            Boolean controlling whether or not to output params as part of the dataframe
+        :return:
+            pd.DataFrame of results
+        """
+        def create_row(result, param):
+            data_dict = {"model": result.model_name,
+                         "score": result.score}
+            if param:
+                data_dict.update(result.model_params)
+
+            if isinstance(result, CVResult):
+                data_dict["cross_val_std"] = result.cross_val_std
+                data_dict['cv'] = result.cv
+
+            return data_dict
+
+        output = [create_row(result, params) for result in self.results]
+
+        return pd.DataFrame(output).sort_values(by='score', ascending=False)
 
 
 class BaseVisualize:

@@ -258,7 +258,7 @@ def plot_feature_importance(importance: DataType,
                                                            top_n,
                                                            bottom_n
                                                            )
-
+    labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')

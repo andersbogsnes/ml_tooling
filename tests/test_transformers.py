@@ -99,12 +99,12 @@ class TestFillNA(TransformerBase):
     @pytest.mark.parametrize('value, strategy, expected', [
         ('Unknown',
          None,
-         pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3'],
-                       'category_b': ['Unknown', 'b2', 'b3']})),
+         pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3', 'a1'],
+                       'category_b': ['Unknown', 'b2', 'b3', 'b1']})),
         (None,
          'most_freq',
-         pd.DataFrame({'category_a': ['a1', 'a1', 'a3'],
-                       'category_b': ['b2', 'b2', 'b3']})),
+         pd.DataFrame({'category_a': ['a1', 'a1', 'a3', 'a1'],
+                       'category_b': ['b1', 'b2', 'b3', 'b1']})),
     ])
     def test_fillna_imputes_categorical_na_correct(self, categorical_na, value, strategy, expected):
         imputer = FillNA(value=value, strategy=strategy)
@@ -137,13 +137,13 @@ class TestFillNA(TransformerBase):
     @pytest.mark.parametrize('value, strategy, expected', [
         ('Unknown',
          None,
-         pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3'],
-                       'category_b': ['Unknown', 'b2', 'b3']},
+         pd.DataFrame({'category_a': ['a1', 'Unknown', 'a3', 'a1'],
+                       'category_b': ['Unknown', 'b2', 'b3', 'b1']},
                       dtype="category")),
         (None,
          'most_freq',
-         pd.DataFrame({'category_a': ['a1', 'a1', 'a3'],
-                       'category_b': ['b2', 'b2', 'b3']},
+         pd.DataFrame({'category_a': ['a1', 'a1', 'a3', 'a1'],
+                       'category_b': ['b1', 'b2', 'b3', 'b1']},
                       dtype="category")),
     ])
     def test_fillna_imputes_pandas_categorical_correct(self, value, strategy, expected,
@@ -376,8 +376,11 @@ class TestFreqFeature(TransformerBase):
         assert set(categorical.columns) == set(result.columns)
         for col in result.columns:
             assert pd.api.types.is_numeric_dtype(result[col])
-        assert 1 / len(categorical) == result.iloc[0, 0]
-        assert all(1 == result.sum())
+        assert 0.5 == result.iloc[0, 0]
+        assert 0.5 == result.iloc[0, 1]
+        assert 0.25 == result.iloc[1, 0]
+        assert 0.25 == result.iloc[1, 1]
+        assert np.all(1.5 == result.sum())
 
     def test_freqfeature_handles_nans_correctly(self, categorical_na):
         freq_feature = FreqFeature()
@@ -387,7 +390,7 @@ class TestFreqFeature(TransformerBase):
         assert len(categorical_na) == len(result)
         assert set(categorical_na.columns) == set(result)
         assert 0 == result.isna().sum().sum()
-        assert 1 / (len(categorical_na) - 1) == result.iloc[0, 0]
+        assert 2 / 3 == result.iloc[0, 0]
 
     def test_freq_features_returns_0_when_unseen_value_is_given(self, categorical):
         freq_feature = FreqFeature()
@@ -402,7 +405,7 @@ class TestFreqFeature(TransformerBase):
 
     def test_freq_feature_can_be_used_in_cross_validation_string_data(self, categorical):
         pipe = self.create_pipeline(FreqFeature())
-        score = cross_val_score(pipe, categorical, np.array([1, 0, 1]), cv=2)
+        score = cross_val_score(pipe, categorical, np.array([1, 0, 1, 0]), cv=2)
         assert np.all(score >= 0)
 
     def test_freq_feature_can_be_used_in_grid_search(self, categorical):
@@ -410,7 +413,7 @@ class TestFreqFeature(TransformerBase):
         model = GridSearchCV(pipe,
                              param_grid={'clf__strategy': ['stratified', 'most_frequent']},
                              cv=2)
-        model.fit(categorical, [1, 0, 1])
+        model.fit(categorical, [1, 0, 1, 0])
         assert hasattr(model, 'best_estimator_')
 
 

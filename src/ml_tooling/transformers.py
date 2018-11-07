@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from functools import reduce
 
-from .utils import listify, TransformerError, _most_freq
+from .utils import listify, TransformerError, _most_freq, DataType
 
 
 # noinspection PyUnusedLocal
@@ -19,14 +19,14 @@ class Select(BaseEstimator, TransformerMixin):
     Selects columns from DataFrame
     """
 
-    def __init__(self, columns):
+    def __init__(self, columns: Union[list, str]):
         self.columns = columns
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         self.columns = listify(self.columns)
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame):
         try:
             return X[self.columns]
         except KeyError:
@@ -42,7 +42,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def __init__(self,
                  value: Optional[Union[str, int]] = None,
-                 strategy: str = None):
+                 strategy: Optional[str] = None):
 
         self.value = value
         self.strategy = strategy
@@ -64,7 +64,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
-    def _col_is_categorical_and_is_missing_category(self, col, X):
+    def _col_is_categorical_and_is_missing_category(self, col: str, X: pd.DataFrame) -> bool:
         if pd.api.types.is_categorical_dtype(X[col]):
             if self.value_map_[col] not in X[col].cat.categories:
                 return True
@@ -124,7 +124,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series, np.array]], pd.DataFrame]):
+    def __init__(self, func: Callable[[DataType], pd.DataFrame]):
         self.func = func
 
     def fit(self, X: pd.DataFrame, y=None):
@@ -162,7 +162,9 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class Binner(BaseEstimator, TransformerMixin):
     """
-    Bins data according to passed bins and labels
+    Bins data according to passed bins and labels. Uses pd.cut() under the hood,
+    see https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.cut.html#pandas-cut
+    for further details
     """
 
     def __init__(self, bins: Union[int, list], labels: list = None):
@@ -182,7 +184,7 @@ class Binner(BaseEstimator, TransformerMixin):
 # noinspection PyUnusedLocal
 class Renamer(BaseEstimator, TransformerMixin):
     """
-    Renames columns to passed names
+    Renames columns to passed names.
     """
 
     def __init__(self, column_names: Union[list, str]):
@@ -247,7 +249,7 @@ class FreqFeature(BaseEstimator, TransformerMixin):
             self.frequencies[col] = X[col].str.upper().value_counts(normalize=True).to_dict()
         return self
 
-    def transform(self, X: pd.DataFrame):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
         for col in X.columns:
             X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
@@ -275,8 +277,13 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
 class DFRowFunc(BaseEstimator, TransformerMixin):
     """
     Row-wise operation on Pandas DataFrame. Strategy can either be one of
-    the predefined or a callable.    If some elements in the row are NaN these
+    the predefined or a callable. If some elements in the row are NaN these
     elements are ignored for the built-in strategies.
+    Valid strategies are:
+        - sum
+        - min
+        - max
+        - mean
     """
 
     _func_map = {'sum': np.sum,
@@ -307,7 +314,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         else:
             self.func = strategy
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         X = X.copy()
-        X = pd.DataFrame(X.apply(self.func, axis=1))
+        X = X.apply(self.func, axis=1).to_frame()
         return X

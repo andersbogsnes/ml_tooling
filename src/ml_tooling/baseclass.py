@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import List, Tuple, Optional, Sequence, Union
+from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
 from sklearn import clone
@@ -263,6 +263,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param metric:
             string of which scoring function to use
         :return:
+            Result object
         """
         # TODO support any given sklearn scorer - must check that it is a scorer
         scoring_func = get_scoring_func(metric)

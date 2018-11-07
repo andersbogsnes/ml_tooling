@@ -20,6 +20,10 @@ from .utils import get_model_name, _get_labels
 
 @total_ordering
 class Result:
+    """
+    Represents a single scoring of a model.
+    Contains plotting methods, as well as being comparable with other results
+    """
     def __init__(self,
                  model,
                  score,
@@ -35,12 +39,27 @@ class Result:
         self.labels = labels
 
     @property
-    def model_params(self):
+    def model_params(self) -> dict:
+        """
+        Calls get_params on estimator. Checks if estimator is a Pipeline, in which case it
+        assumes last step in pipeline is an estimator and calls get_params on that step only
+        :return:
+            dict of params
+        """
         if isinstance(self.model, Pipeline):
             return self.model.steps[-1][1].get_params()
         return self.model.get_params()
 
-    def to_dataframe(self, params=True):
+    def to_dataframe(self, params=True) -> pd.DataFrame:
+        """
+        Output result as a dataframe for ease of inspecting and manipulating.
+        Defaults to including model params, which can be toggled with the params flag.
+        This is useful if you're comparing different models
+        :param params:
+            Whether or not to include model parameters as columns.
+        :return:
+            DataFrame of the result
+        """
         model_params_dict = {}
         if params:
             model_params_dict = self.model_params
@@ -85,7 +104,22 @@ class CVResult(Result):
                          metric=metric,
                          labels=labels)
 
-    def to_dataframe(self, params=True, cross_val_score=False):
+    def to_dataframe(self, params: bool = True, cross_val_score: bool = False) -> pd.DataFrame:
+        """
+        Output result as a dataframe for ease of inspecting and manipulating.
+        Defaults to including model params, which can be toggled with the params flag.
+        This is useful if you're comparing different models. Additionally includes
+        the standard deviation of the score and number of cross validations.
+
+        If you want to inspect the cross-validated scores, toggle cross_val_score and the resulting
+        dataframe will have one row per fold.
+        :param params:
+            Boolean - whether to include model parameters as columns in the dataframe or not
+        :param cross_val_score:
+            Boolean - whether to have one row per fold in the dataframe or not
+        :return:
+            DataFrame of results
+        """
         df = super().to_dataframe(params).assign(cross_val_std=self.cross_val_std, cv=self.cv)
         if cross_val_score:
             return pd.concat([df.assign(score=score)
@@ -100,6 +134,12 @@ class CVResult(Result):
 
 
 class ResultGroup:
+    """
+    A container for results. Proxies attributes to the best result. Supports indexing like a list.
+    Can output the mean score of all its results using .mean_score.
+    Can convert the results to a DataFrame of results, for ease of scanning and manipulating
+
+    """
     def __init__(self, results: List[Result]):
         self.results = sorted(results, reverse=True)
 
@@ -122,15 +162,19 @@ class ResultGroup:
         return f"[{results}]"
 
     def mean_score(self):
+        """
+        Calculates mean score across the results
+        :return:
+        """
         return np.mean([result.score for result in self.results])
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """
-        Outputs results as a DataFrame. By default, the dataframe will contain
+        Outputs results as a DataFrame. By default, the DataFrame will contain
         all possible model parameters. This behaviour can be toggled using `params=False`
 
         :param params:
-            Boolean controlling whether or not to output params as part of the dataframe
+            Boolean toggling whether or not to output params as part of the dataframe
         :return:
             pd.DataFrame of results
         """

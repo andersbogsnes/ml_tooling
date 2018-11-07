@@ -3,6 +3,7 @@ from typing import Union
 
 import numpy as np
 from matplotlib import pyplot as plt
+from sklearn.pipeline import Pipeline
 
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
@@ -21,7 +22,6 @@ class Result:
     def __init__(self,
                  model,
                  viz=None,
-                 model_params=None,
                  score=None,
                  metric=None,
                  labels=None
@@ -29,10 +29,15 @@ class Result:
         self.model = model
         self.model_name = get_model_name(model)
         self.score = score
-        self.model_params = model_params
         self.metric = metric
         self.plot = viz
         self.labels = labels
+
+    @property
+    def model_params(self):
+        if isinstance(self.model, Pipeline):
+            return self.model.steps[-1][1].get_params()
+        return self.model.get_params()
 
     def __eq__(self, other):
         return self.score == other.score
@@ -55,7 +60,6 @@ class CVResult(Result):
                  model,
                  viz=None,
                  cv=None,
-                 model_params=None,
                  cross_val_scores=None,
                  metric=None,
                  labels=None
@@ -64,7 +68,11 @@ class CVResult(Result):
         self.cross_val_scores = cross_val_scores
         self.cross_val_mean = np.mean(cross_val_scores)
         self.cross_val_std = np.std(cross_val_scores)
-        super().__init__(model, viz, model_params, self.cross_val_mean, metric, labels)
+        super().__init__(model=model,
+                         viz=viz,
+                         score=self.cross_val_mean,
+                         metric=metric,
+                         labels=labels)
 
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''

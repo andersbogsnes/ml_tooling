@@ -274,7 +274,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         result = Result(model=model,
                         viz=viz,
-                        model_params=model.get_params(),
                         score=score,
                         metric=metric)
 
@@ -310,7 +309,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         result = CVResult(
             model=model,
             viz=viz,
-            model_params=model.get_params(),
             metric=metric,
             cross_val_scores=scores,
             cv=cv

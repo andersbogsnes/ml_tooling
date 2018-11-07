@@ -152,6 +152,11 @@ class TestResultGroup:
         assert 2 == len(df)
         assert 19 == len(df.columns)
 
+        df_no_params = group.to_dataframe(params=False)
+
+        assert 2 == len(df_no_params)
+        assert 2 == len(df_no_params.columns)
+
     def test_result_cv_group_to_frame_has_correct_num_rows(self):
         result1 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.5, .5])
         result2 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.6, .6])
@@ -161,6 +166,11 @@ class TestResultGroup:
 
         assert 2 == len(df)
         assert 21 == len(df.columns)
+
+        df_no_params = group.to_dataframe(params=False)
+
+        assert 2 == len(df_no_params)
+        assert 4 == len(df_no_params.columns)
 
     def test_result_cv_group_implements_len_properly(self):
         result1 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.5, .5])
@@ -175,6 +185,26 @@ class TestResultGroup:
 
         group = ResultGroup([result1, result2])
         assert 1.5 == group.mean_score()
+
+    def test_result_group_implements_indexing_properly(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result1, result2])
+        first = group[0]
+
+        assert 2 == first.score
+
+    def test_result_group_dir_call_includes_correct_methods(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result1, result2])
+        options_list = dir(group)
+
+        assert 'to_dataframe' in options_list
+        assert 'plot' in options_list
+        assert 'model_params' in options_list
 
 
 class TestBaseClass:

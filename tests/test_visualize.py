@@ -3,13 +3,17 @@ Test file for vizualisations
 """
 import pytest
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
-from ml_tooling.utils import Data
+from sklearn.pipeline import Pipeline
+
+from ml_tooling import BaseClassModel
+from ml_tooling.transformers import ToCategorical
 from ml_tooling.plots import (plot_lift_curve,
                               VizError,
                               _get_feature_importance,
@@ -170,6 +174,29 @@ class TestFeatureImportancePlot:
         with pytest.raises(VizError):
             result.plot.feature_importance()
 
+    def test_feature_importance_plots_correctly_in_pipeline(self, base, categorical):
+        pipe = Pipeline([
+            ('tocategory', ToCategorical()),
+            ('clf', RandomForestClassifier(n_estimators=10))
+        ])
+
+        class DummyModel(BaseClassModel):
+            def get_training_data(self):
+                test_data = pd.DataFrame({"col_a": ["Y", "N", "Y", "N", "Y", "N", "Y"],
+                                          "col_b": ["Y", "N", "Y", "N", "Y", "N", "Y"]})
+                return test_data, np.array([1, 0, 1, 0, 1, 0, 1])
+
+            def get_prediction_data(self, *args):
+                pass
+
+        model = DummyModel(pipe)
+        result = model.score_model()
+        ax = result.plot.feature_importance()
+        assert 'Feature Importance - RandomForestClassifier' == ax.title._text
+
+        assert 4 == len(ax.get_yticklabels())
+        plt.close()
+
 
 class TestLiftCurvePlot:
     def test_lift_curve_have_correct_data(self, classifier):
@@ -275,14 +302,3 @@ class TestGetFeatureImportance:
         result = classifier.score_model()
         importance = _get_feature_importance(classifier.model)
         assert np.all(result.model.feature_importances_ == importance)
-
-
-def test_viz_get_labels_returns_array_if_there_are_no_columns(regression):
-    test_x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-    test_y = np.array([0, 1])
-    test_data = Data.with_train_test(test_x, test_y)
-    viz = RegressionVisualize(regression.model,
-                              regression.config,
-                              test_data)
-    labels = viz._get_labels()
-    assert np.all(np.arange(test_x.shape[1]) == labels)

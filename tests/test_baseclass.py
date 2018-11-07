@@ -122,6 +122,30 @@ class TestResult:
         expected_params = set(RandomForestClassifier().get_params())
         assert expected_params == set(result.model_params)
 
+    @pytest.mark.parametrize('with_cv', [True, False])
+    def test_result_to_dataframe_returns_correct(self, base, pipeline_forest_classifier, with_cv):
+        model = base(pipeline_forest_classifier)
+
+        if with_cv:
+            result = model.score_model(cv=2)
+
+        else:
+            result = model.score_model()
+
+        df = result.to_dataframe()
+        assert 1 == len(df)
+        assert 'score' in df.columns
+        assert 'max_depth' in df.columns
+
+    def test_cv_result_with_cross_val_score_returns_correct(self, base, pipeline_forest_classifier):
+        model = base(pipeline_forest_classifier)
+        result = model.score_model(cv=2)
+        df = result.to_dataframe(cross_val_score=True)
+        assert 2 == len(df)
+        assert df.loc[0, 'score'] != df.loc[1, 'score']
+        assert 'cv' in df.columns
+        assert 'cross_val_std' in df.columns
+
 
 class TestResultGroup:
 

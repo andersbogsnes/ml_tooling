@@ -40,6 +40,16 @@ class Result:
             return self.model.steps[-1][1].get_params()
         return self.model.get_params()
 
+    def to_dataframe(self, params=True):
+        model_params_dict = {}
+        if params:
+            model_params_dict = self.model_params
+
+        model_params_dict['score'] = self.score
+        model_params_dict['metric'] = self.metric
+
+        return pd.DataFrame([model_params_dict])
+
     def __eq__(self, other):
         return self.score == other.score
 
@@ -74,6 +84,13 @@ class CVResult(Result):
                          score=self.cross_val_mean,
                          metric=metric,
                          labels=labels)
+
+    def to_dataframe(self, params=True, cross_val_score=False):
+        df = super().to_dataframe(params).assign(cross_val_std=self.cross_val_std, cv=self.cv)
+        if cross_val_score:
+            return pd.concat([df.assign(score=score)
+                              for score in self.cross_val_scores], ignore_index=True)
+        return df
 
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
@@ -117,21 +134,10 @@ class ResultGroup:
         :return:
             pd.DataFrame of results
         """
-        def create_row(result, param):
-            data_dict = {"model": result.model_name,
-                         "score": result.score}
-            if param:
-                data_dict.update(result.model_params)
 
-            if isinstance(result, CVResult):
-                data_dict["cross_val_std"] = result.cross_val_std
-                data_dict['cv'] = result.cv
+        output = [result.to_dataframe(params) for result in self.results]
 
-            return data_dict
-
-        output = [create_row(result, params) for result in self.results]
-
-        return pd.DataFrame(output).sort_values(by='score', ascending=False)
+        return pd.concat(output, ignore_index=True).sort_values(by='score', ascending=False)
 
 
 class BaseVisualize:

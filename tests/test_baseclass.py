@@ -93,6 +93,35 @@ class TestResult:
 
         assert first_result is max_result
 
+    @pytest.mark.parametrize('with_cv', [True, False])
+    def test_result_params_returns_only_clf_params(self, classifier, classifier_cv, with_cv):
+        if with_cv:
+            model = classifier_cv
+
+        else:
+            model = classifier
+
+        result = model.result
+
+        assert result.model.get_params() == result.model_params
+
+    @pytest.mark.parametrize('with_cv', [True, False])
+    def test_result_params_returns_only_clf_params_in_pipeline(self,
+                                                               base,
+                                                               pipeline_forest_classifier,
+                                                               with_cv):
+
+        model = base(pipeline_forest_classifier)
+
+        if with_cv:
+            result = model.score_model(cv=2)
+
+        else:
+            result = model.score_model()
+
+        expected_params = set(RandomForestClassifier().get_params())
+        assert expected_params == set(result.model_params)
+
 
 class TestBaseClass:
     def test_make_prediction_errors_when_model_is_not_fitted(self, base):

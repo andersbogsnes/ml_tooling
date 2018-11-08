@@ -13,6 +13,20 @@ from ml_tooling import BaseClassModel
 
 
 class TestBaseClass:
+    def test_instantiate_model_with_non_estimator_pipeline_fails(self, base):
+        example_pipe = Pipeline([
+            ('scale', DFStandardScaler)
+        ])
+        with pytest.raises(MLToolingError,
+                           match="You passed a Pipeline without an estimator as the last step"):
+            base(example_pipe)
+
+    def test_instantiate_model_with_other_object_fails(self, base):
+        with pytest.raises(MLToolingError,
+                           match=f"Expected a Pipeline or Estimator - got <class 'dict'>"
+                           ):
+            base({})
+
     def test_make_prediction_errors_when_model_is_not_fitted(self, base):
         with pytest.raises(MLToolingError, match="You haven't fitted the model"):
             model = base(LinearRegression())

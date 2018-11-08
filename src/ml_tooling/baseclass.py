@@ -9,6 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
+from sklearn.pipeline import Pipeline
 
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -25,6 +26,21 @@ from .config import DefaultConfig
 from .result import RegressionVisualize, ClassificationVisualize
 
 
+def _validate_model(model):
+    """
+    Ensures that model runs
+    :param model:
+    :return:
+    """
+    if hasattr(model, '_estimator_type'):
+        return model
+
+    if isinstance(model, Pipeline):
+        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+
+    raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
+
+
 class BaseClassModel(metaclass=abc.ABCMeta):
     """
     Base class for Models
@@ -33,19 +49,18 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     config = DefaultConfig()
 
     def __init__(self, model):
-        self.model = model
-        self.model_type = model._estimator_type
+        self.model = _validate_model(model)
         self.model_name = get_model_name(model)
         self.data = None
         self.result = None
         self._plotter = None
         self.default_metric = None
 
-        if self.model_type == 'classifier':
+        if self.model._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
             self.default_metric = self.config.CLASSIFIER_METRIC
 
-        if self.model_type == 'regressor':
+        if self.model._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
             self.default_metric = self.config.REGRESSION_METRIC
 
@@ -98,7 +113,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         if self.data is None:
             x, y = self.get_training_data()
             if train_test:
-                stratify = y if self.model_type == 'classifier' else None
+                stratify = y if self.model._estimator_type == 'classifier' else None
                 self.data = Data.with_train_test(x, y,
                                                  stratify=stratify,
                                                  test_size=self.config.TEST_SIZE)

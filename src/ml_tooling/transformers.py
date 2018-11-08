@@ -64,6 +64,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
+    # noinspection PyUnresolvedReferences
     def _col_is_categorical_and_is_missing_category(self, col: str, X: pd.DataFrame) -> bool:
         if pd.api.types.is_categorical_dtype(X[col]):
             if self.value_map_[col] not in X[col].cat.categories:
@@ -84,13 +85,13 @@ class FillNA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
-        for col in X.columns:
-            if self._col_is_categorical_and_is_missing_category(col, X):
-                X[col].cat.add_categories(self.value_map_[col], inplace=True)
+        for col in x_.columns:
+            if self._col_is_categorical_and_is_missing_category(col, x_):
+                x_[col].cat.add_categories(self.value_map_[col], inplace=True)
 
-        result = X.fillna(value=self.value_map_)
+        result = x_.fillna(value=self.value_map_)
         return result
 
 
@@ -109,13 +110,13 @@ class ToCategorical(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
-        for col in X.columns:
-            X[col] = pd.Categorical(X[col],
-                                    categories=self.cat_map_[col].categories,
-                                    ordered=self.cat_map_[col].ordered)
-        return pd.get_dummies(X)
+        for col in x_.columns:
+            x_[col] = pd.Categorical(x_[col],
+                                     categories=self.cat_map_[col].categories,
+                                     ordered=self.cat_map_[col].ordered)
+        return pd.get_dummies(x_)
 
 
 # noinspection PyUnusedLocal
@@ -131,10 +132,10 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
-            X[col] = self.func(X[col])
-        return X
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = self.func(x_[col])
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -152,11 +153,11 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.reset_index(drop=True)
+        x_ = X.reset_index(drop=True)
 
-        Xts = [t.transform(X) for _, t in self.transformer_list]
-        Xunion = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), Xts)
-        return Xunion
+        x_ts = [t.transform(x_) for _, t in self.transformer_list]
+        x_union = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), x_ts)
+        return x_union
 
 
 # noinspection PyUnusedLocal
@@ -175,10 +176,10 @@ class Binner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
-            X[col] = pd.cut(X[col], bins=self.bins, labels=self.labels)
-        return X
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = pd.cut(x_[col], bins=self.bins, labels=self.labels)
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -194,15 +195,15 @@ class Renamer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
         column_names = listify(self.column_names)
 
-        if len(column_names) != len(X.columns):
-            raise TransformerError(f"X has {len(X.columns)} columns - "
+        if len(column_names) != len(x_.columns):
+            raise TransformerError(f"X has {len(x_.columns)} columns - "
                                    f"You provided {len(column_names)} column names")
-        X.columns = column_names
-        return X
+        x_.columns = column_names
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -221,18 +222,18 @@ class DateEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
+        x_ = X.copy()
+        for col in x_.columns:
             if self.day:
-                X[f"{col}_day"] = X[col].dt.day
+                x_[f"{col}_day"] = x_[col].dt.day
             if self.month:
-                X[f"{col}_month"] = X[col].dt.month
+                x_[f"{col}_month"] = x_[col].dt.month
             if self.year:
-                X[f"{col}_year"] = X[col].dt.year
+                x_[f"{col}_year"] = x_[col].dt.year
             if self.week:
-                X[f"{col}_week"] = X[col].dt.week
-            X = X.drop(col, axis=1)
-        return X
+                x_[f"{col}_week"] = x_[col].dt.week
+            x_ = x_.drop(col, axis=1)
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -250,10 +251,10 @@ class FreqFeature(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
-            X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
-        return X
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = x_[col].str.upper().map(self.frequencies[col]).fillna(0)
+        return x_
 
 
 class DFStandardScaler(BaseEstimator, TransformerMixin):
@@ -295,6 +296,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.func = None
 
+    # noinspection PyUnusedLocal
     def fit(self, X: pd.DataFrame, y=None):
         self._validate_strategy(self.strategy)
         return self
@@ -315,6 +317,6 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
             self.func = strategy
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        X = X.apply(self.func, axis=1).to_frame()
-        return X
+        x_ = X.copy()
+        x_ = x_.apply(self.func, axis=1).to_frame()
+        return x_

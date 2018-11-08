@@ -254,7 +254,7 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     return ParameterGrid(step_dict)
 
 
-def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> list:
+def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> np.array:
     """
     If data is a DataFrame, use columns attribute - else use [0...n] np.array
     :return:
@@ -268,10 +268,10 @@ def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> list:
     else:
         labels = np.arange(data.shape[1])
 
-    return list(labels)
+    return np.array(labels)
 
 
-def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> list:
+def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> np.array:
     """
     Transforms df using the transformer steps of the pipeline and then getting the column labels
     :param pipe:
@@ -281,4 +281,4 @@ def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> list:
     """
     transformers = pipe.steps[:-1]
     transform_pipe = Pipeline(transformers)
-    return list(transform_pipe.transform(df).columns)
+    return np.array(transform_pipe.transform(df).columns)

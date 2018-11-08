@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.pipeline import Pipeline
 
+from ml_tooling.logging import log_model
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
                     plot_residuals,
@@ -15,7 +16,7 @@ from .plots import (_get_feature_importance,
                     plot_roc_auc,
                     plot_lift_curve,
                     )
-from .utils import get_model_name, _get_labels
+from .utils import _get_model_name, _get_labels
 
 
 @total_ordering
@@ -32,7 +33,7 @@ class Result:
                  metric=None,
                  ):
         self.model = model
-        self.model_name = get_model_name(model)
+        self.model_name = _get_model_name(model)
         self.score = score
         self.metric = metric
         self.plot = viz
@@ -48,6 +49,15 @@ class Result:
         if isinstance(self.model, Pipeline):
             return self.model.steps[-1][1].get_params()
         return self.model.get_params()
+
+    def log_model(self, class_name, run_dir):
+        metric_score = {self.metric: float(self.score)}
+        log_model(metric_scores=metric_score,
+                  model_name=self.model_name,
+                  model_params=self.model_params,
+                  class_name=class_name,
+                  run_dir=run_dir,
+                  )
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """
@@ -190,7 +200,7 @@ class BaseVisualize:
 
     def __init__(self, model, config, data):
         self._model = model
-        self._model_name = get_model_name(model)
+        self._model_name = _get_model_name(model)
         self._config = config
         self._data = data
 

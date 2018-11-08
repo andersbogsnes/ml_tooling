@@ -24,6 +24,7 @@ class Result:
     Represents a single scoring of a model.
     Contains plotting methods, as well as being comparable with other results
     """
+
     def __init__(self,
                  model,
                  score,
@@ -106,17 +107,17 @@ class CVResult(Result):
 
     def to_dataframe(self, params: bool = True, cross_val_score: bool = False) -> pd.DataFrame:
         """
-        Output result as a dataframe for ease of inspecting and manipulating.
+        Output result as a DataFrame for ease of inspecting and manipulating.
         Defaults to including model params, which can be toggled with the params flag.
         This is useful if you're comparing different models. Additionally includes
         the standard deviation of the score and number of cross validations.
 
         If you want to inspect the cross-validated scores, toggle cross_val_score and the resulting
-        dataframe will have one row per fold.
+        DataFrame will have one row per fold.
         :param params:
-            Boolean - whether to include model parameters as columns in the dataframe or not
+            Boolean - whether to include model parameters as columns in the DataFrame or not
         :param cross_val_score:
-            Boolean - whether to have one row per fold in the dataframe or not
+            Boolean - whether to have one row per fold in the DataFrame or not
         :return:
             DataFrame of results
         """
@@ -140,6 +141,7 @@ class ResultGroup:
     Can convert the results to a DataFrame of results, for ease of scanning and manipulating
 
     """
+
     def __init__(self, results: List[Result]):
         self.results = sorted(results, reverse=True)
 

@@ -64,6 +64,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
+    # noinspection PyUnresolvedReferences
     def _col_is_categorical_and_is_missing_category(self, col: str, X: pd.DataFrame) -> bool:
         if pd.api.types.is_categorical_dtype(X[col]):
             if self.value_map_[col] not in X[col].cat.categories:
@@ -295,6 +296,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.func = None
 
+    # noinspection PyUnusedLocal
     def fit(self, X: pd.DataFrame, y=None):
         self._validate_strategy(self.strategy)
         return self

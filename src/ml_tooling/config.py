@@ -6,7 +6,7 @@ MPL_STYLESHEET = str(BASE_PATH.joinpath('almbrand.mplstyle'))
 
 class DefaultConfig:
     """
-    Configuration for a given Baseclass. Configs propagate through each instance
+    Configuration for a given BaseClass. Configs propagate through each instance
     """
     def __init__(self):
         self.VERBOSITY = 0

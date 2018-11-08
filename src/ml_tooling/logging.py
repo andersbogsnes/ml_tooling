@@ -1,0 +1,79 @@
+import logging
+import os
+import pathlib
+import sys
+import uuid
+from datetime import datetime
+from typing import Union
+
+import yaml
+
+from .utils import get_git_hash
+
+
+def create_logger(logger_name):
+    default_logger = os.getenv('ML_LOGGING', True)
+
+    log_level = logging.DEBUG if os.getenv('ML_DEBUG', False) else logging.INFO
+
+    logger = logging.getLogger(logger_name)
+
+    fmt = logging.Formatter(fmt="[%(asctime)s] - %(message)s", datefmt='%H:%M:%S')
+
+    handler = logging.StreamHandler(stream=sys.stdout) if default_logger else logging.NullHandler()
+
+    handler.setFormatter(fmt)
+    logger.addHandler(handler)
+    logger.setLevel(log_level)
+    return logger
+
+
+def _make_run_dir(run_dir: str) -> pathlib.Path:
+    path = pathlib.Path(run_dir)
+
+    if path.is_file():
+        raise IOError(f"{run_dir} is a file - pass a directory")
+
+    if not path.exists():
+        path.mkdir(parents=True)
+
+    return path
+
+
+def log_model(metric_scores: dict,
+              model_name: str,
+              model_params: dict,
+              class_name: str,
+              run_dir: Union[pathlib.Path, str],
+              model_path=None,
+              overwrite=False,
+              ):
+    from ml_tooling import __version__ as ml_tools_version
+    from sklearn import __version__ as sklearn_version
+    from pandas import __version__ as pandas_version
+
+    versions = {"ml_tooling": ml_tools_version,
+                "sklearn": sklearn_version,
+                "pandas": pandas_version}
+
+    data = {"time_created": datetime.now(),
+            "model_name": model_name,
+            "versions": versions,
+            "params": model_params,
+            "git_hash": get_git_hash(),
+            "metrics": metric_scores
+            }
+
+    if model_path:
+        data['model_path'] = model_path
+    run_dir = run_dir.joinpath(class_name)
+    run_dir = _make_run_dir(run_dir)
+    output_file = f'{model_name}_{datetime.now().strftime("%Y%m%d_%H%M")}.yaml'
+    output_path = run_dir.joinpath(output_file)
+
+    if output_path.exists() and not overwrite:
+        output_file = f'{model_name}_{datetime.now().strftime("%Y%m%d_%H%M")}_{uuid.uuid4()}.yaml'
+        output_path = output_path.with_name(output_file)
+
+    with output_path.open(mode='w') as f:
+        yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)

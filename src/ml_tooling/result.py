@@ -30,14 +30,12 @@ class Result:
                  score,
                  viz=None,
                  metric=None,
-                 labels=None
                  ):
         self.model = model
         self.model_name = get_model_name(model)
         self.score = score
         self.metric = metric
         self.plot = viz
-        self.labels = labels
 
     @property
     def model_params(self) -> dict:
@@ -93,7 +91,6 @@ class CVResult(Result):
                  cv=None,
                  cross_val_scores=None,
                  metric=None,
-                 labels=None
                  ):
         self.cv = cv
         self.cross_val_scores = cross_val_scores
@@ -103,7 +100,7 @@ class CVResult(Result):
                          viz=viz,
                          score=self.cross_val_mean,
                          metric=metric,
-                         labels=labels)
+                         )
 
     def to_dataframe(self, params: bool = True, cross_val_score: bool = False) -> pd.DataFrame:
         """

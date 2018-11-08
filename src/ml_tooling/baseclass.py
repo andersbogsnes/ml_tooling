@@ -1,6 +1,6 @@
 import abc
 import pathlib
-from typing import List, Tuple, Optional, Sequence, Union
+from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
 from sklearn import clone
@@ -10,7 +10,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
 
-from .result import Result, CVResult
+from .result import Result, CVResult, ResultGroup
 from .utils import (
     MLToolingError,
     get_model_name,
@@ -162,7 +162,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def test_models(cls,
                     models: Sequence,
                     metric: Optional[str] = None,
-                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', List[Result]]:
+                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', ResultGroup]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -186,7 +186,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         results.sort(reverse=True)
         best_model = results[0].model
 
-        return cls(best_model), results
+        return cls(best_model), ResultGroup(results)
 
     def train_model(self) -> 'BaseClassModel':
         """
@@ -229,7 +229,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def gridsearch(self,
                    param_grid: dict,
                    metric: Optional[str] = None,
-                   cv: Optional[int] = None) -> Tuple[BaseEstimator, List[CVResult]]:
+                   cv: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
         """
         Grid search model with parameters in param_grid.
         Param_grid automatically adds prefix from last step if using pipeline
@@ -253,9 +253,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             joblib.delayed(self._score_model_cv)(clone(baseline_model).set_params(**param),
                                                  metric=metric,
                                                  cv=cv) for param in param_grid)
-        results = sorted(results, reverse=True)
-        self.result = results
-        return results[0].model, results
+
+        self.result = ResultGroup(results)
+        return results[0].model, self.result
 
     def _score_model(self, model, metric: str) -> Result:
         """
@@ -263,6 +263,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param metric:
             string of which scoring function to use
         :return:
+            Result object
         """
         # TODO support any given sklearn scorer - must check that it is a scorer
         scoring_func = get_scoring_func(metric)

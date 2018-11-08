@@ -6,7 +6,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling.result import CVResult, Result
+from ml_tooling.result import CVResult, Result, ResultGroup
 from ml_tooling.utils import MLToolingError
 from ml_tooling import BaseClassModel
 
@@ -121,6 +121,114 @@ class TestResult:
 
         expected_params = set(RandomForestClassifier().get_params())
         assert expected_params == set(result.model_params)
+
+    @pytest.mark.parametrize('with_cv', [True, False])
+    def test_result_to_dataframe_returns_correct(self, base, pipeline_forest_classifier, with_cv):
+        model = base(pipeline_forest_classifier)
+
+        if with_cv:
+            result = model.score_model(cv=2)
+
+        else:
+            result = model.score_model()
+
+        df = result.to_dataframe()
+        assert 1 == len(df)
+        assert 'score' in df.columns
+        assert 'max_depth' in df.columns
+
+    def test_cv_result_with_cross_val_score_returns_correct(self, base, pipeline_forest_classifier):
+        model = base(pipeline_forest_classifier)
+        result = model.score_model(cv=2)
+        df = result.to_dataframe(cross_val_score=True)
+        assert 2 == len(df)
+        assert df.loc[0, 'score'] != df.loc[1, 'score']
+        assert 'cv' in df.columns
+        assert 'cross_val_std' in df.columns
+
+
+class TestResultGroup:
+
+    def test_result_group_proxies_correctly(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(LogisticRegression(), 1)
+
+        group = ResultGroup([result1, result2])
+        result_name = group.model_name
+        assert 'RandomForestClassifier' == result_name
+
+    def test_result_group_sorts_before_proxying(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(LogisticRegression(), 1)
+
+        group = ResultGroup([result2, result1])
+        result_name = group.model_name
+
+        assert 'RandomForestClassifier' == result_name
+
+    def test_result_group_to_frame_has_correct_num_rows(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result2, result1])
+        df = group.to_dataframe()
+
+        assert 2 == len(df)
+        assert 19 == len(df.columns)
+
+        df_no_params = group.to_dataframe(params=False)
+
+        assert 2 == len(df_no_params)
+        assert 2 == len(df_no_params.columns)
+
+    def test_result_cv_group_to_frame_has_correct_num_rows(self):
+        result1 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.5, .5])
+        result2 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.6, .6])
+
+        group = ResultGroup([result1, result2])
+        df = group.to_dataframe()
+
+        assert 2 == len(df)
+        assert 21 == len(df.columns)
+
+        df_no_params = group.to_dataframe(params=False)
+
+        assert 2 == len(df_no_params)
+        assert 4 == len(df_no_params.columns)
+
+    def test_result_cv_group_implements_len_properly(self):
+        result1 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.5, .5])
+        result2 = CVResult(RandomForestClassifier(), cv=2, cross_val_scores=[.6, .6])
+
+        group = ResultGroup([result1, result2])
+        assert 2 == len(group)
+
+    def test_result_group_implements_mean_correctly(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result1, result2])
+        assert 1.5 == group.mean_score()
+
+    def test_result_group_implements_indexing_properly(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result1, result2])
+        first = group[0]
+
+        assert 2 == first.score
+
+    def test_result_group_dir_call_includes_correct_methods(self):
+        result1 = Result(RandomForestClassifier(), 2)
+        result2 = Result(RandomForestClassifier(), 1)
+
+        group = ResultGroup([result1, result2])
+        options_list = dir(group)
+
+        assert 'to_dataframe' in options_list
+        assert 'plot' in options_list
+        assert 'model_params' in options_list
 
 
 class TestBaseClass:

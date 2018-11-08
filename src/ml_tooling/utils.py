@@ -1,9 +1,11 @@
-from typing import Union
+from typing import Union, Callable
 
 import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 import pathlib
+
+from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 from sklearn.metrics.scorer import (explained_variance_scorer,
                                     r2_scorer,
@@ -53,6 +55,9 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
 
 
 class Data:
+    """
+    Container for storing data. Contains both x and y, while also handling train_test_split
+    """
     def __init__(self, x: DataType, y: DataType):
         self.x = x
         self.y = y
@@ -65,7 +70,18 @@ class Data:
                           stratify=None,
                           shuffle=True,
                           test_size=0.25,
-                          ):
+                          ) -> 'Data':
+        """
+        Creates a training and testing dataset and storing it on the data object.
+        :param stratify:
+            What to stratify the split on. Usually y if given a classification problem
+        :param shuffle:
+            Whether or not to shuffle the data
+        :param test_size:
+            What percentage of the data will be part of the test set
+        :return:
+            self
+        """
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(self.x,
                                                                                 self.y,
                                                                                 stratify=stratify,
@@ -74,7 +90,27 @@ class Data:
         return self
 
     @classmethod
-    def with_train_test(cls, x: DataType, y: DataType, stratify=None, shuffle=True, test_size=0.25):
+    def with_train_test(cls,
+                        x: DataType,
+                        y: DataType,
+                        stratify=None,
+                        shuffle=True,
+                        test_size=0.25) -> 'Data':
+        """
+        Creates a new instance of Data with train and test already instantiated
+        :param x:
+            Features
+        :param y:
+            Target
+        :param stratify:
+             What to stratify the split on. Usually y if given a classification problem
+        :param shuffle:
+            Whether or not to shuffle the data
+        :param test_size:
+            What percentage of the data will be part of the test set
+        :return:
+            self
+        """
         instance = cls(x, y)
         return instance.create_train_test(stratify=stratify, shuffle=shuffle, test_size=test_size)
 
@@ -89,7 +125,16 @@ class TransformerError(Exception):
     pass
 
 
-def get_scoring_func(metric):
+def get_scoring_func(metric: str) -> Callable[[BaseEstimator,
+                                               DataType,
+                                               DataType], Union[int, float]]:
+    """
+    Looks up a string scoring function in the scorers dictionary
+    :param metric:
+        string name of metric to use
+    :return:
+        callable score function
+    """
     try:
         return SCORERS[metric]
     except KeyError:
@@ -161,7 +206,14 @@ def listify(collection) -> list:
     return collection
 
 
-def _is_percent(number):
+def _is_percent(number: Union[float, int]) -> bool:
+    """
+    Checks if a value is a valid percent
+    :param number:
+        The number to validate
+    :return:
+        bool
+    """
     if isinstance(number, float):
         if number > 1 or number < 0:
             raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
@@ -169,16 +221,26 @@ def _is_percent(number):
     return False
 
 
-def _most_freq(X):
+def _most_freq(X: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate mode of X
+    :param X:
+        DataFrame to calculate mode over
+    :return:
+        DataFrame of modes
+    """
     return pd.DataFrame.mode(X).iloc[0]
 
 
-def _create_param_grid(pipe, param_grid):
+def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     """
-
+    Creates a parameter grid from a pipeline
     :param pipe:
+        Sklearn Pipeline
     :param param_grid:
+        dict of parameters to search over
     :return:
+        sklearn ParameterGrid
     """
     if not isinstance(pipe, Pipeline):
         return ParameterGrid(param_grid)
@@ -192,7 +254,7 @@ def _create_param_grid(pipe, param_grid):
     return ParameterGrid(step_dict)
 
 
-def _get_labels(model, data):
+def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> list:
     """
     If data is a DataFrame, use columns attribute - else use [0...n] np.array
     :return:
@@ -206,10 +268,17 @@ def _get_labels(model, data):
     else:
         labels = np.arange(data.shape[1])
 
-    return labels
+    return list(labels)
 
 
-def _get_labels_from_pipeline(pipe, df):
+def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> list:
+    """
+    Transforms df using the transformer steps of the pipeline and then getting the column labels
+    :param pipe:
+        sklearn Pipeline
+    :param df:
+    :return:
+    """
     transformers = pipe.steps[:-1]
     transform_pipe = Pipeline(transformers)
-    return transform_pipe.transform(df).columns
+    return list(transform_pipe.transform(df).columns)

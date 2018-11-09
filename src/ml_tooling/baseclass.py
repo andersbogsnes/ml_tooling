@@ -1,5 +1,6 @@
 import abc
 import pathlib
+from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
@@ -89,7 +90,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             cls
         """
-        path = cls.config.MODEL_DIR.joinpath(cls.__name__) if path is None else pathlib.Path(path)
+        path = cls.config.MODEL_DIR if path is None else pathlib.Path(path)
         model_file = find_model_file(path)
         model = joblib.load(model_file)
         instance = cls(model)
@@ -132,7 +133,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         save_name = self._generate_filename()
-        current_dir = (self.config.MODEL_DIR.joinpath(self.class_name)
+        current_dir = (self.config.MODEL_DIR
                        if path is None
                        else pathlib.Path(path)
                        )

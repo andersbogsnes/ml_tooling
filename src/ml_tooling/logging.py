@@ -1,8 +1,6 @@
 import logging
 import os
 import pathlib
-import sys
-import uuid
 from datetime import datetime
 from typing import Union
 
@@ -43,7 +41,6 @@ def _make_run_dir(run_dir: str) -> pathlib.Path:
 def log_model(metric_scores: dict,
               model_name: str,
               model_params: dict,
-              class_name: str,
               run_dir: Union[pathlib.Path, str],
               model_path=None,
               overwrite=False,

@@ -1,9 +1,10 @@
 import pathlib
 
 BASE_PATH = pathlib.Path(__file__).parent
+CWD = pathlib.Path.cwd()
 MPL_STYLESHEET = str(BASE_PATH.joinpath('almbrand.mplstyle'))
-RUN_DIR = BASE_PATH.joinpath('runs')
-MODEL_DIR = RUN_DIR.joinpath('models')
+RUN_DIR = CWD.joinpath('runs')
+MODEL_DIR = CWD.joinpath('models')
 
 
 class DefaultConfig:

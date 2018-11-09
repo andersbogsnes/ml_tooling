@@ -1,7 +1,10 @@
 import pathlib
 
 BASE_PATH = pathlib.Path(__file__).parent
+CWD = pathlib.Path.cwd()
 MPL_STYLESHEET = str(BASE_PATH.joinpath('almbrand.mplstyle'))
+RUN_DIR = CWD.joinpath('runs')
+MODEL_DIR = CWD.joinpath('models')
 
 
 class DefaultConfig:
@@ -17,6 +20,9 @@ class DefaultConfig:
         self.N_JOBS = -1
         self.TEST_SIZE = 0.25
         self.RANDOM_STATE = 42
+        self.RUN_DIR = RUN_DIR
+        self.MODEL_DIR = MODEL_DIR
+        self.LOG = False
 
     def __repr__(self):
         attrs = '\n'.join([f"{attr}: {value}"

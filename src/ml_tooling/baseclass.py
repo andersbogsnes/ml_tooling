@@ -1,19 +1,23 @@
 import abc
 import pathlib
+from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
 from sklearn import clone
 from sklearn.base import BaseEstimator
-
-from sklearn.model_selection import cross_val_score
-from sklearn.externals import joblib
 from sklearn.exceptions import NotFittedError
+from sklearn.externals import joblib
+from sklearn.model_selection import cross_val_score
 
+from ml_tooling.logging import create_logger, log_model
+from ml_tooling.utils import _validate_model
+from .config import DefaultConfig
+from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
     MLToolingError,
-    get_model_name,
+    _get_model_name,
     get_git_hash,
     DataType,
     find_model_file,
@@ -21,8 +25,8 @@ from .utils import (
     get_scoring_func,
     _create_param_grid
 )
-from .config import DefaultConfig
-from .result import RegressionVisualize, ClassificationVisualize
+
+logger = create_logger('ml_tooling')
 
 
 class BaseClassModel(metaclass=abc.ABCMeta):
@@ -33,19 +37,18 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     config = DefaultConfig()
 
     def __init__(self, model):
-        self.model = model
-        self.model_type = model._estimator_type
-        self.model_name = get_model_name(model)
+        self.model = _validate_model(model)
+        self.model_name = _get_model_name(model)
         self.data = None
         self.result = None
         self._plotter = None
         self.default_metric = None
 
-        if self.model_type == 'classifier':
+        if self.model._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
             self.default_metric = self.config.CLASSIFIER_METRIC
 
-        if self.model_type == 'regressor':
+        if self.model._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
             self.default_metric = self.config.REGRESSION_METRIC
 
@@ -75,18 +78,24 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
     @classmethod
-    def load_model(cls, path) -> 'BaseClassModel':
+    def load_model(cls, path=None) -> 'BaseClassModel':
         """
         Load previously saved model from path
 
         :return:
             cls
         """
-
+        path = cls.config.MODEL_DIR if path is None else pathlib.Path(path)
         model_file = find_model_file(path)
         model = joblib.load(model_file)
-        return cls(model)
+        instance = cls(model)
+        logger.info(f"Loaded {instance.model_name} for {cls.__name__}")
+        return instance
 
     def _load_data(self, train_test=False) -> Data:
         """
@@ -96,20 +105,24 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self.x, self.y
         """
         if self.data is None:
+            logger.debug("No data loaded - loading...")
             x, y = self.get_training_data()
             if train_test:
-                stratify = y if self.model_type == 'classifier' else None
+
+                stratify = y if self.model._estimator_type == 'classifier' else None
+                logger.debug("Creating train/test...")
                 self.data = Data.with_train_test(x, y,
                                                  stratify=stratify,
                                                  test_size=self.config.TEST_SIZE)
             else:
+                logger.debug("Data already loaded")
                 self.data = Data(x, y)
         return self.data
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
 
-    def save_model(self, path=None) -> 'BaseClassModel':
+    def save_model(self, path=None) -> pathlib.Path:
         """
         Save model to disk. Defaults to current directory.
 
@@ -120,14 +133,29 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         save_name = self._generate_filename()
-        current_dir = pathlib.Path.cwd() if path is None else pathlib.Path(path)
+        current_dir = (self.config.MODEL_DIR
+                       if path is None
+                       else pathlib.Path(path)
+                       )
 
+        logger.debug(f"Attempting to save model in {current_dir}")
         if not current_dir.exists():
+            logger.debug(f"{current_dir} doesn't exist - creating")
             current_dir.mkdir(parents=True)
 
         model_file = current_dir.joinpath(save_name)
         joblib.dump(self.model, model_file)
-        return self
+
+        metric_scores = {self.result.metric: float(self.result.score)}
+
+        log_model(metric_scores=metric_scores,
+                  model_name=self.model_name,
+                  model_params=self.result.model_params,
+                  run_dir=self.config.RUN_DIR,
+                  model_path=str(model_file))
+
+        logger.info(f"Saved model to {model_file}")
+        return model_file
 
     def make_prediction(self, input_data, proba=False) -> np.ndarray:
         """
@@ -162,7 +190,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def test_models(cls,
                     models: Sequence,
                     metric: Optional[str] = None,
-                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', ResultGroup]:
+                    cv: Union[int, bool] = False,
+                    log_dir: str = None) -> Tuple['BaseClassModel', ResultGroup]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -175,16 +204,26 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param cv:
             Whether or not to use cross-validation. If an int is passed, use that many folds
 
+        :param log_dir:
+            Where to store logged models. If None, don't log
+
         :return:
             List of Result
         """
         results = []
-        for model in models:
+
+        for i, model in enumerate(models, start=1):
+            logger.info(f"Training model {i}/{len(models)}: {_get_model_name(model)}")
             challenger_model = cls(model)
             result = challenger_model.score_model(metric=metric, cv=cv)
             results.append(result)
+            if log_dir:
+                result.log_model(log_dir)
+
         results.sort(reverse=True)
         best_model = results[0].model
+        logger.info(
+            f"Best model: {results[0].model_name} - {results[0].metric}: {results[0].score}")
 
         return cls(best_model), ResultGroup(results)
 
@@ -195,8 +234,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             self
         """
+        logger.info("Training model...")
         self._load_data(train_test=False)
         self.model.fit(self.data.x, self.data.y)
+        logger.info("Model trained!")
+
         return self
 
     def score_model(self, metric=None, cv=False) -> 'Result':
@@ -216,14 +258,19 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         self._load_data(train_test=True)
         metric = self.default_metric if metric is None else metric
-
+        logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
 
         if cv:  # TODO handle case of Sklearn CV class
+            logger.info("Cross-validating...")
             self.result = self._score_model_cv(self.model, metric, cv)
-            return self.result
 
-        self.result = self._score_model(self.model, metric)
+        else:
+            self.result = self._score_model(self.model, metric)
+
+        if self.config.LOG:
+            result_file = self.result.log_model(self.config.RUN_DIR)
+            logger.info(f"Saved run info at {result_file}")
         return self.result
 
     def gridsearch(self,
@@ -244,18 +291,38 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self._load_data(train_test=True)
 
         metric = self.default_metric if metric is None else metric
-        cv = self.config.CROSS_VALIDATION if metric is None else cv
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
+        logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
+        logger.debug(f"Gridsearching using {param_grid}")
         param_grid = _create_param_grid(self.model, param_grid)
-        baseline_model = clone(self.model)
 
+        baseline_model = clone(self.model)
+        logger.info("Starting gridsearch...")
         parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
         results = parallel(
             joblib.delayed(self._score_model_cv)(clone(baseline_model).set_params(**param),
                                                  metric=metric,
                                                  cv=cv) for param in param_grid)
+        logger.info("Done!")
 
         self.result = ResultGroup(results)
+
+        if self.config.LOG:
+            result_file = self.result.log_model(self.config.RUN_DIR)
+            logger.info(f"Saved run info at {result_file}")
+
         return results[0].model, self.result
+
+    @contextmanager
+    def log(self, run_name):
+        old_dir = self.config.RUN_DIR
+        self.config.LOG = True
+        self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)
+        try:
+            yield
+        finally:
+            self.config.LOG = False
+            self.config.RUN_DIR = old_dir
 
     def _score_model(self, model, metric: str) -> Result:
         """
@@ -277,6 +344,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                         viz=viz,
                         score=score,
                         metric=metric)
+
+        logger.info(f"{_get_model_name(model)} - {metric}: {score}")
 
         return result
 
@@ -315,6 +384,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             cv=cv
         )
 
+        if self.config.LOG:
+            result.log_model(self.config.RUN_DIR)
+
+        logger.info(f"{_get_model_name(model)} - {metric}: {np.mean(scores)}")
         return result
 
     @classmethod

@@ -1,12 +1,10 @@
+import pathlib
 from typing import Union, Callable
 
 import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
-import pathlib
-
 from sklearn.base import BaseEstimator
-from sklearn.pipeline import Pipeline
 from sklearn.metrics.scorer import (explained_variance_scorer,
                                     r2_scorer,
                                     fowlkes_mallows_scorer,
@@ -29,6 +27,7 @@ from sklearn.metrics.scorer import (explained_variance_scorer,
                                     normalized_mutual_info_scorer,
                                     )
 from sklearn.model_selection import train_test_split, ParameterGrid
+from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -58,6 +57,7 @@ class Data:
     """
     Container for storing data. Contains both x and y, while also handling train_test_split
     """
+
     def __init__(self, x: DataType, y: DataType):
         self.x = x
         self.y = y
@@ -176,7 +176,7 @@ def find_model_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def get_model_name(clf) -> str:
+def _get_model_name(clf) -> str:
     """
     Returns model name based on class name. If passed classifier is a Pipeline,
     assume last step is the estimator and return that classes name
@@ -282,3 +282,18 @@ def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> np.array:
     transformers = pipe.steps[:-1]
     transform_pipe = Pipeline(transformers)
     return np.array(transform_pipe.transform(df).columns)
+
+
+def _validate_model(model):
+    """
+    Ensures that model runs
+    :param model:
+    :return:
+    """
+    if hasattr(model, '_estimator_type'):
+        return model
+
+    if isinstance(model, Pipeline):
+        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+
+    raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")

@@ -1,10 +1,14 @@
-import pytest
 import matplotlib.pyplot as plt
-from ml_tooling.transformers import ToCategorical
+import numpy as np
+import pytest
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-import numpy as np
 from sklearn.metrics.scorer import _PredictScorer
+from sklearn.pipeline import Pipeline
+
+from ml_tooling.logging import _make_run_dir
+from ml_tooling.plots import _generate_text_labels
+from ml_tooling.transformers import ToCategorical
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
                               _is_percent,
@@ -12,8 +16,6 @@ from ml_tooling.utils import (get_git_hash,
                               get_scoring_func,
                               _create_param_grid,
                               _get_labels)
-from ml_tooling.plots import _generate_text_labels
-from sklearn.pipeline import Pipeline
 
 
 def test_get_git_hash_returns_correctly():
@@ -157,6 +159,7 @@ class TestGetLabels:
     def test_get_labels_returns_array_if_there_are_no_columns(self, regression):
         test_x = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
 
+        # noinspection PyTypeChecker
         labels = _get_labels(regression, test_x)
         assert np.all(np.arange(test_x.shape[1]) == labels)
 
@@ -171,3 +174,10 @@ class TestGetLabels:
                            'petal width (cm)'}
 
         assert expected_labels == set(labels)
+
+
+def test__make_run_dir_fails_if_passed_file(tmpdir):
+    new_file = tmpdir.mkdir('test').join('test.txt')
+    new_file.write('test hi')
+    with pytest.raises(IOError):
+        _make_run_dir(str(new_file))

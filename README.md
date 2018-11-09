@@ -152,6 +152,23 @@ model = BostonModel.setup_model()
 model.train_model()
 ```
 
+`log(log_dir)`
+---
+`log()` is a context manager that lets you turn on logging for any scoring methods that follow. 
+You can pass a log_dir to specify a subfolder to store the model in. The output is a yaml
+file recording model parameters, package version numbers, metrics and other useful information
+
+Usage example:
+```python
+model = BostonModel.setup_model()
+
+with model.log('score'):
+    model.score_model()
+
+``` 
+
+This will save the results of `model.score_model()` to `runs/score/`
+
 ## Visualizing results
 When a model is trained, it returns a Result object. 
 That object has number of visualization options depending on the type of model:

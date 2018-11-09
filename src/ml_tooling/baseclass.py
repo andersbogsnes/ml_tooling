@@ -148,11 +148,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         metric_scores = {self.result.metric: float(self.result.score)}
 
-        log_model(metric_scores=metric_scores,
-                  model_name=self.model_name,
-                  model_params=self.result.model_params,
-                  run_dir=self.config.RUN_DIR,
-                  model_path=str(model_file))
+        if self.config.LOG:
+            log_model(metric_scores=metric_scores,
+                      model_name=self.model_name,
+                      model_params=self.result.model_params,
+                      run_dir=self.config.RUN_DIR,
+                      model_path=str(model_file))
 
         logger.info(f"Saved model to {model_file}")
         return model_file

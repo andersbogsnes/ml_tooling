@@ -250,4 +250,3 @@ class TestResultGroup:
         assert 2 == len(run_files)
         assert any(('RandomForestClassifier_accuracy_2' in str(file) for file in run_files))
         assert any(('RandomForestClassifier_accuracy_1' in str(file) for file in run_files))
-

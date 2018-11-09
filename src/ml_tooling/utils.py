@@ -57,6 +57,7 @@ class Data:
     """
     Container for storing data. Contains both x and y, while also handling train_test_split
     """
+
     def __init__(self, x: DataType, y: DataType):
         self.x = x
         self.y = y

@@ -172,7 +172,7 @@ class TestBaseClass:
             with open(file) as f:
                 log_result = yaml.safe_load(f)
 
-            assert round(result.score, 2) == round(log_result["metrics"]["r2"])
+            assert round(result.score, 2) == round(log_result["metrics"]["r2"], 2)
             assert result.model_name == log_result["model_name"]
 
     def test_test_models_logs_when_given_dir(self, tmpdir, base):

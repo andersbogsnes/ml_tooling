@@ -1,15 +1,16 @@
 import numpy as np
 import pytest
-
+import yaml
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+from ml_tooling import BaseClassModel
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
-from ml_tooling import BaseClassModel
 
 
 class TestBaseClass:
@@ -134,3 +135,52 @@ class TestBaseClass:
 
         for result in results:
             assert isinstance(result, CVResult)
+
+    def test_log_context_manager_works_as_expected(self, regression):
+        assert regression.config.LOG is False
+        assert 'runs' == regression.config.RUN_DIR.name
+        with regression.log('test'):
+            assert regression.config.LOG is True
+            assert 'test' == regression.config.RUN_DIR.name
+            assert 'runs' == regression.config.RUN_DIR.parent.name
+
+        assert regression.config.LOG is False
+        assert 'runs' == regression.config.RUN_DIR.name
+        assert 'test' not in regression.config.RUN_DIR.parts
+
+    def test_log_context_manager_logs_when_scoring_model(self, tmpdir, base):
+        model = base(LinearRegression())
+
+        runs = tmpdir.mkdir('runs')
+        with model.log(runs):
+            result = model.score_model()
+
+        for file in runs.visit('LinearRegression_*'):
+            with open(file) as f:
+                log_result = yaml.safe_load(f)
+
+            assert result.score == log_result["metrics"]["r2"]
+            assert result.model_name == log_result["model_name"]
+
+    def test_log_context_manager_logs_when_gridsearching(self, tmpdir, base):
+        model = base(LinearRegression())
+        runs = tmpdir.mkdir('runs')
+        with model.log(runs):
+            _, result = model.gridsearch({"normalize": [True, False]})
+
+        for file in runs.visit('LinearRegression_*'):
+            with open(file) as f:
+                log_result = yaml.safe_load(f)
+
+            assert result.score == log_result["metrics"]["r2"]
+            assert result.model_name == log_result["model_name"]
+
+    def test_test_models_logs_when_given_dir(self, tmpdir, base):
+        test_models_log = tmpdir.mkdir('test_models')
+        base.test_models([RandomForestClassifier(), DummyClassifier()], log_dir=test_models_log)
+
+        for file in test_models_log.visit('*.yaml'):
+            with open(file) as f:
+                result = yaml.safe_load(f)
+                model_name = result['model_name']
+                assert model_name in {'RandomForestClassifier', 'DummyClassifier'}

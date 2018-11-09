@@ -383,7 +383,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             cross_val_scores=scores,
             cv=cv
         )
-        result.log_model(self.class_name, self.config.RUN_DIR)
+
+        if self.config.LOG:
+            result.log_model(self.config.RUN_DIR)
+
         logger.info(f"{_get_model_name(model)} - {metric}: {np.mean(scores)}")
         return result
 

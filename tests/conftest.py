@@ -1,16 +1,20 @@
-from ml_tooling.transformers import DFStandardScaler
+import logging
+import random as rand
+
+import numpy as np
+import pandas as pd
+import pytest
+from sklearn.datasets import load_iris
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-import pytest
-import pandas as pd
-import numpy as np
-from sklearn.linear_model import LinearRegression, LogisticRegression
 from ml_tooling import BaseClassModel
-from sklearn.datasets import load_iris
-import random as rand
+from ml_tooling.transformers import DFStandardScaler
+
+logging.disable(logging.CRITICAL)
 
 
 @pytest.fixture(autouse=True)

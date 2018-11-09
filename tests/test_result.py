@@ -1,4 +1,5 @@
 import pytest
+import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
@@ -87,6 +88,17 @@ class TestResult:
         max_result = max([first_result, second_result])
 
         assert first_result is max_result
+
+    def test_result_log_model_returns_correctly(self, tmpdir):
+        runs = tmpdir.mkdir('runs')
+        result = Result(model=RandomForestClassifier(), score=.7, metric='accuracy')
+        run_info = result.log_model(runs)
+
+        with open(run_info, 'r') as f:
+            logged = yaml.safe_load(f)
+
+        assert .7 == logged["metrics"]["accuracy"]
+        assert 'RandomForestClassifier' == logged['model_name']
 
     @pytest.mark.parametrize('with_cv', [True, False])
     def test_result_params_returns_only_clf_params(self, classifier, classifier_cv, with_cv):
@@ -224,3 +236,18 @@ class TestResultGroup:
         assert 'to_dataframe' in options_list
         assert 'plot' in options_list
         assert 'model_params' in options_list
+
+    def test_result_group_logs_all_results(self, tmpdir):
+        runs = tmpdir.mkdir('runs')
+        result1 = Result(RandomForestClassifier(), 2, metric='accuracy')
+        result2 = Result(RandomForestClassifier(), 1, metric='accuracy')
+
+        group = ResultGroup([result1, result2])
+        group.log_model(runs)
+
+        run_files = list(runs.visit('RandomForestClassifier_*'))
+
+        assert 2 == len(run_files)
+        assert any(('RandomForestClassifier_accuracy_2' in str(file) for file in run_files))
+        assert any(('RandomForestClassifier_accuracy_1' in str(file) for file in run_files))
+

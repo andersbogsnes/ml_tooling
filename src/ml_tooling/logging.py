@@ -18,7 +18,7 @@ def create_logger(logger_name):
 
     fmt = logging.Formatter(fmt="[%(asctime)s] - %(message)s", datefmt='%H:%M:%S')
 
-    handler = logging.StreamHandler(stream=sys.stdout) if default_logger else logging.NullHandler()
+    handler = logging.StreamHandler() if default_logger else logging.NullHandler()
 
     handler.setFormatter(fmt)
     logger.addHandler(handler)
@@ -58,19 +58,25 @@ def log_model(metric_scores: dict,
             "versions": versions,
             "params": model_params,
             "git_hash": get_git_hash(),
-            "metrics": metric_scores
+            "metrics": {k: float(v) for k, v in metric_scores.items()}
             }
 
     if model_path:
-        data['model_path'] = model_path
-    run_dir = run_dir.joinpath(class_name)
-    run_dir = _make_run_dir(run_dir)
-    output_file = f'{model_name}_{datetime.now().strftime("%Y%m%d_%H%M")}.yaml'
+        data['model_path'] = str(model_path)
+
+    now = datetime.now()
+    metrics = '_'.join([f'{k}_{v:.3f}' for k, v in metric_scores.items()])
+    run_dir = pathlib.Path(run_dir)
+
+    run_dir = _make_run_dir(run_dir.joinpath(now.strftime('%Y%m%d')))
+    output_file = f'{model_name}_{metrics}_{now.strftime("%H%M")}.yaml'
     output_path = run_dir.joinpath(output_file)
 
     if output_path.exists() and not overwrite:
-        output_file = f'{model_name}_{datetime.now().strftime("%Y%m%d_%H%M")}_{uuid.uuid4()}.yaml'
+        output_file = f'{model_name}_{metrics}_{now.strftime("%H%M%S")}.yaml'
         output_path = output_path.with_name(output_file)
 
     with output_path.open(mode='w') as f:
         yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
+
+    return output_path

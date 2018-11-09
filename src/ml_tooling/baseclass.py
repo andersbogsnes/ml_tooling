@@ -145,14 +145,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         model_file = current_dir.joinpath(save_name)
         joblib.dump(self.model, model_file)
-        metric_scores = {self.result.metric: self.result.score}
+
+        metric_scores = {self.result.metric: float(self.result.score)}
 
         log_model(metric_scores=metric_scores,
                   model_name=self.model_name,
                   model_params=self.result.model_params,
                   run_dir=self.config.RUN_DIR,
-                  model_path=model_file,
-                  class_name=self.class_name)
+                  model_path=str(model_file))
 
         logger.info(f"Saved model to {model_file}")
         return model_file
@@ -190,7 +190,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def test_models(cls,
                     models: Sequence,
                     metric: Optional[str] = None,
-                    cv: Union[int, bool] = False) -> Tuple['BaseClassModel', ResultGroup]:
+                    cv: Union[int, bool] = False,
+                    log_dir: str = None) -> Tuple['BaseClassModel', ResultGroup]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -203,6 +204,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param cv:
             Whether or not to use cross-validation. If an int is passed, use that many folds
 
+        :param log_dir:
+            Where to store logged models. If None, don't log
+
         :return:
             List of Result
         """
@@ -213,7 +217,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             challenger_model = cls(model)
             result = challenger_model.score_model(metric=metric, cv=cv)
             results.append(result)
-            result.log_model(cls.__name__, challenger_model.config.RUN_DIR)
+            if log_dir:
+                result.log_model(log_dir)
 
         results.sort(reverse=True)
         best_model = results[0].model
@@ -259,9 +264,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         if cv:  # TODO handle case of Sklearn CV class
             logger.info("Cross-validating...")
             self.result = self._score_model_cv(self.model, metric, cv)
-            return self.result
 
-        self.result = self._score_model(self.model, metric)
+        else:
+            self.result = self._score_model(self.model, metric)
+
+        if self.config.LOG:
+            result_file = self.result.log_model(self.config.RUN_DIR)
+            logger.info(f"Saved run info at {result_file}")
         return self.result
 
     def gridsearch(self,
@@ -294,9 +303,26 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             joblib.delayed(self._score_model_cv)(clone(baseline_model).set_params(**param),
                                                  metric=metric,
                                                  cv=cv) for param in param_grid)
+        logger.info("Done!")
 
         self.result = ResultGroup(results)
+
+        if self.config.LOG:
+            result_file = self.result.log_model(self.config.RUN_DIR)
+            logger.info(f"Saved run info at {result_file}")
+
         return results[0].model, self.result
+
+    @contextmanager
+    def log(self, run_name):
+        old_dir = self.config.RUN_DIR
+        self.config.LOG = True
+        self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)
+        try:
+            yield
+        finally:
+            self.config.LOG = False
+            self.config.RUN_DIR = old_dir
 
     def _score_model(self, model, metric: str) -> Result:
         """
@@ -318,7 +344,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                         viz=viz,
                         score=score,
                         metric=metric)
-        result.log_model(self.__class__.__name__, self.config.RUN_DIR)
+
         logger.info(f"{_get_model_name(model)} - {metric}: {score}")
 
         return result

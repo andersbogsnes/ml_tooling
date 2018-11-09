@@ -22,6 +22,7 @@ class DefaultConfig:
         self.RANDOM_STATE = 42
         self.RUN_DIR = RUN_DIR
         self.MODEL_DIR = MODEL_DIR
+        self.LOG = False
 
     def __repr__(self):
         attrs = '\n'.join([f"{attr}: {value}"

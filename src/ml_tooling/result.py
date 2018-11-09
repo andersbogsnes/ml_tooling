@@ -50,14 +50,13 @@ class Result:
             return self.model.steps[-1][1].get_params()
         return self.model.get_params()
 
-    def log_model(self, class_name, run_dir):
+    def log_model(self, run_dir):
         metric_score = {self.metric: float(self.score)}
-        log_model(metric_scores=metric_score,
-                  model_name=self.model_name,
-                  model_params=self.model_params,
-                  class_name=class_name,
-                  run_dir=run_dir,
-                  )
+        return log_model(metric_scores=metric_score,
+                         model_name=self.model_name,
+                         model_params=self.model_params,
+                         run_dir=run_dir,
+                         )
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """
@@ -169,6 +168,10 @@ class ResultGroup:
     def __repr__(self):
         results = '\n'.join([str(result) for result in self.results])
         return f"[{results}]"
+
+    def log_model(self, log_dir):
+        for result in self.results:
+            result.log_model(log_dir)
 
     def mean_score(self):
         """

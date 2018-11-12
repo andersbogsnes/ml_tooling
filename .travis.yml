@@ -2,25 +2,20 @@ language: python
 python:
 - '3.6'
 cache: pip
-
 env:
 - TOXENV=py36
-
 install:
 - pip install tox codecov flake8
-
 script:
 - tox -e $TOXENV
 - flake8
-
 after_success:
 - codecov
-
 deploy:
   provider: pypi
-  distributions: "sdist bdist_wheel"
+  distributions: sdist bdist_wheel
   user: andersbogsnes
   password:
-    secure: iN5Ebts9jh57A2xEibz+DSCzu1ag73yMMQwjj29UiI2lq4sSKIjfy1z8iILGVxojz9ptrv8pw5GBeIUeHIwTZu5WDM5ZxXk2GXkU7vNKro/fRFfBRXqXaRxMclfkaB+j8Pp8tCm61GgiZqwX0IQSFXUgHgIHUnLtnUIOZsZS0MSNt8O/CkuJ62GkoUEqqSKCkorg57KvVxq1B6Ew00t94o6ngMCACnRxDqYMKnVbuKUxzPpcp6QVMDUobxuljd74tadIToOXpimbOyXQZaZ1tX430qdHFijxNqS9ycy7zH+LYv8D6/X6VtQhENhX+I69uciGGFyCzYJ0urr68EzXjj82sJ2qJ5j4RjuO103boEtNBLv/QImRjrBg5MwDJeoWrvkwc9rWH/4r1GHReGs8S6Tt0RCmNnJuKZcd5ZIJwHS0s9OwLHrVYYotnZY5VWVoftRYO2KnAB5+D7AYPHO3+P2H21m/ba21boJphl3hFCwD4pdNr/miXFOCTAH8QEFzdLV2GRlRCmyKWO1slK+WHnsNzC65bWkv3Moxr5twRRdzD7cdbGDSHPTcPdnIcWFs6+Cg4BeqPBPBGLF8rxlKcqZPs0S6MHi5I3CTFFso3MjZEPvkCCbzeBFONQQLrvTXwq3AruEckN2MrWAC4J+OcF26nXWeblEBLOQUCJcj9tE=
+    secure: CoB43de5YN16AbCHw8cVJpPlYiC8qwTngIEIT9PonjZ+cpp2mWstFhU8YDJ+wG25gN1fk+JdPVF/yBiBC6bqu6GaoFsPr3xE0CHzZA9QdnLvWOgh5w4SB8xgw9cRxbTSPJOt1emOnYPT94CwfQmyUST+JQT68aPSiwb4NfJ1+ZzpCoqPkdtRp3/Kg5NTxfHPvTcpdlQy2BrapqAjzUtFa/nWwPRFaKTFn+mBmOB5av48h0XghsmtCfkulfMi8spdXJ6CmznATrVa6On2+RlBjy3jbowHGHCPgZjL1aB/xZSdb25hwOCBITlXskf8ggvdBmc8JC98nHG1w18ViGzks/dYfc+xFL2fKfBy/PGc4TjHURX+4YoxRTOBFCT8TMTA5VhXus5pkKDMXc7wOuCbAQfKhMIrZFb+n3EbHrZdFuBMR6V9PRczc6XPwnJYL/i4Ndfv/uNFcJiZ6PKnZC048oRe5sY1lDR/5QtNmgzHEfirU1Z/aNWtXsF2DduIieUId4QrxdI5Im861JjyJaBe3i3EdlO6RlxFIrJ1RkQG6IZkKGcUf93P6FMiRH7WtMDZW8J7SBnsSeg6sfnTFlpHJN1q8ywtWrnM45+iSltI5l17kNGmSlfVt+Ga23ZO78YC64YfIxtrK7oMcGWSnDAxLhpNaKvJWz9/WDaL6MprBV8=
   on:
     tags: true

@@ -103,6 +103,19 @@ class TestBaseClass:
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
+    def test_save_model_saves_logging_dir_correctly(self, classifier, tmpdir, monkeypatch):
+        def mockreturn():
+            return '1234'
+
+        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
+        save_dir = tmpdir.mkdir('model')
+        with classifier.log(save_dir):
+            classifier.save_model(save_dir)
+
+        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+        assert save_dir.join(expected_name).check()
+        assert 'LogisticRegression' in [str(file) for file in save_dir.visit('*.yaml')][0]
+
     def test_setup_model_raises_not_implemented_error(self, base):
         with pytest.raises(NotImplementedError):
             base.setup_model()

@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from functools import reduce
 
-from .utils import listify, TransformerError, _most_freq
+from .utils import listify, TransformerError, _most_freq, DataType
 
 
 # noinspection PyUnusedLocal
@@ -19,14 +19,14 @@ class Select(BaseEstimator, TransformerMixin):
     Selects columns from DataFrame
     """
 
-    def __init__(self, columns):
+    def __init__(self, columns: Union[list, str]):
         self.columns = columns
 
-    def fit(self, X, y=None):
+    def fit(self, X: pd.DataFrame, y=None):
         self.columns = listify(self.columns)
         return self
 
-    def transform(self, X):
+    def transform(self, X: pd.DataFrame):
         try:
             return X[self.columns]
         except KeyError:
@@ -42,7 +42,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def __init__(self,
                  value: Optional[Union[str, int]] = None,
-                 strategy: str = None):
+                 strategy: Optional[str] = None):
 
         self.value = value
         self.strategy = strategy
@@ -64,7 +64,8 @@ class FillNA(BaseEstimator, TransformerMixin):
             raise TransformerError(f"Both a value and a strategy have been selected."
                                    f"Please select either a value or a strategy.")
 
-    def _col_is_categorical_and_is_missing_category(self, col, X):
+    # noinspection PyUnresolvedReferences
+    def _col_is_categorical_and_is_missing_category(self, col: str, X: pd.DataFrame) -> bool:
         if pd.api.types.is_categorical_dtype(X[col]):
             if self.value_map_[col] not in X[col].cat.categories:
                 return True
@@ -84,13 +85,13 @@ class FillNA(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
-        for col in X.columns:
-            if self._col_is_categorical_and_is_missing_category(col, X):
-                X[col].cat.add_categories(self.value_map_[col], inplace=True)
+        for col in x_.columns:
+            if self._col_is_categorical_and_is_missing_category(col, x_):
+                x_[col].cat.add_categories(self.value_map_[col], inplace=True)
 
-        result = X.fillna(value=self.value_map_)
+        result = x_.fillna(value=self.value_map_)
         return result
 
 
@@ -109,13 +110,13 @@ class ToCategorical(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
-        for col in X.columns:
-            X[col] = pd.Categorical(X[col],
-                                    categories=self.cat_map_[col].categories,
-                                    ordered=self.cat_map_[col].ordered)
-        return pd.get_dummies(X)
+        for col in x_.columns:
+            x_[col] = pd.Categorical(x_[col],
+                                     categories=self.cat_map_[col].categories,
+                                     ordered=self.cat_map_[col].ordered)
+        return pd.get_dummies(x_)
 
 
 # noinspection PyUnusedLocal
@@ -124,17 +125,17 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[Union[pd.DataFrame, pd.Series, np.array]], pd.DataFrame]):
+    def __init__(self, func: Callable[[DataType], pd.DataFrame]):
         self.func = func
 
     def fit(self, X: pd.DataFrame, y=None):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
-            X[col] = self.func(X[col])
-        return X
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = self.func(x_[col])
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -152,17 +153,19 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.reset_index(drop=True)
+        x_ = X.reset_index(drop=True)
 
-        Xts = [t.transform(X) for _, t in self.transformer_list]
-        Xunion = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), Xts)
-        return Xunion
+        x_ts = [t.transform(x_) for _, t in self.transformer_list]
+        x_union = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), x_ts)
+        return x_union
 
 
 # noinspection PyUnusedLocal
 class Binner(BaseEstimator, TransformerMixin):
     """
-    Bins data according to passed bins and labels
+    Bins data according to passed bins and labels. Uses pd.cut() under the hood,
+    see https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.cut.html#pandas-cut
+    for further details
     """
 
     def __init__(self, bins: Union[int, list], labels: list = None):
@@ -173,16 +176,16 @@ class Binner(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
-            X[col] = pd.cut(X[col], bins=self.bins, labels=self.labels)
-        return X
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = pd.cut(x_[col], bins=self.bins, labels=self.labels)
+        return x_
 
 
 # noinspection PyUnusedLocal
 class Renamer(BaseEstimator, TransformerMixin):
     """
-    Renames columns to passed names
+    Renames columns to passed names.
     """
 
     def __init__(self, column_names: Union[list, str]):
@@ -192,15 +195,15 @@ class Renamer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
+        x_ = X.copy()
 
         column_names = listify(self.column_names)
 
-        if len(column_names) != len(X.columns):
-            raise TransformerError(f"X has {len(X.columns)} columns - "
+        if len(column_names) != len(x_.columns):
+            raise TransformerError(f"X has {len(x_.columns)} columns - "
                                    f"You provided {len(column_names)} column names")
-        X.columns = column_names
-        return X
+        x_.columns = column_names
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -219,18 +222,18 @@ class DateEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        X = X.copy()
-        for col in X.columns:
+        x_ = X.copy()
+        for col in x_.columns:
             if self.day:
-                X[f"{col}_day"] = X[col].dt.day
+                x_[f"{col}_day"] = x_[col].dt.day
             if self.month:
-                X[f"{col}_month"] = X[col].dt.month
+                x_[f"{col}_month"] = x_[col].dt.month
             if self.year:
-                X[f"{col}_year"] = X[col].dt.year
+                x_[f"{col}_year"] = x_[col].dt.year
             if self.week:
-                X[f"{col}_week"] = X[col].dt.week
-            X = X.drop(col, axis=1)
-        return X
+                x_[f"{col}_week"] = x_[col].dt.week
+            x_ = x_.drop(col, axis=1)
+        return x_
 
 
 # noinspection PyUnusedLocal
@@ -247,11 +250,11 @@ class FreqFeature(BaseEstimator, TransformerMixin):
             self.frequencies[col] = X[col].str.upper().value_counts(normalize=True).to_dict()
         return self
 
-    def transform(self, X: pd.DataFrame):
-        X = X.copy()
-        for col in X.columns:
-            X[col] = X[col].str.upper().map(self.frequencies[col]).fillna(0)
-        return X
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        x_ = X.copy()
+        for col in x_.columns:
+            x_[col] = x_[col].str.upper().map(self.frequencies[col]).fillna(0)
+        return x_
 
 
 class DFStandardScaler(BaseEstimator, TransformerMixin):
@@ -275,8 +278,13 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
 class DFRowFunc(BaseEstimator, TransformerMixin):
     """
     Row-wise operation on Pandas DataFrame. Strategy can either be one of
-    the predefined or a callable.    If some elements in the row are NaN these
+    the predefined or a callable. If some elements in the row are NaN these
     elements are ignored for the built-in strategies.
+    Valid strategies are:
+        - sum
+        - min
+        - max
+        - mean
     """
 
     _func_map = {'sum': np.sum,
@@ -288,6 +296,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         self.strategy = strategy
         self.func = None
 
+    # noinspection PyUnusedLocal
     def fit(self, X: pd.DataFrame, y=None):
         self._validate_strategy(self.strategy)
         return self
@@ -307,7 +316,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         else:
             self.func = strategy
 
-    def transform(self, X):
-        X = X.copy()
-        X = pd.DataFrame(X.apply(self.func, axis=1))
-        return X
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        x_ = X.copy()
+        x_ = x_.apply(self.func, axis=1).to_frame()
+        return x_

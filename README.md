@@ -69,7 +69,7 @@ models_to_try = [LinearRegression(), Ridge(), LassoLars()]
 
 # best_model will be BostonModel instantiated with the highest scoring model. all_results is a list of all results 
 best_model, alL_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
-print(alL_results)
+alL_results.to_dataframe(params=False)
 
 ```
 
@@ -109,7 +109,12 @@ Passed to the implemented `get_prediction_data()` method and calls `.predict()` 
 `test_models([model1, model2], metric='accuracy')`
 ---
 Runs `score_model()` on each model, saving the result.
-Returns the best model as well as a list of all results
+Returns the best model as well as a ResultGroup of all results
+
+`gridsearch(param_grid)`
+---
+Runs a gridsearch on the model with the passed in parameter grid.
+The function will ensure that it works inside a pipeline as well.
 
 `setup_model()`
 ---
@@ -147,10 +152,44 @@ model = BostonModel.setup_model()
 model.train_model()
 ```
 
+`log(log_dir)`
+---
+`log()` is a context manager that lets you turn on logging for any scoring methods that follow. 
+You can pass a log_dir to specify a subfolder to store the model in. The output is a yaml
+file recording model parameters, package version numbers, metrics and other useful information
+
+Usage example:
+```python
+model = BostonModel.setup_model()
+
+with model.log('score'):
+    model.score_model()
+
+``` 
+
+This will save the results of `model.score_model()` to `runs/score/`
+
 ## Visualizing results
 When a model is trained, it returns a Result object. 
 That object has number of visualization options depending on the type of model:
-   
+
+Any visualizer listed here also has a functional counterpart in `ml_tooling.plots`.
+E.g if you want to use the function for plotting a confusion matrix without using 
+the ml_tooling BaseClassModel approach, you can instead do 
+`from ml_tooling.plots import plot_confusion_matrix`
+
+These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred
+as arguments
+
+```python
+from ml_tooling.plots import plot_confusion_matrix
+import numpy as np
+
+y_true = np.array([1, 0, 1, 0])
+y_pred = np.array([1, 0, 0, 0])
+plot_confusion_matrix(y_true, y_pred)
+```
+
 ### Classifiers
    
 - `roc_curve()`

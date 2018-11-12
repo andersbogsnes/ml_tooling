@@ -1,9 +1,12 @@
 from functools import total_ordering
-from typing import Union
+from typing import Union, List
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
+from sklearn.pipeline import Pipeline
 
+from ml_tooling.logging import log_model
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
                     plot_residuals,
@@ -13,24 +16,66 @@ from .plots import (_get_feature_importance,
                     plot_roc_auc,
                     plot_lift_curve,
                     )
+from .utils import _get_model_name, _get_labels
 
 
 @total_ordering
 class Result:
+    """
+    Represents a single scoring of a model.
+    Contains plotting methods, as well as being comparable with other results
+    """
+
     def __init__(self,
                  model,
-                 model_name,
+                 score,
                  viz=None,
-                 model_params=None,
-                 score=None,
-                 metric=None
+                 metric=None,
                  ):
         self.model = model
-        self.model_name = model_name
+        self.model_name = _get_model_name(model)
         self.score = score
-        self.model_params = model_params
         self.metric = metric
         self.plot = viz
+
+    @property
+    def model_params(self) -> dict:
+        """
+        Calls get_params on estimator. Checks if estimator is a Pipeline, in which case it
+        assumes last step in pipeline is an estimator and calls get_params on that step only
+        :return:
+            dict of params
+        """
+        if isinstance(self.model, Pipeline):
+            return self.model.steps[-1][1].get_params()
+        return self.model.get_params()
+
+    def log_model(self, run_dir):
+        metric_score = {self.metric: float(self.score)}
+        return log_model(metric_scores=metric_score,
+                         model_name=self.model_name,
+                         model_params=self.model_params,
+                         run_dir=run_dir,
+                         )
+
+    def to_dataframe(self, params=True) -> pd.DataFrame:
+        """
+        Output result as a dataframe for ease of inspecting and manipulating.
+        Defaults to including model params, which can be toggled with the params flag.
+        This is useful if you're comparing different models
+        :param params:
+            Whether or not to include model parameters as columns.
+        :return:
+            DataFrame of the result
+        """
+        model_params_dict = {}
+        if params:
+            model_params_dict = self.model_params
+
+        model_params_dict['score'] = self.score
+        model_params_dict['metric'] = self.metric
+
+        return pd.DataFrame([model_params_dict])
 
     def __eq__(self, other):
         return self.score == other.score
@@ -51,25 +96,104 @@ class CVResult(Result):
 
     def __init__(self,
                  model,
-                 model_name,
                  viz=None,
                  cv=None,
-                 model_params=None,
                  cross_val_scores=None,
-                 cross_val_mean=None,
-                 cross_val_std=None,
-                 metric=None
+                 metric=None,
                  ):
-        super().__init__(model, model_name, viz, model_params, cross_val_mean, metric)
         self.cv = cv
         self.cross_val_scores = cross_val_scores
-        self.cross_val_std = cross_val_std
+        self.cross_val_mean = np.mean(cross_val_scores)
+        self.cross_val_std = np.std(cross_val_scores)
+        super().__init__(model=model,
+                         viz=viz,
+                         score=self.cross_val_mean,
+                         metric=metric,
+                         )
+
+    def to_dataframe(self, params: bool = True, cross_val_score: bool = False) -> pd.DataFrame:
+        """
+        Output result as a DataFrame for ease of inspecting and manipulating.
+        Defaults to including model params, which can be toggled with the params flag.
+        This is useful if you're comparing different models. Additionally includes
+        the standard deviation of the score and number of cross validations.
+
+        If you want to inspect the cross-validated scores, toggle cross_val_score and the resulting
+        DataFrame will have one row per fold.
+        :param params:
+            Boolean - whether to include model parameters as columns in the DataFrame or not
+        :param cross_val_score:
+            Boolean - whether to have one row per fold in the DataFrame or not
+        :return:
+            DataFrame of results
+        """
+        df = super().to_dataframe(params).assign(cross_val_std=self.cross_val_std, cv=self.cv)
+        if cross_val_score:
+            return pd.concat([df.assign(score=score)
+                              for score in self.cross_val_scores], ignore_index=True)
+        return df
 
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
         return f"<Result {self.model_name}: " \
                f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
                f"± {np.round(self.cross_val_std, 2)}>"
+
+
+class ResultGroup:
+    """
+    A container for results. Proxies attributes to the best result. Supports indexing like a list.
+    Can output the mean score of all its results using .mean_score.
+    Can convert the results to a DataFrame of results, for ease of scanning and manipulating
+
+    """
+
+    def __init__(self, results: List[Result]):
+        self.results = sorted(results, reverse=True)
+
+    def __getattr__(self, name):
+        return getattr(self.results[0], name)
+
+    def __dir__(self):
+        proxied_dir = dir(self.results[0])
+        custom_methods = ['to_dataframe', 'mean_score']
+        return proxied_dir + custom_methods
+
+    def __len__(self):
+        return len(self.results)
+
+    def __getitem__(self, item):
+        return self.results[item]
+
+    def __repr__(self):
+        results = '\n'.join([str(result) for result in self.results])
+        return f"[{results}]"
+
+    def log_model(self, log_dir):
+        for result in self.results:
+            result.log_model(log_dir)
+
+    def mean_score(self):
+        """
+        Calculates mean score across the results
+        :return:
+        """
+        return np.mean([result.score for result in self.results])
+
+    def to_dataframe(self, params=True) -> pd.DataFrame:
+        """
+        Outputs results as a DataFrame. By default, the DataFrame will contain
+        all possible model parameters. This behaviour can be toggled using `params=False`
+
+        :param params:
+            Boolean toggling whether or not to output params as part of the dataframe
+        :return:
+            pd.DataFrame of results
+        """
+
+        output = [result.to_dataframe(params) for result in self.results]
+
+        return pd.concat(output, ignore_index=True).sort_values(by='score', ascending=False)
 
 
 class BaseVisualize:
@@ -79,23 +203,9 @@ class BaseVisualize:
 
     def __init__(self, model, config, data):
         self._model = model
-        self._model_name = model.__class__.__name__
+        self._model_name = _get_model_name(model)
         self._config = config
         self._data = data
-        self._feature_labels = self._get_labels()
-
-    def _get_labels(self):
-        """
-        If data is a DataFrame, use columns attribute - else use [0...n] np.array
-        :return:
-            list-like of labels
-        """
-        if hasattr(self._data.train_x, 'columns'):
-            labels = self._data.train_x.columns
-        else:
-            labels = np.arange(self._data.train_x.shape[1])
-
-        return labels
 
     def feature_importance(self,
                            values: bool = True,
@@ -123,10 +233,11 @@ class BaseVisualize:
 
         title = f"Feature Importance - {self._model_name}"
         importance = _get_feature_importance(self._model)
+        labels = _get_labels(self._model, self._data.train_x)
 
         with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(importance,
-                                           self._feature_labels,
+                                           labels,
                                            values=values,
                                            title=title,
                                            top_n=top_n,

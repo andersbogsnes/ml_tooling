@@ -57,8 +57,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-notebooks/
-
+/notebooks/data/raw/
 # Environments
 .env
 .venv
@@ -67,4 +66,4 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+runs/

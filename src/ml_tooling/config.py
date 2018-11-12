@@ -1,12 +1,15 @@
 import pathlib
 
 BASE_PATH = pathlib.Path(__file__).parent
+CWD = pathlib.Path.cwd()
 MPL_STYLESHEET = str(BASE_PATH.joinpath('almbrand.mplstyle'))
+RUN_DIR = CWD.joinpath('runs')
+MODEL_DIR = CWD.joinpath('models')
 
 
 class DefaultConfig:
     """
-    Configuration for a given Baseclass. Configs propagate through each instance
+    Configuration for a given BaseClass. Configs propagate through each instance
     """
     def __init__(self):
         self.VERBOSITY = 0
@@ -15,8 +18,11 @@ class DefaultConfig:
         self.CROSS_VALIDATION = 10
         self.STYLE_SHEET = MPL_STYLESHEET
         self.N_JOBS = -1
-        self.TRAIN_SIZE = 0.25
+        self.TEST_SIZE = 0.25
         self.RANDOM_STATE = 42
+        self.RUN_DIR = RUN_DIR
+        self.MODEL_DIR = MODEL_DIR
+        self.LOG = False
 
     def __repr__(self):
         attrs = '\n'.join([f"{attr}: {value}"

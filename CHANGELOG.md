@@ -1,3 +1,11 @@
+v0.4.0
+- Added gridsearch method to BaseClass. Gridsearch your model 
+and return a list of results for inspection
+- Added ResultGroup - any method that returns a list of results now 
+returns a ResultGroup instead.
+- Added logging
+- Added ability to record runs as yaml
+
 v0.3.2
 - Another bugfix release
 

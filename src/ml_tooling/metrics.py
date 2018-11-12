@@ -44,7 +44,7 @@ def lift_score(y_target: np.ndarray, y_predicted: np.ndarray) -> float:
 
 def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) -> np.ndarray:
     """
-    Generates a confusion matrix using sklearns confusion_matrix function, with the ability
+    Generates a confusion matrix using sklearn's confusion_matrix function, with the ability
     to add normalization.
 
     Calculates a matrix of

@@ -258,7 +258,7 @@ def plot_feature_importance(importance: DataType,
                                                            top_n,
                                                            bottom_n
                                                            )
-
+    labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')
@@ -330,7 +330,7 @@ def _cum_gain_curve(y_true: np.ndarray,
         Predicted label
 
     :param positive_label:
-        Which class is considered positive class in multiclass settings
+        Which class is considered positive class in multi-class settings
 
     :return:
         array of data percents and cumulative gain
@@ -352,7 +352,7 @@ def _generate_text_labels(ax, horizontal=False, padding=0.005):
         Ax which has patches on it
 
     :param horizontal:
-        Whether or not the graph is a barh or a regular bar
+        Whether or not the graph is a horizontal bar chart or a regular bar chart
 
     :param padding:
         How much padding to multiply by

@@ -1,101 +1,33 @@
 import numpy as np
 import pytest
-
+import yaml
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling.result import CVResult, Result
-from ml_tooling.utils import MLToolingError
 from ml_tooling import BaseClassModel
-
-
-class TestResult:
-    @pytest.mark.parametrize('cv', ['with_cv', 'without_cv'])
-    def test_linear_model_returns_a_result(self, regression, regression_cv, cv):
-        if cv == 'with_cv':
-            result = regression_cv.result
-            assert isinstance(result, CVResult)
-            assert 2 == len(result.cross_val_scores)
-            assert 2 == result.cv
-            assert '2-fold Cross-validated' in result.__repr__()
-            assert result.model == regression_cv.model
-        else:
-            result = regression.result
-            assert isinstance(result, Result)
-            assert hasattr(result, 'cross_val_std') is False
-            assert result.model == regression.model
-
-        assert isinstance(result.score, float)
-        assert 'r2' == result.metric
-        assert 'LinearRegression' == result.model_name
-
-    @pytest.mark.parametrize('cv', ['with_cv', 'without_cv'])
-    def test_regression_model_returns_a_result(self, classifier, classifier_cv, cv):
-        if cv == 'with_cv':
-            result = classifier_cv.result
-            assert isinstance(result, CVResult)
-            assert 2 == len(result.cross_val_scores)
-            assert 2 == result.cv
-            assert '2-fold Cross-validated' in result.__repr__()
-            assert result.model == classifier_cv.model
-
-        else:
-            result = classifier.result
-            assert isinstance(result, Result)
-            assert hasattr(result, 'cross_val_std') is False
-            assert result.model == classifier.model
-
-        assert result.score > 0
-        assert 'accuracy' == result.metric
-        assert 'LogisticRegression' == result.model_name
-
-    def test_pipeline_regression_returns_correct_result(self, base, pipeline_linear):
-        model = base(pipeline_linear)
-        result = model.score_model()
-        assert isinstance(result, Result)
-        assert 'LinearRegression' == result.model_name
-        assert isinstance(result.model, Pipeline)
-
-    def test_pipeline_logistic_returns_correct_result(self, base, pipeline_logistic):
-        model = base(pipeline_logistic)
-        result = model.score_model()
-        assert isinstance(result, Result)
-        assert 'LogisticRegression' == result.model_name
-        assert isinstance(result.model, Pipeline)
-
-    def test_cvresult_equality_operators(self):
-        first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-        second_result = CVResult(model=None, model_name='test2', cross_val_mean=.5,
-                                 cross_val_std=.2)
-
-        assert first_result > second_result
-
-    def test_result_equality_operators(self):
-        first_result = Result(model=None, model_name='test', score=.7)
-        second_result = Result(model=None, model_name='test2', score=.5)
-
-        assert first_result > second_result
-
-    def test_max_works_with_cv_result(self):
-        first_result = CVResult(model=None, model_name='test', cross_val_mean=.7, cross_val_std=.2)
-        second_result = CVResult(model_name='test', model=None, cross_val_mean=.5, cross_val_std=.2)
-
-        max_result = max([first_result, second_result])
-
-        assert first_result is max_result
-
-    def test_max_works_with_result(self):
-        first_result = Result(model=None, model_name='test', score=.7)
-        second_result = Result(model_name='test', model=None, score=.5)
-
-        max_result = max([first_result, second_result])
-
-        assert first_result is max_result
+from ml_tooling.result import CVResult, Result
+from ml_tooling.transformers import DFStandardScaler
+from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+    def test_instantiate_model_with_non_estimator_pipeline_fails(self, base):
+        example_pipe = Pipeline([
+            ('scale', DFStandardScaler)
+        ])
+        with pytest.raises(MLToolingError,
+                           match="You passed a Pipeline without an estimator as the last step"):
+            base(example_pipe)
+
+    def test_instantiate_model_with_other_object_fails(self, base):
+        with pytest.raises(MLToolingError,
+                           match=f"Expected a Pipeline or Estimator - got <class 'dict'>"
+                           ):
+            base({})
+
     def test_make_prediction_errors_when_model_is_not_fitted(self, base):
         with pytest.raises(MLToolingError, match="You haven't fitted the model"):
             model = base(LinearRegression())
@@ -171,6 +103,19 @@ class TestBaseClass:
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
+    def test_save_model_saves_logging_dir_correctly(self, classifier, tmpdir, monkeypatch):
+        def mockreturn():
+            return '1234'
+
+        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
+        save_dir = tmpdir.mkdir('model')
+        with classifier.log(save_dir):
+            classifier.save_model(save_dir)
+
+        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+        assert save_dir.join(expected_name).check()
+        assert 'LogisticRegression' in [str(file) for file in save_dir.visit('*.yaml')][0]
+
     def test_setup_model_raises_not_implemented_error(self, base):
         with pytest.raises(NotImplementedError):
             base.setup_model()
@@ -194,3 +139,61 @@ class TestBaseClass:
         model = DummyModel.setup_model()
         assert model.model_name == 'LogisticRegression'
         assert hasattr(model, 'coef_') is False
+
+    def test_gridsearch_model_returns_as_expected(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model, results = model.gridsearch(param_grid={'penalty': ['l1', 'l2']})
+        assert isinstance(model, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, CVResult)
+
+    def test_log_context_manager_works_as_expected(self, regression):
+        assert regression.config.LOG is False
+        assert 'runs' == regression.config.RUN_DIR.name
+        with regression.log('test'):
+            assert regression.config.LOG is True
+            assert 'test' == regression.config.RUN_DIR.name
+            assert 'runs' == regression.config.RUN_DIR.parent.name
+
+        assert regression.config.LOG is False
+        assert 'runs' == regression.config.RUN_DIR.name
+        assert 'test' not in regression.config.RUN_DIR.parts
+
+    def test_log_context_manager_logs_when_scoring_model(self, tmpdir, base):
+        model = base(LinearRegression())
+
+        runs = tmpdir.mkdir('runs')
+        with model.log(runs):
+            result = model.score_model()
+
+        for file in runs.visit('LinearRegression_*'):
+            with open(file) as f:
+                log_result = yaml.safe_load(f)
+
+            assert result.score == log_result["metrics"]["r2"]
+            assert result.model_name == log_result["model_name"]
+
+    def test_log_context_manager_logs_when_gridsearching(self, tmpdir, base):
+        model = base(LinearRegression())
+        runs = tmpdir.mkdir('runs')
+        with model.log(runs):
+            _, result = model.gridsearch({"normalize": [True, False]})
+
+        for file in runs.visit('LinearRegression_*'):
+            with open(file) as f:
+                log_result = yaml.safe_load(f)
+
+            assert round(result.score, 2) == round(log_result["metrics"]["r2"], 2)
+            assert result.model_name == log_result["model_name"]
+
+    def test_test_models_logs_when_given_dir(self, tmpdir, base):
+        test_models_log = tmpdir.mkdir('test_models')
+        base.test_models([RandomForestClassifier(), DummyClassifier()], log_dir=test_models_log)
+
+        for file in test_models_log.visit('*.yaml'):
+            with open(file) as f:
+                result = yaml.safe_load(f)
+                model_name = result['model_name']
+                assert model_name in {'RandomForestClassifier', 'DummyClassifier'}

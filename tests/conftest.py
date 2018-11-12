@@ -1,15 +1,20 @@
+import logging
+import random as rand
+
+import numpy as np
+import pandas as pd
+import pytest
+from sklearn.datasets import load_iris
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-import pytest
-import pandas as pd
-import numpy as np
-from sklearn.linear_model import LinearRegression, LogisticRegression
 from ml_tooling import BaseClassModel
-from sklearn.datasets import load_iris
-import random as rand
+from ml_tooling.transformers import DFStandardScaler
+
+logging.disable(logging.CRITICAL)
 
 
 @pytest.fixture(autouse=True)
@@ -39,8 +44,8 @@ def _base():
 
 @pytest.fixture(name='categorical')
 def categorical_data():
-    return pd.DataFrame({"category_a": ["a1", "a2", "a3"],
-                         "category_b": ["b1", "b2", "b3"]})
+    return pd.DataFrame({"category_a": ["a1", "a2", "a3", "a1"],
+                         "category_b": ["b1", "b2", "b3", "b1"]})
 
 
 @pytest.fixture(name='categorical_na')
@@ -121,7 +126,7 @@ def pipeline_linear():
 @pytest.fixture
 def pipeline_dummy_classifier():
     pipe = Pipeline([
-        ('scale', StandardScaler()),
+        ('scale', DFStandardScaler()),
         ('clf', DummyClassifier())
     ])
 
@@ -131,7 +136,7 @@ def pipeline_dummy_classifier():
 @pytest.fixture
 def pipeline_forest_classifier():
     pipe = Pipeline([
-        ('scale', StandardScaler()),
+        ('scale', DFStandardScaler()),
         ('clf', RandomForestClassifier(n_estimators=10))
     ])
 

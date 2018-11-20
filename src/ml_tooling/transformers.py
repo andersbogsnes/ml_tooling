@@ -125,8 +125,9 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[DataType], pd.DataFrame]):
+    def __init__(self, func: Callable[[DataType], pd.DataFrame], **kwargs):
         self.func = func
+        self.kwargs = kwargs
 
     def fit(self, X: pd.DataFrame, y=None):
         return self
@@ -134,7 +135,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         x_ = X.copy()
         for col in x_.columns:
-            x_[col] = self.func(x_[col])
+            x_[col] = self.func(x_[col], **self.kwargs)
         return x_
 
 

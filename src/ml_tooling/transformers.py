@@ -320,3 +320,29 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         x_ = X.copy()
         x_ = x_.apply(self.func, axis=1).to_frame()
         return x_
+
+
+class Binarize(BaseEstimator, TransformerMixin):
+    """
+    Binarizer that returns a pandas DataFrame
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def fit(self, X: pd.DataFrame, y=None):
+        self._validate_value(self.value)
+        return self
+
+    def _validate_value(self, value):
+
+        if value is None:
+            raise TransformerError("No value is specified.")
+
+        else:
+            self.value = value
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        x_ = X.copy()
+        data = np.where(x_ == self.value, 1, 0)
+        return pd.DataFrame(data=data, columns=X.columns, index=X.index)

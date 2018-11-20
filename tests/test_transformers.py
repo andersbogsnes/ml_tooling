@@ -17,6 +17,7 @@ from ml_tooling.transformers import (Select,
                                      DFStandardScaler,
                                      DFFeatureUnion,
                                      DFRowFunc,
+                                     Binarize
                                      )
 
 from ml_tooling.utils import TransformerError
@@ -542,6 +543,35 @@ class TestFuncTransformer(TransformerBase):
 
     def test_func_transformer_works_in_gridsearch(self, base):
         grid = self.create_gridsearch(FuncTransformer(np.mean))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
+
+
+class TestBinarize(TransformerBase):
+    def test_binarize_returns_correctly_on_categorical_na(self, categorical_na):
+        binarize = Binarize(value='a1')
+        result = binarize.fit_transform(categorical_na)
+        expected = pd.DataFrame({"category_a": [1, 0, 0, 1],
+                                 "category_b": [0, 0, 0, 0]})
+
+        pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+    def test_binarize_returns_correctly_on_numerical_na(self, numerical_na):
+        binarize = Binarize(value=2)
+        result = binarize.fit_transform(numerical_na)
+        expected = pd.DataFrame({"number_a": [0, 1, 0, 0],
+                                 "number_b": [0, 0, 0, 0]})
+
+        pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+    def test_binarize_can_be_used_cv(self, base):
+        model = self.create_model(base, Binarize(value='a1'))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
+
+    def test_binarize_works_in_gridsearch(self, base):
+        grid = self.create_gridsearch(Binarize(value=2))
         model = base(grid)
         result = model.score_model()
         assert isinstance(result, Result)

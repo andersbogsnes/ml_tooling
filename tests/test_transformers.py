@@ -528,15 +528,25 @@ class TestFuncTransformer(TransformerBase):
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
 
-    @pytest.mark.parametrize('passed_func, expected', [
+    def arbitrary_test_func(x, y, z):
+        return x - y > z
+
+    def wrapper_arbitrary_test_func(df, y, z):
+        return df.apply(TestFuncTransformer.arbitrary_test_func, args=(y, z))
+
+    @pytest.mark.parametrize('passed_func, expected, kwargs', [
         (np.mean, pd.DataFrame({"number_a": [2.5, 2.5, 2.5, 2.5],
-                                "number_b": [6.5, 6.5, 6.5, 6.5]})),
+                                "number_b": [6.5, 6.5, 6.5, 6.5]}), dict()),
         (lambda x: x * 2, pd.DataFrame({"number_a": [2, 4, 6, 8],
-                                        "number_b": [10, 12, 14, 16]}))
+                                        "number_b": [10, 12, 14, 16]}), dict()),
+        (wrapper_arbitrary_test_func, pd.DataFrame({"number_a": [False, False, False, True],
+                                                    "number_b": [True, True, True, True]}),
+         {'z': 1, 'y': 2})
 
     ])
-    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected):
-        transformer = FuncTransformer(passed_func)
+    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected,
+                                                          kwargs):
+        transformer = FuncTransformer(passed_func, **kwargs)
         result = transformer.fit_transform(numerical)
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)

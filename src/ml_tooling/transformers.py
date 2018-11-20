@@ -331,16 +331,7 @@ class Binarize(BaseEstimator, TransformerMixin):
         self.value = value
 
     def fit(self, X: pd.DataFrame, y=None):
-        self._validate_value(self.value)
         return self
-
-    def _validate_value(self, value):
-
-        if value is None:
-            raise TransformerError("No value is specified.")
-
-        else:
-            self.value = value
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         x_ = X.copy()

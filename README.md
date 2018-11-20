@@ -326,6 +326,37 @@ Out[1]:
 3  ERROR
 ```
 
+Keyword arguments can be supplied to the function. 
+```python
+def custom_func(input,word1,word2):
+   if input == "OK":
+      result = word1
+   elif input == "Error":
+      result = word2
+   return result
+
+def wrapper(df,word1,word2):
+   return df.apply(custom_func,args=(word1,word2))
+
+df = pd.DataFrame({
+    "status": ["OK", "Error", "OK", "Error"]
+})
+
+kwargs = {'word1': 'Okay','word2': 'Fail'}
+wordchange = FuncTransformer(wrapper,**kwargs)
+wordchange.fit_transform(df)
+```
+
+```
+Out[2]: 
+  status
+0   Okay
+1   Fail
+2   Okay
+3   Fail
+```
+
+
 ### Binner
 Bins numerical data into supplied bins
 

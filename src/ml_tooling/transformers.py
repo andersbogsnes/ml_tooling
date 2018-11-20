@@ -337,4 +337,4 @@ class Binarize(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         x_ = X.copy()
         data = np.where(x_ == self.value, 1, 0)
-        return pd.DataFrame(data=data, columns=X.columns, index=X.index)
+        return pd.DataFrame(data=data, columns=x_.columns, index=x_.index)

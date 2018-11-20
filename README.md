@@ -532,3 +532,30 @@ Out[1]:
 3        4
 
 ```
+
+
+
+### Binarize
+Transfomer which returns 1 if equal to given value else 0.
+
+```python
+from ml_tooling.transformers import Binarize
+import pandas as pd
+
+df = pd.DataFrame({
+    "number_1": [1, np.nan, 3, 4],
+    "number_2": [1, 3, 2, 4]
+
+})
+
+binarize = Binarize(value = 3)
+binarize.fit_transform(df)
+```
+```
+Out[1]: 
+         number_1    number_2
+0               0           0
+1               1           0
+2               0           1
+3               0           0
+```

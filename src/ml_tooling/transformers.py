@@ -321,3 +321,20 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         x_ = X.copy()
         x_ = x_.apply(self.func, axis=1).to_frame()
         return x_
+
+
+class Binarize(BaseEstimator, TransformerMixin):
+    """
+    Binarizer that returns a pandas DataFrame
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def fit(self, X: pd.DataFrame, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        x_ = X.copy()
+        data = np.where(x_ == self.value, 1, 0)
+        return pd.DataFrame(data=data, columns=x_.columns, index=x_.index)

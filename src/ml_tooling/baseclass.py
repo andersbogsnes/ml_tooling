@@ -182,13 +182,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         x = self.get_prediction_data(input_data)
 
         try:
-            if proba and use_index:
-                return pd.DataFrame(self.model.predict_proba(x), index=x.index)
-            if proba and not use_index:
-                return pd.DataFrame(data=self.model.predict_proba(x))
-            if not proba and use_index:
-                return pd.DataFrame(data=self.model.predict(x), index=x.index)
-            return pd.DataFrame(data=self.model.predict(x))
+            if proba:
+                data = self.model.predict_proba(x)
+            else:
+                data = self.model.predict(x)
+
+            if use_index:
+                return pd.DataFrame(data=data, index=x.index)
+            else:
+                return pd.DataFrame(data=data)
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

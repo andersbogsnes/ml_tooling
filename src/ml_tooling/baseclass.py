@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
+import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
@@ -158,7 +159,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Saved model to {model_file}")
         return model_file
 
-    def make_prediction(self, input_data, proba=False) -> np.ndarray:
+    def make_prediction(self, input_data, proba=False, name_column = None) -> pd.DataFrame:
         """
         Returns model prediction for given input data
 
@@ -175,13 +176,23 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         if proba is True and not hasattr(self.model, 'predict_proba'):
             raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
 
+        if name_column is not None and not isinstance(name_column, str):
+            raise MLToolingError("name_column is not a string.")
+
         x = self.get_prediction_data(input_data)
 
-        try:
-            if proba:
-                return self.model.predict_proba(x)
+        if name_column is not None and name_column not in x.columns:
+            raise MLToolingError(f"Prediction data does not have a coulmn named {name_column}.")
 
-            return self.model.predict(x)
+        try:
+            if proba and name_column is None:
+                return pd.DataFrame(self.model.predict_proba(x))
+            elif proba and name_column is not None:
+                return pd.DataFrame(data=self.model.predict_proba(x), index=x[name_column])
+            elif not proba and name_column is None:
+                return pd.DataFrame(data=self.model.predict(x))
+            elif proba and name_column is not None:
+                return pd.DataFrame(data=self.model.predict(x), index=x[name_column])
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

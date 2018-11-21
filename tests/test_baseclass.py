@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import yaml
 from sklearn.dummy import DummyClassifier
@@ -33,6 +34,12 @@ class TestBaseClass:
             model = base(LinearRegression())
             model.make_prediction(5)
 
+    def test_make_prediction_errors_named_column(self, base):
+        with pytest.raises(MLToolingError, match="name_column is not a string."):
+            model = base(LinearRegression())
+            model.train_model()
+            model.make_prediction(5, name_column=5)
+
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
         with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
             model = base(LinearRegression())
@@ -41,7 +48,7 @@ class TestBaseClass:
 
     def test_make_prediction_returns_proba_if_proba_is_true(self, classifier):
         results = classifier.make_prediction(5, proba=True)
-        assert isinstance(results, np.ndarray)
+        assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)

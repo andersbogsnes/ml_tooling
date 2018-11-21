@@ -159,7 +159,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Saved model to {model_file}")
         return model_file
 
-    def make_prediction(self, input_data, proba=False, name_column=None) -> pd.DataFrame:
+    def make_prediction(self, input_data, proba=False, use_index=False) -> pd.DataFrame:
         """
         Returns model prediction for given input data
 
@@ -170,29 +170,25 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
 
+        :param use_index:
+            Whether the row names from the  prediction data should be used for the result.
+
         :return:
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
             raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
 
-        if name_column is not None and not isinstance(name_column, str):
-            raise MLToolingError("name_column is not a string.")
-
         x = self.get_prediction_data(input_data)
 
-        if name_column is not None and name_column not in x.columns:
-            raise MLToolingError(f"Prediction data does not have a coulmn named {name_column}.")
-
         try:
-            if proba and name_column is None:
-                return pd.DataFrame(self.model.predict_proba(x))
-            elif proba and name_column is not None:
-                return pd.DataFrame(data=self.model.predict_proba(x), index=x[name_column])
-            elif not proba and name_column is None:
-                return pd.DataFrame(data=self.model.predict(x))
-            elif proba and name_column is not None:
-                return pd.DataFrame(data=self.model.predict(x), index=x[name_column])
+            if proba and use_index:
+                return pd.DataFrame(self.model.predict_proba(x), index=x.index)
+            if proba and not use_index:
+                return pd.DataFrame(data=self.model.predict_proba(x))
+            if not proba and use_index:
+                return pd.DataFrame(data=self.model.predict(x), index=x.index)
+            return pd.DataFrame(data=self.model.predict(x))
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

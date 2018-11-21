@@ -34,24 +34,35 @@ class TestBaseClass:
             model = base(LinearRegression())
             model.make_prediction(5)
 
-    def test_make_prediction_errors_named_column(self, base):
-        with pytest.raises(MLToolingError, match="name_column is not a string."):
-            model = base(LinearRegression())
-            model.train_model()
-            model.make_prediction(5, name_column=5)
-
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
         with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
             model = base(LinearRegression())
             model.train_model()
             model.make_prediction(5, proba=True)
 
-    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier):
-        results = classifier.make_prediction(5, proba=True)
+
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_prediction_if_proba_is_false(self, classifier, use_index, expected_index):
+        results = classifier.make_prediction(5, proba=False, use_index=use_index)
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
+
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier, use_index, expected_index):
+        results = classifier.make_prediction(5, proba=True, use_index=use_index)
         assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)
+
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()

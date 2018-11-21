@@ -188,9 +188,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                 data = self.model.predict(x)
 
             if use_index:
-                return pd.DataFrame(data=data, index=x.index)
+                prediction = pd.DataFrame(data=data, index=x.index)
             else:
-                return pd.DataFrame(data=data)
+                prediction = pd.DataFrame(data=data)
+
+            return prediction
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

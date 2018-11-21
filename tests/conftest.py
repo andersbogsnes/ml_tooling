@@ -35,6 +35,7 @@ def _base():
             data = load_iris()
             y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
             x = pd.DataFrame(data.data, columns=data.feature_names)
+
             return x, y
 
     IrisModel.config.CROSS_VALIDATION = 2

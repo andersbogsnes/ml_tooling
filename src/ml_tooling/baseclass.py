@@ -159,7 +159,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Saved model to {model_file}")
         return model_file
 
-    def make_prediction(self, input_data, proba=False, name_column = None) -> pd.DataFrame:
+    def make_prediction(self, input_data, proba=False, name_column=None) -> pd.DataFrame:
         """
         Returns model prediction for given input data
 

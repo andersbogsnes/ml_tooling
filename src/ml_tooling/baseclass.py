@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
+import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
@@ -158,7 +159,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Saved model to {model_file}")
         return model_file
 
-    def make_prediction(self, input_data, proba=False) -> np.ndarray:
+    def make_prediction(self, input_data, proba=False, use_index=False) -> pd.DataFrame:
         """
         Returns model prediction for given input data
 
@@ -168,6 +169,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :param proba:
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
+
+        :param use_index:
+            Whether the row names from the  prediction data should be used for the result.
 
         :return:
             Class prediction
@@ -179,9 +183,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         try:
             if proba:
-                return self.model.predict_proba(x)
+                data = self.model.predict_proba(x)
+            else:
+                data = self.model.predict(x)
 
-            return self.model.predict(x)
+            if use_index:
+                prediction = pd.DataFrame(data=data, index=x.index)
+            else:
+                prediction = pd.DataFrame(data=data)
+
+            return prediction
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"

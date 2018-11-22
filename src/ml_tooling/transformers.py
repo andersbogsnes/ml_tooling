@@ -125,8 +125,9 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[DataType], pd.DataFrame]):
+    def __init__(self, func: Callable[[DataType], pd.DataFrame], **kwargs):
         self.func = func
+        self.kwargs = kwargs
 
     def fit(self, X: pd.DataFrame, y=None):
         return self
@@ -134,7 +135,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         x_ = X.copy()
         for col in x_.columns:
-            x_[col] = self.func(x_[col])
+            x_[col] = self.func(x_[col], **self.kwargs)
         return x_
 
 
@@ -320,3 +321,20 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         x_ = X.copy()
         x_ = x_.apply(self.func, axis=1).to_frame()
         return x_
+
+
+class Binarize(BaseEstimator, TransformerMixin):
+    """
+    Binarizer that returns a pandas DataFrame
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def fit(self, X: pd.DataFrame, y=None):
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        x_ = X.copy()
+        data = np.where(x_ == self.value, 1, 0)
+        return pd.DataFrame(data=data, columns=x_.columns, index=x_.index)

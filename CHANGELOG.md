@@ -1,3 +1,9 @@
+v0.5.0
+- Added Binarize Transformer
+- Added ability to use keywords in FuncTransformer
+- .predict now returns a dataframe indexed on input
+- Updated dependencies
+
 v0.4.0
 - Added gridsearch method to BaseClass. Gridsearch your model 
 and return a list of results for inspection

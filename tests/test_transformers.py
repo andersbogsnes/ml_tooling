@@ -17,6 +17,7 @@ from ml_tooling.transformers import (Select,
                                      DFStandardScaler,
                                      DFFeatureUnion,
                                      DFRowFunc,
+                                     Binarize
                                      )
 
 from ml_tooling.utils import TransformerError
@@ -527,21 +528,60 @@ class TestFuncTransformer(TransformerBase):
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
 
-    @pytest.mark.parametrize('passed_func, expected', [
+    def arbitrary_test_func(x, y, z):
+        return x - y > z
+
+    def wrapper_arbitrary_test_func(df, y, z):
+        return df.apply(TestFuncTransformer.arbitrary_test_func, args=(y, z))
+
+    @pytest.mark.parametrize('passed_func, expected, kwargs', [
         (np.mean, pd.DataFrame({"number_a": [2.5, 2.5, 2.5, 2.5],
-                                "number_b": [6.5, 6.5, 6.5, 6.5]})),
+                                "number_b": [6.5, 6.5, 6.5, 6.5]}), dict()),
         (lambda x: x * 2, pd.DataFrame({"number_a": [2, 4, 6, 8],
-                                        "number_b": [10, 12, 14, 16]}))
+                                        "number_b": [10, 12, 14, 16]}), dict()),
+        (wrapper_arbitrary_test_func, pd.DataFrame({"number_a": [False, False, False, True],
+                                                    "number_b": [True, True, True, True]}),
+         {'z': 1, 'y': 2})
 
     ])
-    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected):
-        transformer = FuncTransformer(passed_func)
+    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected,
+                                                          kwargs):
+        transformer = FuncTransformer(passed_func, **kwargs)
         result = transformer.fit_transform(numerical)
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
     def test_func_transformer_works_in_gridsearch(self, base):
         grid = self.create_gridsearch(FuncTransformer(np.mean))
+        model = base(grid)
+        result = model.score_model()
+        assert isinstance(result, Result)
+
+
+class TestBinarize(TransformerBase):
+    def test_binarize_returns_correctly_on_categorical_na(self, categorical_na):
+        binarize = Binarize(value='a1')
+        result = binarize.fit_transform(categorical_na)
+        expected = pd.DataFrame({"category_a": [1, 0, 0, 1],
+                                 "category_b": [0, 0, 0, 0]})
+
+        pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+    def test_binarize_returns_correctly_on_numerical_na(self, numerical_na):
+        binarize = Binarize(value=2)
+        result = binarize.fit_transform(numerical_na)
+        expected = pd.DataFrame({"number_a": [0, 1, 0, 0],
+                                 "number_b": [0, 0, 0, 0]})
+
+        pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+    def test_binarize_can_be_used_cv(self, base):
+        model = self.create_model(base, Binarize(value='a1'))
+        result = model.score_model(cv=2)
+        assert isinstance(result, CVResult)
+
+    def test_binarize_works_in_gridsearch(self, base):
+        grid = self.create_gridsearch(Binarize(value=2))
         model = base(grid)
         result = model.score_model()
         assert isinstance(result, Result)

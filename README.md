@@ -128,14 +128,17 @@ from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
+import pandas as pd
 
 class BostonModel(BaseClassModel):
     def get_prediction_data(self, idx):
-        x, _ = load_boston(return_X_y=True)
-        return x[idx] # Return given observation
+        data = load_boston()
+        df = pd.DataFrame(data=data.data, columns=data.feature_names)
+        return df.iloc[idx] # Return given observation
         
     def get_training_data(self):
-        return load_boston(return_X_y=True)
+        data = load_boston()
+        return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
     
     @classmethod
     def setup_model(cls):
@@ -263,7 +266,7 @@ Out[1]:
 The built-in strategies are 'mean', 'median', 'most_freq', 'max' and 'min. An example of 'mean' would be:
 ```python
 
-fill_na = FillNA(value = 'mean')
+fill_na = FillNA(value='mean')
 fill_na.fit_transform(df)
 ```
 ```
@@ -325,6 +328,41 @@ Out[1]:
 2     OK
 3  ERROR
 ```
+
+Keyword arguments can be supplied to the function. 
+```python
+from ml_tooling.transformers import FuncTransformer
+import pandas as pd
+
+def custom_func(input, word1, word2):
+   result = ""
+   if input == "OK":
+      result = word1
+   elif input == "Error":
+      result = word2
+   return result
+
+def wrapper(df, word1, word2):
+   return df.apply(custom_func,args=(word1,word2))
+
+df = pd.DataFrame({
+    "status": ["OK", "Error", "OK", "Error"]
+})
+
+kwargs = {'word1': 'Okay','word2': 'Fail'}
+wordchange = FuncTransformer(wrapper,**kwargs)
+wordchange.fit_transform(df)
+```
+
+```
+Out[2]: 
+  status
+0   Okay
+1   Fail
+2   Okay
+3   Fail
+```
+
 
 ### Binner
 Bins numerical data into supplied bins
@@ -466,6 +504,7 @@ Row-wise operation on Pandas DataFrame. Strategy can either be one of the predef
 ```python
 from ml_tooling.transformers import DFRowFunc
 import pandas as pd
+import numpy as np
 
 df = pd.DataFrame({
     "number_1": [1, np.nan, 3, 4],
@@ -500,4 +539,31 @@ Out[1]:
 2        2.5
 3        4
 
+```
+
+
+### Binarize
+Transformer which returns 1 if equal to given value else 0.
+
+```python
+from ml_tooling.transformers import Binarize
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({
+    "number_1": [1, np.nan, 3, 4],
+    "number_2": [1, 3, 2, 4]
+
+})
+
+binarize = Binarize(value = 3)
+binarize.fit_transform(df)
+```
+```
+Out[1]: 
+         number_1    number_2
+0               0           0
+1               1           0
+2               0           1
+3               0           0
 ```

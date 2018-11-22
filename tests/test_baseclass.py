@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import yaml
 from sklearn.dummy import DummyClassifier
@@ -39,12 +40,31 @@ class TestBaseClass:
             model.train_model()
             model.make_prediction(5, proba=True)
 
-    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier):
-        results = classifier.make_prediction(5, proba=True)
-        assert isinstance(results, np.ndarray)
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_prediction_if_proba_is_false(self, classifier, use_index,
+                                                                  expected_index):
+        results = classifier.make_prediction(5, proba=False, use_index=use_index)
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
+
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier, use_index,
+                                                            expected_index):
+        results = classifier.make_prediction(5, proba=True, use_index=use_index)
+        assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()

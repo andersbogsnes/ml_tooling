@@ -51,6 +51,7 @@ class TestBaseClass:
         assert 2 == results.ndim
         assert np.all((results == 1) | (results == 0))
         assert np.all(np.sum(results, axis=1) == 0)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
 
     @pytest.mark.parametrize('use_index, expected_index', [
         (False, 0),
@@ -63,6 +64,7 @@ class TestBaseClass:
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()

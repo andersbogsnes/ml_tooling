@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import copy
 import pytest
 import yaml
 from sklearn.dummy import DummyClassifier

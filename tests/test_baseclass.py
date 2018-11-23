@@ -86,7 +86,8 @@ class TestBaseClass:
         base.config.CROSS_VALIDATION = 2
         base.config.N_JOBS = 1
 
-    def test_get_default_metric_works_as_expected_with_pipeline(self, base,pipeline_logistic,pipeline_linear):
+    def test_get_default_metric_works_as_expected_with_pipeline(self, base, pipeline_logistic,
+                                                                pipeline_linear):
         logreg = base(pipeline_logistic)
         linreg = base(pipeline_linear)
         assert 'accuracy' == logreg.default_metric

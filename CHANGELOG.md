@@ -1,3 +1,5 @@
+- default_metric is in BaseClassModel is now the same as in .config
+
 v0.5.0
 - Added Binarize Transformer
 - Added ability to use keywords in FuncTransformer

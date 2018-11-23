@@ -43,15 +43,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.data = None
         self.result = None
         self._plotter = None
-        self.default_metric = None
 
         if self.model._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
-            self.default_metric = self.config.CLASSIFIER_METRIC
 
         if self.model._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
-            self.default_metric = self.config.REGRESSION_METRIC
 
     @abc.abstractmethod
     def get_training_data(self) -> Tuple[DataType, DataType]:
@@ -198,6 +195,28 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLToolingError(message) from None
 
+
+    def default_metric(self):
+        """
+        Finds estimator_type for estimator in a BaseClassModel and returns default
+        metric for this class stated in .config. If passed estimator is a Pipeline,
+        assume last step is the estimator.
+
+        Returns
+        -------
+        str
+            Name of the metric
+
+        """
+        estimator_type = self.model._estimator_type
+
+        if estimator_type == 'classifier':
+            metric = self.config.CLASSIFIER_METRIC
+
+        elif estimator_type == 'regressor':
+            metric = self.config.REGRESSION_METRIC
+        return metric
+
     @classmethod
     def test_models(cls,
                     models: Sequence,
@@ -269,7 +288,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Result
         """
         self._load_data(train_test=True)
-        metric = self.default_metric if metric is None else metric
+        metric = self.default_metric() if metric is None else metric
         logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
 
@@ -302,7 +321,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         self._load_data(train_test=True)
 
-        metric = self.default_metric if metric is None else metric
+        metric = self.default_metric() if metric is None else metric
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
         logger.debug(f"Gridsearching using {param_grid}")

@@ -21,6 +21,7 @@ from ml_tooling.plots import (plot_lift_curve,
                               )
 
 from ml_tooling.result import RegressionVisualize, ClassificationVisualize
+from ml_tooling.utils import _permutation_importances
 from sklearn.svm import SVC
 
 
@@ -271,9 +272,16 @@ class TestRocCurve:
 
 
 class TestGetFeatureImportance:
-    def test_viz_get_feature_importance_returns_coef_from_regression(self, regression):
+
+    def test_viz_get_feature_importance_regression_returns_importance(self, regression):
         importance = _get_feature_importance(regression.model)
-        assert np.all(regression.model.coef_ == importance)
+        model = regression.result.plot._model
+        metric = regression.result.plot._config['REGRESSION_METRIC']
+        train_x = regression.result.plot._data.train_x
+        train_y = regression.result.plot._data.train_y
+        expected = _permutation_importances(model, metric, train_x, train_y)
+
+        assert np.all(expected == importance)
 
     def test_get_feature_importance_returns_coef_from_regression_pipeline(self,
                                                                           base,

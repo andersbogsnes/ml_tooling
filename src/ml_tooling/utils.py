@@ -3,6 +3,7 @@ from typing import Union, Callable
 
 import numpy as np
 import pandas as pd
+import math
 from git import Repo, InvalidGitRepositoryError
 from sklearn.base import BaseEstimator
 from sklearn.metrics.scorer import (explained_variance_scorer,
@@ -28,6 +29,7 @@ from sklearn.metrics.scorer import (explained_variance_scorer,
                                     )
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.pipeline import Pipeline
+from sklearn.utils import check_random_state, resample
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -297,3 +299,75 @@ def _validate_model(model):
         raise MLToolingError("You passed a Pipeline without an estimator as the last step")
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
+
+
+def _generate_sample_indices(random_state, n_samples):
+    """
+    Sample indices to be used for permutations
+    Parameters
+    ----------
+    random_state : None, int, RandomState
+        Seed or RandomsState instance for number generator
+    n_samples : int
+        Size of data to generate indices for
+
+    Returns numpy.ndarray
+    -------
+
+    """
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(0, n_samples, n_samples)
+
+    return sample_indices
+
+
+def _find_unsampled_indices(sample_indices, n_samples):
+    """
+    Finds indices not in sample_indices. To be used for Out-Of-Bag
+    Parameters
+    ----------
+    sample_indices : numpy.ndarray
+        numpy.ndarray with indices
+    n_samples : int
+        Size of data to generate indices for.
+
+    Returns numpy.ndarray
+    -------
+
+    """
+    sample_counts = np.bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
+
+
+def _permutation_importances(model, metric, train_x, train_y, n_samples=None, seed=1337):
+    """
+    Return array of importances from pre-fit rf; metric is function
+    that measures accuracy or R^2 or similar. This function
+    works for regressors and classifiers.
+    """
+
+    random_state = check_random_state(seed=seed)
+
+    if n_samples:
+        if _is_percent(n_samples):
+            n_samples = math.floor(n_samples * len(train_x)) or 1
+        train_x, train_y = resample(train_x, train_y, n_samples=n_samples, replace=True,
+                                    random_state=random_state)
+
+    baseline = metric(model, train_x, train_y)
+
+    imp = []
+
+    for col in train_x.columns:
+        save = train_x[col].copy()
+        train_x[col] = random_state.permutation(train_x[col], )
+        m = metric(model, train_x, train_y)
+        train_x[col] = save
+        drop_in_metric = baseline - m
+        imp.append(drop_in_metric)
+
+    return pd.DataFrame(np.array(imp), columns=['Importance'], index=train_x.columns)

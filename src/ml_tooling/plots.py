@@ -6,12 +6,12 @@ from typing import Tuple, Sequence, Union
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, r2_score
 import numpy as np
+import pandas as pd
 import itertools
 from matplotlib.axes import Axes
-from sklearn.pipeline import Pipeline
 
 from . import metrics
-from .utils import DataType, _is_percent
+from .utils import DataType, _is_percent, _permutation_importances, get_scoring_func
 
 
 def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
@@ -377,7 +377,7 @@ def _generate_text_labels(ax, horizontal=False, padding=0.005):
         yield x_value, y_value
 
 
-def _get_feature_importance(model) -> np.ndarray:
+def _get_feature_importance(viz, n_samples=None, seed=1337) -> pd.DataFrame:
     """
     Helper function for extracting importances.
     Checks for coef_ or feature_importances_ on model
@@ -388,18 +388,10 @@ def _get_feature_importance(model) -> np.ndarray:
     :return:
         array of importances
     """
-    if isinstance(model, Pipeline):
-        model = model.steps[-1][1]
 
-    if hasattr(model, 'feature_importances_'):
-        importance = model.feature_importances_
+    model = viz._model
+    metric = get_scoring_func(viz._config)
+    train_x = viz._data.train_x.copy()
+    train_y = viz._data.train_y.copy()
 
-    elif hasattr(model, 'coef_'):
-        importance = model.coef_
-        if importance.ndim > 1:
-            importance = importance[0]
-    else:
-        model_name = model.__class__.__name__
-        raise VizError(f"{model_name} does not have either coef_ or feature_importances_")
-
-    return importance
+    return _permutation_importances(model, metric, train_x, train_y, n_samples, seed)

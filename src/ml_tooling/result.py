@@ -6,7 +6,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.logging import log_model
+from .logging import log_model
 from .plots import (_get_feature_importance,
                     plot_feature_importance,
                     plot_residuals,
@@ -211,6 +211,7 @@ class BaseVisualize:
                            values: bool = True,
                            top_n: Union[int, float] = None,
                            bottom_n: Union[int, float] = None,
+                           n_samples=None,
                            **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
@@ -227,12 +228,15 @@ class BaseVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
+        :param n_samples:
+
+
         :return:
             matplotlib.Axes
         """
 
         title = f"Feature Importance - {self._model_name}"
-        importance = _get_feature_importance(self._model)
+        importance = _get_feature_importance(self, n_samples)
         labels = _get_labels(self._model, self._data.train_x)
 
         with plt.style.context(self._config.STYLE_SHEET):

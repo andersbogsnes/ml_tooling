@@ -195,7 +195,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLToolingError(message) from None
 
-
+    @property
     def default_metric(self):
         """
         Finds estimator_type for estimator in a BaseClassModel and returns default
@@ -288,7 +288,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Result
         """
         self._load_data(train_test=True)
-        metric = self.default_metric() if metric is None else metric
+        metric = self.default_metric if metric is None else metric
         logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
 
@@ -321,7 +321,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         self._load_data(train_test=True)
 
-        metric = self.default_metric() if metric is None else metric
+        metric = self.default_metric if metric is None else metric
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
         logger.debug(f"Gridsearching using {param_grid}")

@@ -76,24 +76,28 @@ class TestBaseClass:
     def test_get_default_metric_works_as_expected_without_pipeline(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         linreg = base(LinearRegression())
-        assert 'accuracy' == rf.default_metric()
-        assert 'r2' == linreg.default_metric()
+        assert 'accuracy' == rf.default_metric
+        assert 'r2' == linreg.default_metric
         rf.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
         linreg.config.REGRESSION_METRIC = 'neg_mean_squared_error'
-        assert 'fowlkes_mallows_score' == rf.default_metric()
-        assert 'neg_mean_squared_error' == linreg.default_metric()
+        assert 'fowlkes_mallows_score' == rf.default_metric
+        assert 'neg_mean_squared_error' == linreg.default_metric
         base.reset_config()
+        base.config.CROSS_VALIDATION = 2
+        base.config.N_JOBS = 1
 
     def test_get_default_metric_works_as_expected_with_pipeline(self, base,pipeline_logistic,pipeline_linear):
         logreg = base(pipeline_logistic)
         linreg = base(pipeline_linear)
-        assert 'accuracy' == logreg.default_metric()
-        assert 'r2' == linreg.default_metric()
+        assert 'accuracy' == logreg.default_metric
+        assert 'r2' == linreg.default_metric
         logreg.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
         linreg.config.REGRESSION_METRIC = 'neg_mean_squared_error'
-        assert 'fowlkes_mallows_score' == logreg.default_metric()
-        assert 'neg_mean_squared_error' == linreg.default_metric()
+        assert 'fowlkes_mallows_score' == logreg.default_metric
+        assert 'neg_mean_squared_error' == linreg.default_metric
         base.reset_config()
+        base.config.CROSS_VALIDATION = 2
+        base.config.N_JOBS = 1
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]

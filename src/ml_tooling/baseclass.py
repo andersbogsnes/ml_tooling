@@ -147,9 +147,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         model_file = current_dir.joinpath(save_name)
         joblib.dump(self.model, model_file)
 
-        metric_scores = {self.result.metric: float(self.result.score)}
-
         if self.config.LOG:
+            if self.result is None:
+                raise MLToolingError("You haven't scored the model - no results available to log")
+
+            metric_scores = {self.result.metric: float(self.result.score)}
+
             log_model(metric_scores=metric_scores,
                       model_name=self.model_name,
                       model_params=self.result.model_params,

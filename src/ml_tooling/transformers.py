@@ -2,7 +2,7 @@
 Transformers for use in sklearn Pipelines.
 Mainly deals with DataFrames
 """
-from typing import Union, Callable, Optional
+from typing import Union, Callable, Optional, Any
 
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.preprocessing import StandardScaler
@@ -125,7 +125,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[DataType], pd.DataFrame], **kwargs):
+    def __init__(self, func: Callable[[DataType, Any], pd.DataFrame], **kwargs):
         self.func = func
         self.kwargs = kwargs
 
@@ -325,12 +325,13 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
 
 class Binarize(BaseEstimator, TransformerMixin):
     """
-    Binarizer that returns a pandas DataFrame
+    Sets all instances of value to 1 and all others to 0
+    Returns a pandas DataFrame
     """
-
     def __init__(self, value):
         self.value = value
 
+    # noinspection PyUnusedLocal
     def fit(self, X: pd.DataFrame, y=None):
         return self
 

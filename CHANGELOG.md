@@ -1,3 +1,6 @@
+v0.5.1
+- Fixed bug in lift_score when using dataframes
+
 v0.5.0
 - Added Binarize Transformer
 - Added ability to use keywords in FuncTransformer

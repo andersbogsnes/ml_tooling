@@ -1,19 +1,27 @@
 import numpy as np
+import pandas as pd
 import pytest
 from ml_tooling.metrics import lift_score, confusion_matrix, sorted_feature_importance
 from ml_tooling.metrics import MetricError
 
 
 class TestLiftScore:
-    def test_lift_score_fails_if_passed_non_ndarray(self):
+    @pytest.mark.parametrize('y_targ, y_pred', [
+        (np.array([[1, 1, 0, 0], [0, 1, 0, 1]]), np.array([[1, 1, 0, 0], [1, 1, 1, 1]])),
+        ([[1, 1, 0, 0], [0, 1, 0, 1]], [[1, 1, 0, 0], [1, 1, 1, 1]])
+    ])
+    def test_lift_score_fails_if_passed_non_ndarray_or_series(self, y_targ, y_pred):
         with pytest.raises(MetricError):
             # noinspection PyTypeChecker
-            lift_score([1, 2, 3], [4, 5, 6])
+            lift_score(y_targ, y_pred)
 
-    def test_lift_score_returns_correctly(self):
-        y_targ = np.array([1, 1, 1, 0, 0, 2, 0, 3, 4])
-        y_pred = np.array([1, 0, 1, 0, 0, 2, 1, 3, 0])
-
+    @pytest.mark.parametrize('y_targ, y_pred', [
+        (np.array([1, 1, 1, 0, 0, 2, 0, 3, 4]), np.array([1, 0, 1, 0, 0, 2, 1, 3, 0])),
+        (pd.Series([1, 1, 1, 0, 0, 2, 0, 3, 4]), pd.Series([1, 0, 1, 0, 0, 2, 1, 3, 0])),
+        ((1, 1, 1, 0, 0, 2, 0, 3, 4), (1, 0, 1, 0, 0, 2, 1, 3, 0)),
+        ([1, 1, 1, 0, 0, 2, 0, 3, 4], [1, 0, 1, 0, 0, 2, 1, 3, 0])
+    ])
+    def test_lift_score_returns_correctly(self, y_targ, y_pred):
         result = lift_score(y_targ, y_pred)
         assert 2 == result
 

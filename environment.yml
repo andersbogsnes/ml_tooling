@@ -15,4 +15,5 @@ dependencies:
   - gitpython=2.1*
   - flake8=3.6*
   - tox=3.5*
+  - pyyaml=3.13
 

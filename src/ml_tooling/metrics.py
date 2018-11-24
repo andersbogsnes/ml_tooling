@@ -4,14 +4,14 @@ from typing import Union
 import numpy as np
 from sklearn import metrics
 
-from .utils import _is_percent
+from .utils import _is_percent, DataType
 
 
 class MetricError(Exception):
     pass
 
 
-def lift_score(y_target: np.ndarray, y_predicted: np.ndarray) -> float:
+def lift_score(y_target: DataType, y_predicted: DataType) -> float:
     """
     Calculates lift score for a given model. The lift score quantifies how much better
     the model is compared to a random baseline.
@@ -29,8 +29,11 @@ def lift_score(y_target: np.ndarray, y_predicted: np.ndarray) -> float:
     :return:
         Lift score
     """
-    if not isinstance(y_target, np.ndarray) or not isinstance(y_predicted, np.ndarray):
-        raise MetricError("Input must be a numpy NDArray")
+    y_target = np.array(y_target)
+    y_predicted = np.array(y_predicted)
+
+    if y_target.ndim > 1 or y_predicted.ndim > 1:
+        raise MetricError("Input must be 1-dimensional")
 
     n = len(y_target)
     percent_positives_target = np.sum(y_target == 1) / n

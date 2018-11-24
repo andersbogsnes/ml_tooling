@@ -3,6 +3,8 @@ v0.5.1
 prevent users from mistakenly assuming the result is from the training 
 - Fixed bug in lift_score when using dataframes
 - Fixed bug when training model and then scoring model
+- Fixed bug where users could not save models if no result had been created, as would 
+happen if the user only called .train_model before saving.
 
 v0.5.0
 - Added Binarize Transformer

@@ -136,6 +136,19 @@ class TestBaseClass:
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
+    def test_save_model_saves_pipeline_correctly(self, base, pipeline_logistic, monkeypatch,
+                                                 tmpdir):
+        def mockreturn():
+            return '1234'
+
+        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
+        save_dir = tmpdir.mkdir('model')
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.save_model(save_dir)
+        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+        assert save_dir.join(expected_name).check()
+
     def test_save_model_saves_logging_dir_correctly(self, classifier, tmpdir, monkeypatch):
         def mockreturn():
             return '1234'
@@ -230,3 +243,13 @@ class TestBaseClass:
                 result = yaml.safe_load(f)
                 model_name = result['model_name']
                 assert model_name in {'RandomForestClassifier', 'DummyClassifier'}
+
+    def test_train_model_errors_correct_when_not_scored(self,
+                                                        base,
+                                                        pipeline_logistic,
+                                                        tmpdir):
+        model = base(pipeline_logistic)
+        with pytest.raises(MLToolingError, match="You haven't scored the model"):
+            with model.log(tmpdir):
+                model.train_model()
+                model.save_model(tmpdir)

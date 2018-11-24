@@ -138,7 +138,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         logger.debug(f"Attempting to save model in {current_dir}")
         if not current_dir.exists():
-            logger.debug(f"{current_dir} doesn't exist - creating")
+            logger.debug(f"{current_dir} does not exist - creating")
             current_dir.mkdir(parents=True)
 
         model_file = current_dir.joinpath(save_name)
@@ -174,7 +174,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
+            raise MLToolingError(f"{self.model_name} does not have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 

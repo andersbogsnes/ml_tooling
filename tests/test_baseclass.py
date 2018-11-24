@@ -35,7 +35,8 @@ class TestBaseClass:
             model.make_prediction(5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
-        with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
+        with pytest.raises(MLToolingError,
+                           match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
             model.train_model()
             model.make_prediction(5, proba=True)

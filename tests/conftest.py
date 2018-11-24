@@ -25,6 +25,7 @@ def random():
 
 @pytest.fixture(name='base')
 def _base():
+    # noinspection PyAbstractClass
     class IrisModel(BaseClassModel):
         def get_prediction_data(self, idx):
             data = load_iris()

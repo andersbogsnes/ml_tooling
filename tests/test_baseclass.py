@@ -78,6 +78,13 @@ class TestBaseClass:
         regression.train_model()
         assert regression.result is None
 
+    def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.score_model()
+
+        assert isinstance(model.result, Result)
+
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
         best_model, results = base.test_models(models)

@@ -249,6 +249,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info("Training model...")
         self._load_data(train_test=False)
         self.model.fit(self.data.x, self.data.y)
+        self.result = None  # Prevent confusion, as train_model does not return a result
         logger.info("Model trained!")
 
         return self

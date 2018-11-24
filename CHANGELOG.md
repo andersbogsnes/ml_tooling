@@ -1,3 +1,7 @@
+v0.5.1
+- .train_model will now reset the result attribute to None, in order to 
+prevent users from mistakenly assuming the result is from the training 
+
 v0.5.0
 - Added Binarize Transformer
 - Added ability to use keywords in FuncTransformer

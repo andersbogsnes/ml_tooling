@@ -94,7 +94,8 @@ Defaults to non-cross-validated scoring. If you want to cross-validate, pass num
 `train_model()`
 ---
 Loads all training data and trains the model on all data. 
-Typically used as the last step when model tuning is complete
+Typically used as the last step when model tuning is complete.
+Sets .result attribute to None
 
 `set_config({'CONFIG_KEY': 'VALUE'})`
 ---

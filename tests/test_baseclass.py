@@ -72,6 +72,11 @@ class TestBaseClass:
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
+    def test_train_model_sets_result_to_none(self, regression):
+        assert regression.result is not None
+        regression.train_model()
+        assert regression.result is None
+
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
         best_model, results = base.test_models(models)

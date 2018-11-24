@@ -1,5 +1,8 @@
 v0.5.1
+- .train_model will now reset the result attribute to None, in order to 
+prevent users from mistakenly assuming the result is from the training 
 - Fixed bug in lift_score when using dataframes
+
 
 v0.5.0
 - Added Binarize Transformer

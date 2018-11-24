@@ -35,7 +35,8 @@ class TestBaseClass:
             model.make_prediction(5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
-        with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
+        with pytest.raises(MLToolingError,
+                           match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
             model.train_model()
             model.make_prediction(5, proba=True)
@@ -76,6 +77,13 @@ class TestBaseClass:
         assert regression.result is not None
         regression.train_model()
         assert regression.result is None
+
+    def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.score_model()
+
+        assert isinstance(model.result, Result)
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]

@@ -98,7 +98,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Loaded {instance.model_name} for {cls.__name__}")
         return instance
 
-    def _load_data(self, train_test=False) -> Data:
+    def _load_data(self) -> Data:
         """
         Internal method for loading data into class
 
@@ -108,16 +108,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         if self.data is None:
             logger.debug("No data loaded - loading...")
             x, y = self.get_training_data()
-            if train_test:
 
-                stratify = y if self.model._estimator_type == 'classifier' else None
-                logger.debug("Creating train/test...")
-                self.data = Data.with_train_test(x, y,
-                                                 stratify=stratify,
-                                                 test_size=self.config.TEST_SIZE)
-            else:
-                logger.debug("Data already loaded")
-                self.data = Data(x, y)
+            stratify = y if self.model._estimator_type == 'classifier' else None
+            logger.debug("Creating train/test...")
+            self.data = Data.with_train_test(x, y,
+                                             stratify=stratify,
+                                             test_size=self.config.TEST_SIZE)
+
         return self.data
 
     def _generate_filename(self):
@@ -141,7 +138,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         logger.debug(f"Attempting to save model in {current_dir}")
         if not current_dir.exists():
-            logger.debug(f"{current_dir} doesn't exist - creating")
+            logger.debug(f"{current_dir} does not exist - creating")
             current_dir.mkdir(parents=True)
 
         model_file = current_dir.joinpath(save_name)
@@ -180,7 +177,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
+            raise MLToolingError(f"{self.model_name} does not have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 
@@ -250,7 +247,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         logger.info("Training model...")
-        self._load_data(train_test=False)
+        self._load_data()
         self.model.fit(self.data.x, self.data.y)
         self.result = None  # Prevent confusion, as train_model does not return a result
         logger.info("Model trained!")
@@ -272,7 +269,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             Result
         """
-        self._load_data(train_test=True)
+        self._load_data()
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
@@ -304,7 +301,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Cross validation to use. Defaults to 10 based on value in config
         :return:
         """
-        self._load_data(train_test=True)
+        self._load_data()
 
         metric = self.default_metric if metric is None else metric
         cv = self.config.CROSS_VALIDATION if cv is None else cv

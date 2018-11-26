@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import yaml
 from sklearn.dummy import DummyClassifier
@@ -34,23 +35,96 @@ class TestBaseClass:
             model.make_prediction(5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
-        with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
+        with pytest.raises(MLToolingError,
+                           match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
             model.train_model()
             model.make_prediction(5, proba=True)
 
-    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier):
-        results = classifier.make_prediction(5, proba=True)
-        assert isinstance(results, np.ndarray)
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_prediction_if_proba_is_false(self, classifier, use_index,
+                                                                  expected_index):
+        results = classifier.make_prediction(5, proba=False, use_index=use_index)
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
+
+    @pytest.mark.parametrize('use_index, expected_index', [
+        (False, 0),
+        (True, 5),
+    ])
+    def test_make_prediction_returns_proba_if_proba_is_true(self, classifier, use_index,
+                                                            expected_index):
+        results = classifier.make_prediction(5, proba=True, use_index=use_index)
+        assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)
+        assert results.index == pd.RangeIndex(start=expected_index, stop=expected_index + 1, step=1)
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()
         regression.train_model()
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
+
+    def test_default_metric_getter_works_as_expected_classifer(self, base):
+        rf = base(RandomForestClassifier(n_estimators=10))
+        assert rf.config.CLASSIFIER_METRIC == 'accuracy'
+        assert rf.config.REGRESSION_METRIC == 'r2'
+        assert rf.default_metric == 'accuracy'
+        rf.default_metric = 'fowlkes_mallows_score'
+        assert rf.config.CLASSIFIER_METRIC == 'fowlkes_mallows_score'
+        assert rf.config.REGRESSION_METRIC == 'r2'
+        assert rf.default_metric == 'fowlkes_mallows_score'
+
+    def test_default_metric_getter_works_as_expected_regressor(self, base):
+        linreg = base(LinearRegression())
+        assert linreg.config.CLASSIFIER_METRIC == 'accuracy'
+        assert linreg.config.REGRESSION_METRIC == 'r2'
+        assert linreg.default_metric == 'r2'
+        linreg.default_metric = 'neg_mean_squared_error'
+        assert linreg.config.CLASSIFIER_METRIC == 'accuracy'
+        assert linreg.config.REGRESSION_METRIC == 'neg_mean_squared_error'
+        assert linreg.default_metric == 'neg_mean_squared_error'
+
+    def test_default_metric_works_as_expected_without_pipeline(self, base):
+        rf = base(RandomForestClassifier(n_estimators=10))
+        linreg = base(LinearRegression())
+        assert 'accuracy' == rf.default_metric
+        assert 'r2' == linreg.default_metric
+        rf.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
+        linreg.config.REGRESSION_METRIC = 'neg_mean_squared_error'
+        assert 'fowlkes_mallows_score' == rf.default_metric
+        assert 'neg_mean_squared_error' == linreg.default_metric
+
+    def test_default_metric_works_as_expected_with_pipeline(self, base, pipeline_logistic,
+                                                            pipeline_linear):
+        logreg = base(pipeline_logistic)
+        linreg = base(pipeline_linear)
+        assert 'accuracy' == logreg.default_metric
+        assert 'r2' == linreg.default_metric
+        logreg.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
+        linreg.config.REGRESSION_METRIC = 'neg_mean_squared_error'
+        assert 'fowlkes_mallows_score' == logreg.default_metric
+        assert 'neg_mean_squared_error' == linreg.default_metric
+
+    def test_train_model_sets_result_to_none(self, regression):
+        assert regression.result is not None
+        regression.train_model()
+        assert regression.result is None
+
+    def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.score_model()
+
+        assert isinstance(model.result, Result)
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
@@ -100,6 +174,19 @@ class TestBaseClass:
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
         save_dir = tmpdir.mkdir('model')
         classifier.save_model(save_dir)
+        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+        assert save_dir.join(expected_name).check()
+
+    def test_save_model_saves_pipeline_correctly(self, base, pipeline_logistic, monkeypatch,
+                                                 tmpdir):
+        def mockreturn():
+            return '1234'
+
+        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
+        save_dir = tmpdir.mkdir('model')
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.save_model(save_dir)
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
@@ -197,3 +284,13 @@ class TestBaseClass:
                 result = yaml.safe_load(f)
                 model_name = result['model_name']
                 assert model_name in {'RandomForestClassifier', 'DummyClassifier'}
+
+    def test_train_model_errors_correct_when_not_scored(self,
+                                                        base,
+                                                        pipeline_logistic,
+                                                        tmpdir):
+        model = base(pipeline_logistic)
+        with pytest.raises(MLToolingError, match="You haven't scored the model"):
+            with model.log(tmpdir):
+                model.train_model()
+                model.save_model(tmpdir)

@@ -4,15 +4,17 @@ from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
+import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score
 
-from .logging import create_logger, log_model
-from .utils import _validate_model
-from .config import DefaultConfig
+from ml_tooling.logging import create_logger, log_model
+from ml_tooling.utils import _validate_model
+from .config import DefaultConfig, ConfigGetter
+
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -34,7 +36,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     Base class for Models
     """
 
-    config = DefaultConfig()
+    _config = None
+    config = ConfigGetter()
 
     def __init__(self, model):
         self.model = _validate_model(model)
@@ -42,15 +45,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.data = None
         self.result = None
         self._plotter = None
-        self.default_metric = None
 
         if self.model._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
-            self.default_metric = self.config.CLASSIFIER_METRIC
 
         if self.model._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
-            self.default_metric = self.config.REGRESSION_METRIC
 
     @abc.abstractmethod
     def get_training_data(self) -> Tuple[DataType, DataType]:
@@ -97,7 +97,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Loaded {instance.model_name} for {cls.__name__}")
         return instance
 
-    def _load_data(self, train_test=False) -> Data:
+    def _load_data(self) -> Data:
         """
         Internal method for loading data into class
 
@@ -107,16 +107,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         if self.data is None:
             logger.debug("No data loaded - loading...")
             x, y = self.get_training_data()
-            if train_test:
 
-                stratify = y if self.model._estimator_type == 'classifier' else None
-                logger.debug("Creating train/test...")
-                self.data = Data.with_train_test(x, y,
-                                                 stratify=stratify,
-                                                 test_size=self.config.TEST_SIZE)
-            else:
-                logger.debug("Data already loaded")
-                self.data = Data(x, y)
+            stratify = y if self.model._estimator_type == 'classifier' else None
+            logger.debug("Creating train/test...")
+            self.data = Data.with_train_test(x, y,
+                                             stratify=stratify,
+                                             test_size=self.config.TEST_SIZE)
+
         return self.data
 
     def _generate_filename(self):
@@ -140,15 +137,18 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         logger.debug(f"Attempting to save model in {current_dir}")
         if not current_dir.exists():
-            logger.debug(f"{current_dir} doesn't exist - creating")
+            logger.debug(f"{current_dir} does not exist - creating")
             current_dir.mkdir(parents=True)
 
         model_file = current_dir.joinpath(save_name)
         joblib.dump(self.model, model_file)
 
-        metric_scores = {self.result.metric: float(self.result.score)}
-
         if self.config.LOG:
+            if self.result is None:
+                raise MLToolingError("You haven't scored the model - no results available to log")
+
+            metric_scores = {self.result.metric: float(self.result.score)}
+
             log_model(metric_scores=metric_scores,
                       model_name=self.model_name,
                       model_params=self.result.model_params,
@@ -158,7 +158,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Saved model to {model_file}")
         return model_file
 
-    def make_prediction(self, input_data, proba=False) -> np.ndarray:
+    def make_prediction(self, input_data, proba=False, use_index=False) -> pd.DataFrame:
         """
         Returns model prediction for given input data
 
@@ -169,23 +169,57 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
 
+        :param use_index:
+            Whether the row names from the  prediction data should be used for the result.
+
         :return:
             Class prediction
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLToolingError(f"{self.model_name} doesn't have a `predict_proba` method")
+            raise MLToolingError(f"{self.model_name} does not have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 
         try:
             if proba:
-                return self.model.predict_proba(x)
+                data = self.model.predict_proba(x)
+            else:
+                data = self.model.predict(x)
 
-            return self.model.predict(x)
+            if use_index:
+                prediction = pd.DataFrame(data=data, index=x.index)
+            else:
+                prediction = pd.DataFrame(data=data)
+
+            return prediction
 
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLToolingError(message) from None
+
+    @property
+    def default_metric(self):
+        """
+        Finds estimator_type for estimator in a BaseClassModel and returns default
+        metric for this class stated in .config. If passed estimator is a Pipeline,
+        assume last step is the estimator.
+
+        Returns
+        -------
+        str
+            Name of the metric
+
+        """
+
+        return self.config.CLASSIFIER_METRIC if self.model._estimator_type == 'classifier' \
+            else self.config.REGRESSION_METRIC
+
+    @default_metric.setter
+    def default_metric(self, metric):
+        if self.model._estimator_type == 'classifier':
+            self.config.CLASSIFIER_METRIC = metric
+        else:
+            self.config.REGRESSION_METRIC = metric
 
     @classmethod
     def test_models(cls,
@@ -236,8 +270,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self
         """
         logger.info("Training model...")
-        self._load_data(train_test=False)
+        self._load_data()
         self.model.fit(self.data.x, self.data.y)
+        self.result = None  # Prevent confusion, as train_model does not return a result
         logger.info("Model trained!")
 
         return self
@@ -257,7 +292,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         :return:
             Result
         """
-        self._load_data(train_test=True)
+        self._load_data()
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
@@ -289,7 +324,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Cross validation to use. Defaults to 10 based on value in config
         :return:
         """
-        self._load_data(train_test=True)
+        self._load_data()
 
         metric = self.default_metric if metric is None else metric
         cv = self.config.CROSS_VALIDATION if cv is None else cv
@@ -396,7 +431,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         Reset configuration to default
         """
-        cls.config = DefaultConfig()
+        cls._config = DefaultConfig()
+
         return cls
 
     def __repr__(self):

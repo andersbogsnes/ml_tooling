@@ -186,7 +186,7 @@ class ResultGroup:
         all possible model parameters. This behaviour can be toggled using `params=False`
 
         :param params:
-            Boolean toggling whether or not to output params as part of the dataframe
+            Boolean toggling whether or not to output params as part of the DataFrame
         :return:
             pd.DataFrame of results
         """

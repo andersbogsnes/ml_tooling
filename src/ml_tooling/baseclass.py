@@ -217,7 +217,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def default_metric(self, metric):
         if self.model._estimator_type == 'classifier':
             self.__class__.config.CLASSIFIER_METRIC = metric
-        elif self.model._estimator_type == 'regressor':
+        else:
             self.__class__.config.REGRESSION_METRIC = metric
 
     @classmethod

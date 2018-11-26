@@ -73,6 +73,26 @@ class TestBaseClass:
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
+    def test_default_metric_getter_works_as_expected_classifer(self, base):
+        rf = base(RandomForestClassifier(n_estimators=10))
+        assert rf.config.CLASSIFIER_METRIC == 'accuracy'
+        assert rf.config.REGRESSION_METRIC == 'r2'
+        assert rf.default_metric == 'accuracy'
+        rf.default_metric = 'fowlkes_mallows_score'
+        assert rf.config.CLASSIFIER_METRIC == 'fowlkes_mallows_score'
+        assert rf.config.REGRESSION_METRIC == 'r2'
+        assert rf.default_metric == 'fowlkes_mallows_score'
+
+    def test_default_metric_getter_works_as_expected_regressor(self, base):
+        linreg = base(LinearRegression())
+        assert linreg.config.CLASSIFIER_METRIC == 'accuracy'
+        assert linreg.config.REGRESSION_METRIC == 'r2'
+        assert linreg.default_metric == 'r2'
+        linreg.default_metric = 'neg_mean_squared_error'
+        assert linreg.config.CLASSIFIER_METRIC == 'accuracy'
+        assert linreg.config.REGRESSION_METRIC == 'neg_mean_squared_error'
+        assert linreg.default_metric == 'neg_mean_squared_error'
+
     def test_default_metric_works_as_expected_without_pipeline(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         linreg = base(LinearRegression())

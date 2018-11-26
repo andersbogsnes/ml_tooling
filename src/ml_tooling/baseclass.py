@@ -214,12 +214,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             else self.config.REGRESSION_METRIC
 
     @default_metric.setter
-    def default_metric(self, default_metric):
-        self.default_metric = default_metric
+    def default_metric(self, metric):
         if self.model._estimator_type == 'classifier':
-            self.__class__.config.CLASSIFIER_METRIC = default_metric
+            self.__class__.config.CLASSIFIER_METRIC = metric
         elif self.model._estimator_type == 'regressor':
-            self.__class__.config.REGRESSION_METRIC = default_metric
+            self.__class__.config.REGRESSION_METRIC = metric
 
     @classmethod
     def test_models(cls,

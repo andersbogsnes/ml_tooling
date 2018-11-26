@@ -64,10 +64,17 @@ class TestConfig:
         log.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
         assert rf.config.CLASSIFIER_METRIC == 'fowlkes_mallows_score'
 
-    def test_from_different_classes_do_not_share_config(self, base, base_second, pipeline_logistic,
+    def test_from_different_classes_do_not_share_config(self, base, pipeline_logistic,
                                                         pipeline_forest_classifier):
+        class NoModel(BaseClassModel):
+            def get_prediction_data(self, idx):
+                pass
+
+            def get_training_data(self):
+                pass
+
         log = base(pipeline_logistic)
-        rf = base_second(pipeline_forest_classifier)
+        rf = NoModel(pipeline_forest_classifier)
         assert log.config.CLASSIFIER_METRIC == 'accuracy'
         log.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
         assert rf.config.CLASSIFIER_METRIC == 'accuracy'

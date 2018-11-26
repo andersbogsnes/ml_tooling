@@ -4,6 +4,7 @@ import random as rand
 import numpy as np
 import pandas as pd
 import pytest
+from ml_tooling.config import DefaultConfig
 from sklearn.datasets import load_iris
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -23,37 +24,30 @@ def random():
     np.random.seed(42)
 
 
+# noinspection PyAbstractClass
+class IrisModel(BaseClassModel):
+    def get_prediction_data(self, idx):
+        data = load_iris()
+        df = pd.DataFrame(data.data, columns=data.feature_names)
+        return df.iloc[[idx]]
+
+    def get_training_data(self):
+        data = load_iris()
+        y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
+        x = pd.DataFrame(data.data, columns=data.feature_names)
+        return x, y
+
+    @classmethod
+    def clean_model(cls):
+        cls.config = DefaultConfig()
+        cls.config.CROSS_VALIDATION = 2
+        cls.config.N_JOBS = 2
+        return cls
+
+
 @pytest.fixture(name='base')
 def _base():
-    # noinspection PyAbstractClass
-    class IrisModel(BaseClassModel):
-        def get_prediction_data(self, idx):
-            data = load_iris()
-            df = pd.DataFrame(data.data, columns=data.feature_names)
-            return df.iloc[[idx]]
-
-        def get_training_data(self):
-            data = load_iris()
-            y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
-            x = pd.DataFrame(data.data, columns=data.feature_names)
-            return x, y
-
-    IrisModel.config.CROSS_VALIDATION = 2
-    IrisModel.config.N_JOBS = 1
-    return IrisModel
-
-
-@pytest.fixture(name='base_second')
-def _base_second():
-    # noinspection PyAbstractClass
-    class NoModel(BaseClassModel):
-        def get_prediction_data(self, idx):
-            pass
-
-        def get_training_data(self):
-            pass
-
-    return NoModel
+    return IrisModel.clean_model()
 
 
 @pytest.fixture(name='categorical')

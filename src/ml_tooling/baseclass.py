@@ -208,11 +208,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Name of the metric
 
         """
-        estimator_type = self.model._estimator_type
 
-        if estimator_type == 'classifier':
-            return self.config.CLASSIFIER_METRIC
-        return self.config.REGRESSION_METRIC
+        return self.config.CLASSIFIER_METRIC if self.model._estimator_type == 'classifier' \
+            else self.config.REGRESSION_METRIC
 
     @classmethod
     def test_models(cls,

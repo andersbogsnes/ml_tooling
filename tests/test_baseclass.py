@@ -72,7 +72,7 @@ class TestBaseClass:
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
-    def test_get_default_metric_works_as_expected_without_pipeline(self, base):
+    def test_default_metric_works_as_expected_without_pipeline(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         linreg = base(LinearRegression())
         assert 'accuracy' == rf.default_metric
@@ -82,11 +82,11 @@ class TestBaseClass:
         assert 'fowlkes_mallows_score' == rf.default_metric
         assert 'neg_mean_squared_error' == linreg.default_metric
         base.reset_config()
-        base.config.CROSS_VALIDATION = 2
-        base.config.N_JOBS = 1
+        base.config.CROSS_VALIDATION = 2  # TODO Find a way to avoid setting values at end of test
+        base.config.N_JOBS = 1  # TODO Find a way to avoid setting values at end of test
 
-    def test_get_default_metric_works_as_expected_with_pipeline(self, base, pipeline_logistic,
-                                                                pipeline_linear):
+    def test_default_metric_works_as_expected_with_pipeline(self, base, pipeline_logistic,
+                                                            pipeline_linear):
         logreg = base(pipeline_logistic)
         linreg = base(pipeline_linear)
         assert 'accuracy' == logreg.default_metric
@@ -96,8 +96,8 @@ class TestBaseClass:
         assert 'fowlkes_mallows_score' == logreg.default_metric
         assert 'neg_mean_squared_error' == linreg.default_metric
         base.reset_config()
-        base.config.CROSS_VALIDATION = 2
-        base.config.N_JOBS = 1
+        base.config.CROSS_VALIDATION = 2  # TODO Find a way to avoid setting values at end of test
+        base.config.N_JOBS = 1  # TODO Find a way to avoid setting values at end of test
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]

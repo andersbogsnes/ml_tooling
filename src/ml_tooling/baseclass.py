@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_score
 
 from ml_tooling.logging import create_logger, log_model
 from ml_tooling.utils import _validate_model
-from .config import DefaultConfig
+from .config import DefaultConfig, ConfigDescriptor
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -35,7 +35,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     Base class for Models
     """
 
-    config = DefaultConfig()
+    _config = None
+    config = ConfigDescriptor()
 
     def __init__(self, model):
         self.model = _validate_model(model)
@@ -211,6 +212,14 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         return self.config.CLASSIFIER_METRIC if self.model._estimator_type == 'classifier' \
             else self.config.REGRESSION_METRIC
+
+    @default_metric.setter
+    def default_metric(self, default_metric):
+        self.default_metric = default_metric
+        if self.model._estimator_type == 'classifier':
+            self.__class__.config.CLASSIFIER_METRIC = default_metric
+        elif self.model._estimator_type == 'regressor':
+            self.__class__.config.REGRESSION_METRIC = default_metric
 
     @classmethod
     def test_models(cls,
@@ -422,7 +431,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         Reset configuration to default
         """
-        cls.config = DefaultConfig()
+        cls._config = DefaultConfig()
+
         return cls
 
     def __repr__(self):

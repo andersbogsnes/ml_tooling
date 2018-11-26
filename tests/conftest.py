@@ -43,6 +43,19 @@ def _base():
     return IrisModel
 
 
+@pytest.fixture(name='base_second')
+def _base_second():
+    # noinspection PyAbstractClass
+    class NoModel(BaseClassModel):
+        def get_prediction_data(self, idx):
+            pass
+
+        def get_training_data(self):
+            pass
+
+    return NoModel
+
+
 @pytest.fixture(name='categorical')
 def categorical_data():
     return pd.DataFrame({"category_a": ["a1", "a2", "a3", "a1"],

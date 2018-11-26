@@ -11,6 +11,7 @@ class DefaultConfig:
     """
     Configuration for a given BaseClass. Configs propagate through each instance
     """
+
     def __init__(self):
         self.VERBOSITY = 0
         self.CLASSIFIER_METRIC = 'accuracy'
@@ -29,3 +30,14 @@ class DefaultConfig:
                            for attr, value in self.__dict__.items()
                            if '__' not in attr])
         return f'<Config: \n{attrs}\n>'
+
+
+class ConfigGetter:
+    """
+    Give each class that inherits from BaseClassModel an individual config attribute
+    without relying on the user to overriding the config when they define their class.
+    """
+    def __get__(self, obj, cls):
+        if cls._config is None:
+            cls._config = DefaultConfig()
+        return cls._config

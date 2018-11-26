@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_score
 
 from ml_tooling.logging import create_logger, log_model
 from ml_tooling.utils import _validate_model
-from .config import DefaultConfig
+from .config import DefaultConfig, ConfigGetter
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -35,7 +35,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     Base class for Models
     """
 
-    config = DefaultConfig()
+    _config = None
+    config = ConfigGetter()
 
     def __init__(self, model):
         self.model = _validate_model(model)
@@ -43,15 +44,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.data = None
         self.result = None
         self._plotter = None
-        self.default_metric = None
 
         if self.model._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
-            self.default_metric = self.config.CLASSIFIER_METRIC
 
         if self.model._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
-            self.default_metric = self.config.REGRESSION_METRIC
 
     @abc.abstractmethod
     def get_training_data(self) -> Tuple[DataType, DataType]:
@@ -197,6 +195,30 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         except NotFittedError:
             message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
             raise MLToolingError(message) from None
+
+    @property
+    def default_metric(self):
+        """
+        Finds estimator_type for estimator in a BaseClassModel and returns default
+        metric for this class stated in .config. If passed estimator is a Pipeline,
+        assume last step is the estimator.
+
+        Returns
+        -------
+        str
+            Name of the metric
+
+        """
+
+        return self.config.CLASSIFIER_METRIC if self.model._estimator_type == 'classifier' \
+            else self.config.REGRESSION_METRIC
+
+    @default_metric.setter
+    def default_metric(self, metric):
+        if self.model._estimator_type == 'classifier':
+            self.config.CLASSIFIER_METRIC = metric
+        else:
+            self.config.REGRESSION_METRIC = metric
 
     @classmethod
     def test_models(cls,
@@ -408,7 +430,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         Reset configuration to default
         """
-        cls.config = DefaultConfig()
+        cls._config = DefaultConfig()
+
         return cls
 
     def __repr__(self):

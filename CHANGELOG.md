@@ -5,6 +5,8 @@ prevent users from mistakenly assuming the result is from the training
 - Fixed bug when training model and then scoring model
 - Fixed bug where users could not save models if no result had been created, as would 
 happen if the user only called .train_model before saving.
+- default_metric is now the same metric as the one specified for the model in .config
+- each class inheriting from BaseClassModel has an individual config
 
 v0.5.0
 - Added Binarize Transformer

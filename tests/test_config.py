@@ -71,3 +71,4 @@ class TestConfig:
         assert log.config.CLASSIFIER_METRIC == 'accuracy'
         log.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'
         assert rf.config.CLASSIFIER_METRIC == 'accuracy'
+        assert log.config.CLASSIFIER_METRIC = 'fowlkes_mallows_score'

@@ -35,7 +35,8 @@ class TestBaseClass:
             model.make_prediction(5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(self, base):
-        with pytest.raises(MLToolingError, match="LinearRegression doesn't have a `predict_proba`"):
+        with pytest.raises(MLToolingError,
+                           match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
             model.train_model()
             model.make_prediction(5, proba=True)
@@ -72,6 +73,7 @@ class TestBaseClass:
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
+
     def test_default_metric_works_as_expected_without_pipeline(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         linreg = base(LinearRegression())
@@ -98,6 +100,19 @@ class TestBaseClass:
         base.reset_config()
         base.config.CROSS_VALIDATION = 2  # TODO Find a way to avoid setting values at end of test
         base.config.N_JOBS = 1  # TODO Find a way to avoid setting values at end of test
+
+    def test_train_model_sets_result_to_none(self, regression):
+        assert regression.result is not None
+        regression.train_model()
+        assert regression.result is None
+
+    def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.score_model()
+
+        assert isinstance(model.result, Result)
+
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
@@ -147,6 +162,19 @@ class TestBaseClass:
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
         save_dir = tmpdir.mkdir('model')
         classifier.save_model(save_dir)
+        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
+        assert save_dir.join(expected_name).check()
+
+    def test_save_model_saves_pipeline_correctly(self, base, pipeline_logistic, monkeypatch,
+                                                 tmpdir):
+        def mockreturn():
+            return '1234'
+
+        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
+        save_dir = tmpdir.mkdir('model')
+        model = base(pipeline_logistic)
+        model.train_model()
+        model.save_model(save_dir)
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
@@ -244,3 +272,13 @@ class TestBaseClass:
                 result = yaml.safe_load(f)
                 model_name = result['model_name']
                 assert model_name in {'RandomForestClassifier', 'DummyClassifier'}
+
+    def test_train_model_errors_correct_when_not_scored(self,
+                                                        base,
+                                                        pipeline_logistic,
+                                                        tmpdir):
+        model = base(pipeline_logistic)
+        with pytest.raises(MLToolingError, match="You haven't scored the model"):
+            with model.log(tmpdir):
+                model.train_model()
+                model.save_model(tmpdir)

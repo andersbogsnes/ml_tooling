@@ -513,6 +513,32 @@ class TestDFRowFunc(TransformerBase):
         assert isinstance(result, Result)
 
 
+def arbitrary_test_func(x, y, z):
+    return x - y > z
+
+
+def wrapper_arbitrary_test_func(df, y, z):
+    return df.apply(arbitrary_test_func, y=y, z=z)
+
+
+@pytest.mark.parametrize('passed_func, expected, kwargs', [
+    (np.mean, pd.DataFrame({"number_a": [2.5, 2.5, 2.5, 2.5],
+                            "number_b": [6.5, 6.5, 6.5, 6.5]}), dict()),
+    (lambda x: x * 2, pd.DataFrame({"number_a": [2, 4, 6, 8],
+                                    "number_b": [10, 12, 14, 16]}), dict()),
+    (wrapper_arbitrary_test_func, pd.DataFrame({"number_a": [False, False, False, True],
+                                                "number_b": [True, True, True, True]}),
+     {'z': 1, 'y': 2})
+
+])
+def test_func_transformer_returns_correctly_numerical(numerical, passed_func, expected,
+                                                      kwargs):
+    transformer = FuncTransformer(passed_func, **kwargs)
+    result = transformer.fit_transform(numerical)
+
+    pd.testing.assert_frame_equal(expected, result, check_dtype=False)
+
+
 class TestFuncTransformer(TransformerBase):
     def test_func_transformer_returns_correctly_on_categorical(self, categorical):
         func_transformer = FuncTransformer(lambda x: x.str.upper())
@@ -523,33 +549,10 @@ class TestFuncTransformer(TransformerBase):
         for col in result.columns:
             assert result[col].str.isupper().all()
 
-    def test_func_transfomer_can_be_validated(self, base):
+    def test_func_transformer_can_be_validated(self, base):
         model = self.create_model(base, FuncTransformer(np.sum))
         result = model.score_model(cv=2)
         assert isinstance(result, CVResult)
-
-    def arbitrary_test_func(x, y, z):
-        return x - y > z
-
-    def wrapper_arbitrary_test_func(df, y, z):
-        return df.apply(TestFuncTransformer.arbitrary_test_func, args=(y, z))
-
-    @pytest.mark.parametrize('passed_func, expected, kwargs', [
-        (np.mean, pd.DataFrame({"number_a": [2.5, 2.5, 2.5, 2.5],
-                                "number_b": [6.5, 6.5, 6.5, 6.5]}), dict()),
-        (lambda x: x * 2, pd.DataFrame({"number_a": [2, 4, 6, 8],
-                                        "number_b": [10, 12, 14, 16]}), dict()),
-        (wrapper_arbitrary_test_func, pd.DataFrame({"number_a": [False, False, False, True],
-                                                    "number_b": [True, True, True, True]}),
-         {'z': 1, 'y': 2})
-
-    ])
-    def test_func_transformer_returns_correctly_numerical(self, numerical, passed_func, expected,
-                                                          kwargs):
-        transformer = FuncTransformer(passed_func, **kwargs)
-        result = transformer.fit_transform(numerical)
-
-        pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
     def test_func_transformer_works_in_gridsearch(self, base):
         grid = self.create_gridsearch(FuncTransformer(np.mean))

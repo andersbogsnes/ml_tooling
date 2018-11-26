@@ -1,5 +1,5 @@
 """
-Test file for vizualisations
+Test file for visualisations
 """
 import pytest
 import numpy as np
@@ -181,6 +181,10 @@ class TestFeatureImportancePlot:
         ])
 
         class DummyModel(BaseClassModel):
+            @classmethod
+            def setup_model(cls):
+                pass
+
             def get_training_data(self):
                 test_data = pd.DataFrame({"col_a": ["Y", "N", "Y", "N", "Y", "N", "Y"],
                                           "col_b": ["Y", "N", "Y", "N", "Y", "N", "Y"]})

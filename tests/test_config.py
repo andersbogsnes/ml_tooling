@@ -6,6 +6,10 @@ from ml_tooling.config import DefaultConfig
 
 def test_config_is_set_globally(pipeline_dummy_classifier, pipeline_linear):
     class TestModel(BaseClassModel):
+        @classmethod
+        def setup_model(cls):
+            pass
+
         def get_prediction_data(self, *args):
             pass
 
@@ -29,6 +33,10 @@ def test_config_is_set_globally(pipeline_dummy_classifier, pipeline_linear):
 
 def test_can_change_config():
     class SomeModel(BaseClassModel):
+        @classmethod
+        def setup_model(cls):
+            pass
+
         def get_training_data(self):
             pass
 

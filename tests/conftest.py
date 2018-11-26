@@ -23,8 +23,9 @@ def random():
     np.random.seed(42)
 
 
-@pytest.fixture(name='base', scope='session')
+@pytest.fixture(name='base')
 def _base():
+    # noinspection PyAbstractClass
     class IrisModel(BaseClassModel):
         def get_prediction_data(self, idx):
             data = load_iris()
@@ -75,28 +76,28 @@ def dates_data():
                                                    '2018-03-01'], format='%Y-%m-%d')})
 
 
-@pytest.fixture(name='regression', scope='session')
+@pytest.fixture(name='regression')
 def _linear_regression(base):
     model = base(LinearRegression())
     model.score_model()
     return model
 
 
-@pytest.fixture(name='regression_cv', scope='session')
+@pytest.fixture(name='regression_cv')
 def _linear_regression_cv(base):
     model = base(LinearRegression())
     model.score_model(cv=2)
     return model
 
 
-@pytest.fixture(name='classifier', scope='session')
+@pytest.fixture(name='classifier')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
     model.score_model()
     return model
 
 
-@pytest.fixture(name='classifier_cv', scope='session')
+@pytest.fixture(name='classifier_cv')
 def _logistic_regression_cv(base):
     model = base(LogisticRegression(solver='liblinear'))
     model.score_model(cv=2)

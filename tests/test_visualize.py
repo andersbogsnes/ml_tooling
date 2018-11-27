@@ -278,39 +278,47 @@ class TestRocCurve:
 class TestGetFeatureImportance:
 
     def test_viz_get_feature_importance_regression_returns_importance(self, regression):
-        importance = _get_feature_importance(regression.result.plot)
+        importance, baseline = _get_feature_importance(regression.result.plot)
+
         model = regression.result.plot._model
         metric = get_scoring_func(regression.result.plot._config.REGRESSION_METRIC)
         train_x = regression.result.plot._data.train_x
         train_y = regression.result.plot._data.train_y
-        expected = _permutation_importances(model, metric, train_x, train_y)
 
-        assert np.all(expected == importance)
+        expected_importance, expected_baseline = _permutation_importances(model, metric, train_x,
+                                                                          train_y)
+
+        assert np.all(expected_baseline == baseline)
+        assert np.all(expected_importance == importance)
 
     def test_get_feature_importance_returns_importance_from_regression_pipeline(self,
                                                                                 base,
                                                                                 pipeline_linear):
         pipe = base(pipeline_linear)
         pipe.score_model()
-        importance = _get_feature_importance(pipe.result.plot)
+        importance, baseline = _get_feature_importance(pipe.result.plot)
 
         model = pipe.result.plot._model
         metric = get_scoring_func(pipe.result.plot._config.REGRESSION_METRIC)
         train_x = pipe.result.plot._data.train_x
         train_y = pipe.result.plot._data.train_y
-        expected_importance = _permutation_importances(model, metric, train_x, train_y)
+        expected_importance, expected_baseline = _permutation_importances(model, metric, train_x,
+                                                                          train_y)
 
+        assert np.all(expected_baseline == baseline)
         assert np.all(expected_importance == importance)
 
     def test_viz_get_feature_importance_returns_feature_importance_from_classifier(self, base):
         classifier = base(RandomForestClassifier(n_estimators=10))
         result = classifier.score_model()
-        importance = _get_feature_importance(result.plot)
+        importance, baseline = _get_feature_importance(result.plot)
 
         model = classifier.result.plot._model
         metric = get_scoring_func(classifier.result.plot._config.CLASSIFIER_METRIC)
         train_x = classifier.result.plot._data.train_x
         train_y = classifier.result.plot._data.train_y
-        expected_importance = _permutation_importances(model, metric, train_x, train_y)
+        expected_importance, expected_baseline = _permutation_importances(model, metric, train_x,
+                                                                          train_y)
 
+        assert np.all(expected_baseline == baseline)
         assert np.all(expected_importance == importance)

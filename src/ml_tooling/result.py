@@ -254,14 +254,16 @@ class BaseVisualize:
         """
 
         title = f"Feature Importance - {self._model_name}"
-        importance = _get_feature_importance(self, n_samples, seed)
+        importance, baseline = _get_feature_importance(self, n_samples, seed)
         labels = _get_labels(self._model, self._data.train_x)
+        x_lab = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 
         with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(importance,
                                            labels,
                                            values=values,
                                            title=title,
+                                           x_lab=x_lab,
                                            top_n=top_n,
                                            bottom_n=bottom_n,
                                            **kwargs)

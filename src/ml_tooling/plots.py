@@ -201,6 +201,7 @@ def plot_feature_importance(importance: DataType,
                             labels: DataType,
                             values: bool = None,
                             title: str = None,
+                            x_lab: str = None,
                             ax: Axes = None,
                             top_n: Union[int, float] = None,
                             bottom_n: Union[int, float] = None
@@ -216,6 +217,9 @@ def plot_feature_importance(importance: DataType,
 
     :param title:
         Plot title
+
+    :param x_lab:
+        Plot x-axis label
 
     :param values:
         Add value labels to end of each bar
@@ -262,7 +266,8 @@ def plot_feature_importance(importance: DataType,
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')
-    ax.set_xlabel('Importance')
+    x_lab = 'Importance' if x_lab is None else x_lab
+    ax.set_xlabel(x_lab)
     if values:
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
             ax.text(x, y, f"{importance[i]:.2f}", va='center')

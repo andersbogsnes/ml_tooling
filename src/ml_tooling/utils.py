@@ -372,4 +372,4 @@ def _permutation_importances(model, metric, train_x, train_y, n_samples=None, se
         drop_in_metric = baseline - m
         imp.append(drop_in_metric)
 
-    return np.array(imp)
+    return np.array(imp), baseline

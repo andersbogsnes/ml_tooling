@@ -351,6 +351,8 @@ def _permutation_importances(model, metric, train_x, train_y, n_samples=None, se
     """
 
     random_state = check_random_state(seed=seed)
+    train_x=train_x.copy()
+    train_y = train_y.copy()
 
     if n_samples:
         if _is_percent(n_samples):
@@ -364,10 +366,10 @@ def _permutation_importances(model, metric, train_x, train_y, n_samples=None, se
 
     for col in train_x.columns:
         save = train_x[col].copy()
-        train_x[col] = random_state.permutation(train_x[col], )
+        train_x[col] = random_state.permutation(train_x[col])
         m = metric(model, train_x, train_y)
         train_x[col] = save
         drop_in_metric = baseline - m
         imp.append(drop_in_metric)
 
-    return pd.DataFrame(np.array(imp), columns=['Importance'], index=train_x.columns)
+    return np.array(imp)

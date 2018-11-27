@@ -388,9 +388,8 @@ def _get_feature_importance(viz, n_samples=None, seed=1337) -> pd.DataFrame:
     :return:
         array of importances
     """
-
     model = viz._model
-    metric = get_scoring_func(viz._config)
+    metric = get_scoring_func(viz.default_metric)
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 

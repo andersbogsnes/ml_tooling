@@ -207,11 +207,29 @@ class BaseVisualize:
         self._config = config
         self._data = data
 
+    @property
+    def default_metric(self):
+        """
+        Finds estimator_type for estimator in a BaseVisualize and returns default
+        metric for this class stated in .config. If passed estimator is a Pipeline,
+        assume last step is the estimator.
+
+        Returns
+        -------
+        str
+            Name of the metric
+
+        """
+
+        return self._config.CLASSIFIER_METRIC if self._model._estimator_type == 'classifier' \
+            else self._config.REGRESSION_METRIC
+
     def feature_importance(self,
                            values: bool = True,
                            top_n: Union[int, float] = None,
                            bottom_n: Union[int, float] = None,
                            n_samples=None,
+                           seed = 1337,
                            **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model. Model must have either feature_importance_
@@ -236,7 +254,7 @@ class BaseVisualize:
         """
 
         title = f"Feature Importance - {self._model_name}"
-        importance = _get_feature_importance(self, n_samples)
+        importance = _get_feature_importance(self, n_samples, seed)
         labels = _get_labels(self._model, self._data.train_x)
 
         with plt.style.context(self._config.STYLE_SHEET):

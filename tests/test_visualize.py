@@ -21,7 +21,7 @@ from ml_tooling.plots import (plot_lift_curve,
                               )
 
 from ml_tooling.result import RegressionVisualize, ClassificationVisualize
-from ml_tooling.utils import _permutation_importances
+from ml_tooling.utils import _permutation_importances, get_scoring_func
 from sklearn.svm import SVC
 
 
@@ -278,39 +278,39 @@ class TestRocCurve:
 class TestGetFeatureImportance:
 
     def test_viz_get_feature_importance_regression_returns_importance(self, regression):
-        importance = _get_feature_importance(regression.model)
+        importance = _get_feature_importance(regression.result.plot)
         model = regression.result.plot._model
-        metric = regression.result.plot._config['REGRESSION_METRIC']
+        metric = get_scoring_func(regression.result.plot._config.REGRESSION_METRIC)
         train_x = regression.result.plot._data.train_x
         train_y = regression.result.plot._data.train_y
         expected = _permutation_importances(model, metric, train_x, train_y)
 
         assert np.all(expected == importance)
 
-    def test_get_feature_importance_returns_coef_from_regression_pipeline(self,
-                                                                          base,
-                                                                          pipeline_linear):
-        model = base(pipeline_linear)
-        model.train_model()
-
-        importance = _get_feature_importance(model.model)
-        expected_importance = model.model.steps[-1][1].coef_
-
-        assert np.all(expected_importance == importance)
-
     def test_get_feature_importance_returns_importance_from_regression_pipeline(self,
                                                                                 base,
                                                                                 pipeline_linear):
-        model = base(pipeline_linear)
-        model.train_model()
+        pipe = base(pipeline_linear)
+        pipe.score_model()
+        importance = _get_feature_importance(pipe.result.plot)
 
-        importance = _get_feature_importance(model.model)
-        expected_importance = model.model.steps[-1][1].coef_
+        model = pipe.result.plot._model
+        metric = get_scoring_func(pipe.result.plot._config.REGRESSION_METRIC)
+        train_x = pipe.result.plot._data.train_x
+        train_y = pipe.result.plot._data.train_y
+        expected_importance = _permutation_importances(model, metric, train_x, train_y)
 
         assert np.all(expected_importance == importance)
 
     def test_viz_get_feature_importance_returns_feature_importance_from_classifier(self, base):
         classifier = base(RandomForestClassifier(n_estimators=10))
         result = classifier.score_model()
-        importance = _get_feature_importance(classifier.model)
-        assert np.all(result.model.feature_importances_ == importance)
+        importance = _get_feature_importance(result.plot)
+
+        model = classifier.result.plot._model
+        metric = get_scoring_func(classifier.result.plot._config.CLASSIFIER_METRIC)
+        train_x = classifier.result.plot._data.train_x
+        train_y = classifier.result.plot._data.train_y
+        expected_importance = _permutation_importances(model, metric, train_x, train_y)
+
+        assert np.all(expected_importance == importance)

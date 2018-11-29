@@ -5,52 +5,11 @@ import numpy as np
 import pandas as pd
 from git import Repo, InvalidGitRepositoryError
 from sklearn.base import BaseEstimator
-from sklearn.metrics.scorer import (explained_variance_scorer,
-                                    r2_scorer,
-                                    fowlkes_mallows_scorer,
-                                    neg_median_absolute_error_scorer,
-                                    neg_mean_absolute_error_scorer,
-                                    neg_mean_squared_error_scorer,
-                                    neg_mean_squared_log_error_scorer,
-                                    accuracy_scorer,
-                                    roc_auc_scorer,
-                                    balanced_accuracy_scorer,
-                                    average_precision_scorer,
-                                    neg_log_loss_scorer,
-                                    brier_score_loss_scorer,
-                                    adjusted_rand_scorer,
-                                    homogeneity_scorer,
-                                    completeness_scorer,
-                                    v_measure_scorer,
-                                    mutual_info_scorer,
-                                    adjusted_mutual_info_scorer,
-                                    normalized_mutual_info_scorer,
-                                    )
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
-
-SCORERS = dict(explained_variance=explained_variance_scorer,
-               r2=r2_scorer,
-               neg_median_absolute_error=neg_median_absolute_error_scorer,
-               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-               neg_mean_squared_error=neg_mean_squared_error_scorer,
-               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
-               accuracy=accuracy_scorer,
-               roc_auc=roc_auc_scorer,
-               balanced_accuracy=balanced_accuracy_scorer,
-               average_precision=average_precision_scorer,
-               neg_log_loss=neg_log_loss_scorer,
-               brier_score_loss=brier_score_loss_scorer,
-               adjusted_rand_score=adjusted_rand_scorer,
-               homogeneity_score=homogeneity_scorer,
-               completeness_score=completeness_scorer,
-               v_measure_score=v_measure_scorer,
-               mutual_info_score=mutual_info_scorer,
-               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
-               normalized_mutual_info_score=normalized_mutual_info_scorer,
-               fowlkes_mallows_score=fowlkes_mallows_scorer)
 
 
 class Data:
@@ -129,15 +88,15 @@ def get_scoring_func(metric: str) -> Callable[[BaseEstimator,
                                                DataType,
                                                DataType], Union[int, float]]:
     """
-    Looks up a string scoring function in the scorers dictionary
+    Looks up a scikit-learn scoring function using scikit-learns built-in sklearn.metrics.get_scorer
     :param metric:
         string name of metric to use
     :return:
         callable score function
     """
     try:
-        return SCORERS[metric]
-    except KeyError:
+        return get_scorer(metric)
+    except ValueError:
         raise MLToolingError(f"Invalid metric {metric}")
 
 

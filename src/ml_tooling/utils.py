@@ -256,36 +256,6 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     return ParameterGrid(step_dict)
 
 
-def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> np.array:
-    """
-    If data is a DataFrame, use columns attribute - else use [0...n] np.array
-    :return:
-        list-like of labels
-    """
-    if hasattr(data, 'columns'):
-        if isinstance(model, Pipeline):
-            labels = _get_labels_from_pipeline(model, data)
-        else:
-            labels = data.columns
-    else:
-        labels = np.arange(data.shape[1])
-
-    return np.array(labels)
-
-
-def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> np.array:
-    """
-    Transforms df using the transformer steps of the pipeline and then getting the column labels
-    :param pipe:
-        sklearn Pipeline
-    :param df:
-    :return:
-    """
-    transformers = pipe.steps[:-1]
-    transform_pipe = Pipeline(transformers)
-    return np.array(transform_pipe.transform(df).columns)
-
-
 def _validate_model(model):
     """
     Ensures that model runs
@@ -343,33 +313,90 @@ def _find_unsampled_indices(sample_indices, n_samples):
     return unsampled_indices
 
 
-def _permutation_importances(model, metric, train_x, train_y, n_samples=None, seed=1337):
+def _greater_score_is_better(scorer):
     """
-    Return array of importances from pre-fit rf; metric is function
-    that measures accuracy or R^2 or similar. This function
-    works for regressors and classifiers.
+    Determines if a higher score for a given scorer is better or worse
+
+    Parameters
+    ----------
+    scorer:
+        scikit-learn scorer
+
+    Returns
+    -------
+    bool
+
+    """
+    return True if scorer._sign > 0 else False
+
+
+def _permutation_importances(model, scorer, x, y, samples, seed=1337):
+    """
+
+    Parameters
+    ----------
+    model :
+        a trained estimator exposing a predict or predict_proba method depending on the metric
+
+    scorer : _ThresholdScorer or _PredictScorer
+        sklearn scorer
+
+    x : DataFrame
+        Feature data
+
+    y : DateSeries
+        Target data
+
+    samples : None, int, float
+
+        None - Original data set i used. Not recommended for small data sets
+
+        float - A new smaller data set is made from resampling with
+                replacement form the original data set. Not recommended for small data sets.
+                Recommended for very large data sets.
+
+        Int - A new  data set is made from resampling with replacement form the original data.
+              samples sets the number of resamples. Recommended for small data sets
+               to ensure stable estimates of feature importance.
+
+    seed : int
+        Seed for random number generator for permutation.
+
+    Returns
+    -------
+    np.array
+        Decrease in score when permuting features
+    float
+        Baseline score without permutation
+
     """
 
     random_state = check_random_state(seed=seed)
-    train_x=train_x.copy()
-    train_y = train_y.copy()
+    x = x.copy()
+    y = y.copy()
 
-    if n_samples:
-        if _is_percent(n_samples):
-            n_samples = math.floor(n_samples * len(train_x)) or 1
-        train_x, train_y = resample(train_x, train_y, n_samples=n_samples, replace=True,
-                                    random_state=random_state)
+    if samples is not None and \
+            not (isinstance(samples, int) and samples > 0) and \
+            not (isinstance(samples, float) and 0 < samples < 1):
+        raise MLToolingError("samples must be None, float or int.")
 
-    baseline = metric(model, train_x, train_y)
+    if samples:
+        if _is_percent(samples):
+            samples = math.floor(samples * len(x)) or 1
+        x, y = resample(x, y, n_samples=samples, replace=True, random_state=random_state)
+
+    baseline = scorer(model, x, y)
 
     imp = []
 
-    for col in train_x.columns:
-        save = train_x[col].copy()
-        train_x[col] = random_state.permutation(train_x[col])
-        m = metric(model, train_x, train_y)
-        train_x[col] = save
-        drop_in_metric = baseline - m
-        imp.append(drop_in_metric)
+    sign = 1 if _greater_score_is_better(scorer) else -1
+
+    for col in x.columns:
+        save = x[col].copy()
+        x[col] = random_state.permutation(x[col])
+        m = scorer(model, x, y)
+        x[col] = save
+        drop_in_score = sign * (baseline - m)
+        imp.append(drop_in_score)
 
     return np.array(imp), baseline

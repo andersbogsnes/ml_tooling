@@ -382,20 +382,43 @@ def _generate_text_labels(ax, horizontal=False, padding=0.005):
         yield x_value, y_value
 
 
-def _get_feature_importance(viz, n_samples=None, seed=1337) -> pd.DataFrame:
+def _get_feature_importance(viz, samples, seed=1337) -> pd.DataFrame:
     """
     Helper function for extracting importances.
-    Checks for coef_ or feature_importances_ on model
 
-    :param model:
-        A sklearn estimator
+    Parameters
+    ----------
+    viz : BaseVisualize
+        An instance of BaseVisualizer
 
-    :return:
-        array of importances
+    samples : None, int, float
+
+        None - Original data set i used. Not recommended for small data sets
+
+        float - A new smaller data set is made from resampling with
+                replacement form the original data set. Not recommended for small data sets.
+                Recommended for very large data sets.
+
+        Int - A new  data set is made from resampling with replacement form the original data.
+              samples sets the number of resamples. Recommended for small data sets
+               to ensure stable estimates of feature importance.
+
+    seed : int
+        Seed for random number generator for permutation.
+
+    Returns
+    -------
+
+    np.array
+        Decrease in score when permuting features
+
+    float
+        Baseline score without permutation
+
     """
     model = viz._model
-    metric = get_scoring_func(viz.default_metric)
+    scorer = get_scoring_func(viz.default_metric)
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return _permutation_importances(model, metric, train_x, train_y, n_samples, seed)
+    return _permutation_importances(model, scorer, train_x, train_y, samples, seed)

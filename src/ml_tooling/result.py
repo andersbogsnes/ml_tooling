@@ -16,7 +16,7 @@ from .plots import (_get_feature_importance,
                     plot_roc_auc,
                     plot_lift_curve,
                     )
-from .utils import _get_model_name, _get_labels
+from .utils import _get_model_name
 
 
 @total_ordering
@@ -225,37 +225,54 @@ class BaseVisualize:
             else self._config.REGRESSION_METRIC
 
     def feature_importance(self,
+                           samples,
                            values: bool = True,
                            top_n: Union[int, float] = None,
                            bottom_n: Union[int, float] = None,
-                           n_samples=None,
-                           seed = 1337,
+                           seed=1337,
                            **kwargs) -> plt.Axes:
         """
-        Visualizes feature importance of the model. Model must have either feature_importance_
-        or coef_ attribute
+        Visualizes feature importance of the model through permutation.
 
-        :param values:
+        Parameters
+        ----------
+        samples : None, int, float
+
+            None - Original data set i used. Not recommended for small data sets
+
+            float - A new smaller data set is made from resampling with
+                replacement form the original data set. Not recommended for small data sets.
+                Recommended for very large data sets.
+
+            Int - A new  data set is made from resampling with replacement form the original data.
+                samples sets the number of resamples. Recommended for small data sets
+                to ensure stable estimates of feature importance.
+
+        values : bool
             Toggles value labels on end of each bar
 
-        :param top_n:
+        top_n: int, float
             If top_n is an integer, return top_n features.
             If top_n is a float between (0, 1), return top_n percent features
 
-        :param bottom_n:
+        bottom_n: int, float
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
-        :param n_samples:
+        seed : int
+            Seed for random number generator for permutation.
 
+        kwargs
 
-        :return:
+        Returns
+        -------
             matplotlib.Axes
         """
 
+
         title = f"Feature Importance - {self._model_name}"
-        importance, baseline = _get_feature_importance(self, n_samples, seed)
-        labels = _get_labels(self._model, self._data.train_x)
+        importance, baseline = _get_feature_importance(self, samples, seed)
+        labels = self._data.train_x.columns
         x_lab = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 
         with plt.style.context(self._config.STYLE_SHEET):

@@ -1,17 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
-from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
                                     get_scorer,
                                     )
-from sklearn.pipeline import Pipeline
-from sklearn.datasets import load_iris
 from ml_tooling.logging import _make_run_dir
 from ml_tooling.plots import _generate_text_labels
-from ml_tooling.transformers import ToCategorical
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
                               _is_percent,

@@ -107,7 +107,7 @@ class TestFeatureImportancePlot:
         ax = classifier.result.plot.feature_importance(values=False, samples=100)
         assert 0 == len(ax.texts)
         assert 'Features' == ax.get_ylabel()
-        assert 'Importance:  Decrease in accuracy from baseline of 0.66'  == ax.get_xlabel()
+        assert 'Importance:  Decrease in accuracy from baseline of 0.66' == ax.get_xlabel()
         assert 'Feature Importance - LogisticRegression' == ax.title._text
         plt.close()
 

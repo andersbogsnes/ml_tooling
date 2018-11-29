@@ -269,7 +269,6 @@ class BaseVisualize:
             matplotlib.Axes
         """
 
-
         title = f"Feature Importance - {self._model_name}"
         importance, baseline = _get_feature_importance(self, samples, seed)
         labels = self._data.train_x.columns

@@ -11,7 +11,7 @@ import itertools
 from matplotlib.axes import Axes
 
 from . import metrics
-from .utils import DataType, _is_percent, _permutation_importances, get_scoring_func
+from .utils import DataType, _is_percent, get_scoring_func
 
 
 def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
@@ -421,4 +421,4 @@ def _get_feature_importance(viz, samples, seed=1337) -> pd.DataFrame:
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return _permutation_importances(model, scorer, train_x, train_y, samples, seed)
+    return metrics._permutation_importances(model, scorer, train_x, train_y, samples, seed)

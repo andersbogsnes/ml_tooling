@@ -3,7 +3,6 @@ from typing import Union, Callable
 
 import numpy as np
 import pandas as pd
-import math
 from git import Repo, InvalidGitRepositoryError
 from sklearn.base import BaseEstimator
 from sklearn.metrics.scorer import (explained_variance_scorer,
@@ -29,7 +28,7 @@ from sklearn.metrics.scorer import (explained_variance_scorer,
                                     )
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.pipeline import Pipeline
-from sklearn.utils import check_random_state, resample
+from sklearn.utils import check_random_state
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -330,73 +329,4 @@ def _greater_score_is_better(scorer):
     return True if scorer._sign > 0 else False
 
 
-def _permutation_importances(model, scorer, x, y, samples, seed=1337):
-    """
 
-    Parameters
-    ----------
-    model :
-        a trained estimator exposing a predict or predict_proba method depending on the metric
-
-    scorer : _ThresholdScorer or _PredictScorer
-        sklearn scorer
-
-    x : DataFrame
-        Feature data
-
-    y : DateSeries
-        Target data
-
-    samples : None, int, float
-
-        None - Original data set i used. Not recommended for small data sets
-
-        float - A new smaller data set is made from resampling with
-                replacement form the original data set. Not recommended for small data sets.
-                Recommended for very large data sets.
-
-        Int - A new  data set is made from resampling with replacement form the original data.
-              samples sets the number of resamples. Recommended for small data sets
-               to ensure stable estimates of feature importance.
-
-    seed : int
-        Seed for random number generator for permutation.
-
-    Returns
-    -------
-    np.array
-        Decrease in score when permuting features
-    float
-        Baseline score without permutation
-
-    """
-
-    random_state = check_random_state(seed=seed)
-    x = x.copy()
-    y = y.copy()
-
-    if samples is not None and \
-            not (isinstance(samples, int) and samples > 0) and \
-            not (isinstance(samples, float) and 0 < samples < 1):
-        raise MLToolingError("samples must be None, float or int.")
-
-    if samples:
-        if _is_percent(samples):
-            samples = math.floor(samples * len(x)) or 1
-        x, y = resample(x, y, n_samples=samples, replace=True, random_state=random_state)
-
-    baseline = scorer(model, x, y)
-
-    imp = []
-
-    sign = 1 if _greater_score_is_better(scorer) else -1
-
-    for col in x.columns:
-        save = x[col].copy()
-        x[col] = random_state.permutation(x[col])
-        m = scorer(model, x, y)
-        x[col] = save
-        drop_in_score = sign * (baseline - m)
-        imp.append(drop_in_score)
-
-    return np.array(imp), baseline

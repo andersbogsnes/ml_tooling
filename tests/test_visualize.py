@@ -21,7 +21,8 @@ from ml_tooling.plots import (plot_lift_curve,
                               )
 
 from ml_tooling.result import RegressionVisualize, ClassificationVisualize
-from ml_tooling.utils import _permutation_importances, get_scoring_func
+from ml_tooling.metrics import _permutation_importances
+from ml_tooling.utils import  get_scoring_func
 from sklearn.svm import SVC
 
 

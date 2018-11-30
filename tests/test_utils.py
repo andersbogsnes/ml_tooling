@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
@@ -13,7 +12,6 @@ from ml_tooling.utils import (get_git_hash,
                               MLToolingError,
                               get_scoring_func,
                               _create_param_grid,
-                              _permutation_importances,
                               _greater_score_is_better)
 
 
@@ -144,14 +142,6 @@ def test__make_run_dir_fails_if_passed_file(tmpdir):
         _make_run_dir(str(new_file))
 
 
-def test_permutation_importances_raises(regression):
-    x = regression.data.train_x
-    y = regression.data.train_y
-    model = regression.model
-    scorer = get_scorer(regression.default_metric)
-
-    with pytest.raises(MLToolingError, match="samples must be None, float or int."):
-        _, _ = _permutation_importances(model, scorer, x, y, '1', seed=1337)
 
 
 @pytest.mark.parametrize('metric, expected', [
@@ -163,52 +153,3 @@ def test_greater_score_is_better(metric, expected):
     scorer = get_scorer(metric)
     assert _greater_score_is_better(scorer) == expected
 
-
-@pytest.mark.parametrize('setting, expected_importance, expected_baseline', [
-    (None, np.array([0.00273266410, 0.413660488, 0.779916893, 0.6152784471]), 0.2671288886),
-    (0.5, np.array([0.006008307, 0.4534291900, 1.042080126, 0.928642803]), 0.36053665),
-    (1000, np.array([0.001367147, 0.3810664646, 0.70650115542, 0.91687247998]), 0.24313681138)
-
-])
-def test_permutation_importances_works_as_expected_with_estimator(regression, setting,
-                                                                  expected_importance,
-                                                                  expected_baseline):
-    x = regression.data.train_x
-    y = regression.data.train_y
-    model = regression.model
-    scorer = get_scorer(regression.default_metric)
-    importance, baseline = _permutation_importances(model, scorer, x, y, setting, seed=1337)
-
-    np.testing.assert_almost_equal(importance, expected_importance)
-    assert pytest.approx(baseline, expected_baseline)
-
-
-def test_permutation_importances_works_as_expected_with_pipeline(base, pipeline_logistic):
-    pipe = base(pipeline_logistic)
-    pipe.score_model()
-    x = pipe.data.train_x
-    y = pipe.data.train_y
-    model = pipe.model
-    scorer = get_scorer(pipe.default_metric)
-    importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
-    expected_importance = np.array([-0.0180000000, 0.171000000000, 0.051000000, 0.075999999999])
-    expected_baseline = 0.759
-
-    np.testing.assert_almost_equal(importance, expected_importance)
-    assert pytest.approx(baseline, expected_baseline)
-
-
-def test_permutation_importances_works_with_proba_scorer(base, pipeline_logistic):
-    pipe = base(pipeline_logistic)
-    pipe.default_metric = 'roc_auc'
-    pipe.score_model()
-    x = pipe.data.train_x
-    y = pipe.data.train_y
-    model = pipe.model
-    scorer = get_scorer(pipe.default_metric)
-    importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
-    expected_importance = np.array([0.0072557875, 0.2974636312, 0.0944462426, 0.0781050511])
-    expected_baseline = 0.8305146463829
-
-    np.testing.assert_almost_equal(importance, expected_importance)
-    assert pytest.approx(baseline, expected_baseline)

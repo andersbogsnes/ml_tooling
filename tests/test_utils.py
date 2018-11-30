@@ -142,8 +142,6 @@ def test__make_run_dir_fails_if_passed_file(tmpdir):
         _make_run_dir(str(new_file))
 
 
-
-
 @pytest.mark.parametrize('metric, expected', [
     ('r2', True),
     ('neg_mean_squared_error', False)
@@ -152,4 +150,3 @@ def test__make_run_dir_fails_if_passed_file(tmpdir):
 def test_greater_score_is_better(metric, expected):
     scorer = get_scorer(metric)
     assert _greater_score_is_better(scorer) == expected
-

@@ -327,6 +327,3 @@ def _greater_score_is_better(scorer):
 
     """
     return True if scorer._sign > 0 else False
-
-
-

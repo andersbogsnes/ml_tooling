@@ -12,7 +12,8 @@ from ml_tooling.utils import (get_git_hash,
                               MLToolingError,
                               get_scoring_func,
                               _create_param_grid,
-                              _greater_score_is_better)
+                              _greater_score_is_better,
+                              )
 
 
 def test_get_git_hash_returns_correctly():

@@ -28,7 +28,6 @@ from sklearn.metrics.scorer import (explained_variance_scorer,
                                     )
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.pipeline import Pipeline
-from sklearn.utils import check_random_state
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -268,48 +267,6 @@ def _validate_model(model):
         raise MLToolingError("You passed a Pipeline without an estimator as the last step")
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
-
-
-def _generate_sample_indices(random_state, n_samples):
-    """
-    Sample indices to be used for permutations
-    Parameters
-    ----------
-    random_state : None, int, RandomState
-        Seed or RandomsState instance for number generator
-    n_samples : int
-        Size of data to generate indices for
-
-    Returns numpy.ndarray
-    -------
-
-    """
-    random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples)
-
-    return sample_indices
-
-
-def _find_unsampled_indices(sample_indices, n_samples):
-    """
-    Finds indices not in sample_indices. To be used for Out-Of-Bag
-    Parameters
-    ----------
-    sample_indices : numpy.ndarray
-        numpy.ndarray with indices
-    n_samples : int
-        Size of data to generate indices for.
-
-    Returns numpy.ndarray
-    -------
-
-    """
-    sample_counts = np.bincount(sample_indices, minlength=n_samples)
-    unsampled_mask = sample_counts == 0
-    indices_range = np.arange(n_samples)
-    unsampled_indices = indices_range[unsampled_mask]
-
-    return unsampled_indices
 
 
 def _greater_score_is_better(scorer):

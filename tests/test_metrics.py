@@ -164,3 +164,18 @@ class TestFeatureImportance:
 
         np.testing.assert_almost_equal(importance, expected_importance)
         assert pytest.approx(baseline, expected_baseline)
+
+    def test_permutation_importances_gives_same_result_in_parallel(self, base, pipeline_logistic):
+        pipe = base(pipeline_logistic)
+        pipe.score_model()
+        x = pipe.data.train_x
+        y = pipe.data.train_y
+        model = pipe.model
+        scorer = get_scorer(pipe.default_metric)
+        importance_parellel, baseline_parellel = _permutation_importances(model, scorer, x, y, 100,
+                                                                          seed=1337, n_jobs=-1)
+        importance_single, baseline_single = _permutation_importances(model, scorer, x, y, 100,
+                                                                      seed=1337, n_jobs=1)
+
+        assert np.all(importance_parellel == importance_single)
+        assert baseline_single == baseline_parellel

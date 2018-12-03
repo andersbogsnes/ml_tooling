@@ -1,9 +1,9 @@
 import math
 from typing import Union
-
+from copy import deepcopy
 import numpy as np
+from sklearn.externals.joblib import Parallel, delayed
 from sklearn import metrics
-
 from sklearn.utils import check_random_state, resample
 from .utils import (_is_percent,
                     DataType,
@@ -78,7 +78,43 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
     return cm
 
 
-def _permutation_importances(model, scorer, x, y, samples, seed=1337):
+def _get_column_importance(model, scorer, x, y, seed, col):
+    """
+    Helper function for _permutation_importances to calculate the importance of a single column
+
+    Parameters
+    ----------
+    model :
+        a trained estimator exposing a predict or predict_proba method depending on the metric
+
+    scorer : _ThresholdScorer or _PredictScorer
+        sklearn scorer
+
+    x : DataFrame
+        Feature data
+
+    y : DateSeries
+        Target data
+
+    seed :
+        Seed for random number generator for permutation.
+
+    col : str
+        Which column to permute.
+
+    Returns
+    -------
+
+    """
+    random_state = check_random_state(seed=seed)
+    save = x[col].copy()
+    x[col] = random_state.permutation(x[col])
+    measure = scorer(model, x, y)
+    x[col] = save
+    return measure
+
+
+def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1):
     """
 
     Parameters
@@ -122,6 +158,7 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337):
     random_state = check_random_state(seed=seed)
     x = x.copy()
     y = y.copy()
+    model = deepcopy(model)
 
     if samples is not None and \
             not (isinstance(samples, int) and samples > 0) and \
@@ -135,19 +172,17 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337):
 
     baseline = scorer(model, x, y)
 
-    imp = []
+    # Used to ensure random number generation is independent of parallelization
+    col_seeds = [i for i in range(seed, seed + len(x.columns))]
+
+    measure = Parallel(n_jobs=n_jobs)(
+        delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
+        zip(x.columns, col_seeds))
 
     sign = 1 if _greater_score_is_better(scorer) else -1
+    drop_in_score = sign * (baseline - measure)
 
-    for col in x.columns:
-        save = x[col].copy()
-        x[col] = random_state.permutation(x[col])
-        m = scorer(model, x, y)
-        x[col] = save
-        drop_in_score = sign * (baseline - m)
-        imp.append(drop_in_score)
-
-    return np.array(imp), baseline
+    return np.array(drop_in_score), baseline
 
 
 def sorted_feature_importance(labels: np.ndarray,

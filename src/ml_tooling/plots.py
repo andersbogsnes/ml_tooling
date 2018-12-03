@@ -382,7 +382,7 @@ def _generate_text_labels(ax, horizontal=False, padding=0.005):
         yield x_value, y_value
 
 
-def _get_feature_importance(viz, samples, seed=1337) -> pd.DataFrame:
+def _get_feature_importance(viz, samples, seed=1337, n_jobs=1) -> pd.DataFrame:
     """
     Helper function for extracting importances.
 
@@ -421,4 +421,4 @@ def _get_feature_importance(viz, samples, seed=1337) -> pd.DataFrame:
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return metrics._permutation_importances(model, scorer, train_x, train_y, samples, seed)
+    return metrics._permutation_importances(model, scorer, train_x, train_y, samples, seed, n_jobs)

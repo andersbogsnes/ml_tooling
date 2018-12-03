@@ -80,7 +80,8 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
 
 def _get_column_importance(model, scorer, x, y, seed, col):
     """
-    Helper function for _permutation_importances to calculate the importance of a single column
+    Helper function for _permutation_importances to calculate the importance of a single column.
+    When col=None the function calculates the baseline.
 
     Parameters
     ----------
@@ -106,11 +107,13 @@ def _get_column_importance(model, scorer, x, y, seed, col):
     -------
 
     """
-    random_state = check_random_state(seed=seed)
-    save = x[col].copy()
-    x[col] = random_state.permutation(x[col])
+    if col:
+        random_state = check_random_state(seed=seed)
+        save = x[col].copy()
+        x[col] = random_state.permutation(x[col])
     measure = scorer(model, x, y)
-    x[col] = save
+    if col:
+        x[col] = save
     return measure
 
 
@@ -170,17 +173,17 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1):
             samples = math.floor(samples * len(x)) or 1
         x, y = resample(x, y, n_samples=samples, replace=True, random_state=random_state)
 
-    baseline = scorer(model, x, y)
-
     # Used to ensure random number generation is independent of parallelization
-    col_seeds = [i for i in range(seed, seed + len(x.columns))]
+    col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
+    cols = [None] + x.columns.tolist()
 
     measure = Parallel(n_jobs=n_jobs)(
         delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
-        zip(x.columns, col_seeds))
+        zip(cols, col_seeds))
 
+    baseline = measure[0]
     sign = 1 if _greater_score_is_better(scorer) else -1
-    drop_in_score = sign * (baseline - measure)
+    drop_in_score = sign * (baseline - measure[1:])
 
     return np.array(drop_in_score), baseline
 
@@ -212,7 +215,7 @@ def sorted_feature_importance(labels: np.ndarray,
     if not isinstance(labels, np.ndarray):
         labels = np.array(labels)
 
-    idx = np.argsort(np.abs(importance))[::-1]
+    idx = np.argsort(importance)[::-1]
 
     sorted_idx = []
 

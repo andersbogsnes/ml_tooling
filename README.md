@@ -223,7 +223,7 @@ plot_confusion_matrix(y_true, y_pred)
    
 - `roc_curve()`
 - `confusion_matrix()`
-- `feature_importance()`
+- `feature_importance(samples)`: The input `samples` must be set.
 - `lift_curve()`
    
 ### Regressors

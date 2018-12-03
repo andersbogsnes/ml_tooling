@@ -15,6 +15,11 @@ from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+
+    def test_class_name_property_returns_class_name(self, regression):
+        reg = regression
+        assert reg.class_name == 'IrisModel'
+
     def test_instantiate_model_with_non_estimator_pipeline_fails(self, base):
         example_pipe = Pipeline([
             ('scale', DFStandardScaler)

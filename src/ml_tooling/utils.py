@@ -226,20 +226,3 @@ def _validate_model(model):
         raise MLToolingError("You passed a Pipeline without an estimator as the last step")
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
-
-
-def _greater_score_is_better(scorer):
-    """
-    Determines if a higher score for a given scorer is better or worse
-
-    Parameters
-    ----------
-    scorer:
-        scikit-learn scorer
-
-    Returns
-    -------
-    bool
-
-    """
-    return True if scorer._sign > 0 else False

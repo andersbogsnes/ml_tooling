@@ -7,7 +7,6 @@ from sklearn import metrics
 from sklearn.utils import check_random_state, resample
 from .utils import (_is_percent,
                     DataType,
-                    _greater_score_is_better,
                     MLToolingError,
                     )
 
@@ -117,7 +116,7 @@ def _get_column_importance(model, scorer, x, y, seed, col):
     return measure
 
 
-def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1):
+def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1, verbose=0):
     """
 
     Parameters
@@ -177,13 +176,12 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1):
     col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
     cols = [None] + x.columns.tolist()
 
-    measure = Parallel(n_jobs=n_jobs)(
+    measure = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
         zip(cols, col_seeds))
 
     baseline = measure[0]
-    sign = 1 if _greater_score_is_better(scorer) else -1
-    drop_in_score = sign * (baseline - measure[1:])
+    drop_in_score = baseline - measure[1:]
 
     return np.array(drop_in_score), baseline
 

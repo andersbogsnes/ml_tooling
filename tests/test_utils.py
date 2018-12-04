@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
-                                    get_scorer,
                                     )
 from ml_tooling.logging import _make_run_dir
 from ml_tooling.plots import _generate_text_labels
@@ -12,7 +11,6 @@ from ml_tooling.utils import (get_git_hash,
                               MLToolingError,
                               get_scoring_func,
                               _create_param_grid,
-                              _greater_score_is_better,
                               )
 
 
@@ -141,13 +139,3 @@ def test__make_run_dir_fails_if_passed_file(tmpdir):
     new_file.write('test hi')
     with pytest.raises(IOError):
         _make_run_dir(str(new_file))
-
-
-@pytest.mark.parametrize('metric, expected', [
-    ('r2', True),
-    ('neg_mean_squared_error', False)
-
-])
-def test_greater_score_is_better(metric, expected):
-    scorer = get_scorer(metric)
-    assert _greater_score_is_better(scorer) == expected

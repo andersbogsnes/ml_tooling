@@ -116,7 +116,7 @@ class TestFeatureImportance:
         scorer = get_scorer(regression.default_metric)
 
         with pytest.raises(MLToolingError, match="samples must be None, float or int."):
-            _, _ = _permutation_importances(model, scorer, x, y, '1', seed=1337)
+            _permutation_importances(model, scorer, x, y, '1', seed=1337)
 
     @pytest.mark.parametrize('setting, expected_importance, expected_baseline', [
         (None, np.array([0.00273266410, 0.4262626, 0.9134092, 1.1119456]), 0.2671288886),
@@ -134,7 +134,7 @@ class TestFeatureImportance:
         importance, baseline = _permutation_importances(model, scorer, x, y, setting, seed=1337)
 
         np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline, expected_baseline)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
     def test_permutation_importances_works_as_expected_with_pipeline(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)
@@ -148,7 +148,7 @@ class TestFeatureImportance:
         expected_baseline = 0.759
 
         np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline, expected_baseline)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
     def test_permutation_importances_works_with_proba_scorer(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)
@@ -163,7 +163,7 @@ class TestFeatureImportance:
         expected_baseline = 0.8305146463829
 
         np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline, expected_baseline)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
     def test_permutation_importances_gives_same_result_in_parallel(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)

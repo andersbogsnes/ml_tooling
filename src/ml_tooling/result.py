@@ -271,7 +271,7 @@ class BaseVisualize:
 
         title = f"Feature Importance - {self._model_name}"
         importance, baseline = _get_feature_importance(self, samples, self._config.RANDOM_STATE,
-                                                       self._config.N_JOBS)
+                                                       self._config.N_JOBS, self._config.VERBOSITY)
         labels = self._data.train_x.columns
         x_lab = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 

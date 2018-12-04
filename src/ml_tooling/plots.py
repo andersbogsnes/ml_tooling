@@ -201,7 +201,7 @@ def plot_feature_importance(importance: DataType,
                             labels: DataType,
                             values: bool = None,
                             title: str = None,
-                            x_lab: str = None,
+                            x_label: str = None,
                             ax: Axes = None,
                             top_n: Union[int, float] = None,
                             bottom_n: Union[int, float] = None
@@ -218,7 +218,7 @@ def plot_feature_importance(importance: DataType,
     :param title:
         Plot title
 
-    :param x_lab:
+    :param x_label:
         Plot x-axis label
 
     :param values:
@@ -266,8 +266,8 @@ def plot_feature_importance(importance: DataType,
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
     ax.set_ylabel('Features')
-    x_lab = 'Importance' if x_lab is None else x_lab
-    ax.set_xlabel(x_lab)
+    x_label = 'Importance' if x_label is None else x_label
+    ax.set_xlabel(x_label)
     if values:
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
             ax.text(x, y, f"{importance[i]:.2f}", va='center')
@@ -382,7 +382,7 @@ def _generate_text_labels(ax, horizontal=False, padding=0.005):
         yield x_value, y_value
 
 
-def _get_feature_importance(viz, samples, seed=1337, n_jobs=1) -> pd.DataFrame:
+def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.DataFrame:
     """
     Helper function for extracting importances.
 
@@ -421,4 +421,5 @@ def _get_feature_importance(viz, samples, seed=1337, n_jobs=1) -> pd.DataFrame:
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return metrics._permutation_importances(model, scorer, train_x, train_y, samples, seed, n_jobs)
+    return metrics._permutation_importances(model, scorer, train_x, train_y, samples, seed, n_jobs,
+                                            verbose)

@@ -186,6 +186,10 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1, 
     return np.array(drop_in_score), baseline
 
 
+def _permutation_importances_cv():
+    pass
+
+
 def sorted_feature_importance(labels: np.ndarray,
                               importance: np.ndarray,
                               top_n: Union[int, float] = None,

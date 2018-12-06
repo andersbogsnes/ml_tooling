@@ -14,6 +14,7 @@ from sklearn.model_selection import cross_val_score
 from ml_tooling.logging import create_logger, log_model
 from ml_tooling.utils import _validate_model
 from .config import DefaultConfig, ConfigGetter
+
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (

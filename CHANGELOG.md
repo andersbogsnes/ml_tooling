@@ -8,6 +8,7 @@ happen if the user only called .train_model before saving.
 - Default_metric is now the same metric as the one specified for the model in .config
 - Each class inheriting from BaseClassModel has an individual config
 - Changed get_scorer_func to wrap sklearn's get_scorer
+- feature importances changed to use permutation instead of built-in for better estimates.
 
 v0.5.0
 - Added Binarize Transformer

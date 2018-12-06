@@ -213,36 +213,6 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     return ParameterGrid(step_dict)
 
 
-def _get_labels(model: BaseEstimator, data: pd.DataFrame) -> np.array:
-    """
-    If data is a DataFrame, use columns attribute - else use [0...n] np.array
-    :return:
-        list-like of labels
-    """
-    if hasattr(data, 'columns'):
-        if isinstance(model, Pipeline):
-            labels = _get_labels_from_pipeline(model, data)
-        else:
-            labels = data.columns
-    else:
-        labels = np.arange(data.shape[1])
-
-    return np.array(labels)
-
-
-def _get_labels_from_pipeline(pipe: Pipeline, df: pd.DataFrame) -> np.array:
-    """
-    Transforms df using the transformer steps of the pipeline and then getting the column labels
-    :param pipe:
-        sklearn Pipeline
-    :param df:
-    :return:
-    """
-    transformers = pipe.steps[:-1]
-    transform_pipe = Pipeline(transformers)
-    return np.array(transform_pipe.transform(df).columns)
-
-
 def _validate_model(model):
     """
     Ensures that model runs

@@ -334,9 +334,13 @@ class TestBaseClass:
         pd.testing.assert_frame_equal(model1.data.x, model2.data.x)
 
     def test_classes_do_not_share_data(self):
+        pd_df1 = pd.DataFrame({'a': [1, 2, 3, 3, 2, 4]})
+        pd_s1 = pd.Series([0, 1, 1, 0, 1, 0])
+        pd_df2 = pd.DataFrame({'b': [9, 9, 8, 9, 2, 4]})
+
         class class1(BaseClassModel):
             def get_training_data(self):
-                return pd.DataFrame({'a': [1, 2, 3, 3, 2, 4]}), pd.Series([0, 1, 1, 0, 1, 0])
+                return pd_df1, pd_s1
 
             def get_prediction_data(self, *args):
                 pass
@@ -346,7 +350,7 @@ class TestBaseClass:
 
         class class2(BaseClassModel):
             def get_training_data(self):
-                return pd.DataFrame({'a': [1, 2, 3, 3, 2, 4]}), pd.Series([0, 1, 1, 0, 1, 0])
+                return pd_df1, pd_s1
 
             def get_prediction_data(self, *args):
                 pass
@@ -355,8 +359,7 @@ class TestBaseClass:
         cl2.score_model()
 
         pd.testing.assert_frame_equal(cl1.data.x, cl2.data.x)
+        cl2.data.x = pd_df2
 
-        cl1.data.x = pd.DataFrame({'b': [9, 9, 8, 9, 2, 4]})
-
-        assert cl1.data.x.columns != cl2.data.x.columns
-        assert cl1.data.x[0, 0] != cl2.data.x[0, 0]
+        pd.testing.assert_frame_equal(cl1.data.x, pd_df1)
+        pd.testing.assert_frame_equal(cl2.data.x, pd_df2)

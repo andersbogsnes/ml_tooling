@@ -43,7 +43,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def __init__(self, model):
         self.model = _validate_model(model)
         self.model_name = _get_model_name(model)
-        self.data = None
         self.result = None
         self._plotter = None
 

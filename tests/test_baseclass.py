@@ -298,7 +298,8 @@ class TestBaseClass:
 
     def test_test_models_logs_when_given_dir(self, tmpdir, base):
         test_models_log = tmpdir.mkdir('test_models')
-        base.test_models([RandomForestClassifier(), DummyClassifier()], log_dir=test_models_log)
+        base.test_models([RandomForestClassifier(n_estimators=10), DummyClassifier()],
+                         log_dir=test_models_log)
 
         for file in test_models_log.visit('*.yaml'):
             with open(file) as f:

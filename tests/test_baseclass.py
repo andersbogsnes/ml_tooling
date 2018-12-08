@@ -241,6 +241,22 @@ class TestBaseClass:
         for result in results:
             assert isinstance(result, CVResult)
 
+    def test_gridsearch_model_does_not_fail_when_run_twice(self, base, pipeline_logistic):
+        model = base(pipeline_logistic)
+        best_model, results = model.gridsearch(param_grid={'penalty': ['l1', 'l2']})
+        assert isinstance(best_model, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, CVResult)
+
+        best_model, results = model.gridsearch(param_grid={'penalty': ['l1', 'l2']})
+        assert isinstance(best_model, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, CVResult)
+
     def test_log_context_manager_works_as_expected(self, regression):
         assert regression.config.LOG is False
         assert 'runs' == regression.config.RUN_DIR.name

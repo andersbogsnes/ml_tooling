@@ -42,7 +42,8 @@ class TransformerBase:
         pipe = self.create_pipeline(transformer)
         return GridSearchCV(pipe,
                             param_grid={'clf__strategy': ['stratified', 'most_frequent']},
-                            cv=2)
+                            cv=2,
+                            iid=False)
 
 
 class TestDFSelector(TransformerBase):

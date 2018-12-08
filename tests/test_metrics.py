@@ -1,19 +1,34 @@
 import numpy as np
+import pandas as pd
 import pytest
-from ml_tooling.metrics import lift_score, confusion_matrix, sorted_feature_importance
-from ml_tooling.metrics import MetricError
+from sklearn.metrics import get_scorer
+from ml_tooling.utils import (MLToolingError,
+                              )
+from ml_tooling.metrics import (MetricError,
+                                lift_score,
+                                confusion_matrix,
+                                sorted_feature_importance,
+                                _permutation_importances,
+                                )
 
 
 class TestLiftScore:
-    def test_lift_score_fails_if_passed_non_ndarray(self):
+    @pytest.mark.parametrize('y_targ, y_pred', [
+        (np.array([[1, 1, 0, 0], [0, 1, 0, 1]]), np.array([[1, 1, 0, 0], [1, 1, 1, 1]])),
+        ([[1, 1, 0, 0], [0, 1, 0, 1]], [[1, 1, 0, 0], [1, 1, 1, 1]])
+    ])
+    def test_lift_score_fails_if_passed_non_ndarray_or_series(self, y_targ, y_pred):
         with pytest.raises(MetricError):
             # noinspection PyTypeChecker
-            lift_score([1, 2, 3], [4, 5, 6])
+            lift_score(y_targ, y_pred)
 
-    def test_lift_score_returns_correctly(self):
-        y_targ = np.array([1, 1, 1, 0, 0, 2, 0, 3, 4])
-        y_pred = np.array([1, 0, 1, 0, 0, 2, 1, 3, 0])
-
+    @pytest.mark.parametrize('y_targ, y_pred', [
+        (np.array([1, 1, 1, 0, 0, 2, 0, 3, 4]), np.array([1, 0, 1, 0, 0, 2, 1, 3, 0])),
+        (pd.Series([1, 1, 1, 0, 0, 2, 0, 3, 4]), pd.Series([1, 0, 1, 0, 0, 2, 1, 3, 0])),
+        ((1, 1, 1, 0, 0, 2, 0, 3, 4), (1, 0, 1, 0, 0, 2, 1, 3, 0)),
+        ([1, 1, 1, 0, 0, 2, 0, 3, 4], [1, 0, 1, 0, 0, 2, 1, 3, 0])
+    ])
+    def test_lift_score_returns_correctly(self, y_targ, y_pred):
         result = lift_score(y_targ, y_pred)
         assert 2 == result
 
@@ -93,3 +108,74 @@ class TestFeatureImportance:
                                                                      top_n=.2)
         assert ['Feature 5', 'Feature 1'] == list(result_labels)
         assert [.5, .1] == list(result_importance)
+
+    def test_permutation_importances_raises(self, regression):
+        x = regression.data.train_x
+        y = regression.data.train_y
+        model = regression.model
+        scorer = get_scorer(regression.default_metric)
+
+        with pytest.raises(MLToolingError, match="samples must be None, float or int."):
+            _permutation_importances(model, scorer, x, y, '1', seed=1337)
+
+    @pytest.mark.parametrize('setting, expected_importance, expected_baseline', [
+        (None, np.array([0.00273266410, 0.4262626, 0.9134092, 1.1119456]), 0.2671288886),
+        (0.5, np.array([0.0043651, 0.6032381, 1.113386, 0.7495175]), 0.36053665),
+        (1000, np.array([0.0016836, 0.4391413, 0.8194372, 0.8254109]), 0.24313681138)
+
+    ])
+    def test_permutation_importances_works_as_expected_with_estimator(self, regression, setting,
+                                                                      expected_importance,
+                                                                      expected_baseline):
+        x = regression.data.train_x
+        y = regression.data.train_y
+        model = regression.model
+        scorer = get_scorer(regression.default_metric)
+        importance, baseline = _permutation_importances(model, scorer, x, y, setting, seed=1337)
+
+        np.testing.assert_almost_equal(importance, expected_importance)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
+
+    def test_permutation_importances_works_as_expected_with_pipeline(self, base, pipeline_logistic):
+        pipe = base(pipeline_logistic)
+        pipe.score_model()
+        x = pipe.data.train_x
+        y = pipe.data.train_y
+        model = pipe.model
+        scorer = get_scorer(pipe.default_metric)
+        importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
+        expected_importance = np.array([-0.0190000000, 0.164000000000, 0.038000000, 0.0740])
+        expected_baseline = 0.759
+
+        np.testing.assert_almost_equal(importance, expected_importance)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
+
+    def test_permutation_importances_works_with_proba_scorer(self, base, pipeline_logistic):
+        pipe = base(pipeline_logistic)
+        pipe.default_metric = 'roc_auc'
+        pipe.score_model()
+        x = pipe.data.train_x
+        y = pipe.data.train_y
+        model = pipe.model
+        scorer = get_scorer(pipe.default_metric)
+        importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
+        expected_importance = np.array([0.0035604, 0.3021749, 0.1075911, 0.0688982])
+        expected_baseline = 0.8305146463829
+
+        np.testing.assert_almost_equal(importance, expected_importance)
+        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
+
+    def test_permutation_importances_gives_same_result_in_parallel(self, base, pipeline_logistic):
+        pipe = base(pipeline_logistic)
+        pipe.score_model()
+        x = pipe.data.train_x
+        y = pipe.data.train_y
+        model = pipe.model
+        scorer = get_scorer(pipe.default_metric)
+        importance_parellel, baseline_parellel = _permutation_importances(model, scorer, x, y, 100,
+                                                                          seed=1337, n_jobs=-1)
+        importance_single, baseline_single = _permutation_importances(model, scorer, x, y, 100,
+                                                                      seed=1337, n_jobs=1)
+
+        assert np.all(importance_parellel == importance_single)
+        assert baseline_single == baseline_parellel

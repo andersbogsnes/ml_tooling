@@ -1,17 +1,21 @@
 import math
 from typing import Union
-
+from copy import deepcopy
 import numpy as np
+from sklearn.externals.joblib import Parallel, delayed
 from sklearn import metrics
-
-from .utils import _is_percent
+from sklearn.utils import check_random_state, resample
+from .utils import (_is_percent,
+                    DataType,
+                    MLToolingError,
+                    )
 
 
 class MetricError(Exception):
     pass
 
 
-def lift_score(y_target: np.ndarray, y_predicted: np.ndarray) -> float:
+def lift_score(y_target: DataType, y_predicted: DataType) -> float:
     """
     Calculates lift score for a given model. The lift score quantifies how much better
     the model is compared to a random baseline.
@@ -29,8 +33,11 @@ def lift_score(y_target: np.ndarray, y_predicted: np.ndarray) -> float:
     :return:
         Lift score
     """
-    if not isinstance(y_target, np.ndarray) or not isinstance(y_predicted, np.ndarray):
-        raise MetricError("Input must be a numpy NDArray")
+    y_target = np.array(y_target)
+    y_predicted = np.array(y_predicted)
+
+    if y_target.ndim > 1 or y_predicted.ndim > 1:
+        raise MetricError("Input must be 1-dimensional")
 
     n = len(y_target)
     percent_positives_target = np.sum(y_target == 1) / n
@@ -70,6 +77,115 @@ def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) ->
     return cm
 
 
+def _get_column_importance(model, scorer, x, y, seed, col):
+    """
+    Helper function for _permutation_importances to calculate the importance of a single column.
+    When col=None the function calculates the baseline.
+
+    Parameters
+    ----------
+    model :
+        a trained estimator exposing a predict or predict_proba method depending on the metric
+
+    scorer : _ThresholdScorer or _PredictScorer
+        sklearn scorer
+
+    x : DataFrame
+        Feature data
+
+    y : DateSeries
+        Target data
+
+    seed :
+        Seed for random number generator for permutation.
+
+    col : str
+        Which column to permute.
+
+    Returns
+    -------
+
+    """
+    if col:
+        random_state = check_random_state(seed=seed)
+        save = x[col].copy()
+        x[col] = random_state.permutation(x[col])
+    measure = scorer(model, x, y)
+    if col:
+        x[col] = save
+    return measure
+
+
+def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1, verbose=0):
+    """
+
+    Parameters
+    ----------
+    model :
+        a trained estimator exposing a predict or predict_proba method depending on the metric
+
+    scorer : _ThresholdScorer or _PredictScorer
+        sklearn scorer
+
+    x : DataFrame
+        Feature data
+
+    y : DateSeries
+        Target data
+
+    samples : None, int, float
+
+        None - Original data set i used. Not recommended for small data sets
+
+        float - A new smaller data set is made from resampling with
+                replacement form the original data set. Not recommended for small data sets.
+                Recommended for very large data sets.
+
+        Int - A new  data set is made from resampling with replacement form the original data.
+              samples sets the number of resamples. Recommended for small data sets
+               to ensure stable estimates of feature importance.
+
+    seed : int
+        Seed for random number generator for permutation.
+
+    Returns
+    -------
+    np.array
+        Decrease in score when permuting features
+    float
+        Baseline score without permutation
+
+    """
+
+    random_state = check_random_state(seed=seed)
+    x = x.copy()
+    y = y.copy()
+    model = deepcopy(model)
+
+    if samples is not None and \
+            not (isinstance(samples, int) and samples > 0) and \
+            not (isinstance(samples, float) and 0 < samples < 1):
+        raise MLToolingError("samples must be None, float or int.")
+
+    if samples:
+        if _is_percent(samples):
+            samples = math.floor(samples * len(x)) or 1
+        x, y = resample(x, y, n_samples=samples, replace=True, random_state=random_state)
+
+    # Used to ensure random number generation is independent of parallelization
+    col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
+    cols = [None] + x.columns.tolist()
+
+    measure = Parallel(n_jobs=n_jobs, verbose=verbose)(
+        delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
+        zip(cols, col_seeds))
+
+    baseline = measure[0]
+    drop_in_score = baseline - measure[1:]
+
+    return np.array(drop_in_score), baseline
+
+
 def sorted_feature_importance(labels: np.ndarray,
                               importance: np.ndarray,
                               top_n: Union[int, float] = None,
@@ -97,7 +213,7 @@ def sorted_feature_importance(labels: np.ndarray,
     if not isinstance(labels, np.ndarray):
         labels = np.array(labels)
 
-    idx = np.argsort(np.abs(importance))[::-1]
+    idx = np.argsort(importance)[::-1]
 
     sorted_idx = []
 

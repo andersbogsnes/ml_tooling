@@ -388,11 +388,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         baseline_model = clone(self.model)
         logger.info("Starting gridsearch...")
+        self.result = None  # Fixes pickling recursion error in joblib
+
         parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
-        results = parallel(
-            joblib.delayed(self._score_model_cv)(clone(baseline_model).set_params(**param),
-                                                 metric=metric,
-                                                 cv=cv) for param in param_grid)
+        parallel_scoring = joblib.delayed(self._score_model_cv)
+        results = parallel(parallel_scoring(clone(baseline_model).set_params(**param),
+                                            metric=metric,
+                                            cv=cv) for param in param_grid)
         logger.info("Done!")
 
         self.result = ResultGroup(results)

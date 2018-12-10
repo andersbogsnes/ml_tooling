@@ -37,12 +37,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     """
 
     _config = None
+    _data = None
     config = ConfigGetter()
 
     def __init__(self, model):
         self.model = _validate_model(model)
         self.model_name = _get_model_name(model)
-        self.data = None
         self.result = None
         self._plotter = None
 
@@ -115,6 +115,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.info(f"Loaded {instance.model_name} for {cls.__name__}")
         return instance
 
+    @property
+    def data(self):
+        if self.__class__._data is None:
+            self.__class__._data = self._load_data()
+        return self.__class__._data
+
     def _load_data(self) -> Data:
         """
         Internal method for loading data into class
@@ -124,17 +130,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         Data
             Data object containing train-test split as well as original x and y
         """
-        if self.data is None:
-            logger.debug("No data loaded - loading...")
-            x, y = self.get_training_data()
 
-            stratify = y if self.model._estimator_type == 'classifier' else None
-            logger.debug("Creating train/test...")
-            self.data = Data.with_train_test(x, y,
-                                             stratify=stratify,
-                                             test_size=self.config.TEST_SIZE)
+        logger.debug("No data loaded - loading...")
+        x, y = self.get_training_data()
 
-        return self.data
+        stratify = y if self.model._estimator_type == 'classifier' else None
+        logger.debug("Creating train/test...")
+        return Data.with_train_test(x, y, stratify=stratify, test_size=self.config.TEST_SIZE)
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
@@ -307,7 +309,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         """
         logger.info("Training model...")
-        self._load_data()
         self.model.fit(self.data.x, self.data.y)
         self.result = None  # Prevent confusion, as train_model does not return a result
         logger.info("Model trained!")
@@ -332,8 +333,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         -------
         Result object
         """
-
-        self._load_data()
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring model...")
         self.model.fit(self.data.train_x, self.data.train_y)
@@ -377,8 +376,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         result_group: ResultGroup
             ResultGroup object containing each individual score
         """
-
-        self._load_data()
 
         metric = self.default_metric if metric is None else metric
         cv = self.config.CROSS_VALIDATION if cv is None else cv

@@ -121,10 +121,6 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self.__class__._data = self._load_data()
         return self.__class__._data
 
-    @data.setter
-    def data(self, value):
-        self.__class__._data = value
-
     def _load_data(self) -> Data:
         """
         Internal method for loading data into class

@@ -14,7 +14,7 @@ happen if the user only called .train_model before saving.
 - Each class inheriting from BaseClassModel has an individual config
 - Changed get_scorer_func to wrap sklearn's get_scorer
 - Fixed bug when gridsearching twice
-- data for a class are changed from instance varaible to class variable
+- Data for a class is changed from instance varaible to class variable
 
 # v0.5.0
 - Added Binarize Transformer

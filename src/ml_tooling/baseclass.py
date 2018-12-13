@@ -394,20 +394,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
 
-        #        out = parallel(parallel_scoring(clone(baseline_model).set_params(**param),
-        #                                        metric=metric,
-        #                                        cv=cv) for param in param_grid)
-
         out = parallel(
             joblib.delayed(fit_grid_point)(X=train_x, y=train_y,
                                            estimator=clone(baseline_model),
                                            train=train, test=test,
                                            scorer=get_scoring_func(metric),
                                            verbose=self.config.VERBOSITY,
-                                           parameters=parameters)
-            for parameters, (train, test)
-            in product(list(param_grid),
-                       cv.split(train_x, train_y, None)))
+                                           parameters=parameters) for parameters, (train, test)
+            in product(list(param_grid), cv.split(train_x, train_y, None)))
+
+        fold_scores = 
 
         results = out
         logger.info("Done!")

@@ -384,11 +384,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             ResultGroup object containing each individual score
         """
 
-        metric = self.default_metric if metric is None else metric
-        cv = check_cv(self.config.CROSS_VALIDATION) if cv is None else check_cv(cv)
-        n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
-        train_x, train_y = indexable(self.data.train_x, self.data.train_y)
         baseline_model = clone(self.model)
+        train_x, train_y = indexable(self.data.train_x, self.data.train_y)
+        metric = self.default_metric if metric is None else metric
+        n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
+        cv = check_cv(cv, train_y, baseline_model._estimator_type == 'classifier')  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")

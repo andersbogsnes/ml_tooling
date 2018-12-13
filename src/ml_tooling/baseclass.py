@@ -354,7 +354,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def gridsearch(self,
                    param_grid: dict,
                    metric: Optional[str] = None,
-                   cv: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
+                   cv: Optional[int] = None,
+                   n_jobs: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
         """
         Grid search model with parameters in param_grid.
         Param_grid automatically adds prefix from last step if using pipeline
@@ -370,6 +371,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         cv: int, optional
             Cross validation to use. Defaults to 10 based on value in config
 
+        n_jobs: int, optional
+            How many worker process too spawn. Defaults to -1  based on value
+            in config (one for each physical core).
+
         Returns
         -------
         best_model: sklearn.estimator
@@ -381,6 +386,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         metric = self.default_metric if metric is None else metric
         cv = check_cv(self.config.CROSS_VALIDATION) if cv is None else check_cv(cv)
+        n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         train_x, train_y = indexable(self.data.train_x, self.data.train_y)
         baseline_model = clone(self.model)
         self.result = None  # Fixes pickling recursion error in joblib
@@ -390,7 +396,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         param_grid = list(_create_param_grid(self.model, param_grid))
         logger.info("Starting gridsearch...")
 
-        parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
+        parallel = joblib.Parallel(n_jobs=n_jobs, verbose=self.config.VERBOSITY)
 
         out = parallel(
             joblib.delayed(fit_grid_point)(X=train_x, y=train_y,

@@ -3,6 +3,7 @@ import pathlib
 from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union, Any
 
+from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn import clone
@@ -10,9 +11,12 @@ from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import fit_grid_point
+from sklearn.model_selection._split import check_cv
+from sklearn.utils import indexable
 
-from ml_tooling.logging import create_logger, log_model
-from ml_tooling.utils import _validate_model
+from .logging import create_logger, log_model
+from .utils import _validate_model
 from .config import DefaultConfig, ConfigGetter
 
 from .result import RegressionVisualize, ClassificationVisualize
@@ -378,7 +382,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
         metric = self.default_metric if metric is None else metric
-        cv = self.config.CROSS_VALIDATION if cv is None else cv
+        cv = check_cv(self.config.CROSS_VALIDATION) if cv is None else check_cv(cv)
+        train_x, train_y = indexable(self.data.train_x, self.data.train_y)
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
         logger.debug(f"Gridsearching using {param_grid}")
         param_grid = _create_param_grid(self.model, param_grid)
@@ -388,10 +393,23 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.result = None  # Fixes pickling recursion error in joblib
 
         parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
-        parallel_scoring = joblib.delayed(self._score_model_cv)
-        results = parallel(parallel_scoring(clone(baseline_model).set_params(**param),
-                                            metric=metric,
-                                            cv=cv) for param in param_grid)
+
+        #        out = parallel(parallel_scoring(clone(baseline_model).set_params(**param),
+        #                                        metric=metric,
+        #                                        cv=cv) for param in param_grid)
+
+        out = parallel(
+            joblib.delayed(fit_grid_point)(X=train_x, y=train_y,
+                                           estimator=clone(baseline_model),
+                                           train=train, test=test,
+                                           scorer=get_scoring_func(metric),
+                                           verbose=self.config.VERBOSITY,
+                                           parameters=parameters)
+            for parameters, (train, test)
+            in product(list(param_grid),
+                       cv.split(train_x, train_y, None)))
+
+        results = out
         logger.info("Done!")
 
         self.result = ResultGroup(results)
@@ -431,7 +449,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         Result object
 
         """
-        # TODO support any given sklearn scorer - must check that it is a scorer
+
         scoring_func = get_scoring_func(metric)
 
         score = scoring_func(model, self.data.test_x, self.data.test_y)

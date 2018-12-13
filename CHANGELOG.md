@@ -2,6 +2,7 @@
 
 ## Bugfixes
 - Data for a class is changed from instance varaible to class variable
+- Grid search only copies data to workers once and reuse them across grid and folds.
 
 # v0.6.0
 

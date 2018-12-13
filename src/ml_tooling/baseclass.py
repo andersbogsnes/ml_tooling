@@ -382,13 +382,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         metric = self.default_metric if metric is None else metric
         cv = check_cv(self.config.CROSS_VALIDATION) if cv is None else check_cv(cv)
         train_x, train_y = indexable(self.data.train_x, self.data.train_y)
+        baseline_model = clone(self.model)
+        self.result = None  # Fixes pickling recursion error in joblib
+
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
         logger.debug(f"Gridsearching using {param_grid}")
-        param_grid = _create_param_grid(self.model, param_grid)
-
-        baseline_model = clone(self.model)
+        param_grid = list(_create_param_grid(self.model, param_grid))
         logger.info("Starting gridsearch...")
-        self.result = None  # Fixes pickling recursion error in joblib
 
         parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
 
@@ -399,14 +399,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                            scorer=get_scoring_func(metric),
                                            verbose=self.config.VERBOSITY,
                                            parameters=parameters) for parameters, (train, test)
-            in product(list(param_grid), cv.split(train_x, train_y, None)))
+            in product(param_grid, cv.split(train_x, train_y, None)))
 
-        scores = [np.array([score[0] for score in out if score[1] == param]) for param in
-                  list(param_grid)]
+        scores = [np.array([score[0] for score in out if score[1] == par]) for par in param_grid]
 
-        results = [CVResult(baseline_model., metric, scores[i], cv.n_splits) for i, param in
-                   enumerate(list(param_grid))]
-        
+        results = [CVResult(baseline_model.set_params(**param), None, cv.n_splits, scores[i],
+                            metric) for i, param in enumerate(param_grid)]
+
         logger.info("Done!")
 
         self.result = ResultGroup(results)

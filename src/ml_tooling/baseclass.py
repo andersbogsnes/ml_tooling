@@ -10,9 +10,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import fit_grid_point
-from sklearn.model_selection._split import check_cv
+from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 from sklearn.utils import indexable
 
 from .logging import create_logger, log_model
@@ -403,9 +401,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                            parameters=parameters) for parameters, (train, test)
             in product(list(param_grid), cv.split(train_x, train_y, None)))
 
-        fold_scores = 
+        scores = [np.array([score[0] for score in out if score[1] == param]) for param in
+                  list(param_grid)]
 
-        results = out
+        results = [CVResult(baseline_model., metric, scores[i], cv.n_splits) for i, param in
+                   enumerate(list(param_grid))]
+        
         logger.info("Done!")
 
         self.result = ResultGroup(results)

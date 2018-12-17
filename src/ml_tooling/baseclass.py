@@ -11,7 +11,6 @@ from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
-from sklearn.utils import indexable
 
 from .logging import create_logger, log_model
 from .utils import _validate_model
@@ -385,7 +384,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
         baseline_model = clone(self.model)
-        train_x, train_y = indexable(self.data.train_x, self.data.train_y)
+        train_x, train_y = self.data.train_x, self.data.train_y
         metric = self.default_metric if metric is None else metric
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv

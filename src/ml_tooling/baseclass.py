@@ -3,16 +3,17 @@ import pathlib
 from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union, Any
 
+from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from ml_tooling.logging import create_logger, log_model
-from ml_tooling.utils import _validate_model
+from .logging import create_logger, log_model
+from .utils import _validate_model
 from .config import DefaultConfig, ConfigGetter
 
 from .result import RegressionVisualize, ClassificationVisualize
@@ -352,7 +353,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     def gridsearch(self,
                    param_grid: dict,
                    metric: Optional[str] = None,
-                   cv: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
+                   cv: Optional[int] = None,
+                   n_jobs: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
         """
         Grid search model with parameters in param_grid.
         Param_grid automatically adds prefix from last step if using pipeline
@@ -368,6 +370,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         cv: int, optional
             Cross validation to use. Defaults to 10 based on value in config
 
+        n_jobs: int, optional
+            How many worker process too spawn. Defaults to -1  based on value
+            in config (one for each physical core).
+
         Returns
         -------
         best_model: sklearn.estimator
@@ -377,21 +383,35 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             ResultGroup object containing each individual score
         """
 
-        metric = self.default_metric if metric is None else metric
-        cv = self.config.CROSS_VALIDATION if cv is None else cv
-        logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
-        logger.debug(f"Gridsearching using {param_grid}")
-        param_grid = _create_param_grid(self.model, param_grid)
-
         baseline_model = clone(self.model)
-        logger.info("Starting gridsearch...")
+        train_x, train_y = self.data.train_x, self.data.train_y
+        metric = self.default_metric if metric is None else metric
+        n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
+        cv = check_cv(cv, train_y, baseline_model._estimator_type == 'classifier')  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
-        parallel = joblib.Parallel(n_jobs=self.config.N_JOBS, verbose=self.config.VERBOSITY)
-        parallel_scoring = joblib.delayed(self._score_model_cv)
-        results = parallel(parallel_scoring(clone(baseline_model).set_params(**param),
-                                            metric=metric,
-                                            cv=cv) for param in param_grid)
+        logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
+        logger.debug(f"Gridsearching using {param_grid}")
+        param_grid = list(_create_param_grid(self.model, param_grid))
+        logger.info("Starting gridsearch...")
+
+        parallel = joblib.Parallel(n_jobs=n_jobs, verbose=self.config.VERBOSITY)
+
+        out = parallel(
+            joblib.delayed(fit_grid_point)(X=train_x, y=train_y,
+                                           estimator=clone(baseline_model),
+                                           train=train, test=test,
+                                           scorer=get_scoring_func(metric),
+                                           verbose=self.config.VERBOSITY,
+                                           parameters=parameters) for parameters, (train, test)
+            in product(param_grid, cv.split(train_x, train_y, None)))
+
+        scores = [np.array([score[0] for score in out if score[1] == par]) for par in param_grid]
+
+        results = [CVResult(baseline_model.set_params(**param), None, cv.n_splits, scores[i],
+                            metric) for i, param in enumerate(param_grid)]
+
         logger.info("Done!")
 
         self.result = ResultGroup(results)
@@ -431,7 +451,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         Result object
 
         """
-        # TODO support any given sklearn scorer - must check that it is a scorer
+
         scoring_func = get_scoring_func(metric)
 
         score = scoring_func(model, self.data.test_x, self.data.test_y)

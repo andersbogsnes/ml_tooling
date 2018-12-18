@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split, ParameterGrid
 from sklearn.pipeline import Pipeline
+from sklearn.utils import indexable
 
 DataType = Union[pd.DataFrame, np.ndarray]
 
@@ -18,8 +19,7 @@ class Data:
     """
 
     def __init__(self, x: DataType, y: DataType):
-        self.x = x
-        self.y = y
+        self.x, self.y = indexable(x, y)
         self.train_y = None
         self.train_x = None
         self.test_y = None

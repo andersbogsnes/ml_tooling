@@ -86,12 +86,10 @@ class Data:
 
 class MLToolingError(Exception):
     """Error which occurs when using the library"""
-    pass
 
 
 class TransformerError(Exception):
     """Error which occurs during a transform"""
-    pass
 
 
 def get_scoring_func(metric: str) -> Callable[[BaseEstimator,

@@ -304,7 +304,7 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     title = "Lift Curve" if title is None else title
 
     # Get numpy array as _cum_gain_curve takes numpy arrays
-    y_true = getattr(y_true, 'values', y_true)
+    y_true = np.array(y_true)
 
     percents, gains = _cum_gain_curve(y_true, y_proba)
     positives = np.where(y_proba > .5, 1, 0)

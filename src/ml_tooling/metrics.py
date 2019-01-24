@@ -176,7 +176,7 @@ def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1, 
     col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
     cols = [None] + x.columns.tolist()
 
-    measure = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    measure = Parallel(n_jobs=n_jobs, verbose=verbose, max_nbytes=None)(
         delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
         zip(cols, col_seeds))
 

@@ -4,6 +4,7 @@
 - Data for a class is changed from instance varaible to class variable
 - Grid search only copies data to workers once and reuse them across grid and folds.
 - Fixed bug where index of pandas dataframe miss-alings data in plot_lift_curve
+- Disabled mem-maping in feature importance
 
 # v0.6.0
 

@@ -321,7 +321,6 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
 
 class VizError(Exception):
     """Base Exception for visualization errors"""
-    pass
 
 
 def _cum_gain_curve(y_true: np.ndarray,

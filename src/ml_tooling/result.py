@@ -229,7 +229,7 @@ class BaseVisualize:
                            values: bool = True,
                            top_n: Union[int, float] = None,
                            bottom_n: Union[int, float] = None,
-                           seed=1337,
+                           n_jobs=None,
                            **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model through permutation.
@@ -259,8 +259,9 @@ class BaseVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
-        seed : int
-            Seed for random number generator for permutation.
+        n_jobs: int
+            Overwrites N_JOBS from settings. Useful if data is to big to fit
+            in memory multiple times.
 
         kwargs
 
@@ -269,9 +270,13 @@ class BaseVisualize:
             matplotlib.Axes
         """
 
+        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Feature Importance - {self._model_name}"
-        importance, baseline = _get_feature_importance(self, samples, self._config.RANDOM_STATE,
-                                                       self._config.N_JOBS, self._config.VERBOSITY)
+        importance, baseline = _get_feature_importance(self,
+                                                       samples=samples,
+                                                       seed=self._config.RANDOM_STATE,
+                                                       n_jobs=n_jobs,
+                                                       verbose=self._config.VERBOSITY)
         labels = self._data.train_x.columns
         x_label = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 

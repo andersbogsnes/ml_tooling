@@ -303,6 +303,9 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
 
     title = "Lift Curve" if title is None else title
 
+    # Get numpy array as _cum_gain_curve takes numpy arrays
+    y_true = np.array(y_true)
+
     percents, gains = _cum_gain_curve(y_true, y_proba)
     positives = np.where(y_proba > .5, 1, 0)
     score = metrics.lift_score(y_true, positives)
@@ -318,7 +321,6 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
 
 class VizError(Exception):
     """Base Exception for visualization errors"""
-    pass
 
 
 def _cum_gain_curve(y_true: np.ndarray,

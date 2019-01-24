@@ -29,6 +29,7 @@ class Data:
                           stratify=None,
                           shuffle=True,
                           test_size=0.25,
+                          seed=42
                           ) -> 'Data':
         """
         Creates a training and testing dataset and storing it on the data object.
@@ -38,6 +39,8 @@ class Data:
             Whether or not to shuffle the data
         :param test_size:
             What percentage of the data will be part of the test set
+         :param seed:
+            Random seed for train_test_split
         :return:
             self
         """
@@ -45,7 +48,8 @@ class Data:
                                                                                 self.y,
                                                                                 stratify=stratify,
                                                                                 shuffle=shuffle,
-                                                                                test_size=test_size)
+                                                                                test_size=test_size,
+                                                                                random_state=seed)
         return self
 
     @classmethod
@@ -54,7 +58,8 @@ class Data:
                         y: DataType,
                         stratify=None,
                         shuffle=True,
-                        test_size=0.25) -> 'Data':
+                        test_size=0.25,
+                        seed=42) -> 'Data':
         """
         Creates a new instance of Data with train and test already instantiated
         :param x:
@@ -67,11 +72,16 @@ class Data:
             Whether or not to shuffle the data
         :param test_size:
             What percentage of the data will be part of the test set
+        :param seed:
+            Random seed for train_test_split
         :return:
             self
         """
         instance = cls(x, y)
-        return instance.create_train_test(stratify=stratify, shuffle=shuffle, test_size=test_size)
+        return instance.create_train_test(stratify=stratify,
+                                          shuffle=shuffle,
+                                          test_size=test_size,
+                                          seed=seed)
 
 
 class MLToolingError(Exception):

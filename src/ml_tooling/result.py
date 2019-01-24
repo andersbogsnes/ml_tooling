@@ -229,7 +229,7 @@ class BaseVisualize:
                            values: bool = True,
                            top_n: Union[int, float] = None,
                            bottom_n: Union[int, float] = None,
-                           n_jobs_owerwrite=None,
+                           n_jobs=None,
                            **kwargs) -> plt.Axes:
         """
         Visualizes feature importance of the model through permutation.
@@ -259,9 +259,9 @@ class BaseVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
-        n_jobs_owerwrite : int
-            Overwrite N_JOBS to from settings. Useful if data is to big to fit
-            in memeory multile times.
+        n_jobs: int
+            Overwrites N_JOBS from settings. Useful if data is to big to fit
+            in memory multiple times.
 
         kwargs
 
@@ -270,7 +270,7 @@ class BaseVisualize:
             matplotlib.Axes
         """
 
-        n_jobs = self._config.N_JOBS if n_jobs_owerwrite is None else n_jobs_owerwrite
+        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Feature Importance - {self._model_name}"
         importance, baseline = _get_feature_importance(self,
                                                        samples=samples,

@@ -137,7 +137,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         stratify = y if self.model._estimator_type == 'classifier' else None
         logger.debug("Creating train/test...")
-        return Data.with_train_test(x, y, stratify=stratify, test_size=self.config.TEST_SIZE)
+        return Data.with_train_test(x,
+                                    y,
+                                    stratify=stratify,
+                                    test_size=self.config.TEST_SIZE,
+                                    seed=self.config.RANDOM_STATE)
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"

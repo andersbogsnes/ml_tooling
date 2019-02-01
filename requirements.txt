@@ -3,6 +3,6 @@ pandas==0.24.0
 pytest==4.2.0
 pytest-cov==2.6.1
 flake8==3.7.4
-numpy==1.16.0
+numpy==1.16.1
 matplotlib==3.0.2
 gitpython==2.1.11

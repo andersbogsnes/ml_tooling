@@ -42,6 +42,7 @@ class IrisModel(BaseClassModel):
         cls.config = DefaultConfig()
         cls.config.CROSS_VALIDATION = 2
         cls.config.N_JOBS = 2
+        cls._data = None
         return cls
 
 

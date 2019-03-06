@@ -1,3 +1,13 @@
+# v0.6.1
+
+## Bugfixes
+- Data for a class is changed from instance variable to class variable
+- Grid search only copies data to workers once and reuses them across grid and folds.
+- The Data Class now takes a random seed which it will receive from the BaseClass 
+- Disabled mem-maping in feature importance
+- Added license file to package
+- Updated requirements
+
 # v0.6.0
 
 ## Features

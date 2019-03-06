@@ -1,21 +1,18 @@
 language: python
-python:
-- '3.6'
+matrix:
+  include:
+    - python: "3.6"
+      name: "Python 3.6"
+    - language: python
+      sudo: required
+      dist: xenial
+      python: "3.7"
+      name: "Python 3.7"
 cache: pip
-env:
-- TOXENV=py36
 install:
-- pip install tox codecov flake8
+- pip install codecov flake8 .[dev]
 script:
-- tox -e $TOXENV
+- pytest
 - flake8
 after_success:
 - codecov
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: andersbogsnes
-  password:
-    secure: CaN/Da+rF/LllobfybYUN90X5lEWTJy/zc2wp/rF2QYcPECzwLO1Fv2FoM6YlQfXwlD0UUgZk58vyK9UlMII8dR9cwpWY32aTyNVzZxh/qk49ob3beW8AM22J42pBM4JpURhv+VkJFJekXe119pJwsY9O87IUWn3APxtukLVTeSE0xzer9i0bdI1BL3nkeH8oPF56E+/vtKu26qV3JManRUrl/cJVCtVk3zpuTuKyEEwpUG0iu8odYxqIew9f16EsphVuK7ASzwuAugzBiCeBa7F/aoHzUW/kryswASqwhPyfKoOFVjTahwKKlC6hX2HitlkKf6LlkLf+lNtX1Q4v24ZEJPAO9v+GziURI13ARBWbeSR/eZVs2DKPn1gMxR3u8bc1eAa1IYh6N9+5HCpxNd4dK8hq32+2Tp7TTFLzKiIbNLEc8QdrDzNG0+pY2TNffjDGXKXIS1OYCfsaaQ5kA5Z8hpldTZC3rPmf+vZeODxTYmtzfOX/5+wBwD7VrTEUawY20wrG84wnb4rmz9WGvLQ5/dqM1XqSHi4X0GLs7j2uC4450zduEAa/Pe+j9Ic2J3lp+YCMAIe5nl8sPfbttDssgNfkPjP7AINOUu3Xutyhs5oHhlnOC5LDya5LDpq2wI0kJ33zeu0ljZTtWJYaiV/WqSHVu2zo6PYIR3COCY=
-  on:
-    tags: true

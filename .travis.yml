@@ -1,13 +1,13 @@
 language: python
-python:
-- '3.6'
-
 matrix:
   include:
+    - python: "3.6"
+      name: "Python 3.6"
     - language: python
       sudo: required
       dist: xenial
       python: "3.7"
+      name: "Python 3.7"
 cache: pip
 install:
 - pip install codecov flake8 .[dev]

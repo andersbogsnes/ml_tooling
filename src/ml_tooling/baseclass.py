@@ -1,9 +1,9 @@
 import abc
 import pathlib
 from contextlib import contextmanager
+from itertools import product
 from typing import Tuple, Optional, Sequence, Union, Any
 
-from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn import clone
@@ -12,10 +12,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from .logging import create_logger, log_model
-from .utils import _validate_model
 from .config import DefaultConfig, ConfigGetter
-
+from .logging import create_logger, log_model
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -28,6 +26,7 @@ from .utils import (
     get_scoring_func,
     _create_param_grid
 )
+from .utils import _validate_model
 
 logger = create_logger('ml_tooling')
 
@@ -427,7 +426,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return results[0].model, self.result
 
     @contextmanager
-    def log(self, run_name):
+    def log(self, run_name: str):
+        """
+        Log this run by saving a yaml file in the ./<RUN_DIR>/<run_name> folder
+
+        Parameters
+        ----------
+        run_name: str
+            Name of the folder to save the details in
+
+        """
         old_dir = self.config.RUN_DIR
         self.config.LOG = True
         self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)

@@ -1,3 +1,7 @@
+# v0.6.2
+## Bugfixes
+- Now issues a warning when git is not installed.
+
 # v0.6.1
 
 ## Bugfixes

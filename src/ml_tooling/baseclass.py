@@ -25,9 +25,9 @@ from .utils import (
     DataType,
     find_model_file,
     get_scoring_func,
-    _create_param_grid
+    _create_param_grid,
+    _validate_model
 )
-from .utils import _validate_model
 
 logger = create_logger('ml_tooling')
 
@@ -427,7 +427,16 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return results[0].model, self.result
 
     @contextmanager
-    def log(self, run_name):
+    def log(self, run_name: str):
+        """
+        Log this run by saving a yaml file in the ./<RUN_DIR>/<run_name> folder
+
+        Parameters
+        ----------
+        run_name: str
+            Name of the folder to save the details in
+
+        """
         old_dir = self.config.RUN_DIR
         self.config.LOG = True
         self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)

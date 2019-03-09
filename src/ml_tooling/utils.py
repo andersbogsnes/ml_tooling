@@ -1,9 +1,9 @@
 import pathlib
+import warnings
 from typing import Union, Callable
 
 import numpy as np
 import pandas as pd
-from git import Repo, InvalidGitRepositoryError
 from sklearn.base import BaseEstimator
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import train_test_split, ParameterGrid
@@ -114,6 +114,12 @@ def get_git_hash() -> str:
     :return:
         git hash of HEAD
     """
+    try:
+        from git import Repo, InvalidGitRepositoryError
+    except ImportError:
+        warnings.warn("Git is not installed on this system")
+        return ''
+
     try:
         repo = Repo(search_parent_directories=True)
     except InvalidGitRepositoryError:

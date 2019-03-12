@@ -1,29 +1,28 @@
 """
 Test file for visualisations
 """
-import pytest
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pytest
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 
 from ml_tooling import BaseClassModel
-from ml_tooling.transformers import ToCategorical
+from ml_tooling.metrics.permutation_importance import _get_feature_importance
+from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import (plot_lift_curve,
-                              VizError,
-                              _get_feature_importance,
                               plot_confusion_matrix,
                               )
-
+from ml_tooling.plots.utils import VizError
 from ml_tooling.result import RegressionVisualize, ClassificationVisualize
-from ml_tooling.metrics import _permutation_importances
+from ml_tooling.transformers import ToCategorical
 from ml_tooling.utils import get_scoring_func
-from sklearn.svm import SVC
 
 
 class TestVisualize:

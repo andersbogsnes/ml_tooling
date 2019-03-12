@@ -3,15 +3,15 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
                                     )
+
 from ml_tooling.logging import _make_run_dir
-from ml_tooling.plots import _generate_text_labels
+from ml_tooling.metrics.utils import _is_percent
+from ml_tooling.plots.utils import _generate_text_labels
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
-                              _is_percent,
                               MLToolingError,
                               get_scoring_func,
-                              _create_param_grid,
-                              )
+                              _create_param_grid)
 
 
 def test_get_git_hash_returns_correctly():

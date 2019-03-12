@@ -1,9 +1,9 @@
 import abc
 import pathlib
 from contextlib import contextmanager
+from itertools import product
 from typing import Tuple, Optional, Sequence, Union, Any
 
-from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn import clone
@@ -12,10 +12,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from .logging import create_logger, log_model
-from .utils import _validate_model
+from ml_tooling.data import Data
 from .config import DefaultConfig, ConfigGetter
-
+from .logging import create_logger, log_model
 from .result import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
@@ -24,10 +23,10 @@ from .utils import (
     get_git_hash,
     DataType,
     find_model_file,
-    Data,
     get_scoring_func,
     _create_param_grid
 )
+from .utils import _validate_model
 
 logger = create_logger('ml_tooling')
 

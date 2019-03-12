@@ -6,82 +6,10 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.metrics import get_scorer
-from sklearn.model_selection import train_test_split, ParameterGrid
+from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
-from sklearn.utils import indexable
 
 DataType = Union[pd.DataFrame, np.ndarray]
-
-
-class Data:
-    """
-    Container for storing data. Contains both x and y, while also handling train_test_split
-    """
-
-    def __init__(self, x: DataType, y: DataType):
-        self.x, self.y = indexable(x, y)
-        self.train_y = None
-        self.train_x = None
-        self.test_y = None
-        self.test_x = None
-
-    def create_train_test(self,
-                          stratify=None,
-                          shuffle=True,
-                          test_size=0.25,
-                          seed=42
-                          ) -> 'Data':
-        """
-        Creates a training and testing dataset and storing it on the data object.
-        :param stratify:
-            What to stratify the split on. Usually y if given a classification problem
-        :param shuffle:
-            Whether or not to shuffle the data
-        :param test_size:
-            What percentage of the data will be part of the test set
-         :param seed:
-            Random seed for train_test_split
-        :return:
-            self
-        """
-        self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(self.x,
-                                                                                self.y,
-                                                                                stratify=stratify,
-                                                                                shuffle=shuffle,
-                                                                                test_size=test_size,
-                                                                                random_state=seed)
-        return self
-
-    @classmethod
-    def with_train_test(cls,
-                        x: DataType,
-                        y: DataType,
-                        stratify=None,
-                        shuffle=True,
-                        test_size=0.25,
-                        seed=42) -> 'Data':
-        """
-        Creates a new instance of Data with train and test already instantiated
-        :param x:
-            Features
-        :param y:
-            Target
-        :param stratify:
-             What to stratify the split on. Usually y if given a classification problem
-        :param shuffle:
-            Whether or not to shuffle the data
-        :param test_size:
-            What percentage of the data will be part of the test set
-        :param seed:
-            Random seed for train_test_split
-        :return:
-            self
-        """
-        instance = cls(x, y)
-        return instance.create_train_test(stratify=stratify,
-                                          shuffle=shuffle,
-                                          test_size=test_size,
-                                          seed=seed)
 
 
 class MLToolingError(Exception):
@@ -179,32 +107,6 @@ def listify(collection) -> list:
     return collection
 
 
-def _is_percent(number: Union[float, int]) -> bool:
-    """
-    Checks if a value is a valid percent
-    :param number:
-        The number to validate
-    :return:
-        bool
-    """
-    if isinstance(number, float):
-        if number > 1 or number < 0:
-            raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
-        return True
-    return False
-
-
-def _most_freq(X: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calculate mode of X
-    :param X:
-        DataFrame to calculate mode over
-    :return:
-        DataFrame of modes
-    """
-    return pd.DataFrame.mode(X).iloc[0]
-
-
 def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     """
     Creates a parameter grid from a pipeline
@@ -240,3 +142,5 @@ def _validate_model(model):
         raise MLToolingError("You passed a Pipeline without an estimator as the last step")
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
+
+

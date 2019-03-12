@@ -4,10 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-import ml_tooling.metrics
-from ml_tooling.metrics.utils import _is_percent
-from ml_tooling.plots.utils import _generate_text_labels
-from ml_tooling.utils import DataType
+from ..metrics.utils import _is_percent, _sort_values
+from .utils import _generate_text_labels
+from ..utils import DataType
 
 
 def plot_feature_importance(importance: DataType,
@@ -70,11 +69,11 @@ def plot_feature_importance(importance: DataType,
         else:
             title = f"{title} - Bottom {bottom_n}"
 
-    labels, importance = ml_tooling.metrics.utils._sort_values(labels,
-                                                               importance,
-                                                               top_n,
-                                                               bottom_n
-                                                               )
+    labels, importance = _sort_values(labels,
+                                      importance,
+                                      top_n,
+                                      bottom_n
+                                      )
     labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)

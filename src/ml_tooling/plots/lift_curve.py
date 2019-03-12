@@ -1,8 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-import ml_tooling.metrics
-from ml_tooling.metrics.utils import _cum_gain_curve
+from ..metrics import lift_score
+from ..metrics.utils import _cum_gain_curve
 from .utils import VizError
 
 
@@ -39,7 +39,7 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
 
     percents, gains = _cum_gain_curve(y_true, y_proba)
     positives = np.where(y_proba > .5, 1, 0)
-    score = ml_tooling.metrics.lift_score(y_true, positives)
+    score = lift_score(y_true, positives)
 
     ax.plot(percents, gains / percents, label=f'$Lift = {score:.2f}$ ')
     ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')

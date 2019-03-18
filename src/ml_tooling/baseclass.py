@@ -499,13 +499,24 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
     @contextmanager
     def log(self, run_name: str):
-        """
-        Log this run by saving a yaml file in the `./<RUN_DIR>/<run_name>` folder
+        """`log()` is a context manager that lets you turn on logging for any scoring methods that
+        follow. You can pass a log_dir to specify a subfolder to store the model in.
+        The output is a yaml file recording model parameters, package version numbers,
+        metrics and other useful information
 
         Parameters
         ----------
         run_name: str
             Name of the folder to save the details in
+
+        Example
+        --------
+        If we want to log our model run in the `score` folder we can write::
+
+             with model.log('score'):
+                model.score_model
+
+        This will save the results of `model.score_model()` to `runs/score/`
 
         """
         old_dir = self.config.RUN_DIR

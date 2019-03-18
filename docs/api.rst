@@ -68,5 +68,3 @@ All configuration options available
     Toggles whether or not to log runs to a file. Set to True if you
     want every run to be logged, else use the :meth:`~.BaseClassModel.log`
     context manager
-
-

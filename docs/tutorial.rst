@@ -1,6 +1,4 @@
 Tutorial
-========
-
 Let's go through a more involved example from start to end reusing our Boston Houseprice dataset from before
 
 We start with our normal imports
@@ -9,4 +7,4 @@ We start with our normal imports
 >>> from sklearn.datasets import load_boston
 >>> from sklearn.preprocessing import StandardScaler
 >>> from sklearn.pipeline import Pipeline
->>> from sklearn.linear_model import LinearRegression, Ridge,
+>>> from sklearn.linear_model import LinearRegression, Ridge

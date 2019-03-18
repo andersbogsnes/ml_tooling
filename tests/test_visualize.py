@@ -20,7 +20,7 @@ from ml_tooling.plots import (plot_lift_curve,
                               plot_confusion_matrix,
                               )
 from ml_tooling.plots.utils import VizError
-from ml_tooling.result import RegressionVisualize, ClassificationVisualize
+from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import ToCategorical
 from ml_tooling.utils import get_scoring_func
 

@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 
 from ml_tooling.plots import plot_confusion_matrix, plot_roc_auc, plot_lift_curve
 from ml_tooling.plots.utils import VizError
-from ml_tooling.result import BaseVisualize
+from ml_tooling.result.viz import BaseVisualize
 
 
 class ClassificationVisualize(BaseVisualize):

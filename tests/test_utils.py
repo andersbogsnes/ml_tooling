@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
                                     )
 
-from ml_tooling.logging import _make_run_dir
+from ml_tooling.logging.log_model import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 from ml_tooling.utils import (get_git_hash,

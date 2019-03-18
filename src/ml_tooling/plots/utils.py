@@ -1,21 +1,24 @@
+import matplotlib.pyplot as plt
+
+
 class VizError(Exception):
     """Base Exception for visualization errors"""
 
 
-def _generate_text_labels(ax, horizontal=False):
+def _generate_text_labels(ax: plt.Axes, horizontal=False):
     """
     Helper for generating text labels for bar charts
 
-    :param ax:
+    Parameters
+    ----------
+    ax: plt.Axes
         Ax which has patches on it
 
-    :param horizontal:
+    horizontal: bool
         Whether or not the graph is a horizontal bar chart or a regular bar chart
 
-    :param padding:
-        How much padding to multiply by
-
-    :return:
+    Returns
+    -------
         x and y values for ax.text
     """
     for patch in ax.patches:

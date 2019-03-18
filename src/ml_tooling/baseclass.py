@@ -14,8 +14,9 @@ from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.data import Data
 from .config import DefaultConfig, ConfigGetter
-from .logging import create_logger, log_model
-from .result import RegressionVisualize, ClassificationVisualize
+from ml_tooling.logging.logger import create_logger
+from ml_tooling.logging.log_model import log_model
+from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from .result import Result, CVResult, ResultGroup
 from .utils import (
     MLToolingError,

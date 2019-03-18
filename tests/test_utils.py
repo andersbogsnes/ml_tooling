@@ -96,7 +96,7 @@ def test_add_text_labels_vertical_returns_correct():
     ax.bar(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=False))
     assert 0 == x_values
-    assert (100 + 105 * .005) == y_values
+    assert 100 == y_values
 
 
 def test_add_text_labels_horizontal_returns_correct():
@@ -104,7 +104,7 @@ def test_add_text_labels_horizontal_returns_correct():
     ax.barh(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
-    assert (100 + 105 * .005) == x_values
+    assert 100 == x_values
 
 
 class TestGridsearchParams:

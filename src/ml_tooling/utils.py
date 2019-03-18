@@ -142,5 +142,3 @@ def _validate_model(model):
         raise MLToolingError("You passed a Pipeline without an estimator as the last step")
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
-
-

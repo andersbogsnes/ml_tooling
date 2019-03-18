@@ -6,12 +6,16 @@ import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
 from sklearn.utils import check_random_state, resample
 
-import ml_tooling.metrics
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.utils import MLToolingError, get_scoring_func
 
 
-def _get_column_importance(model, scorer, x, y, seed, col):
+def _get_column_importance(model,
+                           scorer,
+                           x,
+                           y,
+                           seed,
+                           col):
     """
     Helper function for _permutation_importances to calculate the importance of a single column.
     When col=None the function calculates the baseline.
@@ -50,7 +54,14 @@ def _get_column_importance(model, scorer, x, y, seed, col):
     return measure
 
 
-def _permutation_importances(model, scorer, x, y, samples, seed=1337, n_jobs=1, verbose=0):
+def _permutation_importances(model,
+                             scorer,
+                             x,
+                             y,
+                             samples,
+                             seed=1337,
+                             n_jobs=1,
+                             verbose=0):
     """
 
     Parameters
@@ -159,5 +170,11 @@ def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return ml_tooling.metrics.permutation_importance._permutation_importances(model, scorer, train_x, train_y, samples, seed, n_jobs,
-                                                                              verbose)
+    return _permutation_importances(model,
+                                    scorer,
+                                    train_x,
+                                    train_y,
+                                    samples,
+                                    seed,
+                                    n_jobs,
+                                    verbose)

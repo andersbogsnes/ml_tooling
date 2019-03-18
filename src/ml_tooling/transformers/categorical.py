@@ -31,6 +31,7 @@ class Binarize(BaseEstimator, TransformerMixin):
     Sets all instances of value to 1 and all others to 0
     Returns a pandas DataFrame
     """
+
     def __init__(self, value):
         self.value = value
 

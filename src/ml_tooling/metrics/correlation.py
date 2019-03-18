@@ -4,8 +4,10 @@ import pandas as pd
 from ml_tooling.utils import DataType
 
 
-def target_correlation(features: pd.DataFrame, target: DataType, method='pearson',
-                       ascending=False) -> pd.Series:
+def target_correlation(features: pd.DataFrame,
+                       target: DataType,
+                       method: str = 'pearson',
+                       ascending: bool = False) -> pd.Series:
     """
     Calculate target_correlation between features and target and returns a sorted pd.Series
     Parameters
@@ -14,6 +16,10 @@ def target_correlation(features: pd.DataFrame, target: DataType, method='pearson
         Features to calculate target_correlation for
     target: np.ndarray or pd.Series
         Target variable
+    method: str
+        Which correlation to use. One of 'pearson', 'spearman', 'kendall'
+    ascending: bool
+        Whether or not to sort correlations in ascending order
 
     Returns
     -------

@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib.axes import Axes
 
-import ml_tooling.metrics
+from ml_tooling.metrics.correlation import target_correlation
 from ml_tooling.plots.feature_importance import plot_feature_importance
 from ml_tooling.utils import DataType
 
@@ -12,7 +12,7 @@ def plot_target_correlation(features: pd.DataFrame,
                             ax: Axes = None,
                             top_n=None,
                             bottom_n=None) -> Axes:
-    correlation = ml_tooling.metrics.correlation.target_correlation(features, target, method=method, ascending=True)
+    correlation = target_correlation(features, target, method=method, ascending=True)
     ax = plot_feature_importance(correlation.values,
                                  correlation.index,
                                  values=True,

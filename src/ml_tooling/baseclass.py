@@ -389,9 +389,11 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return self
 
     def score_model(self, metric: Optional[str] = None, cv: Optional[int] = False) -> 'Result':
-        """
-        Loads training data and returns a Result object containing
-        visualization and cross-validated scores
+        """Loads all training data and trains the model on it, using a train_test split.
+        Returns a :class:`~ml_tooling.result.Result` object containing all result parameters
+        Defaults to non-cross-validated scoring.
+        If you want to cross-validate, pass number of folds to cv
+
 
         Parameters
         ----------
@@ -404,7 +406,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Result object
+        Result
+            A Result object that contains the results of the scoring
         """
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring model...")

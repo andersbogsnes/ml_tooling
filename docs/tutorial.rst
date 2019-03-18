@@ -1,6 +1,8 @@
+.. _tutorial:
+
+
 Tutorial
 ========
-
 Let's go through a more involved example from start to end reusing our Boston Houseprice dataset from before
 
 We start with our normal imports

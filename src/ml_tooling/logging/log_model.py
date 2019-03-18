@@ -1,29 +1,10 @@
-import logging
-import os
 import pathlib
 from datetime import datetime
 from typing import Union
 
 import yaml
 
-from .utils import get_git_hash
-
-
-def create_logger(logger_name):
-    default_logger = os.getenv('ML_LOGGING', True)
-
-    log_level = logging.DEBUG if os.getenv('ML_DEBUG', False) else logging.INFO
-
-    logger = logging.getLogger(logger_name)
-
-    fmt = logging.Formatter(fmt="[%(asctime)s] - %(message)s", datefmt='%H:%M:%S')
-
-    handler = logging.StreamHandler() if default_logger else logging.NullHandler()
-
-    handler.setFormatter(fmt)
-    logger.addHandler(handler)
-    logger.setLevel(log_level)
-    return logger
+from ml_tooling.utils import get_git_hash
 
 
 def _make_run_dir(run_dir: str) -> pathlib.Path:

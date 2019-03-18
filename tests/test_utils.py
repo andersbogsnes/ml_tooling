@@ -3,15 +3,15 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
                                     )
-from ml_tooling.logging import _make_run_dir
-from ml_tooling.plots import _generate_text_labels
+
+from ml_tooling.logging.log_model import _make_run_dir
+from ml_tooling.metrics.utils import _is_percent
+from ml_tooling.plots.utils import _generate_text_labels
 from ml_tooling.utils import (get_git_hash,
                               find_model_file,
-                              _is_percent,
                               MLToolingError,
                               get_scoring_func,
-                              _create_param_grid,
-                              )
+                              _create_param_grid)
 
 
 def test_get_git_hash_returns_correctly():
@@ -96,7 +96,7 @@ def test_add_text_labels_vertical_returns_correct():
     ax.bar(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=False))
     assert 0 == x_values
-    assert (100 + 105 * .005) == y_values
+    assert 100 == y_values
 
 
 def test_add_text_labels_horizontal_returns_correct():
@@ -104,7 +104,7 @@ def test_add_text_labels_horizontal_returns_correct():
     ax.barh(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
-    assert (100 + 105 * .005) == x_values
+    assert 100 == x_values
 
 
 class TestGridsearchParams:

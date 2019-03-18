@@ -4,11 +4,11 @@ Config
 ------
 All configuration options available
 
-.. class:: ml_tooling.config.DefaultConfig
+:class: ml_tooling.config.DefaultConfig
+
 
     :attr:`VERBOSITY` = 0
-
-    The level of verbosity from output
+        The level of verbosity from output
 
 
     :attr:`CLASSIFIER_METRIC` = 'accuracy'

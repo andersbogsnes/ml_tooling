@@ -1,4 +1,4 @@
-.. module:: ml_tooling.baseclass.BaseClassModel
+.. py:currentmodule:: ml_tooling.baseclass.BaseClassModel
 .. _quickstart:
 
 Quickstart

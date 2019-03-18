@@ -62,3 +62,6 @@ That will update the configuration for all instances of BostonData
 .. seealso::
     :ref:`config` for a list of available configuration options
 
+Visualization
+-------------
+

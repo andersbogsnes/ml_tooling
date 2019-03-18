@@ -16,3 +16,5 @@ Implements all the base functionality needed to create the wrapper
     .. automethod:: setup_model()
 
 .. include:: config.inc.rst
+
+.. include:: result.inc.rst

@@ -13,12 +13,12 @@ from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.data import Data
-from .config import DefaultConfig, ConfigGetter
+from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.logging.log_model import log_model
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
-from .result import Result, CVResult, ResultGroup
-from .utils import (
+from ml_tooling.result import Result, CVResult, ResultGroup
+from ml_tooling.utils import (
     MLToolingError,
     _get_model_name,
     get_git_hash,
@@ -260,8 +260,10 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                         input_data: Any,
                         proba: bool = False,
                         use_index: bool = False) -> pd.DataFrame:
-        """
-        Returns model prediction for given input data
+        """Makes a prediction given an input. For example a customer number.
+        Passed to the implemented :meth:`get_prediction_data()` method and calls `predict()`
+        on the estimator
+
 
         Parameters
         ----------
@@ -273,12 +275,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Note that the return value is an n-dimensional array where n = number of classes
 
         use_index: bool
-            Whether the row names from the  prediction data should be used for the result.
+            Whether the index from the prediction data should be used for the result.
 
         Returns
         -------
-        Prediction: pd.DataFrame
-            Depending on whether or not predict_proba is set, will contain prediction
+        pd.DataFrame
+            A DataFrame with a prediction per row.
         """
         if proba is True and not hasattr(self.model, 'predict_proba'):
             raise MLToolingError(f"{self.model_name} does not have a `predict_proba` method")
@@ -372,13 +374,17 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return cls(best_model), ResultGroup(results)
 
     def train_model(self) -> 'BaseClassModel':
-        """
-        Trains the model on the full dataset.
-        Used to prepare for production
+        """Loads all training data and trains the model on all data.
+        Typically used as the last step when model tuning is complete.
+
+        .. warning::
+            Sets .result attribute to None. We are using all the data, so there is no validation
+            data to measure results against
 
         Returns
         -------
-        self
+        BaseClassModel
+            Returns a model trained on all the data, with no train-test split
 
         """
         logger.info("Training model...")
@@ -390,7 +396,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
     def score_model(self, metric: Optional[str] = None, cv: Optional[int] = False) -> 'Result':
         """Loads all training data and trains the model on it, using a train_test split.
-        Returns a :class:`~ml_tooling.result.Result` object containing all result parameters
+        Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
         Defaults to non-cross-validated scoring.
         If you want to cross-validate, pass number of folds to cv
 
@@ -431,8 +437,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                    cv: Optional[int] = None,
                    n_jobs: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
         """
-        Grid search model with parameters in param_grid.
-        Param_grid automatically adds prefix from last step if using pipeline
+        Runs a gridsearch on the model with the passed in parameter grid.
+        Ensure that it works inside a pipeline as well.
 
         Parameters
         ----------
@@ -440,14 +446,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Parameters to use for grid search
 
         metric: str, optional
-            Metric to use for scoring. Defaults to r2 for regressors and accuracy for classifiers
+            Metric to use for scoring. Defaults to value in
+            :attr:`config.CLASSIFIER_METRIC`
+            or :attr:`config.REGRESSION_METRIC`
 
         cv: int, optional
-            Cross validation to use. Defaults to 10 based on value in config
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
         n_jobs: int, optional
-            How many worker process too spawn. Defaults to -1  based on value
-            in config (one for each physical core).
+            How many worker process too spawn. Defaults to value in :attr:`config.N_JOBS`.
 
         Returns
         -------

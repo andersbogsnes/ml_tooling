@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ml_tooling.result.result import Result
+from ml_tooling.result import Result
 
 
 class CVResult(Result):
@@ -52,5 +52,5 @@ class CVResult(Result):
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ''
         return f"<Result {self.model_name}: " \
-               f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
-               f"± {np.round(self.cross_val_std, 2)}>"
+            f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} " \
+            f"± {np.round(self.cross_val_std, 2)}>"

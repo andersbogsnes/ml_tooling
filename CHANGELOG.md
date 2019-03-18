@@ -1,3 +1,6 @@
+# v0.6.3
+- Internal refactor - shouldn't impact endusers
+
 # v0.6.2
 ## Bugfixes
 - Now issues a warning when git is not installed.

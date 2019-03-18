@@ -142,7 +142,7 @@ class TestFeatureImportancePlot:
                                                                                    classifier):
         ax = classifier.result.plot.feature_importance(bottom_n=.2, samples=100)
         assert 1 == len(ax.texts)
-        assert {'-0.05'} == {text._text for text in ax.texts}
+        assert {'0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Bottom 20%' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -151,7 +151,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(self, classifier):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 1' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -161,7 +161,7 @@ class TestFeatureImportancePlot:
                                                                                         classifier):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=.2, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 20%' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -171,7 +171,7 @@ class TestFeatureImportancePlot:
                                                                                         classifier):
         ax = classifier.result.plot.feature_importance(top_n=.2, bottom_n=1, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 20% - Bottom 1' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()

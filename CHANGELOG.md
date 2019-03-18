@@ -1,5 +1,6 @@
 # v0.6.3
 - Internal refactor - shouldn't impact endusers
+- Added Precision-Recall Curve
 
 # v0.6.2
 ## Bugfixes

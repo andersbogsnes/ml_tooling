@@ -13,60 +13,42 @@ Implements all the base functionality needed to create the wrapper
 
     .. automethod:: log(self, run_name)
 
+    .. automethod:: setup_model()
 
-Config
-------
-All configuration options available
+        To be implemented by the user - setup_model is a classmethod which loads up an untrained model.
+        Typically this would setup a pipeline and the selected model for easy training
 
-.. module:: ml_tooling.config
-.. autoclass:: DefaultConfig
+        Returning to our previous example of the BostonModel, let us implement a setup_model method
 
-    :attr:`VERBOSITY` = 0
+    .. code-block:: python
 
-    The level of verbosity from output
+        from ml_tooling import BaseClassModel
+        from sklearn.datasets import load_boston
+        from sklearn.preprocessing import StandardScaler
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import Pipeline
+        import pandas as pd
 
+        class BostonModel(BaseClassModel):
+            def get_prediction_data(self, idx):
+                data = load_boston()
+                df = pd.DataFrame(data=data.data, columns=data.feature_names)
+                return df.iloc[idx] # Return given observation
 
-    :attr:`CLASSIFIER_METRIC` = 'accuracy'
+            def get_training_data(self):
+                data = load_boston()
+                return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
 
-    Default metric for classifiers
+            @classmethod
+            def setup_model(cls):
+                pipeline = Pipeline([('scaler', StandardScaler()),
+                                     ('clf', LinearRegression())
+                                     ])
+                return cls(pipeline)
 
-    :attr:`REGRESSION_METRIC` = 'r2'
+    Given this extra setup, it becomes easy to load the untrained model to train it::
 
-    Default metric for regressions
+        model = BostonModel.setup_model()
+        model.train_model()
 
-    :attr:`CROSS_VALIDATION` = 10
-
-    Default Number of cross validation folds to use
-
-    :attr:`STYLE_SHEET` = 'almbrand.mplstyle'
-
-    Default style sheet to use for plots
-
-    :attr:`N_JOBS` = -1
-
-    Default number of cores to use when doing multiprocessing.
-    -1 means use all available
-
-    :attr:`TEST_SIZE` = 0.25
-
-    Default test size percentage. How much data is witheld to use for testing
-
-    :attr:`RANDOM_STATE` = 42
-
-    Default random state seed for all functions involving randomness
-
-    :attr:`RUN_DIR` = './runs'
-
-    Default folder to store run logging files
-
-    :attr:`MODEL_DIR` = './models'
-
-    Default folder to store pickled models in
-
-    :attr:`LOG` = False
-
-    Toggles whether or not to log runs to a file. Set to True if you
-    want every run to be logged, else use the :meth:`~.BaseClassModel.log`
-    context manager
-
-
+.. include:: config.inc.rst

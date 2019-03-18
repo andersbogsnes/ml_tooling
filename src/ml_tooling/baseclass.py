@@ -86,6 +86,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         Returns
         -------
         BaseClassModel
+            An instance of BaseClassModel with a full pipeline
         """
         raise NotImplementedError
 
@@ -429,7 +430,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @contextmanager
     def log(self, run_name: str):
         """
-        Log this run by saving a yaml file in the ./<RUN_DIR>/<run_name> folder
+        Log this run by saving a yaml file in the `./<RUN_DIR>/<run_name>` folder
 
         Parameters
         ----------

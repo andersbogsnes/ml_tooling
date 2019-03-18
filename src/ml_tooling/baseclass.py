@@ -137,13 +137,24 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @classmethod
     def load_model(cls, path: Optional[str] = None) -> 'BaseClassModel':
         """
-        Load previously saved model from path
+        Instantiates the class with a joblib pickled model.
+        If no path is given, searches path for the newest file that matches
+        the git hash and BaseClassModel name and loads that.
 
         Parameters
         ----------
         path: str, optional
             Where to load the model from. If None, will load newest model that includes
             the model name and class name
+
+        Example
+        -------
+        Having defined a BaseClassModel, we can load a trained estimator from disk::
+
+            my_model = BostonData.load_model('path/to/model')
+
+        We now have a trained model loaded.
+
 
         Returns
         -------

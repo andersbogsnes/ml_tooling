@@ -200,16 +200,32 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
     def save_model(self, path: Optional[str] = None) -> pathlib.Path:
         """
-        Save model to disk. Defaults to current directory.
+        Saves the model as a binary file. Defaults to current working directory,
+        with a filename of `<class_name>_<model_name>_<git_hash>.pkl`
+
 
         Parameters
         ----------
         path: str
             Full path of where to save the model
 
+        Example
+        -------
+
+        If we have trained a model and we want to save it to disk we can write::
+
+            model.save('path/to/folder')
+
+        to save in a given folder, otherwise::
+
+            model.save()
+
+        will save the model in the current directory
+
         Returns
         -------
-        self
+        pathlib.Path
+            The path to where the modelfile was saved
         """
         save_name = self._generate_filename()
         current_dir = (self.config.MODEL_DIR

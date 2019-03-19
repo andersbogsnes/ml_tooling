@@ -57,11 +57,20 @@ class ClassificationVisualize(BaseVisualize):
     def pr_curve(self, **kwargs) -> plt.Axes:
         """
         Visualize a Precision-Recall curve for a classification model.
-        Model must implement a `predict_proba` method
-        Any kwargs are passed onto matplotlib
-        :return:
-            matplotlib.Axes
+        Estimator must implement a `predict_proba` method.
+        Any kwargs are passed onto matplotlib.
+
+        Parameters
+        ----------
+        kwargs : optional
+            Keyword arguments to pass on to matplotlib
+
+        Returns
+        -------
+        plt.Axes
+            Plot of precision-recall curve
         """
+
         if not hasattr(self._model, 'predict_proba'):
             raise VizError("Model must provide a 'predict_proba' method")
 

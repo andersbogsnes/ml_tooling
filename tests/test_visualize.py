@@ -18,6 +18,7 @@ from ml_tooling.metrics.permutation_importance import _get_feature_importance
 from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import (plot_lift_curve,
                               plot_confusion_matrix,
+                              plot_pr_curve,
                               )
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -298,6 +299,14 @@ class TestPRCurve:
         result = svc.score_model()
         with pytest.raises(VizError):
             result.plot.pr_curve()
+
+    def test_pr_curve_can_use_ax(self, classifier):
+        ax = plt.subplot()
+        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
+        y_proba = classifier.model.predict_proba(x)[:, 1]
+
+        assert ax is plot_pr_curve(y, y_proba, ax=ax)
+
 
 
 class TestGetFeatureImportance:

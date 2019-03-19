@@ -5,7 +5,7 @@ from .lift_curve import plot_lift_curve
 from .prediction_error import plot_prediction_error
 from .residuals import plot_residuals
 from .roc_auc import plot_roc_auc
-from .precesion_recall_curve import plot_pr_curve
+from .precision_recall_curve import plot_pr_curve
 
 __all__ = [
     'plot_confusion_matrix',

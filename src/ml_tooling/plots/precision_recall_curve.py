@@ -6,24 +6,25 @@ from ml_tooling.utils import DataType
 
 
 def plot_pr_curve(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
-    """
-    Plot precsion-recall curve. Works only with probabilities
+    """   Plot precision-recall curve. Works only with probabilities.
 
-    :param y_true:
+    Parameters
+    ----------
+    y_true : DataType
         True labels
-
-    :param y_proba:
+    y_proba : DataType
         Probability estimate from model
-
-    :param title:
+    title : str
         Plot title
-
-    :param ax:
+    ax : plt.Axes
         Pass in your own ax
 
-    :return:
-        matplotlib.Axes
+    Returns
+    -------
+    matplotlib.Axes
+        Plot of precision-recall curve
     """
+
     title = 'Precision-Recall curve' if title is None else title
 
     precision, recall, _ = precision_recall_curve(y_true, y_proba)

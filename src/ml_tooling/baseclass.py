@@ -378,8 +378,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         Typically used as the last step when model tuning is complete.
 
         .. warning::
-            Sets .result attribute to None. We are using all the data, so there is no validation
-            data to measure results against
+            This will set self.result attribute to None. This method trains the model
+            using all the data, so there is no validation data to measure results against
 
         Returns
         -------

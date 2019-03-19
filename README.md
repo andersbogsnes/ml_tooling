@@ -222,6 +222,7 @@ plot_confusion_matrix(y_true, y_pred)
 ### Classifiers
    
 - `roc_curve(**kwargs)`:<br />  Visualize a ROC curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib. <br /> <br />
+- `pr_curve(**kwargs)`:<br />  Visualize a Precision-Recall curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib. <br /> <br />
 - `confusion_matrix(normalized = True, **kwargs)`: 
 Visualize a confusion matrix for a classification model. `normalized` determines whether or not to normalize annotated class counts. Any kwargs are passed onto matplotlib.  <br /> <br />
 - `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:<br /> Calculates each features imporatance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set. <br /> <br />

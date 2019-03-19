@@ -63,6 +63,9 @@ def _permutation_importances(model,
                              n_jobs=1,
                              verbose=0):
     """
+    Uses random permutation to calculate feature importance.
+    By randomly permuting each column and measuring the difference in the model metric
+    against the baseline.
 
     Parameters
     ----------
@@ -72,10 +75,10 @@ def _permutation_importances(model,
     scorer : _ThresholdScorer or _PredictScorer
         sklearn scorer
 
-    x : DataFrame
+    x : pd.DataFrame
         Feature data
 
-    y : DateSeries
+    y : np.ndarray, pd.DataFrame
         Target data
 
     samples : None, int, float

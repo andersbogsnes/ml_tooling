@@ -18,3 +18,5 @@ Implements all the base functionality needed to create the wrapper
 .. include:: config.inc.rst
 
 .. include:: result.inc.rst
+
+.. include:: plots.inc.rst

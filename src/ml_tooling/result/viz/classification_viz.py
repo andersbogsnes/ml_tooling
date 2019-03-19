@@ -14,12 +14,18 @@ class ClassificationVisualize(BaseVisualize):
         """
         Visualize a confusion matrix for a classification model
         Any kwargs are passed onto matplotlib
-        :param normalized:
+
+        Parameters
+        ----------
+
+        normalized: bool
             Whether or not to normalize annotated class counts
 
-        :return:
-            matplotlib.Axes
+        Returns
+        -------
+        matplotlib.Axes
         """
+
         with plt.style.context(self._config.STYLE_SHEET):
             title = f'Confusion Matrix - {self._model_name}'
             y_pred = self._model.predict(self._data.test_x)

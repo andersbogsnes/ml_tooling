@@ -14,8 +14,10 @@ class RegressionVisualize(BaseVisualize):
         Visualizes residuals of a regression model.
         Any kwargs are passed onto matplotlib
 
-        :return:
-            matplotlib.Axes
+        Returns
+        -------
+        matplotlib.Axes
+            Plot of the model's residuals
         """
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Residual Plot - {self._model_name}"
@@ -26,9 +28,13 @@ class RegressionVisualize(BaseVisualize):
         """
         Visualizes prediction error of a regression model
         Any kwargs are passed onto matplotlib
-        :return:
-            matplotlib.Axes
+
+        Returns
+        -------
+        matplotlib.Axes
+            Plot of the model's prediction error
         """
+
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Prediction Error - {self._model_name}"
             y_pred = self._model.predict(self._data.test_x)

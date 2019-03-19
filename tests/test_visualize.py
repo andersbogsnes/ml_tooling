@@ -299,14 +299,15 @@ class TestPRCurve:
         result = svc.score_model()
         with pytest.raises(VizError):
             result.plot.pr_curve()
+        plt.close()
 
     def test_pr_curve_can_use_ax(self, classifier):
-        ax = plt.subplot()
+        fig, ax = plt.subplots()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
         y_proba = classifier.model.predict_proba(x)[:, 1]
 
         assert ax is plot_pr_curve(y, y_proba, ax=ax)
-
+        plt.close()
 
 
 class TestGetFeatureImportance:

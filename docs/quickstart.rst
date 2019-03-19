@@ -21,27 +21,27 @@ How to load in your prediction data. When predicting, you have to tell ML Toolin
 Usually this takes an argument to
 
 
-All you have to do to get started is to define your input data:
+All you have to do to get started is to define your input data::
 
->>> from ml_tooling import BaseClassModel
->>> from sklearn.linear_model import LinearRegression
->>> from sklearn.datasets import load_boston
->>> import pandas as pd
->>>
->>> class BostonData(BaseClassModel):
->>>  # Define where to get training time data - always return a DataFrame for X
->>>   def get_training_data(self):
->>>     data = load_boston()
->>>     return pd.DataFrame(data.data, columns=data.feature_names), data.target
->>>
->>>   # Define where to get prediction time data - returning a DataFrame
->>>   def get_prediction_data(self, idx):
->>>     data = load_boston()
->>>     x = pd.DataFrame(data.data, labels=data.feature_names)
->>>     return x.loc[idx] # Return given observation
->>>
->>> # Use your data with a given model
->>> regression = BostonData(LinearRegression())
+    from ml_tooling import BaseClassModel
+    from sklearn.linear_model import LinearRegression
+    from sklearn.datasets import load_boston
+    import pandas as pd
+
+    class BostonData(BaseClassModel):
+    # Define where to get training time data - always return a DataFrame for X
+    def get_training_data(self):
+        data = load_boston()
+        return pd.DataFrame(data.data, columns=data.feature_names), data.target
+
+    # Define where to get prediction time data - returning a DataFrame
+    def get_prediction_data(self, idx):
+        data = load_boston()
+        x = pd.DataFrame(data.data, labels=data.feature_names)
+        return x.loc[idx] # Return given observation
+
+    # Use your data with a given model
+    regression = BostonData(LinearRegression())
 
 Now we can start training our model:
 

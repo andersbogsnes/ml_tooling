@@ -158,14 +158,14 @@ class TestBaseClass:
 
         assert best_model.model == models[0]
 
-    @pytest.mark.parametrize('sub_folder, file_name', [
+    @pytest.mark.parametrize('sub_folder, filename', [
         (True, None),
         (True, 'saved_model.pkl'),
         (False, None),
         (False, 'saved_model.pkl'),
     ])
     def test_regression_model_can_be_saved(self, classifier, tmpdir, base, monkeypatch, sub_folder,
-                                           file_name):
+                                           filename):
 
         def mockreturn():
             return '1234'
@@ -173,12 +173,12 @@ class TestBaseClass:
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
 
         path = tmpdir.join('sub_folder') if sub_folder else tmpdir
-        expected_file_name = 'IrisModel_LogisticRegression_1234.pkl' if not file_name else file_name
+        expected_filename = 'IrisModel_LogisticRegression_1234.pkl' if not filename else filename
 
         classifier.score_model()
-        classifier.save_model(path, file_name=file_name)
+        classifier.save_model(path, filename=filename)
 
-        expected_path = path.join(expected_file_name)
+        expected_path = path.join(expected_filename)
         assert expected_path.check()
 
         loaded_model = base.load_model(str(expected_path))

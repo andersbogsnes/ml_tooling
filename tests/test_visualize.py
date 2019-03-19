@@ -9,7 +9,7 @@ from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
@@ -18,6 +18,7 @@ from ml_tooling.metrics.permutation_importance import _get_feature_importance
 from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import (plot_lift_curve,
                               plot_confusion_matrix,
+                              plot_pr_curve,
                               )
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -49,7 +50,8 @@ class TestVisualize:
     @pytest.mark.parametrize('attr, option', [('confusion_matrix', None),
                                               ('roc_curve', None),
                                               ('lift_curve', None),
-                                              ('feature_importance', 100)])
+                                              ('feature_importance', 100),
+                                              ('pr_curve', None)])
     def test_classifier_visualize_has_all_plots(self, attr, option, classifier):
         result = classifier.result.plot
         if option:
@@ -275,6 +277,37 @@ class TestRocCurve:
         result = svc.score_model()
         with pytest.raises(VizError):
             result.plot.roc_curve()
+
+
+class TestPRCurve:
+    def test_pr_curve_have_correct_data(self, classifier):
+        ax = classifier.result.plot.pr_curve()
+        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
+        y_proba = classifier.model.predict_proba(x)[:, 1]
+
+        precision, recall, _ = precision_recall_curve(y, y_proba)
+
+        assert 'Precision-Recall - LogisticRegression' == ax.title._text
+        assert 'Precision' == ax.get_ylabel()
+        assert 'Recall' == ax.get_xlabel()
+        assert np.all(recall == ax.lines[0].get_xdata())
+        assert np.all(precision == ax.lines[0].get_ydata())
+        plt.close()
+
+    def test_pr_curve_fails_correctly_without_predict_proba(self, base):
+        svc = base(SVC(gamma='scale'))
+        result = svc.score_model()
+        with pytest.raises(VizError):
+            result.plot.pr_curve()
+        plt.close()
+
+    def test_pr_curve_can_use_ax(self, classifier):
+        fig, ax = plt.subplots()
+        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
+        y_proba = classifier.model.predict_proba(x)[:, 1]
+
+        assert ax is plot_pr_curve(y, y_proba, ax=ax)
+        plt.close()
 
 
 class TestGetFeatureImportance:

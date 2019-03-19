@@ -1,6 +1,6 @@
 from matplotlib import pyplot as plt
 
-from ml_tooling.plots import plot_confusion_matrix, plot_roc_auc, plot_lift_curve
+from ml_tooling.plots import plot_confusion_matrix, plot_roc_auc, plot_lift_curve, plot_pr_curve
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import BaseVisualize
 
@@ -53,3 +53,28 @@ class ClassificationVisualize(BaseVisualize):
             title = f'Lift Curve - {self._model_name}'
             y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
             return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)
+
+    def pr_curve(self, **kwargs) -> plt.Axes:
+        """
+        Visualize a Precision-Recall curve for a classification model.
+        Estimator must implement a `predict_proba` method.
+        Any kwargs are passed onto matplotlib.
+
+        Parameters
+        ----------
+        kwargs : optional
+            Keyword arguments to pass on to matplotlib
+
+        Returns
+        -------
+        plt.Axes
+            Plot of precision-recall curve
+        """
+
+        if not hasattr(self._model, 'predict_proba'):
+            raise VizError("Model must provide a 'predict_proba' method")
+
+        with plt.style.context(self._config.STYLE_SHEET):
+            title = f'Precision-Recall - {self._model_name}'
+            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            return plot_pr_curve(self._data.test_y, y_proba, title=title, **kwargs)

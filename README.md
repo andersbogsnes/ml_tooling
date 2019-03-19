@@ -110,9 +110,10 @@ context manager to toggle for a single run.
 ## Methods
 The BaseClass implements a number of useful methods
 
-### `save_model(path=None)`
+### `save_model(path=None, file_name=None)`
 Saves the model as a binary file. Defaults to current working directory, 
-with a filename of `<class_name>_<model_name>_<git_hash>.pkl`
+with a filename of `<class_name>_<model_name>_<git_hash>.pkl` but
+a custom file name can be suppplied.
 
 ### `load_model(path)`
 Instantiates the class with a joblib pickled model.

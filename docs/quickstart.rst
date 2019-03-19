@@ -88,3 +88,5 @@ We can try out many different models:
 <Result LassoLars: neg_mean_squared_error: -72.26 >]
 
 We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to :doc:`tutorial`

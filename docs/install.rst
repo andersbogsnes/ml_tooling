@@ -14,3 +14,5 @@ With ``conda``
 --------------
 ``conda`` is a great way to manage Pydata packages::
     ``conda install -c conda-forge ml_tooling``
+
+Continue to :doc:`quickstart`

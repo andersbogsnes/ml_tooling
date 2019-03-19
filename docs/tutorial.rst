@@ -12,3 +12,5 @@ We start with our normal imports
 >>> from sklearn.preprocessing import StandardScaler
 >>> from sklearn.pipeline import Pipeline
 >>> from sklearn.linear_model import LinearRegression, Ridge,
+
+Continue to :doc:`baseclass`

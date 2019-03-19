@@ -14,8 +14,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../src/'))
 
+sys.path.insert(0, os.path.abspath('../src/'))
 
 # -- Project information -----------------------------------------------------
 
@@ -27,7 +27,6 @@ author = 'Anders Bogsnes'
 version = '0.6'
 # The full version, including alpha/beta/rc tags
 release = '0.6.1'
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -42,8 +41,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon'
+    'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx'
 ]
+
+intersphinx_mapping = {'pd': ('http://pandas.pydata.org/pandas-docs/stable/', None),
+                       'sklearn': ('http://scikit-learn.org/stable/', None)
+                       }
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -71,7 +75,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '*.inc.rst']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -107,7 +110,6 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'MLToolingdoc'
 
-
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
@@ -136,7 +138,6 @@ latex_documents = [
      'Anders Bogsnes', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -145,7 +146,6 @@ man_pages = [
     (master_doc, 'mltooling', 'ML Tooling Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -157,7 +157,6 @@ texinfo_documents = [
      author, 'MLTooling', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -175,6 +174,5 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
 
 # -- Extension configuration -------------------------------------------------

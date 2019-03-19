@@ -5,12 +5,15 @@
 
 Welcome to ML Tooling!
 ======================
-Welcome to ML Toolings documentation. Get started by :ref:`install` and head over to :ref:`quickstart`
+Welcome to ML Tooling's documentation!
+
+Get started by :ref:`installing <install>` and head over to :ref:`quickstart`!
+
 There are three main parts to ML Tooling:
 
 * :ref:`baseclass` wraps all the functionality,
 
-* :ref:`transformer` has a number of pandas-compatible Transformers for use in scikit-learn `Pipelines`_
+* :ref:`transformer` has a number of pandas-compatible scikit-learn `Transformers`_ for use in scikit-learn `Pipelines`_
 
 * :ref:`plotting` has a number of utility plotting functions that can be used standalone
 
@@ -30,5 +33,6 @@ ML Tooling was developed at `Alm Brand <http://www.almbrand.dk>`_
 .. _Scikit-learn: https://scikit-learn.org/stable/
 .. _Pandas: https://pandas.pydata.org/
 .. _Pipelines: https://scikit-learn.org/stable/modules/compose.html
+.. _Transformers: https://scikit-learn.org/stable/modules/preprocessing.html
 
 .. include:: contents.rst

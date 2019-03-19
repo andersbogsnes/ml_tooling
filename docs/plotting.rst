@@ -36,13 +36,16 @@ as arguments::
 Available Classifier plots
 --------------------------
 - :meth:`~ClassificationVisualize.roc_curve`
-    Visualize a ROC curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib
+    Visualize a ROC curve for a classification model.
+    Shows the relationship between the True Positive Rate and the False Positive Rate.
 
 - :meth:`~ClassificationVisualize.confusion_matrix`:
-    Visualize a confusion matrix for a classification model. `normalized` determines whether or not to normalize annotated class counts. Any kwargs are passed onto matplotlib.
+    Visualize a confusion matrix for a classification model.
+    Shows the distribution of predicted labels vs actual labels
 
 - :meth:`~ClassificationVisualize.feature_importance`
-    Uses random permutation to calculate feature importance. By randomly permuting each column and measuring the difference in the model metric against the baseline.
+    Uses random permutation to calculate feature importance.
+    By randomly permuting each column and measuring the difference in the model metric against the baseline.
 
 - :meth:`~ClassificationVisualize.lift_curve`
     Visualizes how much of the target class we capture by setting different thresholds for probability

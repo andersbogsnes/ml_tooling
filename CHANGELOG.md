@@ -1,6 +1,7 @@
 # v0.6.3
 - Internal refactor - shouldn't impact endusers
 - Added Precision-Recall Curve
+- Added option to give custom file name to .save_model()
 
 # v0.6.2
 ## Bugfixes

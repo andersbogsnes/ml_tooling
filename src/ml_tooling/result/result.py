@@ -32,8 +32,11 @@ class Result:
         """
         Calls get_params on estimator. Checks if estimator is a Pipeline, in which case it
         assumes last step in pipeline is an estimator and calls get_params on that step only
-        :return:
-            dict of params
+
+        Returns
+        -------
+        dict
+            Returns a dictionary of all params from the model
         """
         if isinstance(self.model, Pipeline):
             return self.model.steps[-1][1].get_params()
@@ -52,9 +55,15 @@ class Result:
         Output result as a dataframe for ease of inspecting and manipulating.
         Defaults to including model params, which can be toggled with the params flag.
         This is useful if you're comparing different models
-        :param params:
+
+        Parameters
+        ----------
+        params: bool
             Whether or not to include model parameters as columns.
-        :return:
+
+        Returns
+        -------
+        pd.DataFrame
             DataFrame of the result
         """
         model_params_dict = {}

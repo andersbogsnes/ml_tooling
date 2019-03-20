@@ -6,9 +6,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class Binner(BaseEstimator, TransformerMixin):
     """
-    Bins data according to passed bins and labels. Uses pd.cut() under the hood,
-    see https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.cut.html#pandas-cut
-    for further details
+    Bins data according to passed bins and labels. Uses :meth:`pandas.cut()` under the hood,
+    see for further details
     """
 
     def __init__(self, bins: Union[int, list], labels: list = None):

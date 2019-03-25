@@ -124,11 +124,11 @@ class TestFeatureImportance:
     def test_permutation_importances_raises(self, regression):
         x = regression.data.train_x
         y = regression.data.train_y
-        model = regression.model
+        estimator = regression.estimator
         scorer = get_scorer(regression.default_metric)
 
         with pytest.raises(MLToolingError, match="samples must be None, float or int."):
-            _permutation_importances(model, scorer, x, y, '1', seed=1337)
+            _permutation_importances(estimator, scorer, x, y, '1', seed=1337)
 
     @pytest.mark.parametrize('setting, expected_importance, expected_baseline', [
         (None, np.array([0.00273266410, 0.4262626, 0.9134092, 1.1119456]), 0.2671288886),
@@ -141,21 +141,21 @@ class TestFeatureImportance:
                                                                       expected_baseline):
         x = regression.data.train_x
         y = regression.data.train_y
-        model = regression.model
+        estimator = regression.estimator
         scorer = get_scorer(regression.default_metric)
-        importance, baseline = _permutation_importances(model, scorer, x, y, setting, seed=1337)
+        importance, baseline = _permutation_importances(estimator, scorer, x, y, setting, seed=1337)
 
         np.testing.assert_almost_equal(importance, expected_importance)
         assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
     def test_permutation_importances_works_as_expected_with_pipeline(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)
-        pipe.score_model()
+        pipe.score_estimator()
         x = pipe.data.train_x
         y = pipe.data.train_y
-        model = pipe.model
+        estimator = pipe.estimator
         scorer = get_scorer(pipe.default_metric)
-        importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
+        importance, baseline = _permutation_importances(estimator, scorer, x, y, 1000, seed=1337)
         expected_importance = np.array([-0.0190000000, 0.164000000000, 0.038000000, 0.0740])
         expected_baseline = 0.759
 
@@ -165,12 +165,12 @@ class TestFeatureImportance:
     def test_permutation_importances_works_with_proba_scorer(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)
         pipe.default_metric = 'roc_auc'
-        pipe.score_model()
+        pipe.score_estimator()
         x = pipe.data.train_x
         y = pipe.data.train_y
-        model = pipe.model
+        estimator = pipe.estimator
         scorer = get_scorer(pipe.default_metric)
-        importance, baseline = _permutation_importances(model, scorer, x, y, 1000, seed=1337)
+        importance, baseline = _permutation_importances(estimator, scorer, x, y, 1000, seed=1337)
         expected_importance = np.array([0.0035604, 0.3021749, 0.1075911, 0.0688982])
         expected_baseline = 0.8305146463829
 
@@ -179,14 +179,14 @@ class TestFeatureImportance:
 
     def test_permutation_importances_gives_same_result_in_parallel(self, base, pipeline_logistic):
         pipe = base(pipeline_logistic)
-        pipe.score_model()
+        pipe.score_estimator()
         x = pipe.data.train_x
         y = pipe.data.train_y
-        model = pipe.model
+        estimator = pipe.estimator
         scorer = get_scorer(pipe.default_metric)
-        importance_parellel, baseline_parellel = _permutation_importances(model, scorer, x, y, 100,
+        importance_parellel, baseline_parellel = _permutation_importances(estimator, scorer, x, y, 100,
                                                                           seed=1337, n_jobs=-1)
-        importance_single, baseline_single = _permutation_importances(model, scorer, x, y, 100,
+        importance_single, baseline_single = _permutation_importances(estimator, scorer, x, y, 100,
                                                                       seed=1337, n_jobs=1)
 
         assert np.all(importance_parellel == importance_single)

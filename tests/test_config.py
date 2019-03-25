@@ -9,7 +9,7 @@ class TestConfig:
     def test_config_is_set_globally(self, pipeline_dummy_classifier, pipeline_linear):
         class TestModel(ModelData):
             @classmethod
-            def setup_model(cls):
+            def setup_estimator(cls):
                 pass
 
             def get_prediction_data(self, *args):
@@ -35,7 +35,7 @@ class TestConfig:
     def test_can_change_config(self):
         class SomeModel(ModelData):
             @classmethod
-            def setup_model(cls):
+            def setup_estimator(cls):
                 pass
 
             def get_training_data(self):

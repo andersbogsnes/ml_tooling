@@ -87,28 +87,28 @@ def dates_data():
 @pytest.fixture(name='regression')
 def _linear_regression(base):
     model = base(LinearRegression())
-    model.score_model()
+    model.score_estimator()
     return model
 
 
 @pytest.fixture(name='regression_cv')
 def _linear_regression_cv(base):
     model = base(LinearRegression())
-    model.score_model(cv=2)
+    model.score_estimator(cv=2)
     return model
 
 
 @pytest.fixture(name='classifier')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.score_model()
+    model.score_estimator()
     return model
 
 
 @pytest.fixture(name='classifier_cv')
 def _logistic_regression_cv(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.score_model(cv=2)
+    model.score_estimator(cv=2)
     return model
 
 

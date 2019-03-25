@@ -35,7 +35,7 @@ class TestBaseClass:
             base({})
 
     def test_make_prediction_errors_when_model_is_not_fitted(self, base):
-        with pytest.raises(MLToolingError, match="You haven't fitted the model"):
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
             model = base(LinearRegression())
             model.make_prediction(5)
 
@@ -127,22 +127,22 @@ class TestBaseClass:
     def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
         model = base(pipeline_logistic)
         model.train_model()
-        model.score_model()
+        model.score_estimator()
 
         assert isinstance(model.result, Result)
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
         best_model, results = base.test_models(models)
-        assert models[1] is best_model.model
+        assert models[1] is best_model.estimator
         assert 2 == len(results)
         assert results[0].score >= results[1].score
         for result in results:
             assert isinstance(result, Result)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(self, base):
-        models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
-        best_model, results = base.test_models(models, metric='roc_auc')
+        estimators = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
+        best_estimator, results = base.test_models(estimators, metric='roc_auc')
         for result in results:
             assert result.metric == 'roc_auc'
 
@@ -150,13 +150,13 @@ class TestBaseClass:
                                                              base,
                                                              pipeline_logistic,
                                                              pipeline_dummy_classifier):
-        models = [pipeline_logistic, pipeline_dummy_classifier]
-        best_model, results = base.test_models(models)
+        estimators = [pipeline_logistic, pipeline_dummy_classifier]
+        best_estimator, results = base.test_models(estimators)
 
         for result in results:
-            assert result.model_name == result.model.steps[-1][1].__class__.__name__
+            assert result.estimator_name == result.estimator.steps[-1][1].__class__.__name__
 
-        assert best_model.model == models[0]
+        assert best_estimator.estimator == estimators[0]
 
     @pytest.mark.parametrize('sub_folder, filename', [
         (True, None),
@@ -175,14 +175,14 @@ class TestBaseClass:
         path = tmpdir.join('sub_folder') if sub_folder else tmpdir
         expected_filename = 'IrisModel_LogisticRegression_1234.pkl' if not filename else filename
 
-        classifier.score_model()
-        classifier.save_model(path, filename=filename)
+        classifier.score_estimator()
+        classifier.save_estimator(path, filename=filename)
 
         expected_path = path.join(expected_filename)
         assert expected_path.check()
 
-        loaded_model = base.load_model(str(expected_path))
-        assert loaded_model.model.get_params() == classifier.model.get_params()
+        loaded_model = base.load_estimator(str(expected_path))
+        assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_save_model_saves_pipeline_correctly(self, base, pipeline_logistic, monkeypatch,
                                                  tmpdir):
@@ -190,10 +190,10 @@ class TestBaseClass:
             return '1234'
 
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        save_dir = tmpdir.mkdir('model')
+        save_dir = tmpdir.mkdir('estimator')
         model = base(pipeline_logistic)
         model.train_model()
-        model.save_model(save_dir)
+        model.save_estimator(save_dir)
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
@@ -202,9 +202,9 @@ class TestBaseClass:
             return '1234'
 
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        save_dir = tmpdir.mkdir('model')
+        save_dir = tmpdir.mkdir('estimator')
         with classifier.log(save_dir):
-            classifier.save_model(save_dir)
+            classifier.save_estimator(save_dir)
 
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
@@ -212,7 +212,7 @@ class TestBaseClass:
 
     def test_setup_model_raises_not_implemented_error(self, base):
         with pytest.raises(NotImplementedError):
-            base.setup_model()
+            base.setup_estimator()
 
     def test_setup_model_works_when_implemented(self):
         class DummyModel(ModelData):
@@ -223,15 +223,15 @@ class TestBaseClass:
                 pass
 
             @classmethod
-            def setup_model(cls):
+            def setup_estimator(cls):
                 pipeline = Pipeline([
                     ('scaler', StandardScaler()),
                     ('clf', LogisticRegression(solver='lbgfs'))
                 ])
                 return cls(pipeline)
 
-        model = DummyModel.setup_model()
-        assert model.model_name == 'LogisticRegression'
+        model = DummyModel.setup_estimator()
+        assert model.estimator_name == 'LogisticRegression'
         assert hasattr(model, 'coef_') is False
 
     def test_gridsearch_model_returns_as_expected(self, base, pipeline_logistic):
@@ -276,14 +276,14 @@ class TestBaseClass:
 
         runs = tmpdir.mkdir('runs')
         with model.log(runs):
-            result = model.score_model()
+            result = model.score_estimator()
 
         for file in runs.visit('LinearRegression_*'):
             with open(file) as f:
                 log_result = yaml.safe_load(f)
 
             assert result.score == log_result["metrics"]["r2"]
-            assert result.model_name == log_result["model_name"]
+            assert result.estimator_name == log_result["estimator_name"]
 
     def test_log_context_manager_logs_when_gridsearching(self, tmpdir, base):
         model = base(LinearRegression())
@@ -297,7 +297,7 @@ class TestBaseClass:
 
             model_results = [round(r.score, 4) for r in result]
             assert round(log_result["metrics"]["r2"], 4) in model_results
-            assert result.model_name == log_result["model_name"]
+            assert result.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(self, tmpdir, base):
         test_models_log = tmpdir.mkdir('test_models')
@@ -307,7 +307,7 @@ class TestBaseClass:
         for file in test_models_log.visit('*.yaml'):
             with open(file) as f:
                 result = yaml.safe_load(f)
-                model_name = result['model_name']
+                model_name = result['estimator_name']
                 assert model_name in {'RandomForestClassifier', 'DummyClassifier'}
 
     def test_train_model_errors_correct_when_not_scored(self,
@@ -315,10 +315,10 @@ class TestBaseClass:
                                                         pipeline_logistic,
                                                         tmpdir):
         model = base(pipeline_logistic)
-        with pytest.raises(MLToolingError, match="You haven't scored the model"):
+        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(tmpdir):
                 model.train_model()
-                model.save_model(tmpdir)
+                model.save_estimator(tmpdir)
 
     def test_models_share_data(self):
         class test_class(ModelData):
@@ -348,7 +348,7 @@ class TestBaseClass:
                 pass
 
         cl1 = class1(LogisticRegression())
-        cl1.score_model()
+        cl1.score_estimator()
 
         class class2(ModelData):
             def get_training_data(self):
@@ -358,7 +358,7 @@ class TestBaseClass:
                 pass
 
         cl2 = class2(LogisticRegression())
-        cl2.score_model()
+        cl2.score_estimator()
 
         pd.testing.assert_frame_equal(cl1.data.x, cl2.data.x)
         cl2.data.x = pd_df2

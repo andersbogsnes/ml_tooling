@@ -12,12 +12,12 @@ dataset for demo purposes and we just want to try it out with a simple linear re
 
 Your subclass must implement two methods:
 
-- :meth:`~BaseClassModel.get_training_data`
+- :meth:`~ModelData.get_training_data`
 
 Method that retrieves all training data. Used for training and evaluating the model
 
 
-- :meth:`~BaseClassModel.get_prediction_data`
+- :meth:`~ModelData.get_prediction_data`
 
 Method that, given an input, fetches corresponding features. Used for predicting an unseen observation
 
@@ -26,17 +26,17 @@ Method that, given an input, fetches corresponding features. Used for predicting
 
 Example Usage
 -------------
-We define a class using BaseClassModel and implement the two required methods.
+We define a class using ModelData and implement the two required methods.
 In this example, we implement a linear regression on the Boston dataset using sklearn.datasets
 
 .. code-block:: python
 
-    from ml_tooling import BaseClassModel
+    from ml_tooling import ModelData
     from sklearn.datasets import load_boston
     from sklearn.linear_model import LinearRegression
 
     # Define our DataClass
-    class BostonData(BaseClassModel):
+    class BostonData(ModelData):
         # Tell the DataModel how to load data when training
         def get_training_data(self):
             return load_boston(return_X_y=True)
@@ -53,7 +53,7 @@ In this example, we implement a linear regression on the Boston dataset using sk
 Configuration
 -------------
 
-To change the default configuration values, modify the :attr:`~BaseClassModel.config` attributes directly::
+To change the default configuration values, modify the :attr:`~ModelData.config` attributes directly::
 
     BostonData.config.RANDOM_STATE = 2
 

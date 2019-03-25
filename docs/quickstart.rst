@@ -1,9 +1,9 @@
-.. py:currentmodule:: ml_tooling.baseclass.BaseClassModel
+.. py:currentmodule:: ml_tooling.baseclass.ModelData
 .. _quickstart:
 
 Quickstart
 ==========
-ML Tooling requires you to create your own DataModel inheriting from BaseClassModel.
+ML Tooling requires you to create your own DataModel inheriting from ModelData.
 You have to define two methods in your class:
 
 * :meth:`get_training_data`
@@ -23,12 +23,12 @@ Usually this takes an argument to
 
 All you have to do to get started is to define your input data::
 
-    from ml_tooling import BaseClassModel
+    from ml_tooling import ModelData
     from sklearn.linear_model import LinearRegression
     from sklearn.datasets import load_boston
     import pandas as pd
 
-    class BostonData(BaseClassModel):
+    class BostonData(ModelData):
     # Define where to get training time data - always return a DataFrame for X
     def get_training_data(self):
         data = load_boston()

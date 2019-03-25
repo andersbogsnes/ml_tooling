@@ -3,12 +3,12 @@ API
 
 .. _api:
 
-BaseClassModel
+ModelData
 --------------
 Abstract BaseClass to inherit from.
 Implements all the base functionality needed to create the wrapper
 
-.. autoclass:: ml_tooling.baseclass.BaseClassModel
+.. autoclass:: ml_tooling.baseclass.ModelData
     :members:
 
     .. automethod:: log(self, run_name)

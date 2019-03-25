@@ -17,7 +17,7 @@ To use the visualizations, access them using the `.plot` accessor on the
 
 Any visualizer listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
-the ml_tooling BaseClassModel approach, you can instead do::
+the ml_tooling ModelData approach, you can instead do::
 
     from ml_tooling.plots import plot_confusion_matrix
 

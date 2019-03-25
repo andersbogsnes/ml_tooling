@@ -18,7 +18,7 @@ Use pip to install:
 * Plotting functions
     * Functions for producing nice, commonly used plots such as roc_curves and confusion matrices 
 
-# BaseClassModel
+# ModelData
 A base Class for defining your model. 
 Your subclass must define two methods:
  
@@ -32,7 +32,7 @@ Your subclass must define two methods:
 
 
 ## Example usage
-Define a class using BaseClassModel and implement the two required methods.
+Define a class using ModelData and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
 from ml_tooling import BaseClassModel
@@ -205,7 +205,7 @@ That object has number of visualization options depending on the type of model:
 
 Any visualizer listed here also has a functional counterpart in `ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using 
-the ml_tooling BaseClassModel approach, you can instead do 
+the ml_tooling ModelData approach, you can instead do 
 `from ml_tooling.plots import plot_confusion_matrix`
 
 These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred

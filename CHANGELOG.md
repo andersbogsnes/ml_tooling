@@ -30,7 +30,7 @@ prevent users from mistakenly assuming the result is from the training
 - Fixed bug where users could not save models if no result had been created, as would 
 happen if the user only called .train_model before saving.
 - Default_metric is now the same metric as the one specified for the model in .config
-- Each class inheriting from BaseClassModel has an individual config
+- Each class inheriting from ModelData has an individual config
 - Changed get_scorer_func to wrap sklearn's get_scorer
 - Fixed bug when gridsearching twice
 

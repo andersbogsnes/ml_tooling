@@ -184,8 +184,8 @@ class TestFeatureImportance:
         y = pipe.data.train_y
         estimator = pipe.estimator
         scorer = get_scorer(pipe.default_metric)
-        importance_parellel, baseline_parellel = _permutation_importances(estimator, scorer, x, y, 100,
-                                                                          seed=1337, n_jobs=-1)
+        importance_parellel, baseline_parellel = _permutation_importances(estimator, scorer, x, y,
+                                                                          100, seed=1337, n_jobs=-1)
         importance_single, baseline_single = _permutation_importances(estimator, scorer, x, y, 100,
                                                                       seed=1337, n_jobs=1)
 

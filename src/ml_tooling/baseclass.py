@@ -87,7 +87,8 @@ class ModelData(metaclass=abc.ABCMeta):
         Example
         -------
 
-        Returning to our previous example of the BostonModel, let us implement a setup_estimator method:
+        Returning to our previous example of the BostonModel, let us implement
+        a setup_estimator method:
 
         .. code-block:: python
 
@@ -385,7 +386,8 @@ class ModelData(metaclass=abc.ABCMeta):
         results.sort(reverse=True)
         best_estimator = results[0].estimator
         logger.info(
-            f"Best estimator: {results[0].estimator_name} - {results[0].metric}: {results[0].score}")
+            f"Best estimator: {results[0].estimator_name} - "
+            f"{results[0].metric}: {results[0].score}")
 
         return cls(best_estimator), ResultGroup(results)
 
@@ -522,8 +524,8 @@ class ModelData(metaclass=abc.ABCMeta):
 
     @contextmanager
     def log(self, run_name: str):
-        """:meth:`log` is a context manager that lets you turn on logging for any scoring methods that
-        follow. You can pass a log_dir to specify a subfolder to store the estimator in.
+        """:meth:`log` is a context manager that lets you turn on logging for any scoring methods
+        that follow. You can pass a log_dir to specify a subfolder to store the estimator in.
         The output is a yaml file recording estimator parameters, package version numbers,
         metrics and other useful information
 

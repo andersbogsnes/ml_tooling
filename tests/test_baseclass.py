@@ -141,7 +141,8 @@ class TestBaseClass:
             assert isinstance(result, Result)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(self, base):
-        estimators = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
+        estimators = [LogisticRegression(solver='liblinear'),
+                      RandomForestClassifier(n_estimators=10)]
         best_estimator, results = base.test_models(estimators, metric='roc_auc')
         for result in results:
             assert result.metric == 'roc_auc'

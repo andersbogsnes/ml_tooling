@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 
 from ml_tooling.metrics.permutation_importance import _get_feature_importance
 from ml_tooling.plots import plot_feature_importance
-from ml_tooling.utils import _get_model_name
+from ml_tooling.utils import _get_estimator_name
 
 
 class BaseVisualize:
@@ -12,9 +12,9 @@ class BaseVisualize:
     Base class for visualizers
     """
 
-    def __init__(self, model, config, data):
-        self._model = model
-        self._model_name = _get_model_name(model)
+    def __init__(self, estimator, config, data):
+        self._estimator = estimator
+        self._estimator_name = _get_estimator_name(estimator)
         self._config = config
         self._data = data
 
@@ -32,7 +32,7 @@ class BaseVisualize:
 
         """
 
-        return self._config.CLASSIFIER_METRIC if self._model._estimator_type == 'classifier' \
+        return self._config.CLASSIFIER_METRIC if self._estimator._estimator_type == 'classifier' \
             else self._config.REGRESSION_METRIC
 
     def feature_importance(self,
@@ -43,7 +43,7 @@ class BaseVisualize:
                            n_jobs=None,
                            **kwargs) -> plt.Axes:
         """
-        Visualizes feature importance of the model through permutation.
+        Visualizes feature importance of the estimator through permutation.
 
         Parameters
         ----------
@@ -82,7 +82,7 @@ class BaseVisualize:
         """
 
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
-        title = f"Feature Importance - {self._model_name}"
+        title = f"Feature Importance - {self._estimator_name}"
         importance, baseline = _get_feature_importance(self,
                                                        samples=samples,
                                                        seed=self._config.RANDOM_STATE,

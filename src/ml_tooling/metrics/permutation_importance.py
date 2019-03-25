@@ -64,7 +64,7 @@ def _permutation_importances(model,
                              verbose=0):
     """
     Uses random permutation to calculate feature importance.
-    By randomly permuting each column and measuring the difference in the model metric
+    By randomly permuting each column and measuring the difference in the estimator metric
     against the baseline.
 
     Parameters
@@ -168,7 +168,7 @@ def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.
         Baseline score without permutation
 
     """
-    model = viz._model
+    model = viz._estimator
     scorer = get_scoring_func(viz.default_metric)
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()

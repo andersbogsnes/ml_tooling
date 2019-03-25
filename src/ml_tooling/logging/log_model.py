@@ -35,7 +35,7 @@ def log_model(metric_scores: dict,
                 "pandas": pandas_version}
 
     data = {"time_created": datetime.now(),
-            "model_name": model_name,
+            "estimator_name": model_name,
             "versions": versions,
             "params": model_params,
             "git_hash": get_git_hash(),

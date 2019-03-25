@@ -13,7 +13,7 @@ def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axe
         True labels
 
     :param y_proba:
-        Probability estimate from model
+        Probability estimate from estimator
 
     :param title:
         Plot title

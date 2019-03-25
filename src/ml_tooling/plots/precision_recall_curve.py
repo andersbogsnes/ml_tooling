@@ -13,7 +13,7 @@ def plot_pr_curve(y_true: DataType, y_proba: DataType, title: str = None, ax: Ax
     y_true : DataType
         True labels
     y_proba : DataType
-        Probability estimate from model
+        Probability estimate from estimator
     title : str
         Plot title
     ax : plt.Axes

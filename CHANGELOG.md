@@ -1,7 +1,7 @@
 # v0.6.3
 - Internal refactor - shouldn't impact endusers
 - Added Precision-Recall Curve
-- Added option to give custom file name to .save_model()
+- Added option to give custom file name to .save_estimator()
 
 # v0.6.2
 ## Bugfixes
@@ -57,7 +57,7 @@ returns a ResultGroup instead.
 # v0.3.0
 - Added DFRowFunc Transformer
 - Updated FillNA to handle categorical values
-- Allow user to choose whether score_model uses cv or not
+- Allow user to choose whether score_estimator uses cv or not
 
 # v0.2.3
 - Plot_feature_importance now takes a top_n and bottom_n argument

@@ -6,8 +6,8 @@ from .utils import MetricError
 
 def lift_score(y_target: DataType, y_predicted: DataType) -> float:
     """
-    Calculates lift score for a given model. The lift score quantifies how much better
-    the model is compared to a random baseline.
+    Calculates lift score for a given estimator. The lift score quantifies how much better
+    the estimator is compared to a random baseline.
 
     The formula is defined as follows:
         lift = (TP/(TP+FN)(TP+FP)/(TP+TN+FP+FN)

@@ -11,7 +11,7 @@ def plot_prediction_error(y_true: DataType,
                           title: str = None,
                           ax: Axes = None) -> Axes:
     """
-    Plots prediction error of regression model
+    Plots prediction error of regression estimator
 
     :param y_true:
         True values

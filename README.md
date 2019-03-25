@@ -49,25 +49,25 @@ class BostonModel(BaseClassModel):
     def get_training_data(self):
         return load_boston(return_X_y=True)
     
-# Use our new class to implement a given model - any sklearn compatible estimator
+estimator
 linear_boston = BostonModel(LinearRegression())
 
-results = linear_boston.score_model()
+results = linear_boston.score_estimator()
 
 # Visualize results
 results.plot.residuals()
 results.plot.prediction_error()
 
-# Save our model
-linear_boston.save_model()
+estimator
+linear_boston.save_estimator()
 
-# Recreate model
-BostonModel.load_model('.')
+estimator
+BostonModel.load_estimator('.')
 
 # Train Different models and get the best performing
 models_to_try = [LinearRegression(), Ridge(), LassoLars()]
 
-# best_model will be BostonModel instantiated with the highest scoring model. all_results is a list of all results 
+estimator
 best_model, alL_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
 alL_results.to_dataframe(params=False)
 
@@ -110,16 +110,16 @@ context manager to toggle for a single run.
 ## Methods
 The BaseClass implements a number of useful methods
 
-### `save_model(path=None, file_name=None)`
+### `save_estimator(path=None, file_name=None)`
 Saves the model as a binary file. Defaults to current working directory, 
 with a filename of `<class_name>_<model_name>_<git_hash>.pkl` but
 a custom filename can be suppplied.
 
-### `load_model(path)`
+### `load_estimator(path)`
 Instantiates the class with a joblib pickled model.
 If no path is given, searches path for the newest file that matches the pattern 
    
-### `score_model(metric='accuracy', cv=False)`
+### `score_estimator(metric='accuracy', cv=False)`
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
 Defaults to non-cross-validated scoring. If you want to cross-validate, pass number of folds to cv
@@ -136,18 +136,18 @@ Passed to the implemented `get_prediction_data()` method and calls `.predict()` 
    
 
 ### `test_models([model1, model2], metric='accuracy')`
-Runs `score_model()` on each model, saving the result.
+Runs `score_estimator()` on each model, saving the result.
 Returns the best model as well as a ResultGroup of all results
 
 ### `gridsearch(param_grid)`
 Runs a gridsearch on the model with the passed in parameter grid.
 The function will ensure that it works inside a pipeline as well.
 
-### `setup_model()`
-To be implemented by the user - setup_model is a classmethod which loads up an untrained model.
+### `setup_estimator()`
+To be implemented by the user - setup_estimator is a classmethod which loads up an untrained model.
 Typically this would setup a pipeline and the selected model for easy training
 
-Returning to our previous example of the BostonModel, let us implement a setup_model method
+Returning to our previous example of the BostonModel, let us implement a setup_estimator method
 ```python
 from ml_tooling import BaseClassModel
 from sklearn.datasets import load_boston
@@ -167,7 +167,7 @@ class BostonModel(BaseClassModel):
         return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
     
     @classmethod
-    def setup_model(cls):
+    def setup_estimator(cls):
         pipeline = Pipeline([
         ('scaler', StandardScaler()),
         ('clf', LinearRegression())
@@ -177,7 +177,7 @@ class BostonModel(BaseClassModel):
 
 Given this extra setup, it becomes easy to load the untrained model to train it:
 ```python
-model = BostonModel.setup_model()
+model = BostonModel.setup_estimator()
 model.train_model()
 ```
 
@@ -190,14 +190,14 @@ file recording model parameters, package version numbers, metrics and other usef
 
 Usage example:
 ```python
-model = BostonModel.setup_model()
+model = BostonModel.setup_estimator()
 
 with model.log('score'):
-    model.score_model()
+    model.score_estimator()
 
 ``` 
 
-This will save the results of `model.score_model()` to `runs/score/`
+This will save the results of `model.score_estimator()` to `runs/score/`
 
 ## Visualizing results
 When a model is trained, it returns a Result object. 

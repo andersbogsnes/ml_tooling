@@ -8,7 +8,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
@@ -215,7 +215,7 @@ class TestBaseClass:
             base.setup_model()
 
     def test_setup_model_works_when_implemented(self):
-        class DummyModel(BaseClassModel):
+        class DummyModel(ModelData):
             def get_prediction_data(self, idx):
                 pass
 
@@ -321,7 +321,7 @@ class TestBaseClass:
                 model.save_model(tmpdir)
 
     def test_models_share_data(self):
-        class test_class(BaseClassModel):
+        class test_class(ModelData):
             def get_training_data(self):
                 return pd.DataFrame({'a': [1, 2, 3, 3, 2, 4]}), pd.Series([0, 1, 1, 0, 1, 0])
 
@@ -340,7 +340,7 @@ class TestBaseClass:
         pd_s1 = pd.Series([0, 1, 1, 0, 1, 0])
         pd_df2 = pd.DataFrame({'b': [9, 9, 8, 9, 2, 4]})
 
-        class class1(BaseClassModel):
+        class class1(ModelData):
             def get_training_data(self):
                 return pd_df1, pd_s1
 
@@ -350,7 +350,7 @@ class TestBaseClass:
         cl1 = class1(LogisticRegression())
         cl1.score_model()
 
-        class class2(BaseClassModel):
+        class class2(ModelData):
             def get_training_data(self):
                 return pd_df1, pd_s1
 

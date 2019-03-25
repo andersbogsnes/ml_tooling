@@ -1,13 +1,13 @@
 from sklearn.linear_model import LinearRegression
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.config import DefaultConfig
 
 
 class TestConfig:
 
     def test_config_is_set_globally(self, pipeline_dummy_classifier, pipeline_linear):
-        class TestModel(BaseClassModel):
+        class TestModel(ModelData):
             @classmethod
             def setup_model(cls):
                 pass
@@ -33,7 +33,7 @@ class TestConfig:
         assert new_model.config.N_JOBS == 1
 
     def test_can_change_config(self):
-        class SomeModel(BaseClassModel):
+        class SomeModel(ModelData):
             @classmethod
             def setup_model(cls):
                 pass
@@ -66,7 +66,7 @@ class TestConfig:
 
     def test_from_different_classes_do_not_share_config(self, base, pipeline_logistic,
                                                         pipeline_forest_classifier):
-        class NoModel(BaseClassModel):
+        class NoModel(ModelData):
             def get_prediction_data(self, idx):
                 pass
 

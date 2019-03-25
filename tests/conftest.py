@@ -12,7 +12,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.transformers import DFStandardScaler
 
 logging.disable(logging.CRITICAL)
@@ -25,7 +25,7 @@ def random():
 
 
 # noinspection PyAbstractClass
-class IrisModel(BaseClassModel):
+class IrisModel(ModelData):
     def get_prediction_data(self, idx):
         data = load_iris()
         df = pd.DataFrame(data.data, columns=data.feature_names)

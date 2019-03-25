@@ -13,7 +13,7 @@ from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.metrics.permutation_importance import _get_feature_importance
 from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import (plot_lift_curve,
@@ -185,7 +185,7 @@ class TestFeatureImportancePlot:
             ('clf', RandomForestClassifier(n_estimators=10))
         ])
 
-        class DummyModel(BaseClassModel):
+        class DummyModel(ModelData):
             @classmethod
             def setup_model(cls):
                 pass

@@ -32,7 +32,7 @@ from ml_tooling.utils import (
 logger = create_logger('ml_tooling')
 
 
-class BaseClassModel(metaclass=abc.ABCMeta):
+class ModelData(metaclass=abc.ABCMeta):
     """
     Base class for Models
     """
@@ -79,7 +79,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @classmethod
-    def setup_model(cls) -> 'BaseClassModel':
+    def setup_model(cls) -> 'ModelData':
         """To be implemented by the user - `setup_model()` is a classmethod which loads up an
         untrained model. Typically this would setup a pipeline and the selected model
         for easy training
@@ -123,7 +123,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        BaseClassModel
+        ModelData
             An instance of BaseClassModel with a full pipeline
 
         """
@@ -135,7 +135,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return self.__class__.__name__
 
     @classmethod
-    def load_model(cls, path: Optional[str] = None) -> 'BaseClassModel':
+    def load_model(cls, path: Optional[str] = None) -> 'ModelData':
         """
         Instantiates the class with a joblib pickled model.
         If no path is given, searches path for the newest file that matches
@@ -158,7 +158,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        BaseClassModel
+        ModelData
             Instance of saved model
         """
         path = cls.config.MODEL_DIR if path is None else pathlib.Path(path)
@@ -314,7 +314,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     @property
     def default_metric(self):
         """
-        Finds estimator_type for estimator in a BaseClassModel and returns default
+        Finds estimator_type for estimator in a ModelData and returns default
         metric for this class stated in .config. If passed estimator is a Pipeline,
         assume last step is the estimator.
 
@@ -341,7 +341,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                     models: Sequence,
                     metric: Optional[str] = None,
                     cv: Union[int, bool] = False,
-                    log_dir: str = None) -> Tuple['BaseClassModel', ResultGroup]:
+                    log_dir: str = None) -> Tuple['ModelData', ResultGroup]:
         """
         Trains each model passed and returns a sorted list of results
 
@@ -380,7 +380,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         return cls(best_model), ResultGroup(results)
 
-    def train_model(self) -> 'BaseClassModel':
+    def train_model(self) -> 'ModelData':
         """Loads all training data and trains the model on all data.
         Typically used as the last step when model tuning is complete.
 
@@ -390,7 +390,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        BaseClassModel
+        ModelData
             Returns a model trained on all the data, with no train-test split
 
         """

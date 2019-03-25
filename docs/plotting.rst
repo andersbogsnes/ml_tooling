@@ -10,7 +10,7 @@ That object has number of visualization options depending on the type of model.
 To use the visualizations, access them using the `.plot` accessor on the
 :class:`~ml_tooling.result.Result` object::
 
->> result = model.score_model()
+>> result = model.score_estimator()
 >> result.plot.residuals()
 
 .. figure:: plots/residualplot.png

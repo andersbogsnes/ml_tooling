@@ -45,7 +45,27 @@ All you have to do to get started is to define your input data::
 
 Now we can start training our model:
 
->>> result = regression.score_model()
+>>> result = regression.score_estimator()
+[16:30:31] - Scoring model...
+[16:30:31] - LinearRegression - r2: 0.6844267283527068
+>>> print(result)
+<Result LinearRegression: r2: 0.68 >
+
+We can get some pretty plots:
+
+>>> results.plot.residuals()
+
+>>> result = regression.score_estimator()
+[16:30:31] - Scoring model...
+[16:30:31] - LinearRegression - r2: 0.6844267283527068
+>>> print(result)
+<Result LinearRegression: r2: 0.68 >
+
+We can get some pretty plots:
+
+>>> results.plot.residuals()
+
+>>> result = regression.score_estimator()
 [16:30:31] - Scoring model...
 [16:30:31] - LinearRegression - r2: 0.6844267283527068
 >>> print(result)
@@ -65,7 +85,547 @@ We can get some pretty plots:
 We can save and load our model:
 
 >>> regression.save_model()
->>> my_new_model = BostonData.load_model('.')
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_model()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
+
+We can try out many different models:
+
+>>> from sklearn.linear_model import Ridge, LassoLars
+>>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+>>> best_model, all_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+[17:43:11] - Training model 1/3: LinearRegression
+[17:43:11] - Scoring model...
+[17:43:11] - LinearRegression - neg_mean_squared_error: -22.098694827098424
+[17:43:11] - Training model 2/3: Ridge
+[17:43:11] - Scoring model...
+[17:43:11] - Ridge - neg_mean_squared_error: -22.480475501233876
+[17:43:11] - Training model 3/3: LassoLars
+[17:43:11] - Scoring model...
+[17:43:11] - LassoLars - neg_mean_squared_error: -72.2607627995582
+[17:43:11] - Best model: LinearRegression - neg_mean_squared_error: -22.098694827098424
+>>> print(all_results)
+[<Result LinearRegression: neg_mean_squared_error: -22.1 >
+<Result Ridge: neg_mean_squared_error: -22.48 >
+<Result LassoLars: neg_mean_squared_error: -72.26 >]
+
+We get the results in sorted order for each model and see that LinearRegression gives us the best result!
+
+Continue to
+
+>>> regression.save_estimator()
+>>> my_new_model = BostonData.load_estimator('.')
 
 We can try out many different models:
 

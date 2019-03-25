@@ -13,7 +13,7 @@ Implements all the base functionality needed to create the wrapper
 
     .. automethod:: log(self, run_name)
 
-    .. automethod:: setup_model()
+    .. automethod:: setup_estimator()
 
 .. include:: config.inc.rst
 

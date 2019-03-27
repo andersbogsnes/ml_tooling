@@ -1,7 +1,7 @@
-from .log_model import log_model
+from .log_estimator import log_results
 from .logger import create_logger
 
 __all__ = [
-    'log_model',
+    'log_results',
     'create_logger'
 ]

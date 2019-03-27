@@ -15,7 +15,7 @@ from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 from ml_tooling.data import Data
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.logging.logger import create_logger
-from ml_tooling.logging.log_model import log_model
+from ml_tooling.logging.log_estimator import log_results
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.result import Result, CVResult, ResultGroup
 from ml_tooling.utils import (
@@ -119,7 +119,7 @@ class ModelData(metaclass=abc.ABCMeta):
         Given this extra setup, it becomes easy to load the untrained estimator to train it::
 
             estimator = BostonModel.setup_estimator()
-            estimator.train_model()
+            estimator.train_estimator()
 
 
         Returns
@@ -140,7 +140,7 @@ class ModelData(metaclass=abc.ABCMeta):
         """
         Instantiates the class with a joblib pickled estimator.
         If no path is given, searches path for the newest file that matches
-        the git hash and BaseClassModel name and loads that.
+        the git hash and ModelData name and loads that.
 
         Parameters
         ----------
@@ -150,9 +150,9 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Example
         -------
-        Having defined a BaseClassModel, we can load a trained estimator from disk::
+        Having defined ModelData, we can load a trained estimator from disk::
 
-            my_model = BostonData.load_estimator('path/to/estimator')
+            my_estimator = BostonData.load_estimator('path/to/estimator')
 
         We now have a trained estimator loaded.
 
@@ -162,7 +162,7 @@ class ModelData(metaclass=abc.ABCMeta):
         ModelData
             Instance of saved estimator
         """
-        path = cls.config.MODEL_DIR if path is None else pathlib.Path(path)
+        path = cls.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
         estimator_file = find_estimator_file(path)
         estimator = joblib.load(estimator_file)
         instance = cls(estimator)
@@ -240,7 +240,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         """
 
-        current_dir = self.config.MODEL_DIR if path is None else pathlib.Path(path)
+        current_dir = self.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
 
         logger.debug(f"Attempting to save estimator in {current_dir}")
         if not current_dir.exists():
@@ -261,11 +261,11 @@ class ModelData(metaclass=abc.ABCMeta):
 
             metric_scores = {self.result.metric: float(self.result.score)}
 
-            log_model(metric_scores=metric_scores,
-                      model_name=self.estimator_name,
-                      model_params=self.result.estimator_params,
-                      run_dir=self.config.RUN_DIR,
-                      model_path=str(estimator_file))
+            log_results(metric_scores=metric_scores,
+                        estimator_name=self.estimator_name,
+                        estimator_params=self.result.estimator_params,
+                        run_dir=self.config.RUN_DIR,
+                        estimator_path=str(estimator_file))
 
         logger.info(f"Saved estimator to {estimator_file}")
 
@@ -346,18 +346,18 @@ class ModelData(metaclass=abc.ABCMeta):
             self.config.REGRESSION_METRIC = metric
 
     @classmethod
-    def test_models(cls,
-                    estimators: Sequence,
-                    metric: Optional[str] = None,
-                    cv: Union[int, bool] = False,
-                    log_dir: str = None) -> Tuple['ModelData', ResultGroup]:
+    def test_estimators(cls,
+                        estimators: Sequence,
+                        metric: Optional[str] = None,
+                        cv: Union[int, bool] = False,
+                        log_dir: str = None) -> Tuple['ModelData', ResultGroup]:
         """
         Trains each estimator passed and returns a sorted list of results
 
         Parameters
         ----------
         estimators: Sequence
-            List of models to train
+            List of estimators to train
 
         metric: str, optional
             Metric to use in scoring of estimators
@@ -377,8 +377,8 @@ class ModelData(metaclass=abc.ABCMeta):
         for i, estimator in enumerate(estimators, start=1):
             logger.info(f"Training estimator {i}/{len(estimators)}: "
                         f"{_get_estimator_name(estimator)}")
-            challenger_model = cls(estimator)
-            result = challenger_model.score_estimator(metric=metric, cv=cv)
+            challenger_estimator = cls(estimator)
+            result = challenger_estimator.score_estimator(metric=metric, cv=cv)
             results.append(result)
             if log_dir:
                 result.log_estimator(log_dir)
@@ -391,7 +391,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return cls(best_estimator), ResultGroup(results)
 
-    def train_model(self) -> 'ModelData':
+    def train_estimator(self) -> 'ModelData':
         """Loads all training data and trains the estimator on all data.
         Typically used as the last step when estimator tuning is complete.
 

@@ -31,16 +31,22 @@ class CVResult(Result):
         """
         Output result as a DataFrame for ease of inspecting and manipulating.
         Defaults to including estimator params, which can be toggled with the params flag.
-        This is useful if you're comparing different models. Additionally includes
+        This is useful if you're comparing different estimators. Additionally includes
         the standard deviation of the score and number of cross validations.
 
-        If you want to inspect the cross-validated scores, toggle cross_val_score and the resulting
-        DataFrame will have one row per fold.
-        :param params:
-            Boolean - whether to include estimator parameters as columns in the DataFrame or not
-        :param cross_val_score:
-            Boolean - whether to have one row per fold in the DataFrame or not
-        :return:
+        If you want to inspect the cross-validated scores, set cross_val_score to True and
+        the resulting DataFrame will have one row per fold.
+
+        Parameters
+        -----------
+        params: bool
+            Whether to include estimator parameters as columns in the DataFrame or not
+        cross_val_score: bool
+            Whether to have one row per fold in the DataFrame or not
+
+        Returns
+        -------
+        pd.DataFrame
             DataFrame of results
         """
         df = super().to_dataframe(params).assign(cross_val_std=self.cross_val_std, cv=self.cv)

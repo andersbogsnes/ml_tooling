@@ -19,13 +19,13 @@ def _make_run_dir(run_dir: str) -> pathlib.Path:
     return path
 
 
-def log_model(metric_scores: dict,
-              model_name: str,
-              model_params: dict,
-              run_dir: Union[pathlib.Path, str],
-              model_path=None,
-              overwrite=False,
-              ):
+def log_results(metric_scores: dict,
+                estimator_name: str,
+                estimator_params: dict,
+                run_dir: Union[pathlib.Path, str],
+                estimator_path=None,
+                overwrite=False,
+                ):
     from ml_tooling import __version__ as ml_tools_version
     from sklearn import __version__ as sklearn_version
     from pandas import __version__ as pandas_version
@@ -35,26 +35,26 @@ def log_model(metric_scores: dict,
                 "pandas": pandas_version}
 
     data = {"time_created": datetime.now(),
-            "estimator_name": model_name,
+            "estimator_name": estimator_name,
             "versions": versions,
-            "params": model_params,
+            "params": estimator_params,
             "git_hash": get_git_hash(),
             "metrics": {k: float(v) for k, v in metric_scores.items()}
             }
 
-    if model_path:
-        data['model_path'] = str(model_path)
+    if estimator_path:
+        data['estimator_path'] = str(estimator_path)
 
     now = datetime.now()
     metrics = '_'.join([f'{k}_{v:.3f}' for k, v in metric_scores.items()])
     run_dir = pathlib.Path(run_dir)
 
     run_dir = _make_run_dir(run_dir.joinpath(now.strftime('%Y%m%d')))
-    output_file = f'{model_name}_{metrics}_{now.strftime("%H%M")}.yaml'
+    output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M")}.yaml'
     output_path = run_dir.joinpath(output_file)
 
     if output_path.exists() and not overwrite:
-        output_file = f'{model_name}_{metrics}_{now.strftime("%H%M%S")}.yaml'
+        output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M%S")}.yaml'
         output_path = output_path.with_name(output_file)
 
     with output_path.open(mode='w') as f:

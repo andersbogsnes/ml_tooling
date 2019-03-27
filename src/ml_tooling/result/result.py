@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.logging import log_model
+from ml_tooling.logging import log_results
 from ml_tooling.utils import _get_estimator_name
 
 
@@ -44,11 +44,11 @@ class Result:
 
     def log_estimator(self, run_dir):
         metric_score = {self.metric: float(self.score)}
-        return log_model(metric_scores=metric_score,
-                         model_name=self.estimator_name,
-                         model_params=self.estimator_params,
-                         run_dir=run_dir,
-                         )
+        return log_results(metric_scores=metric_score,
+                           estimator_name=self.estimator_name,
+                           estimator_params=self.estimator_params,
+                           run_dir=run_dir,
+                           )
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """

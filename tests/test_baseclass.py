@@ -43,7 +43,7 @@ class TestBaseClass:
         with pytest.raises(MLToolingError,
                            match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
-            model.train_model()
+            model.train_estimator()
             model.make_prediction(5, proba=True)
 
     @pytest.mark.parametrize('use_index, expected_index', [
@@ -74,7 +74,7 @@ class TestBaseClass:
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()
-        regression.train_model()
+        regression.train_estimator()
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
@@ -121,19 +121,19 @@ class TestBaseClass:
 
     def test_train_model_sets_result_to_none(self, regression):
         assert regression.result is not None
-        regression.train_model()
+        regression.train_estimator()
         assert regression.result is None
 
     def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
         model = base(pipeline_logistic)
-        model.train_model()
+        model.train_estimator()
         model.score_estimator()
 
         assert isinstance(model.result, Result)
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
-        best_model, results = base.test_models(models)
+        best_model, results = base.test_estimators(models)
         assert models[1] is best_model.estimator
         assert 2 == len(results)
         assert results[0].score >= results[1].score
@@ -143,7 +143,7 @@ class TestBaseClass:
     def test_model_selection_with_nonstandard_metric_works_as_expected(self, base):
         estimators = [LogisticRegression(solver='liblinear'),
                       RandomForestClassifier(n_estimators=10)]
-        best_estimator, results = base.test_models(estimators, metric='roc_auc')
+        best_estimator, results = base.test_estimators(estimators, metric='roc_auc')
         for result in results:
             assert result.metric == 'roc_auc'
 
@@ -152,7 +152,7 @@ class TestBaseClass:
                                                              pipeline_logistic,
                                                              pipeline_dummy_classifier):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
-        best_estimator, results = base.test_models(estimators)
+        best_estimator, results = base.test_estimators(estimators)
 
         for result in results:
             assert result.estimator_name == result.estimator.steps[-1][1].__class__.__name__
@@ -193,7 +193,7 @@ class TestBaseClass:
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
         save_dir = tmpdir.mkdir('estimator')
         model = base(pipeline_logistic)
-        model.train_model()
+        model.train_estimator()
         model.save_estimator(save_dir)
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
@@ -301,9 +301,9 @@ class TestBaseClass:
             assert result.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(self, tmpdir, base):
-        test_models_log = tmpdir.mkdir('test_models')
-        base.test_models([RandomForestClassifier(n_estimators=10), DummyClassifier()],
-                         log_dir=test_models_log)
+        test_models_log = tmpdir.mkdir('test_estimators')
+        base.test_estimators([RandomForestClassifier(n_estimators=10), DummyClassifier()],
+                             log_dir=test_models_log)
 
         for file in test_models_log.visit('*.yaml'):
             with open(file) as f:
@@ -318,7 +318,7 @@ class TestBaseClass:
         model = base(pipeline_logistic)
         with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(tmpdir):
-                model.train_model()
+                model.train_estimator()
                 model.save_estimator(tmpdir)
 
     def test_models_share_data(self):

@@ -35,13 +35,13 @@ Your subclass must define two methods:
 Define a class using ModelData and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression, Ridge, LassoLars
 
 # Define a new class
 
-class BostonModel(BaseClassModel):
+class BostonModel(ModelData):
     def get_prediction_data(self, idx):
         x, _ = load_boston(return_X_y=True)
         return x[idx] # Return given observation
@@ -49,7 +49,7 @@ class BostonModel(BaseClassModel):
     def get_training_data(self):
         return load_boston(return_X_y=True)
     
-estimator
+# Use our new class to implement a given sklearn compatible estimator
 linear_boston = BostonModel(LinearRegression())
 
 results = linear_boston.score_estimator()
@@ -58,17 +58,17 @@ results = linear_boston.score_estimator()
 results.plot.residuals()
 results.plot.prediction_error()
 
-estimator
+# Save estimator
 linear_boston.save_estimator()
 
-estimator
+# Recreate estimator
 BostonModel.load_estimator('.')
 
 # Train Different models and get the best performing
-models_to_try = [LinearRegression(), Ridge(), LassoLars()]
+estimators_to_try = [LinearRegression(), Ridge(), LassoLars()]
 
-estimator
-best_model, alL_results = BostonModel.test_models(models_to_try, metric='neg_mean_squared_error')
+# best_estimator will be BostonModel instantiated with the highest scoring model. all_results is a list of all results 
+best_estimator, alL_results = BostonModel.test_estimators(estimators_to_try, metric='neg_mean_squared_error')
 alL_results.to_dataframe(params=False)
 
 ```
@@ -124,7 +124,7 @@ Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
 Defaults to non-cross-validated scoring. If you want to cross-validate, pass number of folds to cv
 
-### `train_model()`
+### `train_estimator()`
 Loads all training data and trains the model on all data. 
 Typically used as the last step when model tuning is complete.
 Sets .result attribute to None
@@ -135,7 +135,7 @@ Makes a prediction given an input. For example a customer number.
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
    
 
-### `test_models([model1, model2], metric='accuracy')`
+### `test_estimators([model1, model2], metric='accuracy')`
 Runs `score_estimator()` on each model, saving the result.
 Returns the best model as well as a ResultGroup of all results
 
@@ -149,14 +149,14 @@ Typically this would setup a pipeline and the selected model for easy training
 
 Returning to our previous example of the BostonModel, let us implement a setup_estimator method
 ```python
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 import pandas as pd
 
-class BostonModel(BaseClassModel):
+class BostonModel(ModelData):
     def get_prediction_data(self, idx):
         data = load_boston()
         df = pd.DataFrame(data=data.data, columns=data.feature_names)
@@ -178,7 +178,7 @@ class BostonModel(BaseClassModel):
 Given this extra setup, it becomes easy to load the untrained model to train it:
 ```python
 model = BostonModel.setup_estimator()
-model.train_model()
+model.train_estimator()
 ```
 
 
@@ -222,34 +222,53 @@ plot_confusion_matrix(y_true, y_pred)
 
 ### Classifiers
    
-- `roc_curve(**kwargs)`:<br />  Visualize a ROC curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib. <br /> <br />
-- `pr_curve(**kwargs)`:<br />  Visualize a Precision-Recall curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib. <br /> <br />
-- `confusion_matrix(normalized = True, **kwargs)`: 
-Visualize a confusion matrix for a classification model. `normalized` determines whether or not to normalize annotated class counts. Any kwargs are passed onto matplotlib.  <br /> <br />
-- `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:<br /> Calculates each features imporatance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set. <br /> <br />
-If `samples=None` the original data set is used which is not recommended for small data sets. <br /> <br />
-If `samples` is a `float` between 0 and 1 a new smaller data set is made from resampling with replacement form the original data set. This is not recommended for small data sets but could be suitable for very large data sets. <br /> <br />
-If  `samples` is set to an `int` a new  data set of size `samples` is made from resampling with replacement form the original data. Recommended for small data sets to ensure stable estimates of feature importance.  <br /> <br />
-If `top_n` is an `integer`, return `top_n` features and if `top_n` is a `float` between `(0, 1)`, return `top_n` percent features. <br /> <br /> If `bottom_n` is an `integer`, return `bottom_n` features and if `bottom_n` is a `float` between `(0, 1)`, return `bottom_n` percent features. <br /> <br />
-Setting `n_jobs_overwrite` to an `int` overwrites the settings of the model settings. <br />
+- `roc_curve(**kwargs)`:
 
-- `lift_curve(**kwargs)`: <br />
-Visualize a Lift Curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
+    Visualize a ROC curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
+- `pr_curve(**kwargs)`: 
+    
+    Visualize a Precision-Recall curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
+
+- `confusion_matrix(normalized = True, **kwargs)`: 
+    
+    Visualize a confusion matrix for a classification model. `normalized` determines whether or not to normalize annotated class counts. Any kwargs are passed onto matplotlib.
+
+- `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:
+
+    Calculates each features importance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set
+    If `samples=None` the original data set is used which is not recommended for small data sets.
+    If `samples` is a `float` between 0 and 1 a new smaller data set is made from resampling with replacement form the original data set. This is not recommended for small data sets but could be suitable for very large data sets.
+    If  `samples` is set to an `int` a new  data set of size `samples` is made from resampling with replacement form the original data. Recommended for small data sets to ensure stable estimates of feature importance.
+    If `top_n` is an `integer`, return `top_n` features and if `top_n` is a `float` between `(0, 1)`, return `top_n` percent features. If `bottom_n` is an `integer`, return `bottom_n` features and if `bottom_n` is a `float` between `(0, 1)`, return `bottom_n` percent features.
+    Setting `n_jobs_overwrite` to an `int` overwrites the settings of the model settings.
+
+- `lift_curve(**kwargs)`:
+
+    Visualize a Lift Curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
 
 ### Regressors
    
-- `prediction_error(**kwargs)`:<br /> 
-Visualizes prediction error of a regression model. Any kwargs are passed onto matplotlib.
- <br /> <br />
-- `residuals(**kwargs)`: <br /> 
-Visualizes residuals of a regression model. Any kwargs are passed onto matplotlib.
- <br /> <br />
-- `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:<br /> Calculates each features imporatance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set. <br /> <br />
-If `samples=None` the original data set is used which is not recommended for small data sets. <br /> <br />
-If `samples` is a `float` between 0 and 1 a new smaller data set is made from resampling with replacement form the original data set. This is not recommended for small data sets but could be suitable for very large data sets. <br /> <br />
-If  `samples` is set to an `int` a new  data set of size `samples` is made from resampling with replacement form the original data. Recommended for small data sets to ensure stable estimates of feature importance.  <br /> <br />
-If `top_n` is an `integer`, return `top_n` features and if `top_n` is a `float` between `(0, 1)`, return `top_n` percent features. <br /> <br /> If `bottom_n` is an `integer`, return `bottom_n` features and if `bottom_n` is a `float` between `(0, 1)`, return `bottom_n` percent features. <br /> <br />
-Setting `n_jobs_overwrite` to an `int` overwrites the settings of the model settings. <br />
+- `prediction_error(**kwargs)`: 
+
+    Visualizes prediction error of a regression model. Any kwargs are passed onto matplotlib.
+
+- `residuals(**kwargs)`: 
+ 
+    Visualizes residuals of a regression model. Any kwargs are passed onto matplotlib.
+ 
+- `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:
+
+    Calculates each features imporatance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set.
+    
+    If `samples=None` the original data set is used which is not recommended for small data sets.
+    
+    If `samples` is a `float` between 0 and 1 a new smaller data set is made from resampling with replacement form the original data set. This is not recommended for small data sets but could be suitable for very large data sets.
+    
+    If  `samples` is set to an `int` a new  data set of size `samples` is made from resampling with replacement form the original data. Recommended for small data sets to ensure stable estimates of feature importance.
+    
+    If `top_n` is an `integer`, return `top_n` features and if `top_n` is a `float` between `(0, 1)`, return `top_n` percent features. If `bottom_n` is an `integer`, return `bottom_n` features and if `bottom_n` is a `float` between `(0, 1)`, return `bottom_n` percent features.
+    
+    Setting `n_jobs_overwrite` to an `int` overwrites the settings of the model settings.
 
 # Transformers
 The library also provides a number of transformers for working with DataFrames in a pipeline

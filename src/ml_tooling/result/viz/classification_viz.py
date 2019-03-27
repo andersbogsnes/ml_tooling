@@ -82,7 +82,7 @@ class ClassificationVisualize(BaseVisualize):
         """
 
         if not hasattr(self._estimator, 'predict_proba'):
-            raise VizError("Model must provide a 'predict_proba' method")
+            raise VizError("Estimator must provide a 'predict_proba' method")
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f'Precision-Recall - {self._estimator_name}'

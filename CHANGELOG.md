@@ -1,5 +1,6 @@
 # v0.7.0
-- Internal refactor - shouldn't impact endusers
+- Breaking change - BaseClassModel renamed to ModelData.
+- Breaking change - model renamed to estimator
 - Added Precision-Recall Curve
 - Added option to give custom file name to .save_estimator()
 

@@ -51,5 +51,5 @@ All configuration options available
     :attr:`LOG` = False
 
     Toggles whether or not to log runs to a file. Set to True if you
-    want every run to be logged, else use the :meth:`~ml_tooling.baseclass.BaseClassModel.log`
+    want every run to be logged, else use the :meth:`~ml_tooling.baseclass.ModelData.log`
     context manager

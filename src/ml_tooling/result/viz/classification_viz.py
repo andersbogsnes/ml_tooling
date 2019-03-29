@@ -12,7 +12,7 @@ class ClassificationVisualize(BaseVisualize):
 
     def confusion_matrix(self, normalized: bool = True, **kwargs) -> plt.Axes:
         """
-        Visualize a confusion matrix for a classification model
+        Visualize a confusion matrix for a classification estimator
         Any kwargs are passed onto matplotlib
 
         Parameters
@@ -27,32 +27,32 @@ class ClassificationVisualize(BaseVisualize):
         """
 
         with plt.style.context(self._config.STYLE_SHEET):
-            title = f'Confusion Matrix - {self._model_name}'
-            y_pred = self._model.predict(self._data.test_x)
+            title = f'Confusion Matrix - {self._estimator_name}'
+            y_pred = self._estimator.predict(self._data.test_x)
             return plot_confusion_matrix(self._data.test_y, y_pred, normalized, title, **kwargs)
 
     def roc_curve(self, **kwargs) -> plt.Axes:
         """
-        Visualize a ROC curve for a classification model.
-        Model must implement a `predict_proba` method
+        Visualize a ROC curve for a classification estimator.
+        Estimator must implement a `predict_proba` method
         Any kwargs are passed onto matplotlib
 
         Returns
         -------
         matplotlib.Axes
         """
-        if not hasattr(self._model, 'predict_proba'):
+        if not hasattr(self._estimator, 'predict_proba'):
             raise VizError("Model must provide a 'predict_proba' method")
 
         with plt.style.context(self._config.STYLE_SHEET):
-            title = f'ROC AUC - {self._model_name}'
-            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            title = f'ROC AUC - {self._estimator_name}'
+            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
             return plot_roc_auc(self._data.test_y, y_proba, title=title, **kwargs)
 
     def lift_curve(self, **kwargs) -> plt.Axes:
         """
-        Visualize a Lift Curve for a classification model
-        Model must implement a `predict_proba` method
+        Visualize a Lift Curve for a classification estimator
+        Estimator must implement a `predict_proba` method
         Any kwargs are passed onto matplotlib
 
         Returns
@@ -60,13 +60,13 @@ class ClassificationVisualize(BaseVisualize):
         matplotlib.Axes
         """
         with plt.style.context(self._config.STYLE_SHEET):
-            title = f'Lift Curve - {self._model_name}'
-            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            title = f'Lift Curve - {self._estimator_name}'
+            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
             return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)
 
     def pr_curve(self, **kwargs) -> plt.Axes:
         """
-        Visualize a Precision-Recall curve for a classification model.
+        Visualize a Precision-Recall curve for a classification estimator.
         Estimator must implement a `predict_proba` method.
         Any kwargs are passed onto matplotlib.
 
@@ -81,10 +81,10 @@ class ClassificationVisualize(BaseVisualize):
             Plot of precision-recall curve
         """
 
-        if not hasattr(self._model, 'predict_proba'):
-            raise VizError("Model must provide a 'predict_proba' method")
+        if not hasattr(self._estimator, 'predict_proba'):
+            raise VizError("Estimator must provide a 'predict_proba' method")
 
         with plt.style.context(self._config.STYLE_SHEET):
-            title = f'Precision-Recall - {self._model_name}'
-            y_proba = self._model.predict_proba(self._data.test_x)[:, 1]
+            title = f'Precision-Recall - {self._estimator_name}'
+            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
             return plot_pr_curve(self._data.test_y, y_proba, title=title, **kwargs)

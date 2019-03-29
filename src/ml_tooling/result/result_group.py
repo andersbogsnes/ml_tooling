@@ -35,9 +35,9 @@ class ResultGroup:
         results = '\n'.join([str(result) for result in self.results])
         return f"[{results}]"
 
-    def log_model(self, log_dir):
+    def log_estimator(self, log_dir):
         for result in self.results:
-            result.log_model(log_dir)
+            result.log_estimator(log_dir)
 
     def mean_score(self):
         """
@@ -49,7 +49,7 @@ class ResultGroup:
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """
         Outputs results as a DataFrame. By default, the DataFrame will contain
-        all possible model parameters. This behaviour can be toggled using `params=False`
+        all possible estimator parameters. This behaviour can be toggled using `params=False`
 
         :param params:
             Boolean toggling whether or not to output params as part of the DataFrame

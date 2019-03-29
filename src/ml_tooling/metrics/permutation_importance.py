@@ -10,7 +10,7 @@ from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.utils import MLToolingError, get_scoring_func
 
 
-def _get_column_importance(model,
+def _get_column_importance(estimator,
                            scorer,
                            x,
                            y,
@@ -22,7 +22,7 @@ def _get_column_importance(model,
 
     Parameters
     ----------
-    model :
+    estimator :
         a trained estimator exposing a predict or predict_proba method depending on the metric
 
     scorer : _ThresholdScorer or _PredictScorer
@@ -48,13 +48,13 @@ def _get_column_importance(model,
         random_state = check_random_state(seed=seed)
         save = x[col].copy()
         x[col] = random_state.permutation(x[col])
-    measure = scorer(model, x, y)
+    measure = scorer(estimator, x, y)
     if col:
         x[col] = save
     return measure
 
 
-def _permutation_importances(model,
+def _permutation_importances(estimator,
                              scorer,
                              x,
                              y,
@@ -64,12 +64,12 @@ def _permutation_importances(model,
                              verbose=0):
     """
     Uses random permutation to calculate feature importance.
-    By randomly permuting each column and measuring the difference in the model metric
+    By randomly permuting each column and measuring the difference in the estimator metric
     against the baseline.
 
     Parameters
     ----------
-    model :
+    estimator :
         a trained estimator exposing a predict or predict_proba method depending on the metric
 
     scorer : _ThresholdScorer or _PredictScorer
@@ -108,7 +108,7 @@ def _permutation_importances(model,
     random_state = check_random_state(seed=seed)
     x = x.copy()
     y = y.copy()
-    model = deepcopy(model)
+    estimator = deepcopy(estimator)
 
     if samples is not None and \
             not (isinstance(samples, int) and samples > 0) and \
@@ -125,7 +125,7 @@ def _permutation_importances(model,
     cols = [None] + x.columns.tolist()
 
     measure = Parallel(n_jobs=n_jobs, verbose=verbose, max_nbytes=None)(
-        delayed(_get_column_importance)(model, scorer, x, y, col_seed, col) for col, col_seed in
+        delayed(_get_column_importance)(estimator, scorer, x, y, col_seed, col) for col, col_seed in
         zip(cols, col_seeds))
 
     baseline = measure[0]
@@ -168,12 +168,12 @@ def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.
         Baseline score without permutation
 
     """
-    model = viz._model
+    estimator = viz._estimator
     scorer = get_scoring_func(viz.default_metric)
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return _permutation_importances(model,
+    return _permutation_importances(estimator,
                                     scorer,
                                     train_x,
                                     train_y,

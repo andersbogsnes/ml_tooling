@@ -12,7 +12,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.transformers import DFStandardScaler
 
 logging.disable(logging.CRITICAL)
@@ -25,7 +25,7 @@ def random():
 
 
 # noinspection PyAbstractClass
-class IrisModel(BaseClassModel):
+class IrisModel(ModelData):
     def get_prediction_data(self, idx):
         data = load_iris()
         df = pd.DataFrame(data.data, columns=data.feature_names)
@@ -87,28 +87,28 @@ def dates_data():
 @pytest.fixture(name='regression')
 def _linear_regression(base):
     model = base(LinearRegression())
-    model.score_model()
+    model.score_estimator()
     return model
 
 
 @pytest.fixture(name='regression_cv')
 def _linear_regression_cv(base):
     model = base(LinearRegression())
-    model.score_model(cv=2)
+    model.score_estimator(cv=2)
     return model
 
 
 @pytest.fixture(name='classifier')
 def _logistic_regression(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.score_model()
+    model.score_estimator()
     return model
 
 
 @pytest.fixture(name='classifier_cv')
 def _logistic_regression_cv(base):
     model = base(LogisticRegression(solver='liblinear'))
-    model.score_model(cv=2)
+    model.score_estimator(cv=2)
     return model
 
 

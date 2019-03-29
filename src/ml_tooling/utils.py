@@ -55,11 +55,11 @@ def get_git_hash() -> str:
     return repo.head.object.hexsha
 
 
-def find_model_file(path: str) -> pathlib.Path:
+def find_estimator_file(path: str) -> pathlib.Path:
     """
-    Helper to find a model file in a given directory.
-    If path is a directory - returns newest model that matches the git hash
-    :param path: dir or path to model
+    Helper to find a estimator file in a given directory.
+    If path is a directory - returns newest estimator that matches the git hash
+    :param path: dir or path to estimator
     :return:
     """
     path = pathlib.Path(path)
@@ -77,9 +77,9 @@ def find_model_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def _get_model_name(clf) -> str:
+def _get_estimator_name(clf) -> str:
     """
-    Returns model name based on class name. If passed classifier is a Pipeline,
+    Returns estimator name based on class name. If passed classifier is a Pipeline,
     assume last step is the estimator and return that classes name
     :param clf: sklearn-compatible estimator
     :return:
@@ -129,9 +129,9 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     return ParameterGrid(step_dict)
 
 
-def _validate_model(model):
+def _validate_estimator(model):
     """
-    Ensures that model runs
+    Ensures that estimator runs
     :param model:
     :return:
     """

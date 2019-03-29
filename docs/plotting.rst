@@ -10,14 +10,14 @@ That object has number of visualization options depending on the type of model.
 To use the visualizations, access them using the `.plot` accessor on the
 :class:`~ml_tooling.result.Result` object::
 
->> result = model.score_model()
+>> result = model.score_estimator()
 >> result.plot.residuals()
 
 .. figure:: plots/residualplot.png
 
 Any visualizer listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
-the ml_tooling BaseClassModel approach, you can instead do::
+the ml_tooling ModelData approach, you can instead do::
 
     from ml_tooling.plots import plot_confusion_matrix
 

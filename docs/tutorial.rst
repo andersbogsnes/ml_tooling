@@ -7,6 +7,26 @@ Let's go through a more involved example from start to end reusing our Boston Ho
 
 We start with our normal imports
 
+>>> from ml_tooling import ModelData
+>>> from sklearn.datasets import load_boston
+>>> from sklearn.preprocessing import StandardScaler
+>>> from sklearn.pipeline import Pipeline
+>>> from sklearn.linear_model import LinearRegression, Ridge,
+
+Continue to
+
+We start with our normal imports
+
+>>> from ml_tooling import ModelData
+>>> from sklearn.datasets import load_boston
+>>> from sklearn.preprocessing import StandardScaler
+>>> from sklearn.pipeline import Pipeline
+>>> from sklearn.linear_model import LinearRegression, Ridge,
+
+Continue to
+
+We start with our normal imports
+
 >>> from ml_tooling import BaseClassModel
 >>> from sklearn.datasets import load_boston
 >>> from sklearn.preprocessing import StandardScaler

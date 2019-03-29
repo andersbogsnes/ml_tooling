@@ -22,7 +22,7 @@ def plot_confusion_matrix(y_true: DataType,
         True labels
 
     :param y_pred:
-        Predicted labels from model
+        Predicted labels from estimator
 
     :param normalized:
         Whether to normalize counts in matrix

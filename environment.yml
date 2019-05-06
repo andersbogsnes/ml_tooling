@@ -3,17 +3,12 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.6*
-  - matplotlib=3.0*
-  - pandas=0.23*
-  - pytest=3.9*
-  - pytest-cov=2.6*
-  - scikit-learn=0.20*
-  - scipy=1.1*
-  - numpy=1.15*
-  - matplotlib=3.0*
-  - gitpython=2.1*
-  - flake8=3.6*
-  - tox=3.5*
-  - pyyaml=3.13
-
+  - pandas=0.24.2
+  - numpy=1.16.3
+  - scikit-learn=0.20.3
+  - matplotlib=3.0.3
+  - gitpython=2.1.11
+  - pyyaml=5.1
+  - pytest=4.4.1
+  - pytest-cov=2.7.1
+  - flake8=3.7.7

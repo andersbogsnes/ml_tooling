@@ -47,6 +47,46 @@ class ModelData(metaclass=abc.ABCMeta):
         self.result = None
         self._plotter = None
 
+        if estimator is not None:
+            self.init_estimator(estimator)
+
+    def init_estimator(self, estimator):
+        """
+        Load an estimator after instantiating a ModelData object.
+
+        Example
+        --------
+        .. codeblock:: python
+            from ml_tooling import ModelData
+            from sklearn.linear_model import LinearRegression
+            from sklearn.datasets import load_boston
+            import pandas as pd
+
+            class BostonData(ModelData):
+                def get_training_data(self) -> Tuple[DataType, DataType]:
+                    data = load_boston()
+                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
+
+                def get_prediction_data(self, *args, **kwargs) -> DataType:
+                    pass
+
+            boston = BostonData()
+            boston.init_estimator(LinearRegression())
+            boston.score_model()
+
+        Parameters
+        ----------
+        estimator: sklearn.Estimator
+            A scikit-learn compatible estimator
+
+        Returns
+        -------
+        None
+
+        """
+        self.estimator = _validate_estimator(estimator)
+        self.estimator_name = _get_estimator_name(estimator)
+
         if self.estimator._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
 

@@ -15,6 +15,21 @@ from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+    def test_ModelData_can_be_instantiated_without_a_model(self, base):
+        no_estimator = base()
+
+        assert no_estimator.estimator is None
+        assert no_estimator._plotter is None
+
+    def test_ModelData_init_estimator_works_as_expected(self, base):
+        no_estimator = base()
+
+        assert no_estimator.estimator is None
+
+        estimator = RandomForestClassifier()
+        no_estimator.init_estimator(estimator)
+
+        assert no_estimator.estimator is estimator
 
     def test_class_name_property_returns_class_name(self, regression):
         reg = regression

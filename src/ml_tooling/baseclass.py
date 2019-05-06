@@ -41,9 +41,9 @@ class ModelData(metaclass=abc.ABCMeta):
     _data = None
     config = ConfigGetter()
 
-    def __init__(self, model):
-        self.estimator = _validate_estimator(model)
-        self.estimator_name = _get_estimator_name(model)
+    def __init__(self, estimator=None):
+        self.estimator = None
+        self.estimator_name = None
         self.result = None
         self._plotter = None
 

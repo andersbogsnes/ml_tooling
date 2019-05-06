@@ -280,6 +280,10 @@ class ModelData(metaclass=abc.ABCMeta):
 
         """
 
+        if self.estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+
         current_dir = self.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
 
         logger.debug(f"Attempting to save estimator in {current_dir}")
@@ -357,7 +361,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         except NotFittedError:
             message = f"You haven't fitted the estimator. Call 'train_estimator' " \
-                      f"or 'score_estimator' first"
+                f"or 'score_estimator' first"
             raise MLToolingError(message) from None
 
     @property
@@ -445,6 +449,10 @@ class ModelData(metaclass=abc.ABCMeta):
             Returns an estimator trained on all the data, with no train-test split
 
         """
+        if self.estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+
         logger.info("Training estimator...")
         self.estimator.fit(self.data.x, self.data.y)
         self.result = None  # Prevent confusion, as train_estimator does not return a result
@@ -473,6 +481,10 @@ class ModelData(metaclass=abc.ABCMeta):
         Result
             A Result object that contains the results of the scoring
         """
+        if self.estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring estimator...")
         self.estimator.fit(self.data.train_x, self.data.train_y)
@@ -522,6 +534,10 @@ class ModelData(metaclass=abc.ABCMeta):
         result_group: ResultGroup
             ResultGroup object containing each individual score
         """
+
+        if self.estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
 
         baseline_estimator = clone(self.estimator)
         train_x, train_y = self.data.train_x, self.data.train_y

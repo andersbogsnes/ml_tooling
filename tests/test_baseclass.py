@@ -381,3 +381,27 @@ class TestBaseClass:
 
         pd.testing.assert_frame_equal(cl1.data.x, pd_df1)
         pd.testing.assert_frame_equal(cl2.data.x, pd_df2)
+
+    def test_scoring_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.score_estimator()
+
+    def test_training_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.train_estimator()
+
+    def test_gridsearching_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.gridsearch({'some_params': [1, 2, 3]})
+
+    def test_saving_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.save_estimator()

@@ -56,7 +56,8 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Example
         --------
-        .. codeblock:: python
+        .. code-block:: python
+
             from ml_tooling import ModelData
             from sklearn.linear_model import LinearRegression
             from sklearn.datasets import load_boston
@@ -258,19 +259,15 @@ class ModelData(metaclass=abc.ABCMeta):
         Example
         -------
 
-        If we have trained a
-         estimator and we want to save it to disk we can write::
-
+        If we have trained an estimator and we want to save it to disk we can write::
 
             estimator.save('path/to/folder')
 
         to save in a given folder, otherwise::
 
-
             estimator.save()
 
-        will save the
-         estimator in the current directory
+        will save the estimator in the current directory
 
         Returns
         -------

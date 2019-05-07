@@ -42,13 +42,28 @@ class ModelData(metaclass=abc.ABCMeta):
     config = ConfigGetter()
 
     def __init__(self, estimator=None):
-        self.estimator = None
+        self._estimator = estimator
         self.estimator_name = None
         self.result = None
         self._plotter = None
 
         if estimator is not None:
             self.init_estimator(estimator)
+
+    @property
+    def estimator(self):
+        return self._estimator
+
+    @estimator.getter
+    def estimator(self):
+        if self._estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, estimator):
+        self._estimator = estimator
 
     def init_estimator(self, estimator):
         """

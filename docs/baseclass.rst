@@ -50,6 +50,15 @@ In this example, we implement a linear regression on the Boston dataset using sk
     # Now we can instantiate our DataModel with our estimator
     linear_boston = BostonData(LinearRegression())
 
+You can also instantiate a `BostonData` model without an estimator, but before you can use it
+to do any estimation, you need to use the :meth:`~ModelData.init_estimator` to set an estimator.
+
+.. code-block:: python
+
+    boston = BostonData()
+    boston.init_estimator(LinearRegression())
+
+
 Configuration
 -------------
 

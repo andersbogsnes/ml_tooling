@@ -12,11 +12,11 @@ from sklearn.pipeline import Pipeline
 DataType = Union[pd.DataFrame, np.ndarray]
 
 
-class MLToolingError(BaseException):
+class MLToolingError(Exception):
     """Error which occurs when using the library"""
 
 
-class TransformerError(BaseException):
+class TransformerError(Exception):
     """Error which occurs during a transform"""
 
 

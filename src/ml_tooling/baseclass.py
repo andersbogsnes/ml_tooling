@@ -52,10 +52,6 @@ class ModelData(metaclass=abc.ABCMeta):
 
     @property
     def estimator(self):
-        return self._estimator
-
-    @estimator.getter
-    def estimator(self):
         if self._estimator is None:
             raise MLToolingError('No estimator selected. '
                                  'Use .init_estimator to set an estimator')

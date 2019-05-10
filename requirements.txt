@@ -1,5 +1,5 @@
-scikit-learn[alldeps]==0.20.3
 pytest==4.4.2
+scikit-learn[alldeps]==0.21.0
 pandas==0.24.2
 pytest-cov==2.7.1
 flake8==3.7.7

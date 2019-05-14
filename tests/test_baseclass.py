@@ -15,6 +15,26 @@ from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+    def test_ModelData_can_be_instantiated_without_a_model(self, base):
+        no_estimator = base()
+
+        assert no_estimator._estimator is None
+        assert no_estimator._plotter is None
+
+    def test_ModelData_init_estimator_works_as_expected(self, base):
+        no_estimator = base()
+
+        assert no_estimator._estimator is None
+
+        estimator = RandomForestClassifier()
+        no_estimator.init_estimator(estimator)
+
+        assert no_estimator.estimator is estimator
+
+    def test_ModelData_raises_when_accessing_estimator(self, base):
+        no_estimator = base()
+        with pytest.raises(MLToolingError, match='No estimator selected'):
+            no_estimator.estimator
 
     def test_class_name_property_returns_class_name(self, regression):
         reg = regression
@@ -366,3 +386,27 @@ class TestBaseClass:
 
         pd.testing.assert_frame_equal(cl1.data.x, pd_df1)
         pd.testing.assert_frame_equal(cl2.data.x, pd_df2)
+
+    def test_scoring_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.score_estimator()
+
+    def test_training_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.train_estimator()
+
+    def test_gridsearching_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.gridsearch({'some_params': [1, 2, 3]})
+
+    def test_saving_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.save_estimator()

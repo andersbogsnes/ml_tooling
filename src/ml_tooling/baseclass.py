@@ -41,11 +41,63 @@ class ModelData(metaclass=abc.ABCMeta):
     _data = None
     config = ConfigGetter()
 
-    def __init__(self, model):
-        self.estimator = _validate_estimator(model)
-        self.estimator_name = _get_estimator_name(model)
+    def __init__(self, estimator=None):
+        self._estimator = estimator
+        self.estimator_name = None
         self.result = None
         self._plotter = None
+
+        if estimator is not None:
+            self.init_estimator(estimator)
+
+    @property
+    def estimator(self):
+        if self._estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, estimator):
+        self._estimator = estimator
+
+    def init_estimator(self, estimator):
+        """
+        Load an estimator after instantiating a ModelData object.
+
+        Example
+        --------
+        .. code-block:: python
+
+            from ml_tooling import ModelData
+            from sklearn.linear_model import LinearRegression
+            from sklearn.datasets import load_boston
+            import pandas as pd
+
+            class BostonData(ModelData):
+                def get_training_data(self) -> Tuple[DataType, DataType]:
+                    data = load_boston()
+                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
+
+                def get_prediction_data(self, *args, **kwargs) -> DataType:
+                    pass
+
+            boston = BostonData()
+            boston.init_estimator(LinearRegression())
+            boston.score_model()
+
+        Parameters
+        ----------
+        estimator: sklearn.Estimator
+            A scikit-learn compatible estimator
+
+        Returns
+        -------
+        None
+
+        """
+        self.estimator = _validate_estimator(estimator)
+        self.estimator_name = _get_estimator_name(estimator)
 
         if self.estimator._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
@@ -218,19 +270,15 @@ class ModelData(metaclass=abc.ABCMeta):
         Example
         -------
 
-        If we have trained a
-         estimator and we want to save it to disk we can write::
-
+        If we have trained an estimator and we want to save it to disk we can write::
 
             estimator.save('path/to/folder')
 
         to save in a given folder, otherwise::
 
-
             estimator.save()
 
-        will save the
-         estimator in the current directory
+        will save the estimator in the current directory
 
         Returns
         -------
@@ -317,7 +365,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         except NotFittedError:
             message = f"You haven't fitted the estimator. Call 'train_estimator' " \
-                      f"or 'score_estimator' first"
+                f"or 'score_estimator' first"
             raise MLToolingError(message) from None
 
     @property

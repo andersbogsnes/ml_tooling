@@ -4,6 +4,7 @@
 - Added Precision-Recall Curve
 - Added option to give custom file name to .save_estimator()
 - Instantiating with estimator is now optional - set estimator later using .init_estimator
+- We have a logo! Added ML Tooling logo to docs
 
 # v0.6.2
 ## Bugfixes

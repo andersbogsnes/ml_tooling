@@ -1,9 +1,9 @@
 import abc
 import pathlib
 from contextlib import contextmanager
+from itertools import product
 from typing import Tuple, Optional, Sequence, Union, Any
 
-from itertools import product
 import numpy as np
 import pandas as pd
 from sklearn import clone
@@ -12,27 +12,27 @@ from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from .logging import create_logger, log_model
-from .utils import _validate_model
-from .config import DefaultConfig, ConfigGetter
-
-from .result import RegressionVisualize, ClassificationVisualize
-from .result import Result, CVResult, ResultGroup
-from .utils import (
+from ml_tooling.data import Data
+from ml_tooling.config import DefaultConfig, ConfigGetter
+from ml_tooling.logging.logger import create_logger
+from ml_tooling.logging.log_estimator import log_results
+from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.result import Result, CVResult, ResultGroup
+from ml_tooling.utils import (
     MLToolingError,
-    _get_model_name,
+    _get_estimator_name,
     get_git_hash,
     DataType,
-    find_model_file,
-    Data,
+    find_estimator_file,
     get_scoring_func,
-    _create_param_grid
+    _create_param_grid,
+    _validate_estimator
 )
 
 logger = create_logger('ml_tooling')
 
 
-class BaseClassModel(metaclass=abc.ABCMeta):
+class ModelData(metaclass=abc.ABCMeta):
     """
     Base class for Models
     """
@@ -41,16 +41,68 @@ class BaseClassModel(metaclass=abc.ABCMeta):
     _data = None
     config = ConfigGetter()
 
-    def __init__(self, model):
-        self.model = _validate_model(model)
-        self.model_name = _get_model_name(model)
+    def __init__(self, estimator=None):
+        self._estimator = estimator
+        self.estimator_name = None
         self.result = None
         self._plotter = None
 
-        if self.model._estimator_type == 'classifier':
+        if estimator is not None:
+            self.init_estimator(estimator)
+
+    @property
+    def estimator(self):
+        if self._estimator is None:
+            raise MLToolingError('No estimator selected. '
+                                 'Use .init_estimator to set an estimator')
+        return self._estimator
+
+    @estimator.setter
+    def estimator(self, estimator):
+        self._estimator = estimator
+
+    def init_estimator(self, estimator):
+        """
+        Load an estimator after instantiating a ModelData object.
+
+        Example
+        --------
+        .. code-block:: python
+
+            from ml_tooling import ModelData
+            from sklearn.linear_model import LinearRegression
+            from sklearn.datasets import load_boston
+            import pandas as pd
+
+            class BostonData(ModelData):
+                def get_training_data(self) -> Tuple[DataType, DataType]:
+                    data = load_boston()
+                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
+
+                def get_prediction_data(self, *args, **kwargs) -> DataType:
+                    pass
+
+            boston = BostonData()
+            boston.init_estimator(LinearRegression())
+            boston.score_model()
+
+        Parameters
+        ----------
+        estimator: sklearn.Estimator
+            A scikit-learn compatible estimator
+
+        Returns
+        -------
+        None
+
+        """
+        self.estimator = _validate_estimator(estimator)
+        self.estimator_name = _get_estimator_name(estimator)
+
+        if self.estimator._estimator_type == 'classifier':
             self._plotter = ClassificationVisualize
 
-        if self.model._estimator_type == 'regressor':
+        if self.estimator._estimator_type == 'regressor':
             self._plotter = RegressionVisualize
 
     @abc.abstractmethod
@@ -79,14 +131,56 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
     @classmethod
-    def setup_model(cls) -> 'BaseClassModel':
-        """
-        Setup an untrained model from scratch - create pipeline and model and load the class
+    def setup_estimator(cls) -> 'ModelData':
+        """To be implemented by the user - `setup_estimator()` is a classmethod which loads up an
+        untrained estimator. Typically this would setup a pipeline and the selected estimator
+        for easy training
+
+        Example
+        -------
+
+        Returning to our previous example of the BostonModel, let us implement
+        a setup_estimator method:
+
+        .. code-block:: python
+
+            from ml_tooling import BaseClassModel
+            from sklearn.datasets import load_boston
+            from sklearn.preprocessing import StandardScaler
+            from sklearn.linear_model import LinearRegression
+            from sklearn.pipeline import Pipeline
+            import pandas as pd
+
+            class BostonModel(BaseClassModel):
+                def get_prediction_data(self, idx):
+                    data = load_boston()
+                    df = pd.DataFrame(data=data.data, columns=data.feature_names)
+                    return df.iloc[idx] # Return given observation
+
+                def get_training_data(self):
+                    data = load_boston()
+                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
+
+                @classmethod
+                def setup_estimator(cls):
+                    pipeline = Pipeline([('scaler', StandardScaler()),
+                                         ('clf', LinearRegression())
+                                         ])
+                    return cls(pipeline)
+
+        Given this extra setup, it becomes easy to load the untrained estimator to train it::
+
+            estimator = BostonModel.setup_estimator()
+            estimator.train_estimator()
+
 
         Returns
         -------
-        BaseClassModel
+        ModelData
+            An instance of BaseClassModel with a full pipeline
+
         """
+
         raise NotImplementedError
 
     @property
@@ -94,26 +188,37 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return self.__class__.__name__
 
     @classmethod
-    def load_model(cls, path: Optional[str] = None) -> 'BaseClassModel':
+    def load_estimator(cls, path: Optional[str] = None) -> 'ModelData':
         """
-        Load previously saved model from path
+        Instantiates the class with a joblib pickled estimator.
+        If no path is given, searches path for the newest file that matches
+        the git hash and ModelData name and loads that.
 
         Parameters
         ----------
         path: str, optional
-            Where to load the model from. If None, will load newest model that includes
-            the model name and class name
+            Where to load the estimator from. If None, will load newest estimator that includes
+            the estimator name and class name
+
+        Example
+        -------
+        Having defined ModelData, we can load a trained estimator from disk::
+
+            my_estimator = BostonData.load_estimator('path/to/estimator')
+
+        We now have a trained estimator loaded.
+
 
         Returns
         -------
-        BaseClassModel
-            Instance of saved model
+        ModelData
+            Instance of saved estimator
         """
-        path = cls.config.MODEL_DIR if path is None else pathlib.Path(path)
-        model_file = find_model_file(path)
-        model = joblib.load(model_file)
-        instance = cls(model)
-        logger.info(f"Loaded {instance.model_name} for {cls.__name__}")
+        path = cls.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
+        estimator_file = find_estimator_file(path)
+        estimator = joblib.load(estimator_file)
+        instance = cls(estimator)
+        logger.info(f"Loaded {instance.estimator_name} for {cls.__name__}")
         return instance
 
     @property
@@ -135,7 +240,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         logger.debug("No data loaded - loading...")
         x, y = self.get_training_data()
 
-        stratify = y if self.model._estimator_type == 'classifier' else None
+        stratify = y if self.estimator._estimator_type == 'classifier' else None
         logger.debug("Creating train/test...")
         return Data.with_train_test(x,
                                     y,
@@ -144,84 +249,112 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                     seed=self.config.RANDOM_STATE)
 
     def _generate_filename(self):
-        return f"{self.__class__.__name__}_{self.model_name}_{get_git_hash()}.pkl"
+        return f"{self.__class__.__name__}_{self.estimator_name}_{get_git_hash()}.pkl"
 
-    def save_model(self, path: Optional[str] = None) -> pathlib.Path:
+    def save_estimator(self, path: Optional[str] = None,
+                       filename: Optional[str] = None) -> pathlib.Path:
         """
-        Save model to disk. Defaults to current directory.
+        Saves the estimator as a binary file. Defaults to current working directory,
+        with a filename of `<class_name>_<estimator_name>_<git_hash>.pkl`
+
 
         Parameters
         ----------
-        path: str
-            Full path of where to save the model
+        path : str, optional
+            Full path of directory for where to save the
+            estimator
+        filename : str, optional
+            A custom name for saved file can be given.
+            If not supplied the name will be autogenerated.
+
+        Example
+        -------
+
+        If we have trained an estimator and we want to save it to disk we can write::
+
+            estimator.save('path/to/folder')
+
+        to save in a given folder, otherwise::
+
+            estimator.save()
+
+        will save the estimator in the current directory
 
         Returns
         -------
-        self
-        """
-        save_name = self._generate_filename()
-        current_dir = (self.config.MODEL_DIR
-                       if path is None
-                       else pathlib.Path(path)
-                       )
+        pathlib.Path
+            The path to where the
+            estimator file was saved
 
-        logger.debug(f"Attempting to save model in {current_dir}")
+        """
+
+        current_dir = self.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
+
+        logger.debug(f"Attempting to save estimator in {current_dir}")
         if not current_dir.exists():
             logger.debug(f"{current_dir} does not exist - creating")
             current_dir.mkdir(parents=True)
 
-        model_file = current_dir.joinpath(save_name)
-        joblib.dump(self.model, model_file)
+        if not filename:
+            logger.debug(f"No file name supplied - autogenerating file name")
+            filename = self._generate_filename()
+
+        estimator_file = current_dir.joinpath(filename)
+        joblib.dump(self.estimator, estimator_file)
 
         if self.config.LOG:
             if self.result is None:
-                raise MLToolingError("You haven't scored the model - no results available to log")
+                raise MLToolingError("You haven't scored the estimator - "
+                                     "no results available to log")
 
             metric_scores = {self.result.metric: float(self.result.score)}
 
-            log_model(metric_scores=metric_scores,
-                      model_name=self.model_name,
-                      model_params=self.result.model_params,
-                      run_dir=self.config.RUN_DIR,
-                      model_path=str(model_file))
+            log_results(metric_scores=metric_scores,
+                        estimator_name=self.estimator_name,
+                        estimator_params=self.result.estimator_params,
+                        run_dir=self.config.RUN_DIR,
+                        estimator_path=str(estimator_file))
 
-        logger.info(f"Saved model to {model_file}")
-        return model_file
+        logger.info(f"Saved estimator to {estimator_file}")
+
+        return estimator_file
 
     def make_prediction(self,
                         input_data: Any,
                         proba: bool = False,
                         use_index: bool = False) -> pd.DataFrame:
-        """
-        Returns model prediction for given input data
+        """Makes a prediction given an input. For example a customer number.
+        Passed to the implemented :meth:`get_prediction_data` method and calls `predict()`
+        on the estimator
+
 
         Parameters
         ----------
         input_data: any
-            Defined in .get_prediction_data
+            Defined in :meth:`get_prediction_data`
 
         proba: bool
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
 
         use_index: bool
-            Whether the row names from the  prediction data should be used for the result.
+            Whether the index from the prediction data should be used for the result.
 
         Returns
         -------
-        Prediction: pd.DataFrame
-            Depending on whether or not predict_proba is set, will contain prediction
+        pd.DataFrame
+            A DataFrame with a prediction per row.
         """
-        if proba is True and not hasattr(self.model, 'predict_proba'):
-            raise MLToolingError(f"{self.model_name} does not have a `predict_proba` method")
+        if proba is True and not hasattr(self.estimator, 'predict_proba'):
+            raise MLToolingError(f"{self.estimator_name} does not have a `predict_proba` method")
 
         x = self.get_prediction_data(input_data)
 
         try:
             if proba:
-                data = self.model.predict_proba(x)
+                data = self.estimator.predict_proba(x)
             else:
-                data = self.model.predict(x)
+                data = self.estimator.predict(x)
 
             if use_index:
                 prediction = pd.DataFrame(data=data, index=x.index)
@@ -231,14 +364,15 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             return prediction
 
         except NotFittedError:
-            message = f"You haven't fitted the model. Call 'train_model' or 'score_model' first"
+            message = f"You haven't fitted the estimator. Call 'train_estimator' " \
+                f"or 'score_estimator' first"
             raise MLToolingError(message) from None
 
     @property
     def default_metric(self):
         """
-        Finds estimator_type for estimator in a BaseClassModel and returns default
-        metric for this class stated in .config. If passed estimator is a Pipeline,
+        Finds estimator_type for estimator in a ModelData class and returns default
+        metric for this class as configured in .config. If passed estimator is a Pipeline,
         assume last step is the estimator.
 
         Returns
@@ -249,38 +383,38 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
 
         return (self.config.CLASSIFIER_METRIC
-                if self.model._estimator_type == 'classifier'
+                if self.estimator._estimator_type == 'classifier'
                 else self.config.REGRESSION_METRIC)
 
     @default_metric.setter
     def default_metric(self, metric):
-        if self.model._estimator_type == 'classifier':
+        if self.estimator._estimator_type == 'classifier':
             self.config.CLASSIFIER_METRIC = metric
         else:
             self.config.REGRESSION_METRIC = metric
 
     @classmethod
-    def test_models(cls,
-                    models: Sequence,
-                    metric: Optional[str] = None,
-                    cv: Union[int, bool] = False,
-                    log_dir: str = None) -> Tuple['BaseClassModel', ResultGroup]:
+    def test_estimators(cls,
+                        estimators: Sequence,
+                        metric: Optional[str] = None,
+                        cv: Union[int, bool] = False,
+                        log_dir: str = None) -> Tuple['ModelData', ResultGroup]:
         """
-        Trains each model passed and returns a sorted list of results
+        Trains each estimator passed and returns a sorted list of results
 
         Parameters
         ----------
-        models: Listlike
-            List of models to train
+        estimators: Sequence
+            List of estimators to train
 
         metric: str, optional
-            Metric to use in scoring of model
+            Metric to use in scoring of estimators
 
         cv: int, bool
             Whether or not to use cross-validation. If an int is passed, use that many folds
 
         log_dir: str, optional
-            Where to store logged models. If None, don't log
+            Where to store logged estimators. If None, don't log
 
         Returns
         -------
@@ -288,47 +422,55 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         results = []
 
-        for i, model in enumerate(models, start=1):
-            logger.info(f"Training model {i}/{len(models)}: {_get_model_name(model)}")
-            challenger_model = cls(model)
-            result = challenger_model.score_model(metric=metric, cv=cv)
+        for i, estimator in enumerate(estimators, start=1):
+            logger.info(f"Training estimator {i}/{len(estimators)}: "
+                        f"{_get_estimator_name(estimator)}")
+            challenger_estimator = cls(estimator)
+            result = challenger_estimator.score_estimator(metric=metric, cv=cv)
             results.append(result)
             if log_dir:
-                result.log_model(log_dir)
+                result.log_estimator(log_dir)
 
         results.sort(reverse=True)
-        best_model = results[0].model
+        best_estimator = results[0].estimator
         logger.info(
-            f"Best model: {results[0].model_name} - {results[0].metric}: {results[0].score}")
+            f"Best estimator: {results[0].estimator_name} - "
+            f"{results[0].metric}: {results[0].score}")
 
-        return cls(best_model), ResultGroup(results)
+        return cls(best_estimator), ResultGroup(results)
 
-    def train_model(self) -> 'BaseClassModel':
-        """
-        Trains the model on the full dataset.
-        Used to prepare for production
+    def train_estimator(self) -> 'ModelData':
+        """Loads all training data and trains the estimator on all data.
+        Typically used as the last step when estimator tuning is complete.
+
+        .. warning::
+            This will set self.result attribute to None. This method trains the estimator
+            using all the data, so there is no validation data to measure results against
 
         Returns
         -------
-        self
+        ModelData
+            Returns an estimator trained on all the data, with no train-test split
 
         """
-        logger.info("Training model...")
-        self.model.fit(self.data.x, self.data.y)
-        self.result = None  # Prevent confusion, as train_model does not return a result
-        logger.info("Model trained!")
+        logger.info("Training estimator...")
+        self.estimator.fit(self.data.x, self.data.y)
+        self.result = None  # Prevent confusion, as train_estimator does not return a result
+        logger.info("Estimator trained!")
 
         return self
 
-    def score_model(self, metric: Optional[str] = None, cv: Optional[int] = False) -> 'Result':
-        """
-        Loads training data and returns a Result object containing
-        visualization and cross-validated scores
+    def score_estimator(self, metric: Optional[str] = None, cv: Optional[int] = False) -> 'Result':
+        """Loads all training data and trains the estimator on it, using a train_test split.
+        Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
+        Defaults to non-cross-validated scoring.
+        If you want to cross-validate, pass number of folds to cv
+
 
         Parameters
         ----------
         metric: string
-            Metric to use for scoring the model. Any sklearn metric string
+            Metric to use for scoring the estimator. Any sklearn metric string
 
         cv: int, optional
             Whether or not to use cross validation. Number of folds if an int is passed
@@ -336,21 +478,22 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Result object
+        Result
+            A Result object that contains the results of the scoring
         """
         metric = self.default_metric if metric is None else metric
-        logger.info("Scoring model...")
-        self.model.fit(self.data.train_x, self.data.train_y)
+        logger.info("Scoring estimator...")
+        self.estimator.fit(self.data.train_x, self.data.train_y)
 
-        if cv:  # TODO handle case of Sklearn CV class
+        if cv:
             logger.info("Cross-validating...")
-            self.result = self._score_model_cv(self.model, metric, cv)
+            self.result = self._score_estimator_cv(self.estimator, metric, cv)
 
         else:
-            self.result = self._score_model(self.model, metric)
+            self.result = self._score_estimator(self.estimator, metric)
 
         if self.config.LOG:
-            result_file = self.result.log_model(self.config.RUN_DIR)
+            result_file = self.result.log_estimator(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
         return self.result
 
@@ -360,8 +503,8 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                    cv: Optional[int] = None,
                    n_jobs: Optional[int] = None) -> Tuple[BaseEstimator, ResultGroup]:
         """
-        Grid search model with parameters in param_grid.
-        Param_grid automatically adds prefix from last step if using pipeline
+        Runs a gridsearch on the estimator with the passed in parameter grid.
+        Ensure that it works inside a pipeline as well.
 
         Parameters
         ----------
@@ -369,42 +512,43 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             Parameters to use for grid search
 
         metric: str, optional
-            Metric to use for scoring. Defaults to r2 for regressors and accuracy for classifiers
+            Metric to use for scoring. Defaults to value in
+            :attr:`config.CLASSIFIER_METRIC`
+            or :attr:`config.REGRESSION_METRIC`
 
         cv: int, optional
-            Cross validation to use. Defaults to 10 based on value in config
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
         n_jobs: int, optional
-            How many worker process too spawn. Defaults to -1  based on value
-            in config (one for each physical core).
+            How many cores to use. Defaults to value in :attr:`config.N_JOBS`.
 
         Returns
         -------
-        best_model: sklearn.estimator
-            Best model as found by the gridsearch
+        best_estimator: sklearn.estimator
+            Best estimator as found by the gridsearch
 
         result_group: ResultGroup
             ResultGroup object containing each individual score
         """
 
-        baseline_model = clone(self.model)
+        baseline_estimator = clone(self.estimator)
         train_x, train_y = self.data.train_x, self.data.train_y
         metric = self.default_metric if metric is None else metric
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, train_y, baseline_model._estimator_type == 'classifier')  # Stratify?
+        cv = check_cv(cv, train_y, baseline_estimator._estimator_type == 'classifier')  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
         logger.debug(f"Gridsearching using {param_grid}")
-        param_grid = list(_create_param_grid(self.model, param_grid))
+        param_grid = list(_create_param_grid(self.estimator, param_grid))
         logger.info("Starting gridsearch...")
 
         parallel = joblib.Parallel(n_jobs=n_jobs, verbose=self.config.VERBOSITY)
 
         out = parallel(
             joblib.delayed(fit_grid_point)(X=train_x, y=train_y,
-                                           estimator=clone(baseline_model),
+                                           estimator=clone(baseline_estimator),
                                            train=train, test=test,
                                            scorer=get_scoring_func(metric),
                                            verbose=self.config.VERBOSITY,
@@ -413,7 +557,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         scores = [np.array([score[0] for score in out if score[1] == par]) for par in param_grid]
 
-        results = [CVResult(baseline_model.set_params(**param), None, cv.n_splits, scores[i],
+        results = [CVResult(baseline_estimator.set_params(**param), None, cv.n_splits, scores[i],
                             metric) for i, param in enumerate(param_grid)]
 
         logger.info("Done!")
@@ -421,13 +565,33 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         self.result = ResultGroup(results)
 
         if self.config.LOG:
-            result_file = self.result.log_model(self.config.RUN_DIR)
+            result_file = self.result.log_estimator(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return results[0].model, self.result
+        return results[0].estimator, self.result
 
     @contextmanager
-    def log(self, run_name):
+    def log(self, run_name: str):
+        """:meth:`log` is a context manager that lets you turn on logging for any scoring methods
+        that follow. You can pass a log_dir to specify a subfolder to store the estimator in.
+        The output is a yaml file recording estimator parameters, package version numbers,
+        metrics and other useful information
+
+        Parameters
+        ----------
+        run_name: str
+            Name of the folder to save the details in
+
+        Example
+        --------
+        If we want to log an estimator run in the `score` folder we can write::
+
+             with estimator.log('score'):
+                estimator.score_estimator
+
+        This will save the results of `estimator.score_estimator()` to `runs/score/`
+
+        """
         old_dir = self.config.RUN_DIR
         self.config.LOG = True
         self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)
@@ -437,13 +601,13 @@ class BaseClassModel(metaclass=abc.ABCMeta):
             self.config.LOG = False
             self.config.RUN_DIR = old_dir
 
-    def _score_model(self, model, metric: str) -> Result:
+    def _score_estimator(self, estimator, metric: str) -> Result:
         """
-        Scores model with a given score function.
+        Scores estimator with a given score function.
 
         Parameters
         ----------
-        model: sklearn.estimator
+        estimator: sklearn.estimator
             Estimator to evaluate
 
         metric: string
@@ -458,29 +622,31 @@ class BaseClassModel(metaclass=abc.ABCMeta):
 
         scoring_func = get_scoring_func(metric)
 
-        score = scoring_func(model, self.data.test_x, self.data.test_y)
-        viz = self._plotter(model=model,
+        score = scoring_func(estimator, self.data.test_x, self.data.test_y)
+        viz = self._plotter(estimator=estimator,
                             config=self.config,
                             data=self.data)
 
-        result = Result(model=model,
+        result = Result(estimator=estimator,
                         viz=viz,
                         score=score,
                         metric=metric)
 
-        logger.info(f"{_get_model_name(model)} - {metric}: {score}")
+        logger.info(f"{_get_estimator_name(estimator)} - {metric}: {score}")
 
         return result
 
-    def _score_model_cv(self,
-                        model,
-                        metric=None,
-                        cv=None) -> CVResult:
+    def _score_estimator_cv(self,
+                            estimator,
+                            metric=None,
+                            cv=None) -> CVResult:
         """
-        Scores model with given metric using cross-validation
+        Scores estimator with given metric using cross-validation
 
         Parameters
         ----------
+        estimator: BaseEstimator
+            A sklearn-compatible estimator to use for scoring
 
         metric: string
             Which scoring function to use
@@ -494,7 +660,7 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         """
         cv = self.config.CROSS_VALIDATION if cv is None else cv
 
-        scores = cross_val_score(model,
+        scores = cross_val_score(estimator,
                                  self.data.train_x,
                                  self.data.train_y,
                                  cv=cv,
@@ -503,12 +669,12 @@ class BaseClassModel(metaclass=abc.ABCMeta):
                                  verbose=self.config.VERBOSITY,
                                  )
 
-        viz = self._plotter(model=model,
+        viz = self._plotter(estimator=estimator,
                             config=self.config,
                             data=self.data)
 
         result = CVResult(
-            model=model,
+            estimator=estimator,
             viz=viz,
             metric=metric,
             cross_val_scores=scores,
@@ -516,9 +682,9 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         )
 
         if self.config.LOG:
-            result.log_model(self.config.RUN_DIR)
+            result.log_estimator(self.config.RUN_DIR)
 
-        logger.info(f"{_get_model_name(model)} - {metric}: {np.mean(scores)}")
+        logger.info(f"{_get_estimator_name(estimator)} - {metric}: {np.mean(scores)}")
         return result
 
     @classmethod
@@ -531,4 +697,4 @@ class BaseClassModel(metaclass=abc.ABCMeta):
         return cls
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}: {self.model_name}>"
+        return f"<{self.__class__.__name__}: {self.estimator_name}>"

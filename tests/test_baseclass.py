@@ -8,13 +8,33 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling import BaseClassModel
+from ml_tooling import ModelData
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+    def test_ModelData_can_be_instantiated_without_a_model(self, base):
+        no_estimator = base()
+
+        assert no_estimator._estimator is None
+        assert no_estimator._plotter is None
+
+    def test_ModelData_init_estimator_works_as_expected(self, base):
+        no_estimator = base()
+
+        assert no_estimator._estimator is None
+
+        estimator = RandomForestClassifier()
+        no_estimator.init_estimator(estimator)
+
+        assert no_estimator.estimator is estimator
+
+    def test_ModelData_raises_when_accessing_estimator(self, base):
+        no_estimator = base()
+        with pytest.raises(MLToolingError, match='No estimator selected'):
+            no_estimator.estimator
 
     def test_class_name_property_returns_class_name(self, regression):
         reg = regression
@@ -35,7 +55,7 @@ class TestBaseClass:
             base({})
 
     def test_make_prediction_errors_when_model_is_not_fitted(self, base):
-        with pytest.raises(MLToolingError, match="You haven't fitted the model"):
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
             model = base(LinearRegression())
             model.make_prediction(5)
 
@@ -43,7 +63,7 @@ class TestBaseClass:
         with pytest.raises(MLToolingError,
                            match="LinearRegression does not have a `predict_proba`"):
             model = base(LinearRegression())
-            model.train_model()
+            model.train_estimator()
             model.make_prediction(5, proba=True)
 
     @pytest.mark.parametrize('use_index, expected_index', [
@@ -74,7 +94,7 @@ class TestBaseClass:
 
     def test_train_model_saves_x_and_y_as_expected(self, regression):
         expected_x, expected_y = regression.get_training_data()
-        regression.train_model()
+        regression.train_estimator()
         assert np.all(expected_x == regression.data.x)
         assert np.all(expected_y == regression.data.y)
 
@@ -121,28 +141,29 @@ class TestBaseClass:
 
     def test_train_model_sets_result_to_none(self, regression):
         assert regression.result is not None
-        regression.train_model()
+        regression.train_estimator()
         assert regression.result is None
 
     def test_train_model_followed_by_score_model_returns_correctly(self, base, pipeline_logistic):
         model = base(pipeline_logistic)
-        model.train_model()
-        model.score_model()
+        model.train_estimator()
+        model.score_estimator()
 
         assert isinstance(model.result, Result)
 
     def test_model_selection_works_as_expected(self, base):
         models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
-        best_model, results = base.test_models(models)
-        assert models[1] is best_model.model
+        best_model, results = base.test_estimators(models)
+        assert models[1] is best_model.estimator
         assert 2 == len(results)
         assert results[0].score >= results[1].score
         for result in results:
             assert isinstance(result, Result)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(self, base):
-        models = [LogisticRegression(solver='liblinear'), RandomForestClassifier(n_estimators=10)]
-        best_model, results = base.test_models(models, metric='roc_auc')
+        estimators = [LogisticRegression(solver='liblinear'),
+                      RandomForestClassifier(n_estimators=10)]
+        best_estimator, results = base.test_estimators(estimators, metric='roc_auc')
         for result in results:
             assert result.metric == 'roc_auc'
 
@@ -150,37 +171,39 @@ class TestBaseClass:
                                                              base,
                                                              pipeline_logistic,
                                                              pipeline_dummy_classifier):
-        models = [pipeline_logistic, pipeline_dummy_classifier]
-        best_model, results = base.test_models(models)
+        estimators = [pipeline_logistic, pipeline_dummy_classifier]
+        best_estimator, results = base.test_estimators(estimators)
 
         for result in results:
-            assert result.model_name == result.model.steps[-1][1].__class__.__name__
+            assert result.estimator_name == result.estimator.steps[-1][1].__class__.__name__
 
-        assert best_model.model == models[0]
+        assert best_estimator.estimator == estimators[0]
 
-    def test_regression_model_can_be_saved(self, classifier, tmpdir, base, monkeypatch):
+    @pytest.mark.parametrize('sub_folder, filename', [
+        (True, None),
+        (True, 'saved_model.pkl'),
+        (False, None),
+        (False, 'saved_model.pkl'),
+    ])
+    def test_regression_model_can_be_saved(self, classifier, tmpdir, base, monkeypatch, sub_folder,
+                                           filename):
+
         def mockreturn():
             return '1234'
 
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        path = tmpdir.mkdir('model')
-        classifier.score_model()
-        classifier.save_model(path)
-        expected_path = path.join('IrisModel_LogisticRegression_1234.pkl')
+
+        path = tmpdir.join('sub_folder') if sub_folder else tmpdir
+        expected_filename = 'IrisModel_LogisticRegression_1234.pkl' if not filename else filename
+
+        classifier.score_estimator()
+        classifier.save_estimator(path, filename=filename)
+
+        expected_path = path.join(expected_filename)
         assert expected_path.check()
 
-        loaded_model = base.load_model(str(expected_path))
-        assert loaded_model.model.get_params() == classifier.model.get_params()
-
-    def test_save_model_saves_correctly(self, classifier, tmpdir, monkeypatch):
-        def mockreturn():
-            return '1234'
-
-        monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        save_dir = tmpdir.mkdir('model')
-        classifier.save_model(save_dir)
-        expected_name = 'IrisModel_LogisticRegression_1234.pkl'
-        assert save_dir.join(expected_name).check()
+        loaded_model = base.load_estimator(str(expected_path))
+        assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_save_model_saves_pipeline_correctly(self, base, pipeline_logistic, monkeypatch,
                                                  tmpdir):
@@ -188,10 +211,10 @@ class TestBaseClass:
             return '1234'
 
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        save_dir = tmpdir.mkdir('model')
+        save_dir = tmpdir.mkdir('estimator')
         model = base(pipeline_logistic)
-        model.train_model()
-        model.save_model(save_dir)
+        model.train_estimator()
+        model.save_estimator(save_dir)
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
 
@@ -200,9 +223,9 @@ class TestBaseClass:
             return '1234'
 
         monkeypatch.setattr('ml_tooling.baseclass.get_git_hash', mockreturn)
-        save_dir = tmpdir.mkdir('model')
+        save_dir = tmpdir.mkdir('estimator')
         with classifier.log(save_dir):
-            classifier.save_model(save_dir)
+            classifier.save_estimator(save_dir)
 
         expected_name = 'IrisModel_LogisticRegression_1234.pkl'
         assert save_dir.join(expected_name).check()
@@ -210,10 +233,10 @@ class TestBaseClass:
 
     def test_setup_model_raises_not_implemented_error(self, base):
         with pytest.raises(NotImplementedError):
-            base.setup_model()
+            base.setup_estimator()
 
     def test_setup_model_works_when_implemented(self):
-        class DummyModel(BaseClassModel):
+        class DummyModel(ModelData):
             def get_prediction_data(self, idx):
                 pass
 
@@ -221,15 +244,15 @@ class TestBaseClass:
                 pass
 
             @classmethod
-            def setup_model(cls):
+            def setup_estimator(cls):
                 pipeline = Pipeline([
                     ('scaler', StandardScaler()),
                     ('clf', LogisticRegression(solver='lbgfs'))
                 ])
                 return cls(pipeline)
 
-        model = DummyModel.setup_model()
-        assert model.model_name == 'LogisticRegression'
+        model = DummyModel.setup_estimator()
+        assert model.estimator_name == 'LogisticRegression'
         assert hasattr(model, 'coef_') is False
 
     def test_gridsearch_model_returns_as_expected(self, base, pipeline_logistic):
@@ -274,14 +297,14 @@ class TestBaseClass:
 
         runs = tmpdir.mkdir('runs')
         with model.log(runs):
-            result = model.score_model()
+            result = model.score_estimator()
 
         for file in runs.visit('LinearRegression_*'):
             with open(file) as f:
                 log_result = yaml.safe_load(f)
 
             assert result.score == log_result["metrics"]["r2"]
-            assert result.model_name == log_result["model_name"]
+            assert result.estimator_name == log_result["estimator_name"]
 
     def test_log_context_manager_logs_when_gridsearching(self, tmpdir, base):
         model = base(LinearRegression())
@@ -295,17 +318,17 @@ class TestBaseClass:
 
             model_results = [round(r.score, 4) for r in result]
             assert round(log_result["metrics"]["r2"], 4) in model_results
-            assert result.model_name == log_result["model_name"]
+            assert result.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(self, tmpdir, base):
-        test_models_log = tmpdir.mkdir('test_models')
-        base.test_models([RandomForestClassifier(n_estimators=10), DummyClassifier()],
-                         log_dir=test_models_log)
+        test_models_log = tmpdir.mkdir('test_estimators')
+        base.test_estimators([RandomForestClassifier(n_estimators=10), DummyClassifier()],
+                             log_dir=test_models_log)
 
         for file in test_models_log.visit('*.yaml'):
             with open(file) as f:
                 result = yaml.safe_load(f)
-                model_name = result['model_name']
+                model_name = result['estimator_name']
                 assert model_name in {'RandomForestClassifier', 'DummyClassifier'}
 
     def test_train_model_errors_correct_when_not_scored(self,
@@ -313,13 +336,13 @@ class TestBaseClass:
                                                         pipeline_logistic,
                                                         tmpdir):
         model = base(pipeline_logistic)
-        with pytest.raises(MLToolingError, match="You haven't scored the model"):
+        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(tmpdir):
-                model.train_model()
-                model.save_model(tmpdir)
+                model.train_estimator()
+                model.save_estimator(tmpdir)
 
     def test_models_share_data(self):
-        class test_class(BaseClassModel):
+        class test_class(ModelData):
             def get_training_data(self):
                 return pd.DataFrame({'a': [1, 2, 3, 3, 2, 4]}), pd.Series([0, 1, 1, 0, 1, 0])
 
@@ -338,7 +361,7 @@ class TestBaseClass:
         pd_s1 = pd.Series([0, 1, 1, 0, 1, 0])
         pd_df2 = pd.DataFrame({'b': [9, 9, 8, 9, 2, 4]})
 
-        class class1(BaseClassModel):
+        class class1(ModelData):
             def get_training_data(self):
                 return pd_df1, pd_s1
 
@@ -346,9 +369,9 @@ class TestBaseClass:
                 pass
 
         cl1 = class1(LogisticRegression())
-        cl1.score_model()
+        cl1.score_estimator()
 
-        class class2(BaseClassModel):
+        class class2(ModelData):
             def get_training_data(self):
                 return pd_df1, pd_s1
 
@@ -356,10 +379,34 @@ class TestBaseClass:
                 pass
 
         cl2 = class2(LogisticRegression())
-        cl2.score_model()
+        cl2.score_estimator()
 
         pd.testing.assert_frame_equal(cl1.data.x, cl2.data.x)
         cl2.data.x = pd_df2
 
         pd.testing.assert_frame_equal(cl1.data.x, pd_df1)
         pd.testing.assert_frame_equal(cl2.data.x, pd_df2)
+
+    def test_scoring_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.score_estimator()
+
+    def test_training_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.train_estimator()
+
+    def test_gridsearching_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.gridsearch({'some_params': [1, 2, 3]})
+
+    def test_saving_estimator_with_no_estimator_raises(self, base):
+        clf = base()
+        with pytest.raises(MLToolingError, match='No estimator selected. '
+                                                 'Use .init_estimator to set an estimator'):
+            clf.save_estimator()

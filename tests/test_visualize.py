@@ -1,29 +1,29 @@
 """
 Test file for visualisations
 """
-import pytest
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pytest
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
-
-from ml_tooling import BaseClassModel
-from ml_tooling.transformers import ToCategorical
-from ml_tooling.plots import (plot_lift_curve,
-                              VizError,
-                              _get_feature_importance,
-                              plot_confusion_matrix,
-                              )
-
-from ml_tooling.result import RegressionVisualize, ClassificationVisualize
-from ml_tooling.metrics import _permutation_importances
-from ml_tooling.utils import get_scoring_func
 from sklearn.svm import SVC
+
+from ml_tooling import ModelData
+from ml_tooling.metrics.permutation_importance import _get_feature_importance
+from ml_tooling.metrics.permutation_importance import _permutation_importances
+from ml_tooling.plots import (plot_lift_curve,
+                              plot_confusion_matrix,
+                              plot_pr_curve,
+                              )
+from ml_tooling.plots.utils import VizError
+from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.transformers import ToCategorical
+from ml_tooling.utils import get_scoring_func
 
 
 class TestVisualize:
@@ -50,7 +50,8 @@ class TestVisualize:
     @pytest.mark.parametrize('attr, option', [('confusion_matrix', None),
                                               ('roc_curve', None),
                                               ('lift_curve', None),
-                                              ('feature_importance', 100)])
+                                              ('feature_importance', 100),
+                                              ('pr_curve', None)])
     def test_classifier_visualize_has_all_plots(self, attr, option, classifier):
         result = classifier.result.plot
         if option:
@@ -143,7 +144,7 @@ class TestFeatureImportancePlot:
                                                                                    classifier):
         ax = classifier.result.plot.feature_importance(bottom_n=.2, samples=100)
         assert 1 == len(ax.texts)
-        assert {'-0.05'} == {text._text for text in ax.texts}
+        assert {'0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Bottom 20%' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -152,7 +153,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(self, classifier):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 1' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -162,7 +163,7 @@ class TestFeatureImportancePlot:
                                                                                         classifier):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=.2, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 1 - Bottom 20%' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -172,7 +173,7 @@ class TestFeatureImportancePlot:
                                                                                         classifier):
         ax = classifier.result.plot.feature_importance(top_n=.2, bottom_n=1, samples=100)
         assert 2 == len(ax.texts)
-        assert {'0.12', '-0.05'} == {text._text for text in ax.texts}
+        assert {'0.12', '0.03'} == {text._text for text in ax.texts}
         assert 'Feature Importance - LogisticRegression - Top 20% - Bottom 1' == ax.title._text
         assert 'Features' == ax.get_ylabel()
         assert 'Importance:  Decrease in accuracy from baseline of 0.7' == ax.get_xlabel()
@@ -184,9 +185,9 @@ class TestFeatureImportancePlot:
             ('clf', RandomForestClassifier(n_estimators=10))
         ])
 
-        class DummyModel(BaseClassModel):
+        class DummyModel(ModelData):
             @classmethod
-            def setup_model(cls):
+            def setup_estimator(cls):
                 pass
 
             def get_training_data(self):
@@ -198,7 +199,7 @@ class TestFeatureImportancePlot:
                 pass
 
         model = DummyModel(pipe)
-        result = model.score_model()
+        result = model.score_estimator()
         ax = result.plot.feature_importance(samples=100)
 
         assert 'Feature Importance - RandomForestClassifier' == ax.title._text
@@ -230,7 +231,7 @@ class TestPredictionErrorPlot:
     def test_prediction_error_plots_have_correct_data(self, regression):
         ax = regression.result.plot.prediction_error()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.model.predict(x)
+        y_pred = regression.result.estimator.predict(x)
 
         assert 'Prediction Error - LinearRegression' == ax.title._text
         assert '$\hat{y}$' == ax.get_ylabel()
@@ -245,7 +246,7 @@ class TestResidualPlot:
     def test_residual_plots_have_correct_data(self, regression):
         ax = regression.result.plot.residuals()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.model.predict(x)
+        y_pred = regression.result.estimator.predict(x)
         expected = y_pred - y
 
         assert 'Residual Plot - LinearRegression' == ax.title._text
@@ -261,7 +262,7 @@ class TestRocCurve:
     def test_roc_curve_have_correct_data(self, classifier):
         ax = classifier.result.plot.roc_curve()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
-        y_proba = classifier.model.predict_proba(x)[:, 1]
+        y_proba = classifier.estimator.predict_proba(x)[:, 1]
         fpr, tpr, _ = roc_curve(y, y_proba)
 
         assert 'ROC AUC - LogisticRegression' == ax.title._text
@@ -273,9 +274,40 @@ class TestRocCurve:
 
     def test_roc_curve_fails_correctly_without_predict_proba(self, base):
         svc = base(SVC(gamma='scale'))
-        result = svc.score_model()
+        result = svc.score_estimator()
         with pytest.raises(VizError):
             result.plot.roc_curve()
+
+
+class TestPRCurve:
+    def test_pr_curve_have_correct_data(self, classifier):
+        ax = classifier.result.plot.pr_curve()
+        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
+        y_proba = classifier.estimator.predict_proba(x)[:, 1]
+
+        precision, recall, _ = precision_recall_curve(y, y_proba)
+
+        assert 'Precision-Recall - LogisticRegression' == ax.title._text
+        assert 'Precision' == ax.get_ylabel()
+        assert 'Recall' == ax.get_xlabel()
+        assert np.all(recall == ax.lines[0].get_xdata())
+        assert np.all(precision == ax.lines[0].get_ydata())
+        plt.close()
+
+    def test_pr_curve_fails_correctly_without_predict_proba(self, base):
+        svc = base(SVC(gamma='scale'))
+        result = svc.score_estimator()
+        with pytest.raises(VizError):
+            result.plot.pr_curve()
+        plt.close()
+
+    def test_pr_curve_can_use_ax(self, classifier):
+        fig, ax = plt.subplots()
+        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
+        y_proba = classifier.estimator.predict_proba(x)[:, 1]
+
+        assert ax is plot_pr_curve(y, y_proba, ax=ax)
+        plt.close()
 
 
 class TestGetFeatureImportance:
@@ -284,7 +316,7 @@ class TestGetFeatureImportance:
         sample = 10
         importance, baseline = _get_feature_importance(regression.result.plot, sample)
 
-        model = regression.result.plot._model
+        model = regression.result.plot._estimator
         metric = get_scoring_func(regression.result.plot._config.REGRESSION_METRIC)
         train_x = regression.result.plot._data.train_x
         train_y = regression.result.plot._data.train_y
@@ -299,11 +331,11 @@ class TestGetFeatureImportance:
                                                                                 base,
                                                                                 pipeline_linear):
         pipe = base(pipeline_linear)
-        pipe.score_model()
+        pipe.score_estimator()
         sample = 10
         importance, baseline = _get_feature_importance(pipe.result.plot, sample)
 
-        model = pipe.result.plot._model
+        model = pipe.result.plot._estimator
         metric = get_scoring_func(pipe.result.plot._config.REGRESSION_METRIC)
         train_x = pipe.result.plot._data.train_x
         train_y = pipe.result.plot._data.train_y
@@ -315,11 +347,11 @@ class TestGetFeatureImportance:
 
     def test_viz_get_feature_importance_returns_feature_importance_from_classifier(self, base):
         classifier = base(RandomForestClassifier(n_estimators=10))
-        result = classifier.score_model()
+        result = classifier.score_estimator()
         sample = 10
         importance, baseline = _get_feature_importance(result.plot, sample)
 
-        model = classifier.result.plot._model
+        model = classifier.result.plot._estimator
         metric = get_scoring_func(classifier.result.plot._config.CLASSIFIER_METRIC)
         train_x = classifier.result.plot._data.train_x
         train_y = classifier.result.plot._data.train_y

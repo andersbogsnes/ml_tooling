@@ -1,3 +1,11 @@
+# v0.7.0
+- Breaking change - BaseClassModel renamed to ModelData.
+- Breaking change - model renamed to estimator
+- Added Precision-Recall Curve
+- Added option to give custom file name to .save_estimator()
+- Instantiating with estimator is now optional - set estimator later using .init_estimator
+- We have a logo! Added ML Tooling logo to docs
+
 # v0.6.2
 ## Bugfixes
 - Now issues a warning when git is not installed.
@@ -18,14 +26,14 @@
 - Feature importances changed to use permutation instead of built-in for better estimates.
 
 ## Bugfixes
-- .train_model will now reset the result attribute to None, in order to 
+- .train_estimator will now reset the result attribute to None, in order to 
 prevent users from mistakenly assuming the result is from the training 
 - Fixed bug in lift_score when using dataframes
 - Fixed bug when training model and then scoring model
 - Fixed bug where users could not save models if no result had been created, as would 
-happen if the user only called .train_model before saving.
+happen if the user only called .train_estimator before saving.
 - Default_metric is now the same metric as the one specified for the model in .config
-- Each class inheriting from BaseClassModel has an individual config
+- Each class inheriting from ModelData has an individual config
 - Changed get_scorer_func to wrap sklearn's get_scorer
 - Fixed bug when gridsearching twice
 

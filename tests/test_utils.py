@@ -3,15 +3,15 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics.scorer import (_PredictScorer,
                                     )
-from ml_tooling.logging import _make_run_dir
-from ml_tooling.plots import _generate_text_labels
+
+from ml_tooling.logging.log_estimator import _make_run_dir
+from ml_tooling.metrics.utils import _is_percent
+from ml_tooling.plots.utils import _generate_text_labels
 from ml_tooling.utils import (get_git_hash,
-                              find_model_file,
-                              _is_percent,
+                              find_estimator_file,
                               MLToolingError,
                               get_scoring_func,
-                              _create_param_grid,
-                              )
+                              _create_param_grid)
 
 
 def test_get_git_hash_returns_correctly():
@@ -21,7 +21,7 @@ def test_get_git_hash_returns_correctly():
 
 
 def test_find_model_file_with_given_model_returns_correctly(tmpdir):
-    model_folder = tmpdir.mkdir('model')
+    model_folder = tmpdir.mkdir('estimator')
     model1 = 'TestModel1_1234.pkl'
     model1_file = model_folder.join(model1)
     model1_file.write('test')
@@ -30,14 +30,14 @@ def test_find_model_file_with_given_model_returns_correctly(tmpdir):
     model2_file = model_folder.join(model2)
     model2_file.write('test')
 
-    result = find_model_file(model1_file)
+    result = find_estimator_file(model1_file)
 
     assert model1_file == result
 
 
 def test_find_model_raise_when_no_model_found():
     with pytest.raises(MLToolingError, match="No models found - check your directory: nonsense"):
-        find_model_file('nonsense')
+        find_estimator_file('nonsense')
 
 
 def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
@@ -46,7 +46,7 @@ def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
 
     monkeypatch.setattr('ml_tooling.utils.get_git_hash', mockreturn)
 
-    model_folder = tmpdir.mkdir('model')
+    model_folder = tmpdir.mkdir('estimator')
     model1 = 'TestModel1_1234.pkl'
     model1_file = model_folder.join(model1)
     model1_file.write('test')
@@ -57,7 +57,7 @@ def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
     model2_file.write('test')
     model2_file.setmtime(first_file_mtime + 100)  # Ensure second file is newer
 
-    result = find_model_file(model_folder)
+    result = find_estimator_file(model_folder)
 
     assert model2_file == result
 
@@ -81,7 +81,7 @@ def test_is_percent_raises_correctly_if_given_large_float():
 def test_scoring_func_returns_a_scorer(classifier):
     scorer = get_scoring_func('accuracy')
 
-    score = scorer(classifier.model, classifier.data.test_x, classifier.data.test_y)
+    score = scorer(classifier.estimator, classifier.data.test_x, classifier.data.test_y)
     assert isinstance(scorer, _PredictScorer)
     assert score > 0.63
 
@@ -96,7 +96,7 @@ def test_add_text_labels_vertical_returns_correct():
     ax.bar(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=False))
     assert 0 == x_values
-    assert (100 + 105 * .005) == y_values
+    assert 100 == y_values
 
 
 def test_add_text_labels_horizontal_returns_correct():
@@ -104,7 +104,7 @@ def test_add_text_labels_horizontal_returns_correct():
     ax.barh(['value'], [100])
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
-    assert (100 + 105 * .005) == x_values
+    assert 100 == x_values
 
 
 class TestGridsearchParams:

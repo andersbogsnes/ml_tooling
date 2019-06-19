@@ -5,6 +5,12 @@
 
 Welcome to ML Tooling!
 ======================
+
+.. figure:: images/ML_logo.png
+   :width: 600
+   :alt: Logo for ML Tooling
+   :align: left
+
 Welcome to ML Tooling's documentation!
 
 Get started by :ref:`installing <install>` and head over to :ref:`quickstart`!

@@ -10,6 +10,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.externals import joblib
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.data import Data
@@ -24,7 +25,6 @@ from ml_tooling.utils import (
     get_git_hash,
     DataType,
     find_estimator_file,
-    get_scoring_func,
     _create_param_grid,
     _validate_estimator
 )
@@ -550,7 +550,7 @@ class ModelData(metaclass=abc.ABCMeta):
             joblib.delayed(fit_grid_point)(X=train_x, y=train_y,
                                            estimator=clone(baseline_estimator),
                                            train=train, test=test,
-                                           scorer=get_scoring_func(metric),
+                                           scorer=get_scorer(metric),
                                            verbose=self.config.VERBOSITY,
                                            parameters=parameters) for parameters, (train, test)
             in product(param_grid, cv.split(train_x, train_y, None)))
@@ -620,7 +620,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         """
 
-        scoring_func = get_scoring_func(metric)
+        scoring_func = get_scorer(metric)
 
         score = scoring_func(estimator, self.data.test_x, self.data.test_y)
         viz = self._plotter(estimator=estimator,

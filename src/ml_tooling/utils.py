@@ -20,22 +20,6 @@ class TransformerError(Exception):
     """Error which occurs during a transform"""
 
 
-def get_scoring_func(metric: str) -> Callable[[BaseEstimator,
-                                               DataType,
-                                               DataType], Union[int, float]]:
-    """
-    Looks up a scikit-learn scoring function using scikit-learns built-in sklearn.metrics.get_scorer
-    :param metric:
-        string name of metric to use
-    :return:
-        callable score function
-    """
-    try:
-        return get_scorer(metric)
-    except ValueError:
-        raise MLToolingError(f"Invalid metric {metric}")
-
-
 def get_git_hash() -> str:
     """
     Returns the git hash of HEAD

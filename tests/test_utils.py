@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics.scorer import (_PredictScorer,
-                                    )
 
 from ml_tooling.logging.log_estimator import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent

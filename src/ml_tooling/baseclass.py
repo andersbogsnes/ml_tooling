@@ -59,7 +59,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
     @estimator.setter
     def estimator(self, estimator):
-        self._estimator = estimator
+        self._estimator = _validate_estimator(estimator)
 
     def init_estimator(self, estimator):
         """

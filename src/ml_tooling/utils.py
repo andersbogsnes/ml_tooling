@@ -1,11 +1,9 @@
 import pathlib
 import warnings
-from typing import Union, Callable
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.metrics import get_scorer
 from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
@@ -62,8 +60,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     if path.is_file():
         return path
 
-    git_hash = get_git_hash()
-    all_models = list(path.glob(f'*_{git_hash}.pkl'))
+    all_models = list(path.glob(f'*.pkl'))
 
     if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")
@@ -74,8 +71,8 @@ def find_estimator_file(path: str) -> pathlib.Path:
 
 def _get_estimator_name(clf) -> str:
     """
-    Returns estimator name based on class name. If passed classifier is a :class:`~sklearn.pipeline.Pipeline`,
-    assume last step is the estimator and return that classes name
+    Returns estimator name based on class name. If passed classifier is a :class:
+    `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name
 
     Parameters
     ----------
@@ -143,8 +140,9 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
 
 def _validate_estimator(estimator):
     """
-    Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator` or a :class:`~sklearn.pipeline.Pipeline` with
-    a :class:`~sklearn.base.BaseEstimator` as the final step
+    Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
+    or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`
+    as the final step
 
     Parameters
     ----------

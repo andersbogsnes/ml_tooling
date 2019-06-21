@@ -75,6 +75,7 @@ def test_is_percent_raises_correctly_if_given_large_float():
     with pytest.raises(ValueError, match='Floats only valid between 0 and 1. Got 100.0'):
         _is_percent(100.0)
 
+
 def test_add_text_labels_vertical_returns_correct():
     fig, ax = plt.subplots()
     ax.bar(['value'], [100])

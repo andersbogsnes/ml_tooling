@@ -1,15 +1,15 @@
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
-
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from ml_tooling.logging.log_estimator import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 from ml_tooling.utils import (get_git_hash,
                               find_estimator_file,
                               MLToolingError,
-
-                              _create_param_grid)
+                              _create_param_grid, _validate_estimator)
 
 
 def test_get_git_hash_returns_correctly():
@@ -90,6 +90,28 @@ def test_add_text_labels_horizontal_returns_correct():
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
     assert 100 == x_values
+
+
+@pytest.mark.parametrize('estimator', [RandomForestClassifier(),
+                                       make_pipeline(StandardScaler(), RandomForestClassifier())
+                                       ])
+def test_validate_estimator_should_return_estimator(estimator):
+    result = _validate_estimator(estimator)
+    assert result is estimator
+
+
+def test_validate_estimator_should_raise_on_invalid_input():
+    class AnyClass:
+        def __str__(self):
+            return "<AnyClass>"
+
+    with pytest.raises(MLToolingError,
+                       match=f"Expected a Pipeline or Estimator - got"):
+        _validate_estimator(AnyClass)
+
+    with pytest.raises(MLToolingError,
+                       match="You passed a Pipeline without an estimator as the last step"):
+        _validate_estimator(make_pipeline(StandardScaler()))
 
 
 class TestGridsearchParams:

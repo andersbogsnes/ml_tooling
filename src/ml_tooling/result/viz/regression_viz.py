@@ -38,4 +38,6 @@ class RegressionVisualize(BaseVisualize):
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Prediction Error - {self._estimator_name}"
             y_pred = self._estimator.predict(self._data.test_x)
-            return plot_prediction_error(self._data.test_y, y_pred, title=title, **kwargs)
+            return plot_prediction_error(
+                self._data.test_y, y_pred, title=title, **kwargs
+            )

@@ -20,9 +20,9 @@ class TransformerError(Exception):
     """Error which occurs during a transform"""
 
 
-def get_scoring_func(metric: str) -> Callable[[BaseEstimator,
-                                               DataType,
-                                               DataType], Union[int, float]]:
+def get_scoring_func(
+    metric: str
+) -> Callable[[BaseEstimator, DataType, DataType], Union[int, float]]:
     """
     Looks up a scikit-learn scoring function using scikit-learns built-in sklearn.metrics.get_scorer
     :param metric:
@@ -46,12 +46,12 @@ def get_git_hash() -> str:
         from git import Repo, InvalidGitRepositoryError
     except ImportError:
         warnings.warn("Git is not installed on this system")
-        return ''
+        return ""
 
     try:
         repo = Repo(search_parent_directories=True)
     except InvalidGitRepositoryError:
-        return ''
+        return ""
     return repo.head.object.hexsha
 
 
@@ -68,7 +68,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
         return path
 
     git_hash = get_git_hash()
-    all_models = list(path.glob(f'*_{git_hash}.pkl'))
+    all_models = list(path.glob(f"*_{git_hash}.pkl"))
 
     if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")
@@ -84,7 +84,7 @@ def _get_estimator_name(clf) -> str:
     :param clf: sklearn-compatible estimator
     :return:
     """
-    if clf.__class__.__name__ == 'Pipeline':
+    if clf.__class__.__name__ == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
     return clf.__class__.__name__
@@ -122,9 +122,10 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
 
     step_name = pipe.steps[-1][0]
 
-    step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
-                 for param, value
-                 in param_grid.items()}
+    step_dict = {
+        f"{step_name}__{param}" if step_name not in param else param: value
+        for param, value in param_grid.items()
+    }
 
     return ParameterGrid(step_dict)
 
@@ -135,10 +136,12 @@ def _validate_estimator(model):
     :param model:
     :return:
     """
-    if hasattr(model, '_estimator_type'):
+    if hasattr(model, "_estimator_type"):
         return model
 
     if isinstance(model, Pipeline):
-        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+        raise MLToolingError(
+            "You passed a Pipeline without an estimator as the last step"
+        )
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")

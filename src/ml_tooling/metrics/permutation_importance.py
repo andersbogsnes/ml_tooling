@@ -10,12 +10,7 @@ from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.utils import MLToolingError, get_scoring_func
 
 
-def _get_column_importance(estimator,
-                           scorer,
-                           x,
-                           y,
-                           seed,
-                           col):
+def _get_column_importance(estimator, scorer, x, y, seed, col):
     """
     Helper function for _permutation_importances to calculate the importance of a single column.
     When col=None the function calculates the baseline.
@@ -54,14 +49,9 @@ def _get_column_importance(estimator,
     return measure
 
 
-def _permutation_importances(estimator,
-                             scorer,
-                             x,
-                             y,
-                             samples,
-                             seed=1337,
-                             n_jobs=1,
-                             verbose=0):
+def _permutation_importances(
+    estimator, scorer, x, y, samples, seed=1337, n_jobs=1, verbose=0
+):
     """
     Uses random permutation to calculate feature importance.
     By randomly permuting each column and measuring the difference in the estimator metric
@@ -110,23 +100,28 @@ def _permutation_importances(estimator,
     y = y.copy()
     estimator = deepcopy(estimator)
 
-    if samples is not None and \
-            not (isinstance(samples, int) and samples > 0) and \
-            not (isinstance(samples, float) and 0 < samples < 1):
+    if (
+        samples is not None
+        and not (isinstance(samples, int) and samples > 0)
+        and not (isinstance(samples, float) and 0 < samples < 1)
+    ):
         raise MLToolingError("samples must be None, float or int.")
 
     if samples:
         if _is_percent(samples):
             samples = math.floor(samples * len(x)) or 1
-        x, y = resample(x, y, n_samples=samples, replace=True, random_state=random_state)
+        x, y = resample(
+            x, y, n_samples=samples, replace=True, random_state=random_state
+        )
 
     # Used to ensure random number generation is independent of parallelization
     col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
     cols = [None] + x.columns.tolist()
 
     measure = Parallel(n_jobs=n_jobs, verbose=verbose, max_nbytes=None)(
-        delayed(_get_column_importance)(estimator, scorer, x, y, col_seed, col) for col, col_seed in
-        zip(cols, col_seeds))
+        delayed(_get_column_importance)(estimator, scorer, x, y, col_seed, col)
+        for col, col_seed in zip(cols, col_seeds)
+    )
 
     baseline = measure[0]
     drop_in_score = baseline - measure[1:]
@@ -134,7 +129,9 @@ def _permutation_importances(estimator,
     return np.array(drop_in_score), baseline
 
 
-def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.DataFrame:
+def _get_feature_importance(
+    viz, samples, seed=1337, n_jobs=1, verbose=0
+) -> pd.DataFrame:
     """
     Helper function for extracting importances.
 
@@ -173,11 +170,6 @@ def _get_feature_importance(viz, samples, seed=1337, n_jobs=1, verbose=0) -> pd.
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 
-    return _permutation_importances(estimator,
-                                    scorer,
-                                    train_x,
-                                    train_y,
-                                    samples,
-                                    seed,
-                                    n_jobs,
-                                    verbose)
+    return _permutation_importances(
+        estimator, scorer, train_x, train_y, samples, seed, n_jobs, verbose
+    )

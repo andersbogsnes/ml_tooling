@@ -3,7 +3,7 @@
 Transformers
 ============
 
-One great feature of scikit-learn is the concept of the :class:`sklearn.pipeline.Pipeline`
+One great feature of scikit-learn is the concept of the :class:`~sklearn.pipeline.Pipeline`
 alongside `transformers`_
 
 .. _transformers: https://scikit-learn.org/stable/modules/preprocessing.html

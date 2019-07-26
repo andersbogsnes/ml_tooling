@@ -400,7 +400,7 @@ class TestBaseClass:
             def get_prediction_data(self, *args):
                 pass
 
-        cl1 = class1(LogisticRegression())
+        cl1 = class1(LogisticRegression(solver="lbfgs"))
         cl1.score_estimator()
 
         class class2(ModelData):

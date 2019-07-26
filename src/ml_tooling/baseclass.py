@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
-from sklearn.externals import joblib
+import joblib
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.data import Data

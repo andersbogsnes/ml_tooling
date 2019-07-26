@@ -16,6 +16,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('../src/'))
+from ml_tooling import __version__  # noqa
 
 # -- Project information -----------------------------------------------------
 
@@ -24,9 +25,9 @@ copyright = '2019, Anders Bogsnes'
 author = 'Anders Bogsnes'
 
 # The short X.Y version
-version = '0.7'
+version = __version__
 # The full version, including alpha/beta/rc tags
-release = '0.7'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 
@@ -87,7 +88,9 @@ html_theme = 'alabaster'
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    "logo": 'ML_logo.png'
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

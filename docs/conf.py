@@ -13,6 +13,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
 from ml_tooling import __version__
+
 # -- Project information -----------------------------------------------------
 
 project = "ML Tooling"
@@ -39,6 +40,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    "spinx.ext.doctest",
 ]
 
 intersphinx_mapping = {
@@ -84,9 +86,7 @@ html_theme = "alabaster"
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {
-    "logo": 'ML_logo.png'
-}
+html_theme_options = {"logo": "ML_logo.png"}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

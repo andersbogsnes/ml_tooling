@@ -1,3 +1,5 @@
+# v0.7.1
+- Joblib is now a dependency, instead of being vendored with scikit-learn
 # v0.7.0
 - Breaking change - BaseClassModel renamed to ModelData.
 - Breaking change - model renamed to estimator

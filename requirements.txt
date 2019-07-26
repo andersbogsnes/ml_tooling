@@ -5,4 +5,4 @@ pytest-cov==2.7.1
 flake8==3.7.7
 matplotlib==3.1.1
 numpy==1.16.4
-gitpython==2.1.11
+gitpython==2.1.12

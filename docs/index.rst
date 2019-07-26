@@ -6,7 +6,7 @@
 Welcome to ML Tooling!
 ======================
 
-.. figure:: images/ML_logo.png
+.. figure:: _static/ML_logo.png
    :width: 600
    :alt: Logo for ML Tooling
    :align: left

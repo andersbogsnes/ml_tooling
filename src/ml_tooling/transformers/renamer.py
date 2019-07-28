@@ -23,7 +23,9 @@ class Renamer(BaseEstimator, TransformerMixin):
         column_names = listify(self.column_names)
 
         if len(column_names) != len(x_.columns):
-            raise TransformerError(f"X has {len(x_.columns)} columns - "
-                                   f"You provided {len(column_names)} column names")
+            raise TransformerError(
+                f"X has {len(x_.columns)} columns - "
+                f"You provided {len(column_names)} column names"
+            )
         x_.columns = column_names
         return x_

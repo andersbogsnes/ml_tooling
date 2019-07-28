@@ -31,12 +31,12 @@ def get_git_hash() -> str:
         from git import Repo, InvalidGitRepositoryError
     except ImportError:
         warnings.warn("Git is not installed on this system")
-        return ''
+        return ""
 
     try:
         repo = Repo(search_parent_directories=True)
     except InvalidGitRepositoryError:
-        return ''
+        return ""
     return repo.head.object.hexsha
 
 
@@ -83,7 +83,7 @@ def _get_estimator_name(clf) -> str:
     str
         Name of estimator
     """
-    if clf.__class__.__name__ == 'Pipeline':
+    if clf.__class__.__name__ == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
     return clf.__class__.__name__
@@ -131,9 +131,10 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
 
     step_name = pipe.steps[-1][0]
 
-    step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
-                 for param, value
-                 in param_grid.items()}
+    step_dict = {
+        f"{step_name}__{param}" if step_name not in param else param: value
+        for param, value in param_grid.items()
+    }
 
     return ParameterGrid(step_dict)
 

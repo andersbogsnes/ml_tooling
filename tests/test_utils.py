@@ -97,9 +97,13 @@ def test_add_text_labels_horizontal_returns_correct():
     assert 100 == x_values
 
 
-@pytest.mark.parametrize('estimator', [RandomForestClassifier(),
-                                       make_pipeline(StandardScaler(), RandomForestClassifier())
-                                       ])
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        RandomForestClassifier(),
+        make_pipeline(StandardScaler(), RandomForestClassifier()),
+    ],
+)
 def test_validate_estimator_should_return_estimator(estimator):
     result = _validate_estimator(estimator)
     assert result is estimator
@@ -110,12 +114,13 @@ def test_validate_estimator_should_raise_on_invalid_input():
         def __str__(self):
             return "<AnyClass>"
 
-    with pytest.raises(MLToolingError,
-                       match=f"Expected a Pipeline or Estimator - got"):
+    with pytest.raises(MLToolingError, match=f"Expected a Pipeline or Estimator - got"):
         _validate_estimator(AnyClass)
 
-    with pytest.raises(MLToolingError,
-                       match="You passed a Pipeline without an estimator as the last step"):
+    with pytest.raises(
+        MLToolingError,
+        match="You passed a Pipeline without an estimator as the last step",
+    ):
         _validate_estimator(make_pipeline(StandardScaler()))
 
 

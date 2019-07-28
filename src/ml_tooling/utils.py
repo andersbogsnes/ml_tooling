@@ -60,7 +60,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     if path.is_file():
         return path
 
-    all_models = list(path.glob(f'*.pkl'))
+    all_models = list(path.glob(f"*.pkl"))
 
     if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")

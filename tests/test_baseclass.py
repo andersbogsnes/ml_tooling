@@ -381,8 +381,8 @@ class TestBaseClass:
             def get_prediction_data(self, *args):
                 pass
 
-        model1 = test_class(LogisticRegression())
-        model2 = test_class(LogisticRegression())
+        model1 = test_class(LogisticRegression(solver="lbfgs"))
+        model2 = test_class(LogisticRegression(solver="lbfgs"))
         pd.testing.assert_frame_equal(model1.data.x, model2.data.x)
 
         model1.data.x = pd.DataFrame({"b": [9, 9, 8, 9, 2, 4]})
@@ -410,7 +410,7 @@ class TestBaseClass:
             def get_prediction_data(self, *args):
                 pass
 
-        cl2 = class2(LogisticRegression())
+        cl2 = class2(LogisticRegression(solver="lbfgs"))
         cl2.score_estimator()
 
         pd.testing.assert_frame_equal(cl1.data.x, cl2.data.x)

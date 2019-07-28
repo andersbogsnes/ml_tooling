@@ -1,17 +1,18 @@
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics.scorer import _PredictScorer
-
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from ml_tooling.logging.log_estimator import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
+
 from ml_tooling.utils import (
     get_git_hash,
     find_estimator_file,
     MLToolingError,
-    get_scoring_func,
     _create_param_grid,
+    _validate_estimator,
 )
 
 
@@ -80,19 +81,6 @@ def test_is_percent_raises_correctly_if_given_large_float():
         _is_percent(100.0)
 
 
-def test_scoring_func_returns_a_scorer(classifier):
-    scorer = get_scoring_func("accuracy")
-
-    score = scorer(classifier.estimator, classifier.data.test_x, classifier.data.test_y)
-    assert isinstance(scorer, _PredictScorer)
-    assert score > 0.63
-
-
-def test_scoring_func_fails_if_invalid_scorer_is_given():
-    with pytest.raises(MLToolingError):
-        get_scoring_func("invalid_scorer")
-
-
 def test_add_text_labels_vertical_returns_correct():
     fig, ax = plt.subplots()
     ax.bar(["value"], [100])
@@ -107,6 +95,33 @@ def test_add_text_labels_horizontal_returns_correct():
     x_values, y_values = next(_generate_text_labels(ax, horizontal=True))
     assert 0 == y_values
     assert 100 == x_values
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        RandomForestClassifier(),
+        make_pipeline(StandardScaler(), RandomForestClassifier()),
+    ],
+)
+def test_validate_estimator_should_return_estimator(estimator):
+    result = _validate_estimator(estimator)
+    assert result is estimator
+
+
+def test_validate_estimator_should_raise_on_invalid_input():
+    class AnyClass:
+        def __str__(self):
+            return "<AnyClass>"
+
+    with pytest.raises(MLToolingError, match=f"Expected a Pipeline or Estimator - got"):
+        _validate_estimator(AnyClass)
+
+    with pytest.raises(
+        MLToolingError,
+        match="You passed a Pipeline without an estimator as the last step",
+    ):
+        _validate_estimator(make_pipeline(StandardScaler()))
 
 
 class TestGridsearchParams:

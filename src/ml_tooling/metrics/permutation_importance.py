@@ -4,10 +4,11 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 from sklearn.externals.joblib import Parallel, delayed
+from sklearn.metrics import get_scorer
 from sklearn.utils import check_random_state, resample
 
 from ml_tooling.metrics.utils import _is_percent
-from ml_tooling.utils import MLToolingError, get_scoring_func
+from ml_tooling.utils import MLToolingError
 
 
 def _get_column_importance(estimator, scorer, x, y, seed, col):
@@ -166,7 +167,7 @@ def _get_feature_importance(
 
     """
     estimator = viz._estimator
-    scorer = get_scoring_func(viz.default_metric)
+    scorer = get_scorer(viz.default_metric)
     train_x = viz._data.train_x.copy()
     train_y = viz._data.train_y.copy()
 

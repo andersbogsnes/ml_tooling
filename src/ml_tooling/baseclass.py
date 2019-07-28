@@ -10,6 +10,7 @@ from sklearn import clone
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 import joblib
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.data import Data
@@ -24,7 +25,6 @@ from ml_tooling.utils import (
     get_git_hash,
     DataType,
     find_estimator_file,
-    get_scoring_func,
     _create_param_grid,
     _validate_estimator,
 )
@@ -54,13 +54,13 @@ class ModelData(metaclass=abc.ABCMeta):
     def estimator(self):
         if self._estimator is None:
             raise MLToolingError(
-                "No estimator selected. " "Use .init_estimator to set an estimator"
+                "No estimator selected. Use .init_estimator to set an estimator"
             )
         return self._estimator
 
     @estimator.setter
     def estimator(self, estimator):
-        self._estimator = estimator
+        self._estimator = _validate_estimator(estimator)
 
     def init_estimator(self, estimator):
         """
@@ -309,7 +309,7 @@ class ModelData(metaclass=abc.ABCMeta):
         if self.config.LOG:
             if self.result is None:
                 raise MLToolingError(
-                    "You haven't scored the estimator - " "no results available to log"
+                    "You haven't scored the estimator - no results available to log"
                 )
 
             metric_scores = {self.result.metric: float(self.result.score)}
@@ -472,9 +472,8 @@ class ModelData(metaclass=abc.ABCMeta):
         """
         logger.info("Training estimator...")
         self.estimator.fit(self.data.x, self.data.y)
-        self.result = (
-            None
-        )  # Prevent confusion, as train_estimator does not return a result
+        # Prevent confusion, as train_estimator does not return a result
+        self.result = None
         logger.info("Estimator trained!")
 
         return self
@@ -578,7 +577,7 @@ class ModelData(metaclass=abc.ABCMeta):
                 estimator=clone(baseline_estimator),
                 train=train,
                 test=test,
-                scorer=get_scoring_func(metric),
+                scorer=get_scorer(metric),
                 verbose=self.config.VERBOSITY,
                 parameters=parameters,
             )
@@ -663,7 +662,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         """
 
-        scoring_func = get_scoring_func(metric)
+        scoring_func = get_scorer(metric)
 
         score = scoring_func(estimator, self.data.test_x, self.data.test_y)
         viz = self._plotter(estimator=estimator, config=self.config, data=self.data)

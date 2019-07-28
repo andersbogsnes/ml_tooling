@@ -9,7 +9,7 @@ from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, precision_recall_curve
+from sklearn.metrics import roc_curve, precision_recall_curve, get_scorer
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
@@ -20,7 +20,6 @@ from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_cur
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import ToCategorical
-from ml_tooling.utils import get_scoring_func
 
 
 class TestVisualize:
@@ -374,7 +373,7 @@ class TestGetFeatureImportance:
         importance, baseline = _get_feature_importance(regression.result.plot, sample)
 
         model = regression.result.plot._estimator
-        metric = get_scoring_func(regression.result.plot._config.REGRESSION_METRIC)
+        metric = get_scorer(regression.result.plot._config.REGRESSION_METRIC)
         train_x = regression.result.plot._data.train_x
         train_y = regression.result.plot._data.train_y
 
@@ -394,7 +393,7 @@ class TestGetFeatureImportance:
         importance, baseline = _get_feature_importance(pipe.result.plot, sample)
 
         model = pipe.result.plot._estimator
-        metric = get_scoring_func(pipe.result.plot._config.REGRESSION_METRIC)
+        metric = get_scorer(pipe.result.plot._config.REGRESSION_METRIC)
         train_x = pipe.result.plot._data.train_x
         train_y = pipe.result.plot._data.train_y
         expected_importance, expected_baseline = _permutation_importances(
@@ -413,7 +412,7 @@ class TestGetFeatureImportance:
         importance, baseline = _get_feature_importance(result.plot, sample)
 
         model = classifier.result.plot._estimator
-        metric = get_scoring_func(classifier.result.plot._config.CLASSIFIER_METRIC)
+        metric = get_scorer(classifier.result.plot._config.CLASSIFIER_METRIC)
         train_x = classifier.result.plot._data.train_x
         train_y = classifier.result.plot._data.train_y
         expected_importance, expected_baseline = _permutation_importances(

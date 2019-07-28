@@ -5,7 +5,9 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from ml_tooling.utils import DataType
 
 
-def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
+def plot_roc_auc(
+    y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None
+) -> Axes:
     """
     Plot ROC AUC curve. Works only with probabilities
 
@@ -24,7 +26,7 @@ def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axe
     :return:
         matplotlib.Axes
     """
-    title = 'ROC AUC curve' if title is None else title
+    title = "ROC AUC curve" if title is None else title
 
     fpr, tpr, _ = roc_curve(y_true, y_proba)
     score = roc_auc_score(y_true, y_proba)
@@ -33,10 +35,10 @@ def plot_roc_auc(y_true: DataType, y_proba: DataType, title: str = None, ax: Axe
         fig, ax = plt.subplots()
 
     ax.plot(fpr, tpr, label=f"ROC Score: {score}")
-    ax.plot([0, 1], '--')
+    ax.plot([0, 1], "--")
     ax.set_title(title)
-    ax.set_ylabel('True Positive Rate')
-    ax.set_xlabel('False Positive Rate')
-    ax.legend(loc='best')
+    ax.set_ylabel("True Positive Rate")
+    ax.set_xlabel("False Positive Rate")
+    ax.legend(loc="best")
     plt.tight_layout()
     return ax

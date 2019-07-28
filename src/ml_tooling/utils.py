@@ -17,7 +17,6 @@ class MLToolingError(Exception):
 class TransformerError(Exception):
     """Error which occurs during a transform"""
 
-
 def get_git_hash() -> str:
     """
     Returns the git hash of HEAD
@@ -31,12 +30,12 @@ def get_git_hash() -> str:
         from git import Repo, InvalidGitRepositoryError
     except ImportError:
         warnings.warn("Git is not installed on this system")
-        return ''
+        return ""
 
     try:
         repo = Repo(search_parent_directories=True)
     except InvalidGitRepositoryError:
-        return ''
+        return ""
     return repo.head.object.hexsha
 
 
@@ -83,7 +82,7 @@ def _get_estimator_name(clf) -> str:
     str
         Name of estimator
     """
-    if clf.__class__.__name__ == 'Pipeline':
+    if clf.__class__.__name__ == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
     return clf.__class__.__name__
@@ -131,9 +130,10 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
 
     step_name = pipe.steps[-1][0]
 
-    step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
-                 for param, value
-                 in param_grid.items()}
+    step_dict = {
+        f"{step_name}__{param}" if step_name not in param else param: value
+        for param, value in param_grid.items()
+    }
 
     return ParameterGrid(step_dict)
 
@@ -157,10 +157,13 @@ def _validate_estimator(estimator):
     MLToolingError
         Raises on invalid input
     """
-    if hasattr(estimator, '_estimator_type'):
-        return estimator
 
-    if isinstance(estimator, Pipeline):
-        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+    if hasattr(model, "_estimator_type"):
+        return model
+
+    if isinstance(model, Pipeline):
+        raise MLToolingError(
+            "You passed a Pipeline without an estimator as the last step"
+        )
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")

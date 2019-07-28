@@ -1,5 +1,3 @@
 from .data import Data
 
-__all__ = [
-    'Data'
-]
+__all__ = ["Data"]

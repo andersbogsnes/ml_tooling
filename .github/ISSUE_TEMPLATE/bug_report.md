@@ -23,5 +23,5 @@ A clear and concise description of what you expected to happen.
 **Additional context**
 Add any other context about the problem here.
 
-- [ ] I have updated ML Tooling to the latest version  
+- [ ] I have updated ML Tooling to the latest version
 - [ ] I have checked if this issue has been reported previously

@@ -54,7 +54,7 @@ class ModelData(metaclass=abc.ABCMeta):
     def estimator(self):
         if self._estimator is None:
             raise MLToolingError(
-                "No estimator selected. " "Use .init_estimator to set an estimator"
+                "No estimator selected. Use .init_estimator to set an estimator"
             )
         return self._estimator
 
@@ -255,9 +255,7 @@ class ModelData(metaclass=abc.ABCMeta):
         return f"{self.__class__.__name__}_{self.estimator_name}_{get_git_hash()}.pkl"
 
     def save_estimator(
-        self,
-        path: Optional[str] = None,
-        filename: Optional[str] = None
+        self, path: Optional[str] = None, filename: Optional[str] = None
     ) -> pathlib.Path:
         """
         Saves the estimator as a binary file. Defaults to current working directory,
@@ -311,7 +309,7 @@ class ModelData(metaclass=abc.ABCMeta):
         if self.config.LOG:
             if self.result is None:
                 raise MLToolingError(
-                    "You haven't scored the estimator - " "no results available to log"
+                    "You haven't scored the estimator - no results available to log"
                 )
 
             metric_scores = {self.result.metric: float(self.result.score)}
@@ -481,9 +479,7 @@ class ModelData(metaclass=abc.ABCMeta):
         return self
 
     def score_estimator(
-        self,
-        metric: Optional[str] = None,
-        cv: Optional[int] = False
+        self, metric: Optional[str] = None, cv: Optional[int] = False
     ) -> "Result":
         """Loads all training data and trains the estimator on it, using a train_test split.
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters

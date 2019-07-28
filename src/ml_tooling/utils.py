@@ -158,10 +158,13 @@ def _validate_estimator(estimator):
     MLToolingError
         Raises on invalid input
     """
-    if hasattr(estimator, '_estimator_type'):
+
+    if hasattr(estimator, "_estimator_type"):
         return estimator
 
     if isinstance(estimator, Pipeline):
-        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+        raise MLToolingError(
+            "You passed a Pipeline without an estimator as the last step"
+        )
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")

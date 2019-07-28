@@ -5,7 +5,7 @@
 [![Updates](https://pyup.io/repos/github/andersbogsnes/ml_tooling/shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 
 # Installation
-Use pip to install: 
+Use pip to install:
 `pip install ml-tooling`
 
 # Contents
@@ -16,18 +16,18 @@ Use pip to install:
     * Production baseclasses for subclassing - guarantees interface for use in API
 
 * Plotting functions
-    * Functions for producing nice, commonly used plots such as roc_curves and confusion matrices 
+    * Functions for producing nice, commonly used plots such as roc_curves and confusion matrices
 
 # ModelData
-A base Class for defining your model. 
+A base Class for defining your model.
 Your subclass must define two methods:
- 
+
 - `get_prediction_data()`
- 
+
     Function that, given an input, fetches corresponding features. Used for predicting an unseen observation
- 
+
 - `get_training_data()`
-    
+
     Function that retrieves all training data. Used for training and evaluating the model
 
 
@@ -45,10 +45,10 @@ class BostonModel(ModelData):
     def get_prediction_data(self, idx):
         x, _ = load_boston(return_X_y=True)
         return x[idx] # Return given observation
-        
+
     def get_training_data(self):
         return load_boston(return_X_y=True)
-    
+
 # Use our new class to implement a given sklearn compatible estimator
 linear_boston = BostonModel(LinearRegression())
 
@@ -67,7 +67,7 @@ BostonModel.load_estimator('.')
 # Train Different models and get the best performing
 estimators_to_try = [LinearRegression(), Ridge(), LassoLars()]
 
-# best_estimator will be BostonModel instantiated with the highest scoring model. all_results is a list of all results 
+# best_estimator will be BostonModel instantiated with the highest scoring model. all_results is a list of all results
 best_estimator, alL_results = BostonModel.test_estimators(estimators_to_try, metric='neg_mean_squared_error')
 alL_results.to_dataframe(params=False)
 
@@ -88,52 +88,52 @@ Defaults to 0. The level of verbosity sklearn outputs
 Defaults to 'accuracy'. The metric to use in classifier problems
 ### REGRESSION_METRIC
 Defaults to 'r2'. The metric to use in regression problems
-### CROSS_VALIDATION 
+### CROSS_VALIDATION
 Defaults to 10. Number of cross validation iterations to use
 ### STYLE_SHEET
 Defaults to built-in Alm Brand styling. Path to a matplotlib stylesheet to use in plots
-### N_JOBS 
+### N_JOBS
 Defaults to -1. Number of cores to use in multiprocessing situations.
-### TEST_SIZE 
+### TEST_SIZE
 Defaults to 0.25. Percentage of data taken out as test data.
-### RANDOM_STATE 
+### RANDOM_STATE
 Defaults to 42. Random state seed to use.
-### RUN_DIR 
-Defaults to './runs'. Folder to store run logging files 
-### MODEL_DIR 
+### RUN_DIR
+Defaults to './runs'. Folder to store run logging files
+### MODEL_DIR
 Defaults to './models'. Folder to store pickled models
-### LOG 
-Defaults to False. Toggles whether or not to log to file. Set to True 
-if you want every run to be logged, otherwise use the `.log` 
+### LOG
+Defaults to False. Toggles whether or not to log to file. Set to True
+if you want every run to be logged, otherwise use the `.log`
 context manager to toggle for a single run.
 
 ## Methods
 The BaseClass implements a number of useful methods
 
 ### `save_estimator(path=None, file_name=None)`
-Saves the model as a binary file. Defaults to current working directory, 
+Saves the model as a binary file. Defaults to current working directory,
 with a filename of `<class_name>_<model_name>_<git_hash>.pkl` but
 a custom filename can be suppplied.
 
 ### `load_estimator(path)`
 Instantiates the class with a joblib pickled model.
-If no path is given, searches path for the newest file that matches the pattern 
-   
+If no path is given, searches path for the newest file that matches the pattern
+
 ### `score_estimator(metric='accuracy', cv=False)`
 Loads all training data and trains the model on it, using a train_test split.
 Returns a Result object containing all result parameters
 Defaults to non-cross-validated scoring. If you want to cross-validate, pass number of folds to cv
 
 ### `train_estimator()`
-Loads all training data and trains the model on all data. 
+Loads all training data and trains the model on all data.
 Typically used as the last step when model tuning is complete.
 Sets .result attribute to None
 
-   
+
 ### `make_prediction(*args)`
-Makes a prediction given an input. For example a customer number. 
+Makes a prediction given an input. For example a customer number.
 Passed to the implemented `get_prediction_data()` method and calls `.predict()` on the estimator
-   
+
 
 ### `test_estimators([model1, model2], metric='accuracy')`
 Runs `score_estimator()` on each model, saving the result.
@@ -161,11 +161,11 @@ class BostonModel(ModelData):
         data = load_boston()
         df = pd.DataFrame(data=data.data, columns=data.feature_names)
         return df.iloc[idx] # Return given observation
-        
+
     def get_training_data(self):
         data = load_boston()
         return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
-    
+
     @classmethod
     def setup_estimator(cls):
         pipeline = Pipeline([
@@ -184,7 +184,7 @@ model.train_estimator()
 
 
 ### `log(log_dir)`
-`log()` is a context manager that lets you turn on logging for any scoring methods that follow. 
+`log()` is a context manager that lets you turn on logging for any scoring methods that follow.
 You can pass a log_dir to specify a subfolder to store the model in. The output is a yaml
 file recording model parameters, package version numbers, metrics and other useful information
 
@@ -195,17 +195,17 @@ model = BostonModel.setup_estimator()
 with model.log('score'):
     model.score_estimator()
 
-``` 
+```
 
 This will save the results of `model.score_estimator()` to `runs/score/`
 
 ## Visualizing results
-When a model is trained, it returns a Result object. 
+When a model is trained, it returns a Result object.
 That object has number of visualization options depending on the type of model:
 
 Any visualizer listed here also has a functional counterpart in `ml_tooling.plots`.
-E.g if you want to use the function for plotting a confusion matrix without using 
-the ml_tooling ModelData approach, you can instead do 
+E.g if you want to use the function for plotting a confusion matrix without using
+the ml_tooling ModelData approach, you can instead do
 `from ml_tooling.plots import plot_confusion_matrix`
 
 These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred
@@ -221,16 +221,16 @@ plot_confusion_matrix(y_true, y_pred)
 ```
 
 ### Classifiers
-   
+
 - `roc_curve(**kwargs)`:
 
     Visualize a ROC curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
-- `pr_curve(**kwargs)`: 
-    
+- `pr_curve(**kwargs)`:
+
     Visualize a Precision-Recall curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
 
-- `confusion_matrix(normalized = True, **kwargs)`: 
-    
+- `confusion_matrix(normalized = True, **kwargs)`:
+
     Visualize a confusion matrix for a classification model. `normalized` determines whether or not to normalize annotated class counts. Any kwargs are passed onto matplotlib.
 
 - `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:
@@ -247,27 +247,27 @@ plot_confusion_matrix(y_true, y_pred)
     Visualize a Lift Curve for a classification model. Model must implement a `predict_proba` method. Any kwargs are passed onto matplotlib.
 
 ### Regressors
-   
-- `prediction_error(**kwargs)`: 
+
+- `prediction_error(**kwargs)`:
 
     Visualizes prediction error of a regression model. Any kwargs are passed onto matplotlib.
 
-- `residuals(**kwargs)`: 
- 
+- `residuals(**kwargs)`:
+
     Visualizes residuals of a regression model. Any kwargs are passed onto matplotlib.
- 
+
 - `feature_importance(samples, values = True,  top_n = None, bottom_n = None, n_jobs_overwrite=None, **kwargs)`:
 
     Calculates each features imporatance with permutation. Importance is measured in drop in model metric. `samples` determines the number of samples to use and must be set.
-    
+
     If `samples=None` the original data set is used which is not recommended for small data sets.
-    
+
     If `samples` is a `float` between 0 and 1 a new smaller data set is made from resampling with replacement form the original data set. This is not recommended for small data sets but could be suitable for very large data sets.
-    
+
     If  `samples` is set to an `int` a new  data set of size `samples` is made from resampling with replacement form the original data. Recommended for small data sets to ensure stable estimates of feature importance.
-    
+
     If `top_n` is an `integer`, return `top_n` features and if `top_n` is a `float` between `(0, 1)`, return `top_n` percent features. If `bottom_n` is an `integer`, return `bottom_n` features and if `bottom_n` is a `float` between `(0, 1)`, return `bottom_n` percent features.
-    
+
     Setting `n_jobs_overwrite` to an `int` overwrites the settings of the model settings.
 
 # Transformers
@@ -282,7 +282,7 @@ import pandas as pd
 df = pd.DataFrame({
     "id": [1, 2, 3, 4],
     "status": ["OK", "Error", "OK", "Error"],
-    "sales": [2000, 3000, 4000, 5000] 
+    "sales": [2000, 3000, 4000, 5000]
 
 })
 
@@ -290,7 +290,7 @@ select = Select(['id', 'status'])
 select.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    id status
 0   1     OK
 1   2  Error
@@ -309,7 +309,7 @@ import numpy as np
 df = pd.DataFrame({
     "id": [1, 2, 3, 4],
     "status": ["OK", "Error", "OK", "Error"],
-    "sales": [2000, 3000, 4000, np.nan] 
+    "sales": [2000, 3000, 4000, np.nan]
 
 })
 
@@ -317,7 +317,7 @@ fill_na = FillNA(value = 0)
 fill_na.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    id status   sales
 0   1     OK  2000.0
 1   2  Error  3000.0
@@ -334,7 +334,7 @@ fill_na = FillNA(value='mean')
 fill_na.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    id status   sales
 0   1     OK  2000.0
 1   2  Error  3000.0
@@ -344,8 +344,8 @@ Out[1]:
 ```
 
 ## ToCategorical
-Performs one-hot encoding of categorical values through pd.Categorical. 
-All categorical values not found in training data will be set to 0 
+Performs one-hot encoding of categorical values through pd.Categorical.
+All categorical values not found in training data will be set to 0
 
 ### Example
 ```python
@@ -353,7 +353,7 @@ from ml_tooling.transformers import ToCategorical
 import pandas as pd
 
 df = pd.DataFrame({
-    "status": ["OK", "Error", "OK", "Error"] 
+    "status": ["OK", "Error", "OK", "Error"]
 
 })
 
@@ -361,7 +361,7 @@ onehot = ToCategorical()
 onehot.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    status_Error  status_OK
 0             0          1
 1             1          0
@@ -385,7 +385,7 @@ uppercase = FuncTransformer(lambda x: x.str.upper())
 uppercase.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
   status
 0     OK
 1  ERROR
@@ -393,7 +393,7 @@ Out[1]:
 3  ERROR
 ```
 
-Keyword arguments can be supplied to the function. 
+Keyword arguments can be supplied to the function.
 ```python
 from ml_tooling.transformers import FuncTransformer
 import pandas as pd
@@ -419,7 +419,7 @@ wordchange.fit_transform(df)
 ```
 
 ```
-Out[2]: 
+Out[2]:
   status
 0   Okay
 1   Fail
@@ -444,7 +444,7 @@ binned = Binner(bins=[0, 1000, 2000, 8000])
 binned.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
           sales
 0  (1000, 2000]
 1  (1000, 2000]
@@ -469,7 +469,7 @@ rename.fit_transform(df)
 ```
 
 ```
-Out[1]: 
+Out[1]:
    sales
 0   1500
 1   2000
@@ -494,7 +494,7 @@ dates.fit_transform(df)
 ```
 
 ```
-Out[1]: 
+Out[1]:
    sales_date_day  sales_date_month  sales_date_year
 0               1                 1             2018
 1               2                 2             2018
@@ -516,7 +516,7 @@ freq = FreqFeature()
 freq.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    sales_category
 0        0.666667
 1        0.666667
@@ -540,24 +540,24 @@ df = pd.DataFrame({
 
 
 freq = Pipeline([
-    ('select', Select('sales_category')), 
+    ('select', Select('sales_category')),
     ('freq', FreqFeature())
 ])
 
 binned = Pipeline([
-    ('select', Select('sales')), 
+    ('select', Select('sales')),
     ('bin', Binner(bins=[0, 1000, 2000, 8000]))
     ])
 
 
 union = DFFeatureUnion([
-    ('sales_category', freq), 
+    ('sales_category', freq),
     ('sales', binned)
 ])
 union.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
    sales_category         sales
 0             0.5  (1000, 2000]
 1             0.5  (1000, 2000]
@@ -584,7 +584,7 @@ rowfunc = DFRowFunc(strategy = 'sum')
 rowfunc.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
          0
 0        2
 1        3
@@ -600,7 +600,7 @@ rowfunc = DFRowFunc(strategy = np.mean)
 rowfunc.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
          0
 0        1
 1        3
@@ -629,7 +629,7 @@ binarize = Binarize(value = 3)
 binarize.fit_transform(df)
 ```
 ```
-Out[1]: 
+Out[1]:
          number_1    number_2
 0               0           0
 1               1           0

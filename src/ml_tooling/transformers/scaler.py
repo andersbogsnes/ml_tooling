@@ -6,7 +6,7 @@ from sklearn.preprocessing import StandardScaler
 class DFStandardScaler(BaseEstimator, TransformerMixin):
     """
     Wrapping of the StandardScaler from scikit-learn for Pandas DataFrames. See:
-    http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+    :class:`~sklearn.preprocessing.StandardScaler`
     """
 
     def __init__(self, copy=True, with_mean=True, with_std=True):

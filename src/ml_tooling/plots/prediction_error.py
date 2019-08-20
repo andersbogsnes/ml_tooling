@@ -6,10 +6,9 @@ from sklearn.metrics import r2_score
 from ml_tooling.utils import DataType
 
 
-def plot_prediction_error(y_true: DataType,
-                          y_pred: DataType,
-                          title: str = None,
-                          ax: Axes = None) -> Axes:
+def plot_prediction_error(
+    y_true: DataType, y_pred: DataType, title: str = None, ax: Axes = None
+) -> Axes:
     """
     Plots prediction error of regression estimator
 
@@ -36,10 +35,10 @@ def plot_prediction_error(y_true: DataType,
     r2 = r2_score(y_true, y_pred)
 
     ax.scatter(y_true, y_pred, label=f"$R^2 = {r2}$")
-    ax.set_ylabel('$\hat{y}$')
-    ax.set_xlabel('$y$')
+    ax.set_ylabel("$\hat{y}$")
+    ax.set_xlabel("$y$")
     ax.set_title(title)
     min_x, min_y = np.min(y_true), np.min(y_pred)
     max_x, max_y = np.max(y_true), np.max(y_pred)
-    ax.plot((min_x, max_x), (min_y, max_y), c='grey', linestyle='--')
+    ax.plot((min_x, max_x), (min_y, max_y), c="grey", linestyle="--")
     return ax

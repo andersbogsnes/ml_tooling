@@ -38,11 +38,11 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     y_true = np.array(y_true)
 
     percents, gains = _cum_gain_curve(y_true, y_proba)
-    positives = np.where(y_proba > .5, 1, 0)
+    positives = np.where(y_proba > 0.5, 1, 0)
     score = lift_score(y_true, positives)
 
-    ax.plot(percents, gains / percents, label=f'$Lift = {score:.2f}$ ')
-    ax.axhline(y=1, color='grey', linestyle='--', label='Baseline')
+    ax.plot(percents, gains / percents, label=f"$Lift = {score:.2f}$ ")
+    ax.axhline(y=1, color="grey", linestyle="--", label="Baseline")
     ax.set_title(title)
     ax.set_ylabel("Lift")
     ax.set_xlabel("% of Data")

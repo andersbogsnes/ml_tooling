@@ -9,15 +9,16 @@ from .utils import _generate_text_labels
 from ..utils import DataType
 
 
-def plot_feature_importance(importance: DataType,
-                            labels: DataType,
-                            values: bool = None,
-                            title: str = None,
-                            x_label: str = None,
-                            ax: Axes = None,
-                            top_n: Union[int, float] = None,
-                            bottom_n: Union[int, float] = None
-                            ) -> Axes:
+def plot_feature_importance(
+    importance: DataType,
+    labels: DataType,
+    values: bool = None,
+    title: str = None,
+    x_label: str = None,
+    ax: Axes = None,
+    top_n: Union[int, float] = None,
+    bottom_n: Union[int, float] = None,
+) -> Axes:
     """
     Plot a horizontal bar chart of labelled feature importance
 
@@ -69,22 +70,23 @@ def plot_feature_importance(importance: DataType,
         else:
             title = f"{title} - Bottom {bottom_n}"
 
-    labels, importance = _sort_values(labels,
-                                      importance,
-                                      sort='abs',
-                                      top_n=top_n,
-                                      bottom_n=bottom_n,
-
-                                      )
+    labels, importance = _sort_values(
+        labels, importance, sort="abs", top_n=top_n, bottom_n=bottom_n
+    )
     labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))
     ax.set_title(title)
-    ax.set_ylabel('Features')
-    x_label = 'Importance' if x_label is None else x_label
+    ax.set_ylabel("Features")
+    x_label = "Importance" if x_label is None else x_label
     ax.set_xlabel(x_label)
     if values:
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
-            ax.annotate(f"{importance[i]:.2f}", (x, y),
-                        xytext=(5, 0), textcoords="offset points", va='center')
+            ax.annotate(
+                f"{importance[i]:.2f}",
+                (x, y),
+                xytext=(5, 0),
+                textcoords="offset points",
+                va="center",
+            )
 
     return ax

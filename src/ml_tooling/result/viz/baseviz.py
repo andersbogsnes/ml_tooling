@@ -32,16 +32,21 @@ class BaseVisualize:
 
         """
 
-        return self._config.CLASSIFIER_METRIC if self._estimator._estimator_type == 'classifier' \
+        return (
+            self._config.CLASSIFIER_METRIC
+            if self._estimator._estimator_type == "classifier"
             else self._config.REGRESSION_METRIC
+        )
 
-    def feature_importance(self,
-                           samples,
-                           values: bool = True,
-                           top_n: Union[int, float] = None,
-                           bottom_n: Union[int, float] = None,
-                           n_jobs=None,
-                           **kwargs) -> plt.Axes:
+    def feature_importance(
+        self,
+        samples,
+        values: bool = True,
+        top_n: Union[int, float] = None,
+        bottom_n: Union[int, float] = None,
+        n_jobs=None,
+        **kwargs,
+    ) -> plt.Axes:
         """
         Visualizes feature importance of the estimator through permutation.
 
@@ -83,20 +88,24 @@ class BaseVisualize:
 
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Feature Importance - {self._estimator_name}"
-        importance, baseline = _get_feature_importance(self,
-                                                       samples=samples,
-                                                       seed=self._config.RANDOM_STATE,
-                                                       n_jobs=n_jobs,
-                                                       verbose=self._config.VERBOSITY)
+        importance, baseline = _get_feature_importance(
+            self,
+            samples=samples,
+            seed=self._config.RANDOM_STATE,
+            n_jobs=n_jobs,
+            verbose=self._config.VERBOSITY,
+        )
         labels = self._data.train_x.columns
         x_label = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 
         with plt.style.context(self._config.STYLE_SHEET):
-            return plot_feature_importance(importance,
-                                           labels,
-                                           values=values,
-                                           title=title,
-                                           x_label=x_label,
-                                           top_n=top_n,
-                                           bottom_n=bottom_n,
-                                           **kwargs)
+            return plot_feature_importance(
+                importance,
+                labels,
+                values=values,
+                title=title,
+                x_label=x_label,
+                top_n=top_n,
+                bottom_n=bottom_n,
+                **kwargs,
+            )

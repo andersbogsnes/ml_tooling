@@ -9,12 +9,14 @@ import ml_tooling.metrics
 from ml_tooling.utils import DataType
 
 
-def plot_confusion_matrix(y_true: DataType,
-                          y_pred: DataType,
-                          normalized: bool = True,
-                          title: str = None,
-                          ax: Axes = None,
-                          labels: Sequence[str] = None) -> Axes:
+def plot_confusion_matrix(
+    y_true: DataType,
+    y_pred: DataType,
+    normalized: bool = True,
+    title: str = None,
+    ax: Axes = None,
+    labels: Sequence[str] = None,
+) -> Axes:
     """
     Plots a confusion matrix of predicted labels vs actual labels
 
@@ -40,7 +42,7 @@ def plot_confusion_matrix(y_true: DataType,
         matplotlib.Axes
     """
 
-    title = 'Confusion Matrix' if title is None else title
+    title = "Confusion Matrix" if title is None else title
 
     if normalized:
         title = f"{title} - Normalized"
@@ -54,24 +56,28 @@ def plot_confusion_matrix(y_true: DataType,
         unique_labels = np.unique(y_true)
         labels = list(unique_labels)
 
-    cax = ax.matshow(cm, interpolation='nearest', cmap=plt.get_cmap('Blues'))
+    cax = ax.matshow(cm, interpolation="nearest", cmap=plt.get_cmap("Blues"))
 
-    ax.set_ylabel('True Label')
-    ax.set_xlabel('Predicted Label')
+    ax.set_ylabel("True Label")
+    ax.set_xlabel("Predicted Label")
 
-    labels.insert(0, '')
+    labels.insert(0, "")
     ax.set_title(title)
     ax.set_yticklabels(labels)
     ax.set_xticklabels(labels)
-    ax.xaxis.set_ticks_position('bottom')
+    ax.xaxis.set_ticks_position("bottom")
 
     plt.colorbar(cax, ax=ax)
-    fmt = '.2f' if normalized else 'd'
-    thresh = cm.max() / 2.
+    fmt = ".2f" if normalized else "d"
+    thresh = cm.max() / 2.0
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        ax.text(j, i, format(cm[i, j], fmt),
-                horizontalalignment="center",
-                color="white" if cm[i, j] > thresh else "black")
+        ax.text(
+            j,
+            i,
+            format(cm[i, j], fmt),
+            horizontalalignment="center",
+            color="white" if cm[i, j] > thresh else "black",
+        )
 
     plt.tight_layout()
     return ax

@@ -19,37 +19,41 @@ def _make_run_dir(run_dir: str) -> pathlib.Path:
     return path
 
 
-def log_results(metric_scores: dict,
-                estimator_name: str,
-                estimator_params: dict,
-                run_dir: Union[pathlib.Path, str],
-                estimator_path=None,
-                overwrite=False,
-                ):
+def log_results(
+    metric_scores: dict,
+    estimator_name: str,
+    estimator_params: dict,
+    run_dir: Union[pathlib.Path, str],
+    estimator_path=None,
+    overwrite=False,
+):
     from ml_tooling import __version__ as ml_tools_version
     from sklearn import __version__ as sklearn_version
     from pandas import __version__ as pandas_version
 
-    versions = {"ml_tooling": ml_tools_version,
-                "sklearn": sklearn_version,
-                "pandas": pandas_version}
+    versions = {
+        "ml_tooling": ml_tools_version,
+        "sklearn": sklearn_version,
+        "pandas": pandas_version,
+    }
 
-    data = {"time_created": datetime.now(),
-            "estimator_name": estimator_name,
-            "versions": versions,
-            "params": estimator_params,
-            "git_hash": get_git_hash(),
-            "metrics": {k: float(v) for k, v in metric_scores.items()}
-            }
+    data = {
+        "time_created": datetime.now(),
+        "estimator_name": estimator_name,
+        "versions": versions,
+        "params": estimator_params,
+        "git_hash": get_git_hash(),
+        "metrics": {k: float(v) for k, v in metric_scores.items()},
+    }
 
     if estimator_path:
-        data['estimator_path'] = str(estimator_path)
+        data["estimator_path"] = str(estimator_path)
 
     now = datetime.now()
-    metrics = '_'.join([f'{k}_{v:.3f}' for k, v in metric_scores.items()])
+    metrics = "_".join([f"{k}_{v:.3f}" for k, v in metric_scores.items()])
     run_dir = pathlib.Path(run_dir)
 
-    run_dir = _make_run_dir(run_dir.joinpath(now.strftime('%Y%m%d')))
+    run_dir = _make_run_dir(run_dir.joinpath(now.strftime("%Y%m%d")))
     output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M")}.yaml'
     output_path = run_dir.joinpath(output_file)
 
@@ -57,7 +61,7 @@ def log_results(metric_scores: dict,
         output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M%S")}.yaml'
         output_path = output_path.with_name(output_file)
 
-    with output_path.open(mode='w') as f:
+    with output_path.open(mode="w") as f:
         yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
 
     return output_path

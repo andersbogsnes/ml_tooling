@@ -8,28 +8,34 @@ When a model is trained, it returns a :class:`~ml_tooling.result.Result` object.
 That object has number of visualization options depending on the type of model.
 
 To use the visualizations, access them using the `.plot` accessor on the
-:class:`~ml_tooling.result.Result` object::
+:class:`~ml_tooling.result.Result` object:
 
->> result = model.score_estimator()
->> result.plot.residuals()
+.. code-block:: python
+
+    >>> result = model.score_estimator()
+    >>> result.plot.residuals()
 
 .. figure:: plots/residualplot.png
 
 Any visualizer listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
-the ml_tooling ModelData approach, you can instead do::
+the ml_tooling ModelData approach, you can instead do:
 
-    from ml_tooling.plots import plot_confusion_matrix
+.. code-block:: python
+
+    >>> from ml_tooling.plots import plot_confusion_matrix
 
 These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred
-as arguments::
+as arguments:
 
->>> from ml_tooling.plots import plot_confusion_matrix
->>> import numpy as np
->>>
->>> y_true = np.array([1, 0, 1, 0])
->>> y_pred = np.array([1, 0, 0, 0])
->>> plot_confusion_matrix(y_true, y_pred)
+.. code-block:: python
+
+    >>> from ml_tooling.plots import plot_confusion_matrix
+    >>> import numpy as np
+    >>>
+    >>> y_true = np.array([1, 0, 1, 0])
+    >>> y_pred = np.array([1, 0, 0, 0])
+    >>> plot_confusion_matrix(y_true, y_pred)
 
 .. figure:: plots/confusion_matrix.png
 

@@ -38,10 +38,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         - mean
     """
 
-    _func_map = {'sum': np.sum,
-                 'min': np.min,
-                 'max': np.max,
-                 'mean': np.mean}
+    _func_map = {"sum": np.sum, "min": np.min, "max": np.max, "mean": np.mean}
 
     def __init__(self, strategy=None):
         self.strategy = strategy

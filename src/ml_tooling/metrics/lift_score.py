@@ -35,4 +35,6 @@ def lift_score(y_target: DataType, y_predicted: DataType) -> float:
     all_prod = np.column_stack([y_target, y_predicted])
     percent_correct_positives = (all_prod == 1).all(axis=1).sum() / n
 
-    return percent_correct_positives / (percent_positives_target * percent_positives_predicted)
+    return percent_correct_positives / (
+        percent_positives_target * percent_positives_predicted
+    )

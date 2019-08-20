@@ -1,11 +1,9 @@
 import pathlib
 import warnings
-from typing import Union, Callable
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.metrics import get_scorer
 from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
@@ -20,38 +18,25 @@ class TransformerError(Exception):
     """Error which occurs during a transform"""
 
 
-def get_scoring_func(metric: str) -> Callable[[BaseEstimator,
-                                               DataType,
-                                               DataType], Union[int, float]]:
-    """
-    Looks up a scikit-learn scoring function using scikit-learns built-in sklearn.metrics.get_scorer
-    :param metric:
-        string name of metric to use
-    :return:
-        callable score function
-    """
-    try:
-        return get_scorer(metric)
-    except ValueError:
-        raise MLToolingError(f"Invalid metric {metric}")
-
-
 def get_git_hash() -> str:
     """
     Returns the git hash of HEAD
-    :return:
-        git hash of HEAD
+
+    Returns
+    -------
+    str
+        git hash value of HEAD
     """
     try:
         from git import Repo, InvalidGitRepositoryError
     except ImportError:
         warnings.warn("Git is not installed on this system")
-        return ''
+        return ""
 
     try:
         repo = Repo(search_parent_directories=True)
     except InvalidGitRepositoryError:
-        return ''
+        return ""
     return repo.head.object.hexsha
 
 
@@ -59,16 +44,23 @@ def find_estimator_file(path: str) -> pathlib.Path:
     """
     Helper to find a estimator file in a given directory.
     If path is a directory - returns newest estimator that matches the git hash
-    :param path: dir or path to estimator
-    :return:
+
+    Parameters
+    ----------
+    path: str
+        directory or path to estimator. If a directory is passed, will load the newest model found
+
+    Returns
+    -------
+    pathlib.Path
+        path to pickled estimator
     """
     path = pathlib.Path(path)
 
     if path.is_file():
         return path
 
-    git_hash = get_git_hash()
-    all_models = list(path.glob(f'*_{git_hash}.pkl'))
+    all_models = list(path.glob(f"*.pkl"))
 
     if not all_models:
         raise MLToolingError(f"No models found - check your directory: {path}")
@@ -79,12 +71,19 @@ def find_estimator_file(path: str) -> pathlib.Path:
 
 def _get_estimator_name(clf) -> str:
     """
-    Returns estimator name based on class name. If passed classifier is a Pipeline,
-    assume last step is the estimator and return that classes name
-    :param clf: sklearn-compatible estimator
-    :return:
+    Returns estimator name based on class name. If passed classifier is a :class:
+    `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name
+
+    Parameters
+    ----------
+    clf: BaseEstimator, Pipeline
+
+    Returns
+    -------
+    str
+        Name of estimator
     """
-    if clf.__class__.__name__ == 'Pipeline':
+    if clf.__class__.__name__ == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
     return clf.__class__.__name__
@@ -92,11 +91,16 @@ def _get_estimator_name(clf) -> str:
 
 def listify(collection) -> list:
     """
-    Takes a given collection and returns a list of the elements
-    :param collection:
-        Any collection or str
-    :return:
-        list
+    Takes a given collection and returns a list of the elements, handling strings correctly
+
+    Parameters
+    ----------
+    collection: tuple, set, str
+        Any type of collection or string
+
+    Returns
+    -------
+    list
     """
     if isinstance(collection, str):
         collection = [collection]
@@ -109,36 +113,58 @@ def listify(collection) -> list:
 
 def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     """
-    Creates a parameter grid from a pipeline
-    :param pipe:
-        Sklearn Pipeline
-    :param param_grid:
+    Creates a parameter grid from a :class:`~sklearn.pipeline.Pipeline`
+
+    Parameters
+    ----------
+    pipe: Pipeline
+        Input pipeline
+    param_grid: dict
         dict of parameters to search over
-    :return:
-        sklearn ParameterGrid
+
+    Returns
+    -------
+    :class:`~sklearn.model_selection.ParameterGrid`
     """
     if not isinstance(pipe, Pipeline):
         return ParameterGrid(param_grid)
 
     step_name = pipe.steps[-1][0]
 
-    step_dict = {f"{step_name}__{param}" if step_name not in param else param: value
-                 for param, value
-                 in param_grid.items()}
+    step_dict = {
+        f"{step_name}__{param}" if step_name not in param else param: value
+        for param, value in param_grid.items()
+    }
 
     return ParameterGrid(step_dict)
 
 
-def _validate_estimator(model):
+def _validate_estimator(estimator):
     """
-    Ensures that estimator runs
-    :param model:
-    :return:
+    Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
+    or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`
+    as the final step
+
+    Parameters
+    ----------
+    estimator: passed estimator to validate
+
+    Returns
+    -------
+    :class:`~sklearn.base.BaseEstimator`
+
+    Raises
+    ------
+    MLToolingError
+        Raises on invalid input
     """
-    if hasattr(model, '_estimator_type'):
-        return model
 
-    if isinstance(model, Pipeline):
-        raise MLToolingError("You passed a Pipeline without an estimator as the last step")
+    if hasattr(estimator, "_estimator_type"):
+        return estimator
 
-    raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(model)}")
+    if isinstance(estimator, Pipeline):
+        raise MLToolingError(
+            "You passed a Pipeline without an estimator as the last step"
+        )
+
+    raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")

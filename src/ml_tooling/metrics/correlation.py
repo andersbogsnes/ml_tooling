@@ -4,10 +4,12 @@ import pandas as pd
 from ml_tooling.utils import DataType
 
 
-def target_correlation(features: pd.DataFrame,
-                       target: DataType,
-                       method: str = 'pearson',
-                       ascending: bool = False) -> pd.Series:
+def target_correlation(
+    features: pd.DataFrame,
+    target: DataType,
+    method: str = "pearson",
+    ascending: bool = False,
+) -> pd.Series:
     """
     Calculate target_correlation between features and target and returns a sorted pd.Series
     Parameters
@@ -41,5 +43,5 @@ def target_correlation(features: pd.DataFrame,
     return corr[sorted_idx]
 
 
-def multi_collinearity(features: pd.DataFrame, method='pearson'):
+def multi_collinearity(features: pd.DataFrame, method="pearson"):
     return features.corr(method=method)

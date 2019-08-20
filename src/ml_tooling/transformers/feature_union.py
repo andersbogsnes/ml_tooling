@@ -21,5 +21,7 @@ class DFFeatureUnion(BaseEstimator, TransformerMixin):
         x_ = X.reset_index(drop=True)
 
         x_ts = [t.transform(x_) for _, t in self.transformer_list]
-        x_union = reduce(lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), x_ts)
+        x_union = reduce(
+            lambda X1, X2: pd.merge(X1, X2, left_index=True, right_index=True), x_ts
+        )
         return x_union

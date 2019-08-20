@@ -23,4 +23,6 @@ class Select(BaseEstimator, TransformerMixin):
             return X[self.columns]
         except KeyError:
             cols_error = list(set(self.columns) - set(X.columns))
-            raise TransformerError(f"The DataFrame does not include the columns: {cols_error}")
+            raise TransformerError(
+                f"The DataFrame does not include the columns: {cols_error}"
+            )

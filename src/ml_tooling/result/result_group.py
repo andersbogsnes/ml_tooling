@@ -22,7 +22,7 @@ class ResultGroup:
 
     def __dir__(self):
         proxied_dir = dir(self.results[0])
-        custom_methods = ['to_dataframe', 'mean_score']
+        custom_methods = ["to_dataframe", "mean_score"]
         return proxied_dir + custom_methods
 
     def __len__(self):
@@ -32,7 +32,7 @@ class ResultGroup:
         return self.results[item]
 
     def __repr__(self):
-        results = '\n'.join([str(result) for result in self.results])
+        results = "\n".join([str(result) for result in self.results])
         return f"[{results}]"
 
     def log_estimator(self, log_dir):
@@ -59,4 +59,6 @@ class ResultGroup:
 
         output = [result.to_dataframe(params) for result in self.results]
 
-        return pd.concat(output, ignore_index=True).sort_values(by='score', ascending=False)
+        return pd.concat(output, ignore_index=True).sort_values(
+            by="score", ascending=False
+        )

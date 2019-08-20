@@ -12,7 +12,9 @@ class FreqFeature(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
         for col in X.columns:
-            self.frequencies[col] = X[col].str.upper().value_counts(normalize=True).to_dict()
+            self.frequencies[col] = (
+                X[col].str.upper().value_counts(normalize=True).to_dict()
+            )
         return self
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:

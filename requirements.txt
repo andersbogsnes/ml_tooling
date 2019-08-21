@@ -1,5 +1,7 @@
 scikit-learn[alldeps]==0.21.3
 pandas==0.24.2
+pytest-cov==2.7.1
+flake8==3.7.8
 matplotlib==3.1.1
 numpy==1.17.0
 gitpython==3.0.1

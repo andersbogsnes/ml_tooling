@@ -6,7 +6,7 @@
 Welcome to ML Tooling!
 ======================
 
-.. figure:: images/ML_logo.png
+.. figure:: _static/ML_logo.png
    :width: 600
    :alt: Logo for ML Tooling
    :align: left
@@ -33,7 +33,7 @@ Why?
 ML Tooling standardises interfaces for training, saving and loading models while also providing a
 number of utility functions for everyday tasks such as plotting, comparing results and gridsearching.
 
-ML Tooling was developed at `Alm Brand <http://www.almbrand.dk>`_
+ML Tooling was developed at `Alm Brand <https://www.almbrand.dk>`_
 
 
 .. _Scikit-learn: https://scikit-learn.org/stable/

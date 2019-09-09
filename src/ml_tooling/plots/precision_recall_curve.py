@@ -5,7 +5,9 @@ from sklearn.metrics import precision_recall_curve, average_precision_score
 from ml_tooling.utils import DataType
 
 
-def plot_pr_curve(y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None) -> Axes:
+def plot_pr_curve(
+    y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None
+) -> Axes:
     """   Plot precision-recall curve. Works only with probabilities.
 
     Parameters
@@ -25,7 +27,7 @@ def plot_pr_curve(y_true: DataType, y_proba: DataType, title: str = None, ax: Ax
         Plot of precision-recall curve
     """
 
-    title = 'Precision-Recall curve' if title is None else title
+    title = "Precision-Recall curve" if title is None else title
 
     precision, recall, _ = precision_recall_curve(y_true, y_proba)
     score = average_precision_score(y_true, y_proba)
@@ -33,13 +35,15 @@ def plot_pr_curve(y_true: DataType, y_proba: DataType, title: str = None, ax: Ax
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.step(recall, precision, label=f"Average precision: {score}", alpha=0.95, where='post')
-    ax.fill_between(recall, precision, alpha=0.2, step='post')
+    ax.step(
+        recall, precision, label=f"Average precision: {score}", alpha=0.95, where="post"
+    )
+    ax.fill_between(recall, precision, alpha=0.2, step="post")
     ax.set_title(title)
-    ax.set_ylabel('Precision')
-    ax.set_xlabel('Recall')
+    ax.set_ylabel("Precision")
+    ax.set_xlabel("Recall")
     ax.set_ylim([0.0, 1.05])
     ax.set_xlim([0.0, 1.0])
-    ax.legend(loc='best')
+    ax.legend(loc="best")
     plt.tight_layout()
     return ax

@@ -16,12 +16,9 @@ class Data:
         self.test_y = None
         self.test_x = None
 
-    def create_train_test(self,
-                          stratify=None,
-                          shuffle=True,
-                          test_size=0.25,
-                          seed=42
-                          ) -> 'Data':
+    def create_train_test(
+        self, stratify=None, shuffle=True, test_size=0.25, seed=42
+    ) -> "Data":
         """
         Creates a training and testing dataset and storing it on the data object.
         :param stratify:
@@ -35,22 +32,26 @@ class Data:
         :return:
             self
         """
-        self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(self.x,
-                                                                                self.y,
-                                                                                stratify=stratify,
-                                                                                shuffle=shuffle,
-                                                                                test_size=test_size,
-                                                                                random_state=seed)
+        self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
+            self.x,
+            self.y,
+            stratify=stratify,
+            shuffle=shuffle,
+            test_size=test_size,
+            random_state=seed,
+        )
         return self
 
     @classmethod
-    def with_train_test(cls,
-                        x: DataType,
-                        y: DataType,
-                        stratify=None,
-                        shuffle=True,
-                        test_size=0.25,
-                        seed=42) -> 'Data':
+    def with_train_test(
+        cls,
+        x: DataType,
+        y: DataType,
+        stratify=None,
+        shuffle=True,
+        test_size=0.25,
+        seed=42,
+    ) -> "Data":
         """
         Creates a new instance of Data with train and test already instantiated
         :param x:
@@ -69,7 +70,6 @@ class Data:
             self
         """
         instance = cls(x, y)
-        return instance.create_train_test(stratify=stratify,
-                                          shuffle=shuffle,
-                                          test_size=test_size,
-                                          seed=seed)
+        return instance.create_train_test(
+            stratify=stratify, shuffle=shuffle, test_size=test_size, seed=seed
+        )

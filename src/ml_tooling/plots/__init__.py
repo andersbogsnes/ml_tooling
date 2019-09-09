@@ -8,12 +8,12 @@ from .roc_auc import plot_roc_auc
 from .precision_recall_curve import plot_pr_curve
 
 __all__ = [
-    'plot_confusion_matrix',
-    'plot_target_correlation',
-    'plot_feature_importance',
-    'plot_lift_curve',
-    'plot_prediction_error',
-    'plot_residuals',
-    'plot_roc_auc',
-    'plot_pr_curve',
+    "plot_confusion_matrix",
+    "plot_target_correlation",
+    "plot_feature_importance",
+    "plot_lift_curve",
+    "plot_prediction_error",
+    "plot_residuals",
+    "plot_roc_auc",
+    "plot_pr_curve",
 ]

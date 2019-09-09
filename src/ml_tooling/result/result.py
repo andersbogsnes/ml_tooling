@@ -15,12 +15,7 @@ class Result:
     Contains plotting methods, as well as being comparable with other results
     """
 
-    def __init__(self,
-                 estimator,
-                 score,
-                 viz=None,
-                 metric=None,
-                 ):
+    def __init__(self, estimator, score, viz=None, metric=None):
         self.estimator = estimator
         self.estimator_name = _get_estimator_name(estimator)
         self.score = score
@@ -44,11 +39,12 @@ class Result:
 
     def log_estimator(self, run_dir):
         metric_score = {self.metric: float(self.score)}
-        return log_results(metric_scores=metric_score,
-                           estimator_name=self.estimator_name,
-                           estimator_params=self.estimator_params,
-                           run_dir=run_dir,
-                           )
+        return log_results(
+            metric_scores=metric_score,
+            estimator_name=self.estimator_name,
+            estimator_params=self.estimator_params,
+            run_dir=run_dir,
+        )
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
         """
@@ -70,8 +66,8 @@ class Result:
         if params:
             estimator_params_dict = self.estimator_params
 
-        estimator_params_dict['score'] = self.score
-        estimator_params_dict['metric'] = self.metric
+        estimator_params_dict["score"] = self.score
+        estimator_params_dict["metric"] = self.metric
 
         return pd.DataFrame([estimator_params_dict])
 
@@ -82,5 +78,7 @@ class Result:
         return self.score < other.score
 
     def __repr__(self):
-        return f"<Result {self.estimator_name}: " \
+        return (
+            f"<Result {self.estimator_name}: "
             f"{self.metric}: {np.round(self.score, 2)} >"
+        )

@@ -11,16 +11,16 @@ from .select import Select
 
 
 __all__ = [
-    'Binner',
-    'ToCategorical',
-    'Binarize',
-    'DateEncoder',
-    'DFFeatureUnion',
-    'FillNA',
-    'FreqFeature',
-    'FuncTransformer',
-    'DFRowFunc',
-    'Renamer',
-    'DFStandardScaler',
-    'Select',
+    "Binner",
+    "ToCategorical",
+    "Binarize",
+    "DateEncoder",
+    "DFFeatureUnion",
+    "FillNA",
+    "FreqFeature",
+    "FuncTransformer",
+    "DFRowFunc",
+    "Renamer",
+    "DFStandardScaler",
+    "Select",
 ]

@@ -1,7 +1,4 @@
 name: ml_tooling
-channels:
-  - conda-forge
-  - defaults
 dependencies:
   - pandas=0.24.2
   - numpy=1.16.3

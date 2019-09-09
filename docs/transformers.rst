@@ -3,7 +3,7 @@
 Transformers
 ============
 
-One great feature of scikit-learn is the concept of the :class:`sklearn.pipeline.Pipeline`
+One great feature of scikit-learn is the concept of the :class:`~sklearn.pipeline.Pipeline`
 alongside `transformers`_
 
 .. _transformers: https://scikit-learn.org/stable/modules/preprocessing.html
@@ -18,18 +18,17 @@ A column selector - Provide a list of columns to be passed on in the pipeline
 
 Example
 #######
-Pass a list of column names to be selected::
+Pass a list of column names to be selected
 
-    from ml_tooling.transformers import Select
-    import pandas as pd
+.. doctest::
 
-    df = pd.DataFrame({
-        "id": [1, 2, 3, 4],
-        "status": ["OK", "Error", "OK", "Error"],
-        "sales": [2000, 3000, 4000, 5000]
-
-    })
-
+    >>> from ml_tooling.transformers import Select
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({
+    ...    "id": [1, 2, 3, 4],
+    ...    "status": ["OK", "Error", "OK", "Error"],
+    ...    "sales": [2000, 3000, 4000, 5000]
+    ... })
     >>> select = Select(['id', 'status'])
     >>> select.fit_transform(df)
        id status
@@ -47,26 +46,23 @@ Fills NA values with given value or strategy. Either a value or a strategy has t
 
 Examples
 ########
-You can pass any value to replace NaNs with::
+You can pass any value to replace NaNs with
 
-    from ml_tooling.transformers import FillNA
-    import pandas as pd
-    import numpy as np
+.. doctest::
 
-    df = pd.DataFrame({
-        "id": [1, 2, 3, 4],
-        "status": ["OK", "Error", "OK", "Error"],
-        "sales": [2000, 3000, 4000, np.nan]
-
-    })
-
+    >>> from ml_tooling.transformers import FillNA
+    >>> import numpy as np
+    >>> df = pd.DataFrame({
+    ...        "id": [1, 2, 3, 4],
+    ...        "sales": [2000, 3000, 4000, np.nan]
+    ... })
     >>> fill_na = FillNA(value = 0)
     >>> fill_na.fit_transform(df)
-       id status   sales
-    0   1     OK  2000.0
-    1   2  Error  3000.0
-    2   3     OK  4000.0
-    3   4  Error     0.0
+       id   sales
+    0   1  2000.0
+    1   2  3000.0
+    2   3  4000.0
+    3   4     0.0
 
 
 You can also use one of the built-in strategies.
@@ -77,13 +73,15 @@ You can also use one of the built-in strategies.
 - 'max'
 - 'min'
 
->>> fill_na = FillNA(value='mean')
->>> fill_na.fit_transform(df)
-   id status   sales
-0   1     OK  2000.0
-1   2  Error  3000.0
-2   3     OK  4000.0
-3   4  Error  3000.0
+.. doctest::
+
+    >>> fill_na = FillNA(strategy='mean')
+    >>> fill_na.fit_transform(df)
+       id   sales
+    0   1  2000.0
+    1   2  3000.0
+    2   3  4000.0
+    3   4  3000.0
 
 ToCategorical
 -------------
@@ -94,16 +92,12 @@ All categorical values not found in training data will be set to 0
 Example
 #######
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import ToCategorical
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "status": ["OK", "Error", "OK", "Error"]
-
-    })
-
+    >>> from ml_tooling.transformers import ToCategorical
+    >>> df = pd.DataFrame({
+    ...    "status": ["OK", "Error", "OK", "Error"]
+    ... })
     >>> onehot = ToCategorical()
     >>> onehot.fit_transform(df)
        status_Error  status_OK
@@ -120,44 +114,39 @@ Applies a given function to each column
 Example
 #######
 We can use any arbitrary function that accepts a :class:`pandas.Series`
-- under the hood, FuncTransformer uses :meth:`~pandas.DataFrame.apply`::
+- under the hood, FuncTransformer uses :meth:`~pandas.DataFrame.apply`
 
-    from ml_tooling.transformers import FuncTransformer
-    import pandas as pd
+.. doctest::
 
-    df = pd.DataFrame({
-        "status": ["OK", "Error", "OK", "Error"]
-    })
+    >>> from ml_tooling.transformers import FuncTransformer
+    >>> df = pd.DataFrame({
+    ...    "status": ["OK", "Error", "OK", "Error"]
+    ... })
+    >>> uppercase = FuncTransformer(lambda x: x.str.upper())
+    >>> uppercase.fit_transform(df)
+      status
+    0     OK
+    1  ERROR
+    2     OK
+    3  ERROR
 
->>> uppercase = FuncTransformer(lambda x: x.str.upper())
->>> uppercase.fit_transform(df)
-  status
-0     OK
-1  ERROR
-2     OK
-3  ERROR
+FuncTransformer also supports passing keyword arguments to the function
 
-FuncTransformer also supports passing keyword arguments to the function::
+.. doctest::
 
-
-    from ml_tooling.transformers import FuncTransformer
-    import pandas as pd
-
-    def custom_func(input, word1, word2):
-       result = ""
-       if input == "OK":
-          result = word1
-       elif input == "Error":
-          result = word2
-       return result
-
-    def wrapper(df, word1, word2):
-       return df.apply(custom_func,args=(word1,word2))
-
-    df = pd.DataFrame({
-        "status": ["OK", "Error", "OK", "Error"]
-    })
-
+    >>> from ml_tooling.transformers import FuncTransformer
+    >>> def custom_func(input, word1, word2):
+    ...    result = ""
+    ...    if input == "OK":
+    ...       result = word1
+    ...    elif input == "Error":
+    ...       result = word2
+    ...    return result
+    >>> def wrapper(df, word1, word2):
+    ...   return df.apply(custom_func,args=(word1,word2))
+    >>> df = pd.DataFrame({
+    ...     "status": ["OK", "Error", "OK", "Error"]
+    ... })
     >>> kwargs = {'word1': 'Okay','word2': 'Fail'}
     >>> wordchange = FuncTransformer(wrapper,**kwargs)
     >>> wordchange.fit_transform(df)
@@ -174,15 +163,13 @@ Bins numerical data into supplied bins. Bins are passed on to :func:`pandas.cut`
 Example
 -------
 
-Here we want to bin our sales data into 3 buckets::
+Here we want to bin our sales data into 3 buckets
+.. doctest::
 
-    from ml_tooling.transformers import Binner
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "sales": [1500, 2000, 2250, 7830]
-    })
-
+    >>> from ml_tooling.transformers import Binner
+    >>> df = pd.DataFrame({
+    ...    "sales": [1500, 2000, 2250, 7830]
+    ... })
     >>> binned = Binner(bins=[0, 1000, 2000, 8000])
     >>> binned.fit_transform(df)
               sales
@@ -198,16 +185,12 @@ Renames columns to be equal to the passed list - must be in order
 Example
 ########
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import Renamer
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "Total Sales": [1500, 2000, 2250, 7830]
-    })
-
-
+    >>> from ml_tooling.transformers import Renamer
+    >>> df = pd.DataFrame({
+    ...     "Total Sales": [1500, 2000, 2250, 7830]
+    ... })
     >>> rename = Renamer(['sales'])
     >>> rename.fit_transform(df)
        sales
@@ -225,15 +208,12 @@ Each date type can be toggled in the initializer
 Example
 #######
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import DateEncoder
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "sales_date": [pd.to_datetime('2018-01-01'), pd.to_datetime('2018-02-02')]
-    })
-
+    >>> from ml_tooling.transformers import DateEncoder
+    >>> df = pd.DataFrame({
+    ...     "sales_date": [pd.to_datetime('2018-01-01'), pd.to_datetime('2018-02-02')]
+    ... })
     >>> dates = DateEncoder(week=False)
     >>> dates.fit_transform(df)
        sales_date_day  sales_date_month  sales_date_year
@@ -246,15 +226,12 @@ Converts a column into a normalized frequency
 
 Example
 #######
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import FreqFeature
-    import pandas as pd
-
-    df = pd.DataFrame({
-        "sales_category": ['Sale', 'Sale', 'Not Sale']
-    })
-
+    >>> from ml_tooling.transformers import FreqFeature
+    >>> df = pd.DataFrame({
+    ...     "sales_category": ['Sale', 'Sale', 'Not Sale']
+    ... })
     >>> freq = FreqFeature()
     >>> freq.fit_transform(df)
        sales_category
@@ -270,34 +247,26 @@ A FeatureUnion equivalent for DataFrames. Concatenates the result of multiple tr
 Example
 #######
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import FreqFeature, Binner, Select, DFFeatureUnion
-    from sklearn.pipeline import Pipeline
-    import pandas as pd
-
-
-    df = pd.DataFrame({
-        "sales_category": ['Sale', 'Sale', 'Not Sale', 'Not Sale'],
-        "sales": [1500, 2000, 2250, 7830]
-    })
-
-
-    freq = Pipeline([
-        ('select', Select('sales_category')),
-        ('freq', FreqFeature())
-    ])
-
-    binned = Pipeline([
-        ('select', Select('sales')),
-        ('bin', Binner(bins=[0, 1000, 2000, 8000]))
-        ])
-
-
+    >>> from ml_tooling.transformers import FreqFeature, Binner, Select, DFFeatureUnion
+    >>> from sklearn.pipeline import Pipeline
+    >>> df = pd.DataFrame({
+    ...     "sales_category": ['Sale', 'Sale', 'Not Sale', 'Not Sale'],
+    ...     "sales": [1500, 2000, 2250, 7830]
+    ... })
+    >>> freq = Pipeline([
+    ...     ('select', Select('sales_category')),
+    ...     ('freq', FreqFeature())
+    ... ])
+    >>> binned = Pipeline([
+    ...     ('select', Select('sales')),
+    ...     ('bin', Binner(bins=[0, 1000, 2000, 8000]))
+    ...     ])
     >>> union = DFFeatureUnion([
-    >>>    ('sales_category', freq),
-    >>>    ('sales', binned)
-    >>> ])
+    ...    ('sales_category', freq),
+    ...    ('sales', binned)
+    ... ])
     >>> union.fit_transform(df)
        sales_category         sales
     0             0.5  (1000, 2000]
@@ -315,36 +284,33 @@ The built-in strategies are 'sum', 'min' and 'max'
 Example
 #######
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import DFRowFunc
-    import pandas as pd
-    import numpy as np
-
-    df = pd.DataFrame({
-        "number_1": [1, np.nan, 3, 4],
-        "number_2": [1, 3, 2, 4]
-
-    })
-
+    >>> from ml_tooling.transformers import DFRowFunc
+    >>> df = pd.DataFrame({
+    ...    "number_1": [1, np.nan, 3, 4],
+    ...    "number_2": [1, 3, 2, 4]
+    ... })
     >>> rowfunc = DFRowFunc(strategy = 'sum')
     >>> rowfunc.fit_transform(df)
-             0
-    0        2
-    1        3
-    2        5
-    3        8
+         0
+    0  2.0
+    1  3.0
+    2  5.0
+    3  8.0
 
 
 You can also use any callable that takes a :class:`pandas.Series`
 
->>> rowfunc = DFRowFunc(strategy = np.mean)
->>> rowfunc.fit_transform(df)
+.. doctest::
+
+    >>> rowfunc = DFRowFunc(strategy = np.mean)
+    >>> rowfunc.fit_transform(df)
          0
-0        1
-1        3
-2        2.5
-3        4
+    0  1.0
+    1  3.0
+    2  2.5
+    3  4.0
 
 
 Binarize
@@ -354,24 +320,17 @@ Convenience transformer which returns 1 where the column value is equal to given
 Example
 #######
 
-.. code-block:: python
+.. doctest::
 
-    from ml_tooling.transformers import Binarize
-    import pandas as pd
-    import numpy as np
-
-    df = pd.DataFrame({
-        "number_1": [1, np.nan, 3, 4],
-        "number_2": [1, 3, 2, 4]
-
-    })
-
+    >>> from ml_tooling.transformers import Binarize
+    >>> df = pd.DataFrame({
+    ...     "number_1": [1, np.nan, 3, 4],
+    ...     "number_2": [1, 3, 2, 4]
+    ... })
     >>> binarize = Binarize(value = 3)
     >>> binarize.fit_transform(df)
-             number_1    number_2
-    0               0           0
-    1               1           0
-    2               0           1
-    3               0           0
-
-
+       number_1  number_2
+    0         0         0
+    1         0         1
+    2         1         0
+    3         0         0

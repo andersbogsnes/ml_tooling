@@ -1,8 +1,8 @@
-pytest==4.6.3
-scikit-learn[alldeps]==0.21.2
-pandas==0.24.2
+scikit-learn[alldeps]==0.21.3
+pandas==0.25.1
 pytest-cov==2.7.1
-flake8==3.7.7
-matplotlib==3.1.0
-numpy==1.16.4
-gitpython==2.1.11
+flake8==3.7.8
+matplotlib==3.1.1
+numpy==1.17.2
+gitpython==3.0.2
+joblib==0.13.2

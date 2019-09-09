@@ -2,7 +2,9 @@ import numpy as np
 from sklearn import metrics
 
 
-def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, normalized=True) -> np.ndarray:
+def confusion_matrix(
+    y_true: np.ndarray, y_pred: np.ndarray, normalized=True
+) -> np.ndarray:
     """
     Generates a confusion matrix using sklearn's confusion_matrix function, with the ability
     to add normalization.

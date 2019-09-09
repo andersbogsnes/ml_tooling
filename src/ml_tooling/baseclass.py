@@ -2,7 +2,7 @@ import abc
 import pathlib
 from contextlib import contextmanager
 from itertools import product
-from typing import Tuple, Optional, Sequence, Union, Any
+from typing import Tuple, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ import joblib
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from ml_tooling.data import Data
+from ml_tooling.data import PredictionDataSet, TrainingDataSet
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.logging.log_estimator import log_results
@@ -23,7 +23,6 @@ from ml_tooling.utils import (
     MLToolingError,
     _get_estimator_name,
     get_git_hash,
-    DataType,
     find_estimator_file,
     _create_param_grid,
     _validate_estimator,
@@ -38,7 +37,6 @@ class ModelData(metaclass=abc.ABCMeta):
     """
 
     _config = None
-    _data = None
     config = ConfigGetter()
 
     def __init__(self, estimator=None):
@@ -61,6 +59,18 @@ class ModelData(metaclass=abc.ABCMeta):
     @estimator.setter
     def estimator(self, estimator):
         self._estimator = _validate_estimator(estimator)
+
+    @property
+    def class_name(self):
+        return self.__class__.__name__
+
+    @property
+    def is_classifier(self):
+        return self.estimator._estimator_type == "classifier"
+
+    @property
+    def is_regressor(self):
+        return self.estimator._estimator_type == "regressor"
 
     def init_estimator(self, estimator):
         """
@@ -100,36 +110,11 @@ class ModelData(metaclass=abc.ABCMeta):
         self.estimator = _validate_estimator(estimator)
         self.estimator_name = _get_estimator_name(estimator)
 
-        if self.estimator._estimator_type == "classifier":
+        if self.is_classifier:
             self._plotter = ClassificationVisualize
 
-        if self.estimator._estimator_type == "regressor":
+        if self.is_regressor:
             self._plotter = RegressionVisualize
-
-    @abc.abstractmethod
-    def get_training_data(self) -> Tuple[DataType, DataType]:
-        """
-        Gets training data, returning features and labels
-
-        Returns
-        -------
-        features : pd.DataFrame
-            Features to use for training
-
-        labels : pd.DataFrame
-            Labels to use for training
-        """
-
-    @abc.abstractmethod
-    def get_prediction_data(self, *args, **kwargs) -> DataType:
-        """
-        Gets data to predict a given observation
-
-        Returns
-        -------
-        pd.DataFrame
-            Features to use in prediction
-        """
 
     @classmethod
     def setup_estimator(cls) -> "ModelData":
@@ -184,10 +169,6 @@ class ModelData(metaclass=abc.ABCMeta):
 
         raise NotImplementedError
 
-    @property
-    def class_name(self):
-        return self.__class__.__name__
-
     @classmethod
     def load_estimator(cls, path: Optional[str] = None) -> "ModelData":
         """
@@ -222,34 +203,28 @@ class ModelData(metaclass=abc.ABCMeta):
         logger.info(f"Loaded {instance.estimator_name} for {cls.__name__}")
         return instance
 
-    @property
-    def data(self):
-        if self.__class__._data is None:
-            self.__class__._data = self._load_data()
-        return self.__class__._data
-
-    def _load_data(self) -> Data:
-        """
-        Internal method for loading data into class
-
-        Returns
-        -------
-        Data
-            Data object containing train-test split as well as original x and y
-        """
-
-        logger.debug("No data loaded - loading...")
-        x, y = self.get_training_data()
-
-        stratify = y if self.estimator._estimator_type == "classifier" else None
-        logger.debug("Creating train/test...")
-        return Data.with_train_test(
-            x,
-            y,
-            stratify=stratify,
-            test_size=self.config.TEST_SIZE,
-            seed=self.config.RANDOM_STATE,
-        )
+    # def _load_data(self) -> Data:
+    #     """
+    #     Internal method for loading data into class
+    #
+    #     Returns
+    #     -------
+    #     Data
+    #         Data object containing train-test split as well as original x and y
+    #     """
+    #
+    #     logger.debug("No data loaded - loading...")
+    #     x, y = self.get_training_data()
+    #
+    #     stratify = y if self.estimator._estimator_type == "classifier" else None
+    #     logger.debug("Creating train/test...")
+    #     return Data.with_train_test(
+    #         x,
+    #         y,
+    #         stratify=stratify,
+    #         test_size=self.config.TEST_SIZE,
+    #         seed=self.config.RANDOM_STATE,
+    #     )
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.estimator_name}_{get_git_hash()}.pkl"
@@ -327,7 +302,12 @@ class ModelData(metaclass=abc.ABCMeta):
         return estimator_file
 
     def make_prediction(
-        self, input_data: Any, proba: bool = False, use_index: bool = False
+        self,
+        data: PredictionDataSet,
+        *args,
+        proba: bool = False,
+        use_index: bool = False,
+        **kwargs,
     ) -> pd.DataFrame:
         """Makes a prediction given an input. For example a customer number.
         Passed to the implemented :meth:`get_prediction_data` method and calls `predict()`
@@ -356,7 +336,7 @@ class ModelData(metaclass=abc.ABCMeta):
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
 
-        x = self.get_prediction_data(input_data)
+        x = data.load(*args, **kwargs)
 
         try:
             if proba:
@@ -394,13 +374,13 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return (
             self.config.CLASSIFIER_METRIC
-            if self.estimator._estimator_type == "classifier"
+            if self.is_classifier
             else self.config.REGRESSION_METRIC
         )
 
     @default_metric.setter
     def default_metric(self, metric):
-        if self.estimator._estimator_type == "classifier":
+        if self.is_classifier:
             self.config.CLASSIFIER_METRIC = metric
         else:
             self.config.REGRESSION_METRIC = metric
@@ -408,6 +388,7 @@ class ModelData(metaclass=abc.ABCMeta):
     @classmethod
     def test_estimators(
         cls,
+        data: TrainingDataSet,
         estimators: Sequence,
         metric: Optional[str] = None,
         cv: Union[int, bool] = False,
@@ -442,7 +423,9 @@ class ModelData(metaclass=abc.ABCMeta):
                 f"{_get_estimator_name(estimator)}"
             )
             challenger_estimator = cls(estimator)
-            result = challenger_estimator.score_estimator(metric=metric, cv=cv)
+            result = challenger_estimator.score_estimator(
+                data=data, metric=metric, cv=cv
+            )
             results.append(result)
             if log_dir:
                 result.log_estimator(log_dir)
@@ -456,7 +439,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return cls(best_estimator), ResultGroup(results)
 
-    def train_estimator(self) -> "ModelData":
+    def train_estimator(self, data: TrainingDataSet) -> "ModelData":
         """Loads all training data and trains the estimator on all data.
         Typically used as the last step when estimator tuning is complete.
 
@@ -471,7 +454,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         """
         logger.info("Training estimator...")
-        self.estimator.fit(self.data.x, self.data.y)
+        self.estimator.fit(data.x, data.y)
         # Prevent confusion, as train_estimator does not return a result
         self.result = None
         logger.info("Estimator trained!")
@@ -479,7 +462,10 @@ class ModelData(metaclass=abc.ABCMeta):
         return self
 
     def score_estimator(
-        self, metric: Optional[str] = None, cv: Optional[int] = False
+        self,
+        data: TrainingDataSet,
+        metric: Optional[str] = None,
+        cv: Optional[int] = False,
     ) -> "Result":
         """Loads all training data and trains the estimator on it, using a train_test split.
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
@@ -503,7 +489,14 @@ class ModelData(metaclass=abc.ABCMeta):
         """
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring estimator...")
-        self.estimator.fit(self.data.train_x, self.data.train_y)
+        stratify = data.y if self.is_regressor else None
+        data.create_train_test(
+            stratify=stratify,
+            test_size=self.config.TEST_SIZE,
+            seed=self.config.RANDOM_STATE,
+        )
+
+        self.estimator.fit(data.train_x, data.train_y)
 
         if cv:
             logger.info("Cross-validating...")
@@ -514,7 +507,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         if self.config.LOG:
             result_file = self.result.log_estimator(self.config.RUN_DIR)
-            logger.info(f"Saved run info at {result_file}")
+        logger.info(f"Saved run info at {result_file}")
         return self.result
 
     def gridsearch(

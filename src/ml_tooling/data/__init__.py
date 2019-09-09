@@ -1,3 +1,3 @@
-from .data import Data
+from .data import TrainingDataSet, PredictionDataSet
 
-__all__ = ["Data"]
+__all__ = ["TrainingDataSet", "PredictionDataSet"]

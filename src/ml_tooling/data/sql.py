@@ -24,6 +24,7 @@ class SQLDataSet:
         return pd.read_sql(self.table.select(whereclause=filter), self.engine)
 
     def save(self, data: pd.DataFrame):
+        self.table.drop(self.engine)
         self.table.create(self.engine, checkfirst=True)
 
         insert_data = data.to_dict(orient="records")

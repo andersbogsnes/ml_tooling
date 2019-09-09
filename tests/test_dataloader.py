@@ -3,6 +3,7 @@ import pytest
 from sklearn.datasets import load_boston
 import pandas as pd
 import sqlalchemy as sa
+from ml_tooling.data.dataloader import TrainingDataSet
 
 
 @pytest.fixture
@@ -26,8 +27,17 @@ def test_db(test_df, test_engine):
 
 @pytest.fixture
 def test_data(test_db):
-    pass
+    class BostonDataSet(TrainingDataSet):
+        def load(self):
+            sql = "SELECT * FROM boston"
+            df = pd.read_sql(sql, test_db)
+            return df.drop(columns="MEDV"), df.MEDV
+
+    return BostonDataSet()
 
 
-def test_tabledataset_works_correctly(test_engine):
-    pass
+def test_tabledataset_works_correctly(test_data):
+    assert test_data._x is None
+    features = test_data.x
+    assert test_data._x is not None
+    assert len(features) == 506

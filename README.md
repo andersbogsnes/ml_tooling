@@ -3,6 +3,8 @@
 [![codecov](https://codecov.io/gh/andersbogsnes/ml_tooling/branch/develop/graph/badge.svg)](https://codecov.io/gh/andersbogsnes/ml_tooling)
 [![Python 3](https://pyup.io/repos/github/andersbogsnes/ml_tooling/python-3-shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 [![Updates](https://pyup.io/repos/github/andersbogsnes/ml_tooling/shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
+[![CodeFactor](https://www.codefactor.io/repository/github/andersbogsnes/ml_tooling/badge)](https://www.codefactor.io/repository/github/andersbogsnes/ml_tooling)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # Installation
 Use pip to install:

@@ -1,3 +1,4 @@
-from .data import TrainingDataSet, PredictionDataSet
+from .file import FileDataSet
+from .sql import SQLDataSet
 
-__all__ = ["TrainingDataSet", "PredictionDataSet"]
+__all__ = ["FileDataSet", "SQLDataSet"]

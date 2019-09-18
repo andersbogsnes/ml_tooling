@@ -13,8 +13,8 @@ import joblib
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
-from ml_tooling.data import PredictionDataSet, TrainingDataSet
 from ml_tooling.config import DefaultConfig, ConfigGetter
+from ml_tooling.data.base_data import DataSet
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.logging.log_estimator import log_results
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -303,7 +303,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
     def make_prediction(
         self,
-        data: PredictionDataSet,
+        data: DataSet,
         *args,
         proba: bool = False,
         use_index: bool = False,
@@ -388,7 +388,7 @@ class ModelData(metaclass=abc.ABCMeta):
     @classmethod
     def test_estimators(
         cls,
-        data: TrainingDataSet,
+        data: DataSet,
         estimators: Sequence,
         metric: Optional[str] = None,
         cv: Union[int, bool] = False,
@@ -439,7 +439,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return cls(best_estimator), ResultGroup(results)
 
-    def train_estimator(self, data: TrainingDataSet) -> "ModelData":
+    def train_estimator(self, data: DataSet) -> "ModelData":
         """Loads all training data and trains the estimator on all data.
         Typically used as the last step when estimator tuning is complete.
 
@@ -462,10 +462,7 @@ class ModelData(metaclass=abc.ABCMeta):
         return self
 
     def score_estimator(
-        self,
-        data: TrainingDataSet,
-        metric: Optional[str] = None,
-        cv: Optional[int] = False,
+        self, data: DataSet, metric: Optional[str] = None, cv: Optional[int] = False
     ) -> "Result":
         """Loads all training data and trains the estimator on it, using a train_test split.
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
@@ -507,7 +504,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         if self.config.LOG:
             result_file = self.result.log_estimator(self.config.RUN_DIR)
-        logger.info(f"Saved run info at {result_file}")
+            logger.info(f"Saved run info at {result_file}")
         return self.result
 
     def gridsearch(

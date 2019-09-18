@@ -1,9 +1,12 @@
+from typing import Tuple
+
 import pytest
 
 from sklearn.datasets import load_boston
 import pandas as pd
 import sqlalchemy as sa
-from ml_tooling.data.dataloader import TrainingDataSet
+from ml_tooling.data.sql import SQLDataSet
+from ml_tooling.utils import DataType
 
 
 @pytest.fixture
@@ -27,13 +30,18 @@ def test_db(test_df, test_engine):
 
 @pytest.fixture
 def test_data(test_db):
-    class BostonDataSet(TrainingDataSet):
-        def load(self):
+    class BostonDataSet(SQLDataSet):
+        def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
             sql = "SELECT * FROM boston"
-            df = pd.read_sql(sql, test_db)
+            df = pd.read_sql(sql, self.engine, index_col="index")
             return df.drop(columns="MEDV"), df.MEDV
 
-    return BostonDataSet()
+        def load_prediction_data(self, *args, **kwargs) -> DataType:
+            sql = "SELECT * FROM boston"
+            df = pd.read_sql(sql, self.engine, index_col="index")
+            return df.iloc[0]
+
+    return BostonDataSet(test_db)
 
 
 def test_tabledataset_works_correctly(test_data):

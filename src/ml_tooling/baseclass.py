@@ -335,9 +335,7 @@ class ModelData(metaclass=abc.ABCMeta):
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-
-        x = data.load(*args, **kwargs)
-
+        x = data.load_prediction_data()
         try:
             if proba:
                 data = self.estimator.predict_proba(x)

@@ -67,3 +67,4 @@ ENV/
 env.bak/
 venv.bak/
 runs/
+.python-version

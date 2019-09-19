@@ -23,3 +23,6 @@ class SQLDataSet(DataSet):
     @abc.abstractmethod
     def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
         pass
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} - SQLDataset>"

@@ -2,7 +2,7 @@ import abc
 from typing import Optional, Tuple
 
 from sklearn.model_selection import train_test_split
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, DataSetError
 from sklearn.utils import indexable
 
 
@@ -13,6 +13,9 @@ class DataSet:
     test_y: Optional[DataType] = None
     train_y: Optional[DataType] = None
     train_x: Optional[DataType] = None
+
+    def __init__(self, *args, **kwargs):
+        pass
 
     def create_train_test(
         self, stratify=None, shuffle=True, test_size=0.25, seed=42
@@ -44,22 +47,22 @@ class DataSet:
     @property
     def x(self):
         if self._x is None:
-            self._x, self._y = indexable(self.load_training_data())
+            self._x, self._y = indexable(*self.load_training_data())
         return self._x
 
     @x.setter
     def x(self, data):
-        self._x = data
+        raise DataSetError("Trying to modify x - x is immutable")
 
     @property
     def y(self):
         if self._y is None:
-            self._x, self._y = indexable(self.load_training_data())
+            self._x, self._y = indexable(*self.load_training_data())
         return self._y
 
     @y.setter
     def y(self, data):
-        self._y = data
+        raise DataSetError("Trying to modify y - y is immutable")
 
     @abc.abstractmethod
     def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
@@ -68,3 +71,10 @@ class DataSet:
     @abc.abstractmethod
     def load_prediction_data(self, *args, **kwargs) -> DataType:
         raise NotImplementedError
+
+    @classmethod
+    def load_from_dataset(cls, data: "DataSet", *args, **kwargs):
+        dataset = cls(*args, **kwargs)
+        dataset._x = data.x
+        dataset._y = data.y
+        return dataset

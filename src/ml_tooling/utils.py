@@ -14,8 +14,12 @@ class MLToolingError(Exception):
     """Error which occurs when using the library"""
 
 
-class TransformerError(Exception):
+class TransformerError(MLToolingError):
     """Error which occurs during a transform"""
+
+
+class DataSetError(MLToolingError):
+    """Error which occurs when using a DataSet"""
 
 
 def get_git_hash() -> str:
@@ -83,10 +87,12 @@ def _get_estimator_name(clf) -> str:
     str
         Name of estimator
     """
-    if clf.__class__.__name__ == "Pipeline":
+    class_name = clf.__class__.__name__
+
+    if class_name == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
-    return clf.__class__.__name__
+    return class_name
 
 
 def listify(collection) -> list:

@@ -7,7 +7,7 @@ from typing import Tuple, Optional, Sequence, Union
 import numpy as np
 import pandas as pd
 from sklearn import clone
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 import joblib
 from sklearn.metrics import get_scorer
@@ -40,7 +40,7 @@ class ModelData(metaclass=abc.ABCMeta):
     config = ConfigGetter()
 
     def __init__(self, estimator=None):
-        self._estimator = estimator
+        self._estimator = None
         self.estimator_name = None
         self.result = None
         self._plotter = None
@@ -66,11 +66,11 @@ class ModelData(metaclass=abc.ABCMeta):
 
     @property
     def is_classifier(self):
-        return self.estimator._estimator_type == "classifier"
+        return is_classifier(self.estimator)
 
     @property
     def is_regressor(self):
-        return self.estimator._estimator_type == "regressor"
+        return is_regressor(self.estimator)
 
     def init_estimator(self, estimator):
         """

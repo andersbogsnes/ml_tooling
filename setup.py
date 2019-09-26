@@ -16,7 +16,7 @@ INSTALL_REQUIRES = [
     "gitpython",
     "joblib",
 ]
-KEYWORDS = ["ml", "framework", "tooling"]
+KEYWORDS = ["ml", "framework", "tooling", "productionize"]
 PROJECT_URLS = {
     "Documentation": "https://ml-tooling.readthedocs.io/en/stable/",
     "Bug Tracker": "https://github.com/andersbogsnes/ml_tooling/issues",

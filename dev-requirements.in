@@ -1,4 +1,4 @@
--rrequirements.txt
+-r requirements.txt
 tox
 pre-commit
 pytest

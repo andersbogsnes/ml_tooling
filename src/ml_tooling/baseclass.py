@@ -21,7 +21,6 @@ from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.result import Result, CVResult, ResultGroup
 from ml_tooling.utils import (
     MLToolingError,
-    _get_estimator_name,
     get_git_hash,
     find_estimator_file,
     _create_param_grid,
@@ -41,8 +40,6 @@ class ModelData(metaclass=abc.ABCMeta):
 
     def __init__(self, estimator=None):
         self._estimator = None
-        self.estimator_name = None
-        self.result = None
         self._plotter = None
 
         if estimator is not None:
@@ -71,6 +68,15 @@ class ModelData(metaclass=abc.ABCMeta):
     @property
     def is_regressor(self):
         return is_regressor(self.estimator)
+
+    @property
+    def estimator_name(self):
+        class_name = self.estimator.__class__.__name__
+
+        if class_name == "Pipeline":
+            return self.estimator.steps[-1][1].__class__.__name__
+
+        return class_name
 
     def init_estimator(self, estimator):
         """
@@ -107,14 +113,13 @@ class ModelData(metaclass=abc.ABCMeta):
         None
 
         """
-        self.estimator = _validate_estimator(estimator)
-        self.estimator_name = _get_estimator_name(estimator)
+        self.estimator = estimator
 
         if self.is_classifier:
-            self._plotter = ClassificationVisualize
+            self._plotter = ClassificationVisualize(self)
 
         if self.is_regressor:
-            self._plotter = RegressionVisualize
+            self._plotter = RegressionVisualize(self)
 
     @classmethod
     def setup_estimator(cls) -> "ModelData":
@@ -202,29 +207,6 @@ class ModelData(metaclass=abc.ABCMeta):
         instance = cls(estimator)
         logger.info(f"Loaded {instance.estimator_name} for {cls.__name__}")
         return instance
-
-    # def _load_data(self) -> Data:
-    #     """
-    #     Internal method for loading data into class
-    #
-    #     Returns
-    #     -------
-    #     Data
-    #         Data object containing train-test split as well as original x and y
-    #     """
-    #
-    #     logger.debug("No data loaded - loading...")
-    #     x, y = self.get_training_data()
-    #
-    #     stratify = y if self.estimator._estimator_type == "classifier" else None
-    #     logger.debug("Creating train/test...")
-    #     return Data.with_train_test(
-    #         x,
-    #         y,
-    #         stratify=stratify,
-    #         test_size=self.config.TEST_SIZE,
-    #         seed=self.config.RANDOM_STATE,
-    #     )
 
     def _generate_filename(self):
         return f"{self.__class__.__name__}_{self.estimator_name}_{get_git_hash()}.pkl"
@@ -417,8 +399,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         for i, estimator in enumerate(estimators, start=1):
             logger.info(
-                f"Training estimator {i}/{len(estimators)}: "
-                f"{_get_estimator_name(estimator)}"
+                f"Training estimator {i}/{len(estimators)}: " f"{cls.estimator_name}"
             )
             challenger_estimator = cls(estimator)
             result = challenger_estimator.score_estimator(
@@ -657,7 +638,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         result = Result(estimator=estimator, viz=viz, score=score, metric=metric)
 
-        logger.info(f"{_get_estimator_name(estimator)} - {metric}: {score}")
+        logger.info(f"{self.estimator_name} - {metric}: {score}")
 
         return result
 
@@ -701,7 +682,7 @@ class ModelData(metaclass=abc.ABCMeta):
         if self.config.LOG:
             result.log_estimator(self.config.RUN_DIR)
 
-        logger.info(f"{_get_estimator_name(estimator)} - {metric}: {np.mean(scores)}")
+        logger.info(f"{self.estimator_name} - {metric}: {np.mean(scores)}")
         return result
 
     @classmethod

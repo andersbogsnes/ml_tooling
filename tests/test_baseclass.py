@@ -450,3 +450,29 @@ class TestBaseClass:
             match="No estimator selected. " "Use .init_estimator to set an estimator",
         ):
             clf.save_estimator()
+
+    def test_is_regressor_property(self, base):
+        clf = base(LinearRegression())
+        assert clf.is_classifier is False
+        assert clf.is_regressor is True
+
+    def test_is_classifier_property(self, base):
+        clf = base(RandomForestClassifier())
+        assert clf.is_regressor is False
+        assert clf.is_classifier is True
+
+    def test_is_classifier_with_no_estimator_given(self, base):
+        clf = base()
+        with pytest.raises(
+            MLToolingError,
+            match="No estimator selected. Use .init_estimator to set an estimator",
+        ):
+            clf.is_classifier
+
+    def test_is_regressor_with_no_estimator_given(self, base):
+        clf = base()
+        with pytest.raises(
+            MLToolingError,
+            match="No estimator selected. Use .init_estimator to set an estimator",
+        ):
+            clf.is_regressor

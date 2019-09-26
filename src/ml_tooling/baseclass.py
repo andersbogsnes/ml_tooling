@@ -7,7 +7,7 @@ from typing import Tuple, Optional, Sequence, Union, Any
 import numpy as np
 import pandas as pd
 from sklearn import clone
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 import joblib
 from sklearn.metrics import get_scorer
@@ -100,11 +100,19 @@ class ModelData(metaclass=abc.ABCMeta):
         self.estimator = _validate_estimator(estimator)
         self.estimator_name = _get_estimator_name(estimator)
 
-        if self.estimator._estimator_type == "classifier":
+        if self.is_classifier:
             self._plotter = ClassificationVisualize
 
-        if self.estimator._estimator_type == "regressor":
+        if self.is_regressor:
             self._plotter = RegressionVisualize
+
+    @property
+    def is_classifier(self):
+        return is_classifier(self.estimator)
+
+    @property
+    def is_regressor(self):
+        return is_regressor(self.estimator)
 
     @abc.abstractmethod
     def get_training_data(self) -> Tuple[DataType, DataType]:
@@ -241,7 +249,7 @@ class ModelData(metaclass=abc.ABCMeta):
         logger.debug("No data loaded - loading...")
         x, y = self.get_training_data()
 
-        stratify = y if self.estimator._estimator_type == "classifier" else None
+        stratify = y if self.is_classifier else None
         logger.debug("Creating train/test...")
         return Data.with_train_test(
             x,
@@ -394,13 +402,13 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return (
             self.config.CLASSIFIER_METRIC
-            if self.estimator._estimator_type == "classifier"
+            if self.is_classifier
             else self.config.REGRESSION_METRIC
         )
 
     @default_metric.setter
     def default_metric(self, metric):
-        if self.estimator._estimator_type == "classifier":
+        if self.is_classifier:
             self.config.CLASSIFIER_METRIC = metric
         else:
             self.config.REGRESSION_METRIC = metric

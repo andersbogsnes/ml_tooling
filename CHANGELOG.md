@@ -1,3 +1,6 @@
+# v0.8.0
+- Added new properties `is_estimator` and `is_regressor` which checks what type of estimator is used
+
 # v0.7.1
 - Joblib is now a dependency, instead of being vendored with scikit-learn
 - Updated requirements

@@ -39,25 +39,15 @@ class ModelData(metaclass=abc.ABCMeta):
     _config = None
     config = ConfigGetter()
 
-    def __init__(self, estimator=None):
-        self._estimator = None
-        self._plotter = None
-        self.result = None
+    def __init__(self, estimator):
+        self.estimator: BaseEstimator = _validate_estimator(estimator)
+        self.result: Optional[Result] = None
 
-        if estimator is not None:
-            self.init_estimator(estimator)
+        if self.is_classifier:
+            self._plotter = ClassificationVisualize
 
-    @property
-    def estimator(self):
-        if self._estimator is None:
-            raise MLToolingError(
-                "No estimator selected. Use .init_estimator to set an estimator"
-            )
-        return self._estimator
-
-    @estimator.setter
-    def estimator(self, estimator):
-        self._estimator = _validate_estimator(estimator)
+        elif self.is_regressor:
+            self._plotter = RegressionVisualize
 
     @property
     def class_name(self):
@@ -79,49 +69,6 @@ class ModelData(metaclass=abc.ABCMeta):
             return self.estimator.steps[-1][1].__class__.__name__
 
         return class_name
-
-    def init_estimator(self, estimator):
-        """
-        Load an estimator after instantiating a ModelData object.
-
-        Example
-        --------
-        .. code-block:: python
-
-            from ml_tooling import ModelData
-            from sklearn.linear_model import LinearRegression
-            from sklearn.datasets import load_boston
-            import pandas as pd
-
-            class BostonData(ModelData):
-                def get_training_data(self) -> Tuple[DataType, DataType]:
-                    data = load_boston()
-                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
-
-                def get_prediction_data(self, *args, **kwargs) -> DataType:
-                    pass
-
-            boston = BostonData()
-            boston.init_estimator(LinearRegression())
-            boston.score_model()
-
-        Parameters
-        ----------
-        estimator: sklearn.Estimator
-            A scikit-learn compatible estimator
-
-        Returns
-        -------
-        None
-
-        """
-        self.estimator = estimator
-
-        if self.is_classifier:
-            self._plotter = ClassificationVisualize
-
-        if self.is_regressor:
-            self._plotter = RegressionVisualize
 
     @classmethod
     def setup_estimator(cls) -> "ModelData":

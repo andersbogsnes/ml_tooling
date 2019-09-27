@@ -79,3 +79,6 @@ class DataSet:
     @abc.abstractmethod
     def load_prediction_data(self, *args, **kwargs) -> DataType:
         raise NotImplementedError
+
+    def __repr__(self):
+        return f"<Dataset {self.__class__.__name__}>"

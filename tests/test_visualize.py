@@ -64,19 +64,17 @@ class TestVisualize:
 
 
 class TestConfusionMatrixPlot:
-    @pytest.mark.xfail
     def test_confusion_matrix_plots_have_correct_data(self, classifier):
         ax = classifier.result.plot.confusion_matrix()
 
         assert "Confusion Matrix - LogisticRegression - Normalized" == ax.title._text
         result = [text._text for text in ax.texts]
         assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
-        assert {"0.61", "0.32", "0.05", "0.03"} == set(result)
+        assert {"0.63", "0.18", "0.11", "0.08"} == set(result)
         assert "True Label" == ax.get_ylabel()
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
 
-    @pytest.mark.xfail
     def test_confusion_matrix_plots_have_correct_data_when_not_normalized(
         self, classifier
     ):
@@ -84,7 +82,7 @@ class TestConfusionMatrixPlot:
 
         assert "Confusion Matrix - LogisticRegression" == ax.title._text
         result = {text._text for text in ax.texts}
-        assert {"23", "1", "2", "12"} == result
+        assert {"24", "7", "4", "3"} == result
         assert "True Label" == ax.get_ylabel()
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
@@ -103,20 +101,18 @@ class TestConfusionMatrixPlot:
 
 
 class TestFeatureImportancePlot:
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_correct_data(self, classifier):
         ax = classifier.result.plot.feature_importance(samples=100)
 
-        expected = {"0.03", "-0.05", "0.12", "0.10"}
+        expected = {"0.09", "-0.04", "-0.04", "0.07"}
         assert expected == {text._text for text in ax.texts}
         assert "Feature Importance - LogisticRegression" == ax.title._text
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_no_labels_if_value_is_false(
         self, classifier
     ):
@@ -124,50 +120,47 @@ class TestFeatureImportancePlot:
         assert 0 == len(ax.texts)
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         assert "Feature Importance - LogisticRegression" == ax.title._text
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_set(
         self, classifier
     ):
         ax = classifier.result.plot.feature_importance(top_n=2, samples=100)
         assert 2 == len(ax.texts)
-        assert {"0.12", "0.10"} == {text._text for text in ax.texts}
+        assert {"0.09", "0.07"} == {text._text for text in ax.texts}
         assert "Feature Importance - LogisticRegression - Top 2" == ax.title._text
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_percent(
         self, classifier
     ):
         ax = classifier.result.plot.feature_importance(top_n=0.2, samples=100)
         assert 1 == len(ax.texts)
-        assert {"0.12"} == {text._text for text in ax.texts}
+        assert {"0.09"} == {text._text for text in ax.texts}
         assert "Feature Importance - LogisticRegression - Top 20%" == ax.title._text
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_int(
         self, classifier
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=2, samples=100)
         assert 2 == len(ax.texts)
-        assert {"0.03", "-0.05"} == {text._text for text in ax.texts}
+        assert {"-0.04", "-0.04"} == {text._text for text in ax.texts}
         assert "Feature Importance - LogisticRegression - Bottom 2" == ax.title._text
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
@@ -177,32 +170,30 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=0.2, samples=100)
         assert 1 == len(ax.texts)
-        assert {"0.03"} == {text._text for text in ax.texts}
+        assert {"-0.04"} == {text._text for text in ax.texts}
         assert "Feature Importance - LogisticRegression - Bottom 20%" == ax.title._text
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(
         self, classifier
     ):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1, samples=100)
         assert 2 == len(ax.texts)
-        assert {"0.12", "0.03"} == {text._text for text in ax.texts}
+        assert {"0.09", "-0.04"} == {text._text for text in ax.texts}
         assert (
             "Feature Importance - LogisticRegression - Top 1 - Bottom 1"
             == ax.title._text
         )
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(
         self, classifier
     ):
@@ -210,18 +201,17 @@ class TestFeatureImportancePlot:
             top_n=1, bottom_n=0.2, samples=100
         )
         assert 2 == len(ax.texts)
-        assert {"0.12", "0.03"} == {text._text for text in ax.texts}
+        assert {"0.09", "-0.04"} == {text._text for text in ax.texts}
         assert (
             "Feature Importance - LogisticRegression - Top 1 - Bottom 20%"
             == ax.title._text
         )
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(
         self, classifier
     ):
@@ -229,18 +219,17 @@ class TestFeatureImportancePlot:
             top_n=0.2, bottom_n=1, samples=100
         )
         assert 2 == len(ax.texts)
-        assert {"0.12", "0.03"} == {text._text for text in ax.texts}
+        assert {"-0.04", "0.09"} == {text._text for text in ax.texts}
         assert (
             "Feature Importance - LogisticRegression - Top 20% - Bottom 1"
             == ax.title._text
         )
         assert "Features" == ax.get_ylabel()
         assert (
-            "Importance:  Decrease in accuracy from baseline of 0.7" == ax.get_xlabel()
+            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_correctly_in_pipeline(
         self, base, categorical, test_dataset
     ):
@@ -251,22 +240,16 @@ class TestFeatureImportancePlot:
             ]
         )
 
-        class DummyModel(ModelData):
-            @classmethod
-            def setup_estimator(cls):
-                pass
-
-        model = DummyModel(pipe)
+        model = ModelData(pipe)
         result = model.score_estimator(test_dataset)
         ax = result.plot.feature_importance(samples=100)
 
         assert "Feature Importance - RandomForestClassifier" == ax.title._text
-        assert 2 == len(ax.get_yticklabels())
+        assert 4 == len(ax.get_yticklabels())
         plt.close()
 
 
 class TestLiftCurvePlot:
-    @pytest.mark.xfail
     def test_lift_curve_have_correct_data(self, classifier):
         ax = classifier.result.plot.lift_curve()
 
@@ -274,7 +257,7 @@ class TestLiftCurvePlot:
         assert "Lift" == ax.get_ylabel()
         assert "% of Data" == ax.get_xlabel()
         assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
-        assert pytest.approx(49.849, rel=0.0001) == np.sum(ax.lines[0].get_ydata())
+        assert pytest.approx(60.291, rel=0.0001) == np.sum(ax.lines[0].get_ydata())
         plt.close()
 
     def test_lift_chart_fails_correctly_with_2d_proba(self):

@@ -8,11 +8,7 @@ from ml_tooling import ModelData
 
 logging.disable(logging.CRITICAL)
 
-pytest_plugins = [
-    "tests.fixtures.dataframes",
-    "tests.fixtures.datasets",
-    "tests.fixtures.estimators",
-]
+pytest_plugins = ["fixtures.dataframes", "fixtures.datasets", "fixtures.estimators"]
 
 
 @pytest.fixture(autouse=True)

@@ -8,13 +8,11 @@ from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, precision_recall_curve, get_scorer
+from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
 from ml_tooling import ModelData
-from ml_tooling.metrics.permutation_importance import _get_feature_importance
-from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -350,59 +348,3 @@ class TestPRCurve:
 
         assert ax is plot_pr_curve(y, y_proba, ax=ax)
         plt.close()
-
-
-class TestGetFeatureImportance:
-    def test_viz_get_feature_importance_regression_returns_importance(self, regression):
-        sample = 10
-        importance, baseline = _get_feature_importance(regression.result.plot, sample)
-
-        model = regression.result.plot._estimator
-        metric = get_scorer(regression.result.plot._config.REGRESSION_METRIC)
-        train_x = regression.result.plot._data.train_x
-        train_y = regression.result.plot._data.train_y
-
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)
-
-    def test_get_feature_importance_returns_importance_from_regression_pipeline(
-        self, base, pipeline_linear, test_dataset
-    ):
-        pipe = base(pipeline_linear)
-        pipe.score_estimator(test_dataset)
-        sample = 10
-        importance, baseline = _get_feature_importance(pipe.result.plot, sample)
-
-        model = pipe.result.plot._estimator
-        metric = get_scorer(pipe.result.plot._config.REGRESSION_METRIC)
-        train_x = pipe.result.plot._data.train_x
-        train_y = pipe.result.plot._data.train_y
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)
-
-    def test_viz_get_feature_importance_returns_feature_importance_from_classifier(
-        self, base, test_dataset
-    ):
-        classifier = base(RandomForestClassifier(n_estimators=10))
-        result = classifier.score_estimator(test_dataset)
-        sample = 10
-        importance, baseline = _get_feature_importance(result.plot, sample)
-
-        model = classifier.result.plot._estimator
-        metric = get_scorer(classifier.result.plot._config.CLASSIFIER_METRIC)
-        train_x = classifier.result.plot._data.train_x
-        train_y = classifier.result.plot._data.train_y
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)

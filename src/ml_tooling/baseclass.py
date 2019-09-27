@@ -25,6 +25,7 @@ from ml_tooling.utils import (
     find_estimator_file,
     _create_param_grid,
     _validate_estimator,
+    DataSetError,
 )
 
 logger = create_logger("ml_tooling")
@@ -41,6 +42,7 @@ class ModelData(metaclass=abc.ABCMeta):
     def __init__(self, estimator=None):
         self._estimator = None
         self._plotter = None
+        self.result = None
 
         if estimator is not None:
             self.init_estimator(estimator)
@@ -116,10 +118,10 @@ class ModelData(metaclass=abc.ABCMeta):
         self.estimator = estimator
 
         if self.is_classifier:
-            self._plotter = ClassificationVisualize(self)
+            self._plotter = ClassificationVisualize
 
         if self.is_regressor:
-            self._plotter = RegressionVisualize(self)
+            self._plotter = RegressionVisualize
 
     @classmethod
     def setup_estimator(cls) -> "ModelData":
@@ -298,8 +300,8 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
-        input_data: any
-            Defined in :meth:`get_prediction_data`
+        data: DataSet
+            an instantiated DataSet object
 
         proba: bool
             Whether prediction is returned as a probability or not.
@@ -317,7 +319,7 @@ class ModelData(metaclass=abc.ABCMeta):
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-        x = data.load_prediction_data()
+        x = data.load_prediction_data(*args, **kwargs)
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
@@ -451,6 +453,9 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
+        data: DataSet
+            An instantiated Data object
+
         metric: string
             Metric to use for scoring the estimator. Any sklearn metric string
 
@@ -465,21 +470,19 @@ class ModelData(metaclass=abc.ABCMeta):
         """
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring estimator...")
-        stratify = data.y if self.is_regressor else None
-        data.create_train_test(
-            stratify=stratify,
-            test_size=self.config.TEST_SIZE,
-            seed=self.config.RANDOM_STATE,
-        )
+
+        # TODO: Should we run train_test automagically if not done?
+        if not data.has_validation_set:
+            raise DataSetError("Must run create_train_test first!")
 
         self.estimator.fit(data.train_x, data.train_y)
 
         if cv:
             logger.info("Cross-validating...")
-            self.result = self._score_estimator_cv(self.estimator, metric, cv)
+            self.result = self._score_estimator_cv(data, self.estimator, metric, cv)
 
         else:
-            self.result = self._score_estimator(self.estimator, metric)
+            self.result = self._score_estimator(data, self.estimator, metric)
 
         if self.config.LOG:
             result_file = self.result.log_estimator(self.config.RUN_DIR)
@@ -488,6 +491,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
     def gridsearch(
         self,
+        data: DataSet,
         param_grid: dict,
         metric: Optional[str] = None,
         cv: Optional[int] = None,
@@ -499,6 +503,9 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Parameters
         ----------
+        data: DataSet
+            An instance of a DataSet object
+
         param_grid: dict
             Parameters to use for grid search
 
@@ -523,12 +530,11 @@ class ModelData(metaclass=abc.ABCMeta):
         """
 
         baseline_estimator = clone(self.estimator)
-        train_x, train_y = self.data.train_x, self.data.train_y
         metric = self.default_metric if metric is None else metric
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         cv = check_cv(
-            cv, train_y, baseline_estimator._estimator_type == "classifier"
+            cv, data.train_y, baseline_estimator._estimator_type == "classifier"
         )  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
@@ -541,8 +547,8 @@ class ModelData(metaclass=abc.ABCMeta):
 
         out = parallel(
             joblib.delayed(fit_grid_point)(
-                X=train_x,
-                y=train_y,
+                X=data.train_x,
+                y=data.train_y,
                 estimator=clone(baseline_estimator),
                 train=train,
                 test=test,
@@ -551,7 +557,7 @@ class ModelData(metaclass=abc.ABCMeta):
                 parameters=parameters,
             )
             for parameters, (train, test) in product(
-                param_grid, cv.split(train_x, train_y, None)
+                param_grid, cv.split(data.train_x, data.train_y, None)
             )
         )
 
@@ -612,12 +618,14 @@ class ModelData(metaclass=abc.ABCMeta):
             self.config.LOG = False
             self.config.RUN_DIR = old_dir
 
-    def _score_estimator(self, estimator, metric: str) -> Result:
+    def _score_estimator(self, data, estimator, metric: str) -> Result:
         """
         Scores estimator with a given score function.
 
         Parameters
         ----------
+        data: DataSet
+            An instantiated DataSet object
         estimator: sklearn.estimator
             Estimator to evaluate
 
@@ -633,8 +641,8 @@ class ModelData(metaclass=abc.ABCMeta):
 
         scoring_func = get_scorer(metric)
 
-        score = scoring_func(estimator, self.data.test_x, self.data.test_y)
-        viz = self._plotter(estimator=estimator, config=self.config, data=self.data)
+        score = scoring_func(estimator, data.test_x, data.test_y)
+        viz = self._plotter(estimator=estimator, config=self.config, data=data)
 
         result = Result(estimator=estimator, viz=viz, score=score, metric=metric)
 
@@ -642,12 +650,15 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return result
 
-    def _score_estimator_cv(self, estimator, metric=None, cv=None) -> CVResult:
+    def _score_estimator_cv(self, data, estimator, metric=None, cv=None) -> CVResult:
         """
         Scores estimator with given metric using cross-validation
 
         Parameters
         ----------
+        data: DataSet
+            An instantiated DataSet object
+
         estimator: BaseEstimator
             A sklearn-compatible estimator to use for scoring
 
@@ -665,15 +676,15 @@ class ModelData(metaclass=abc.ABCMeta):
 
         scores = cross_val_score(
             estimator,
-            self.data.train_x,
-            self.data.train_y,
+            data.train_x,
+            data.train_y,
             cv=cv,
             scoring=metric,
             n_jobs=self.config.N_JOBS,
             verbose=self.config.VERBOSITY,
         )
 
-        viz = self._plotter(estimator=estimator, config=self.config, data=self.data)
+        viz = self._plotter(estimator=estimator, config=self.config, data=data)
 
         result = CVResult(
             estimator=estimator, viz=viz, metric=metric, cross_val_scores=scores, cv=cv

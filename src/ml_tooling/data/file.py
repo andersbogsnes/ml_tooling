@@ -24,29 +24,3 @@ class FileDataSet(DataSet):
     @abc.abstractmethod
     def load_prediction_data(self, *args, **kwargs) -> DataType:
         pass
-
-    def save(self, overwrite=False, **kwargs):
-        """
-        Save dataset to path
-
-        Parameters
-        ----------
-        overwrite: bool
-            Whether or not to overwrite an existing file if exists
-        kwargs:
-            Passed to pandas to_* function
-
-        Returns
-        -------
-        FileDataSet
-        """
-
-        if self.file_path.exists() and overwrite is False:
-            raise FileExistsError(
-                f"{self.file_path} already exists. "
-                f"Set overwrite=True to overwrite existing file"
-            )
-
-        output_data = self.x.join(self.y)
-        getattr(output_data, f"to_{self.file_type}")(self.file_path, **kwargs)
-        return self

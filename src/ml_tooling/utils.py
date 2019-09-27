@@ -4,6 +4,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
@@ -73,7 +74,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def _get_estimator_name(clf) -> str:
+def _get_estimator_name(clf: BaseEstimator) -> str:
     """
     Returns estimator name based on class name. If passed classifier is a :class:
     `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name

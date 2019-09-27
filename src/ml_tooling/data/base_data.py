@@ -14,9 +14,6 @@ class DataSet:
     train_y: Optional[DataType] = None
     train_x: Optional[DataType] = None
 
-    def __init__(self, *args, **kwargs):
-        pass
-
     def create_train_test(
         self, stratify=None, shuffle=True, test_size=0.25, seed=42
     ) -> "DataSet":
@@ -37,7 +34,7 @@ class DataSet:
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
             self.x,
             self.y,
-            stratify=stratify,
+            stratify=self.y if stratify else None,
             shuffle=shuffle,
             test_size=test_size,
             random_state=seed,
@@ -64,6 +61,17 @@ class DataSet:
     def y(self, data):
         raise DataSetError("Trying to modify y - y is immutable")
 
+    @property
+    def has_validation_set(self):
+        if (
+            self.test_x is None
+            or self.train_x is None
+            or self.test_y is None
+            or self.train_y is None
+        ):
+            return False
+        return True
+
     @abc.abstractmethod
     def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
         raise NotImplementedError
@@ -71,10 +79,3 @@ class DataSet:
     @abc.abstractmethod
     def load_prediction_data(self, *args, **kwargs) -> DataType:
         raise NotImplementedError
-
-    @classmethod
-    def load_from_dataset(cls, data: "DataSet", *args, **kwargs):
-        dataset = cls(*args, **kwargs)
-        dataset._x = data.x
-        dataset._y = data.y
-        return dataset

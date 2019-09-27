@@ -47,16 +47,20 @@ class TestResult:
         assert "accuracy" == result.metric
         assert "LogisticRegression" == result.estimator_name
 
-    def test_pipeline_regression_returns_correct_result(self, base, pipeline_linear):
+    def test_pipeline_regression_returns_correct_result(
+        self, base, pipeline_linear, test_dataset
+    ):
         model = base(pipeline_linear)
-        result = model.score_estimator()
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
         assert "LinearRegression" == result.estimator_name
         assert isinstance(result.estimator, Pipeline)
 
-    def test_pipeline_logistic_returns_correct_result(self, base, pipeline_logistic):
+    def test_pipeline_logistic_returns_correct_result(
+        self, base, pipeline_logistic, test_dataset
+    ):
         model = base(pipeline_logistic)
-        result = model.score_estimator()
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
         assert "LogisticRegression" == result.estimator_name
         assert isinstance(result.estimator, Pipeline)
@@ -126,31 +130,31 @@ class TestResult:
 
     @pytest.mark.parametrize("with_cv", [True, False])
     def test_result_params_returns_only_clf_params_in_pipeline(
-        self, base, pipeline_forest_classifier, with_cv
+        self, base, pipeline_forest_classifier, with_cv, test_dataset
     ):
 
         model = base(pipeline_forest_classifier)
 
         if with_cv:
-            result = model.score_estimator(cv=2)
+            result = model.score_estimator(test_dataset, cv=2)
 
         else:
-            result = model.score_estimator()
+            result = model.score_estimator(test_dataset)
 
         expected_params = set(RandomForestClassifier().get_params())
         assert expected_params == set(result.estimator_params)
 
     @pytest.mark.parametrize("with_cv", [True, False])
     def test_result_to_dataframe_returns_correct(
-        self, base, pipeline_forest_classifier, with_cv
+        self, base, pipeline_forest_classifier, with_cv, test_dataset
     ):
         model = base(pipeline_forest_classifier)
 
         if with_cv:
-            result = model.score_estimator(cv=2)
+            result = model.score_estimator(test_dataset, cv=2)
 
         else:
-            result = model.score_estimator()
+            result = model.score_estimator(test_dataset)
 
         df = result.to_dataframe()
         assert 1 == len(df)
@@ -158,10 +162,10 @@ class TestResult:
         assert "max_depth" in df.columns
 
     def test_cv_result_with_cross_val_score_returns_correct(
-        self, base, pipeline_forest_classifier
+        self, base, pipeline_forest_classifier, test_dataset
     ):
         model = base(pipeline_forest_classifier)
-        result = model.score_estimator(cv=2)
+        result = model.score_estimator(test_dataset, cv=2)
         df = result.to_dataframe(cross_val_score=True)
         assert 2 == len(df)
         assert df.loc[0, "score"] != df.loc[1, "score"]

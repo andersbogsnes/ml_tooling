@@ -8,7 +8,7 @@
 --trusted-host artifactory-singlep.p001.alm.brand.dk
 
 cycler==0.10.0            # via matplotlib
-gitdb2==2.0.5             # via gitpython
+gitdb2==2.0.6             # via gitpython
 gitpython==3.0.2
 joblib==0.13.2
 kiwisolver==1.1.0         # via matplotlib

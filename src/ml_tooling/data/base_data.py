@@ -6,7 +6,7 @@ from ml_tooling.utils import DataType, DataSetError
 from sklearn.utils import indexable
 
 
-class DataSet(metaclass=abc.ABCMeta):
+class Dataset(metaclass=abc.ABCMeta):
     _x: Optional[DataType] = None
     _y: Optional[DataType] = None
     test_x: Optional[DataType] = None
@@ -16,7 +16,7 @@ class DataSet(metaclass=abc.ABCMeta):
 
     def create_train_test(
         self, stratify=None, shuffle=True, test_size=0.25, seed=42
-    ) -> "DataSet":
+    ) -> "Dataset":
         """
         Creates a training and testing dataset and storing it on the data object.
         :param stratify:

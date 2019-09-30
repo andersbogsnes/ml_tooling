@@ -1,5 +1,5 @@
-from .file import FileDataSet
-from .sql import SQLDataSet
-from .base_data import DataSet
+from .file import FileDataset
+from .sql import SQLDataset
+from .base_data import Dataset
 
-__all__ = ["FileDataSet", "SQLDataSet", "DataSet"]
+__all__ = ["FileDataset", "SQLDataset", "Dataset"]

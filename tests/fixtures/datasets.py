@@ -6,14 +6,14 @@ import pytest
 import sqlalchemy as sa
 from sklearn.datasets import load_boston, load_iris
 
-from ml_tooling.data import SQLDataSet
-from ml_tooling.data.base_data import DataSet
+from ml_tooling.data import SQLDataset
+from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 
 
 @pytest.fixture
 def base_dataset():
-    class IrisData(DataSet):
+    class IrisData(Dataset):
         def load_prediction_data(self, idx):
             data = load_iris()
             df = pd.DataFrame(data.data, columns=data.feature_names)
@@ -51,7 +51,7 @@ def test_db(test_df, test_engine):
 
 @pytest.fixture
 def test_sqldata(test_db):
-    class BostonDataSet(SQLDataSet):
+    class BostonDataSet(SQLDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
             sql = "SELECT * FROM boston"
             df = pd.read_sql(sql, self.engine, index_col="index")

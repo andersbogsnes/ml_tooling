@@ -1,13 +1,13 @@
 import abc
 from typing import Tuple
 
-from ml_tooling.data.base_data import DataSet
+from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 import sqlalchemy as sa
 from sqlalchemy.engine import Connectable
 
 
-class SQLDataSet(DataSet, metaclass=abc.ABCMeta):
+class SQLDataset(Dataset, metaclass=abc.ABCMeta):
     def __init__(self, conn, **engine_kwargs):
         if isinstance(conn, Connectable):
             self.engine = conn

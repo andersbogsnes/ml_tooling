@@ -30,7 +30,7 @@ Usually this takes an argument to select features for a given customer or item.
         >>> from sklearn.datasets import load_boston
         >>> import pandas as pd
         >>>
-        >>> class BostonData(DataSet):
+        >>> class BostonData(Dataset):
         ...    def load_training_data(self):
         ...        data = load_boston()
         ...        return pd.DataFrame(data.data, columns=data.feature_names), data.target
@@ -42,18 +42,20 @@ Usually this takes an argument to select features for a given customer or item.
         ...        return x.loc[idx] # Return given observation
         >>>
         >>> class BostonModel(ModelData):
-        >>>     pass
+        ...     pass
         ...    # Define where to get training time data - always return a DataFrame for X
         >>> # Use your data with a given model
         >>> data = BostonData()
         >>> regression = BostonModel(LinearRegression())
         >>> regression
-        <BostonData: LinearRegression>
+        <BostonModel: LinearRegression>
 
 Now we can start training our model:
 
 .. doctest::
 
+    >>> data.create_train_test()
+    <Dataset BostonData>
     >>> result = regression.score_estimator(data)
     >>> result
     <Result LinearRegression: r2: 0.68 >
@@ -79,9 +81,9 @@ We can save and load our model:
 .. doctest::
 
     >>> path = regression.save_estimator()
-    >>> my_new_model = BostonData.load_estimator(path)
+    >>> my_new_model = BostonModel.load_estimator(path)
     >>> print(my_new_model)
-    <BostonData: LinearRegression>
+    <BostonModel: LinearRegression>
 
 We can try out many different models:
 
@@ -89,7 +91,7 @@ We can try out many different models:
 
     >>> from sklearn.linear_model import Ridge, LassoLars
     >>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
-    >>> best_model, all_results = BostonData.test_estimators(data,
+    >>> best_model, all_results = BostonModel.test_estimators(data,
     ...                                                      models_to_try,
     ...                                                      metric='neg_mean_squared_error')
     >>> all_results

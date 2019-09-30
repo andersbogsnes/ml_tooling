@@ -400,6 +400,7 @@ class ModelData(metaclass=abc.ABCMeta):
         cross-validates on training data and doesn't use the validation data.
 
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
+
         Parameters
         ----------
         data: Dataset

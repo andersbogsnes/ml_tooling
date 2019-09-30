@@ -10,28 +10,18 @@ In order to take advantage of this functionality, start by creating your DataCla
 which inherits from BaseClass. We will be using scikit-learn's built-in Boston houseprices
 dataset for demo purposes and we just want to try it out with a simple linear regression
 
-Your subclass must implement two methods:
-
-- :meth:`~ModelData.get_training_data`
-
-Method that retrieves all training data. Used for training and evaluating the model
-
-
-- :meth:`~ModelData.get_prediction_data`
-
-Method that, given an input, fetches corresponding features. Used for predicting an unseen observation
-
 .. seealso::
     :ref:`api` for a full overview of methods
 
 Example Usage
 -------------
-We define a class using ModelData and implement the two required methods.
+We define a class using ModelData and define the dataset.
 In this example, we implement a linear regression on the Boston dataset using sklearn.datasets
 
 .. code-block:: python
 
     from ml_tooling import ModelData
+    from ml_tooling.data import Dataset
     from sklearn.datasets import load_boston
     from sklearn.linear_model import LinearRegression
 

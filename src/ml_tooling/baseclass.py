@@ -241,14 +241,14 @@ class ModelData(metaclass=abc.ABCMeta):
         **kwargs,
     ) -> pd.DataFrame:
         """Makes a prediction given an input. For example a customer number.
-        Passed to the implemented :meth:`get_prediction_data` method and calls `predict()`
+        Calls `load_prediction_data(*args)` and passes resulting data to `predict()`
         on the estimator
 
 
         Parameters
         ----------
         data: Dataset
-            an instantiated DataSet object
+            an instantiated Dataset object
 
         proba: bool
             Whether prediction is returned as a probability or not.
@@ -392,16 +392,18 @@ class ModelData(metaclass=abc.ABCMeta):
     def score_estimator(
         self, data: Dataset, metric: Optional[str] = None, cv: Optional[int] = False
     ) -> "Result":
-        """Loads all training data and trains the estimator on it, using a train_test split.
+        """Scores the estimator based on training data from `data` and validates based on validation
+        data from `data`.
+
+        Defaults to no cross-validation. If you want to cross-validate the results,
+        pass number of folds to cv. If cross-validation is used, `score_estimator` only
+        cross-validates on training data and doesn't use the validation data.
+
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
-        Defaults to non-cross-validated scoring.
-        If you want to cross-validate, pass number of folds to cv
-
-
         Parameters
         ----------
         data: Dataset
-            An instantiated Data object
+            An instantiated Dataset object
 
         metric: string
             Metric to use for scoring the estimator. Any sklearn metric string
@@ -418,7 +420,6 @@ class ModelData(metaclass=abc.ABCMeta):
         metric = self.default_metric if metric is None else metric
         logger.info("Scoring estimator...")
 
-        # TODO: Should we run train_test automagically if not done?
         if not data.has_validation_set:
             raise DataSetError("Must run create_train_test first!")
 
@@ -572,7 +573,7 @@ class ModelData(metaclass=abc.ABCMeta):
         Parameters
         ----------
         data: Dataset
-            An instantiated DataSet object
+            An instantiated Dataset object
         estimator: sklearn.estimator
             Estimator to evaluate
 
@@ -604,7 +605,7 @@ class ModelData(metaclass=abc.ABCMeta):
         Parameters
         ----------
         data: Dataset
-            An instantiated DataSet object
+            An instantiated DataSet object with train_test split
 
         estimator: BaseEstimator
             A sklearn-compatible estimator to use for scoring

@@ -1,15 +1,14 @@
 import abc
 from typing import Union, Tuple
-
-import pandas as pd
-from ml_tooling.data.base_data import DataSet
-from ml_tooling.utils import DataSetError
 import pathlib
 
-from ml_tooling.utils import DataType
+from ml_tooling.data.base_data import DataSet
+from ml_tooling.utils import DataSetError, DataType
+
+import pandas as pd
 
 
-class FileDataSet(DataSet):
+class FileDataSet(DataSet, metaclass=abc.ABCMeta):
     def __init__(self, path: Union[pathlib.Path, str]):
         self.file_path = pathlib.Path(path)
         self.file_type = self.file_path.suffix[1:]

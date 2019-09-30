@@ -1,3 +1,5 @@
+# 0.8.0
+- Breaking change - Dataset is now a separate object that has to be instantiated outside Modeldata
 # v0.7.1
 - Joblib is now a dependency, instead of being vendored with scikit-learn
 - Updated requirements

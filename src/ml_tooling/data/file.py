@@ -9,7 +9,7 @@ import pathlib
 from ml_tooling.utils import DataType
 
 
-class FileDataSet(DataSet):
+class FileDataSet(DataSet, metaclass=abc.ABCMeta):
     def __init__(self, path: Union[pathlib.Path, str]):
         self.file_path = pathlib.Path(path)
         self.file_type = self.file_path.suffix[1:]

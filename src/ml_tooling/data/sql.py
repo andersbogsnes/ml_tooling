@@ -7,7 +7,7 @@ import sqlalchemy as sa
 from sqlalchemy.engine import Connectable
 
 
-class SQLDataSet(DataSet):
+class SQLDataSet(DataSet, metaclass=abc.ABCMeta):
     def __init__(self, conn, **engine_kwargs):
         if isinstance(conn, Connectable):
             self.engine = conn

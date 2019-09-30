@@ -6,7 +6,7 @@ from ml_tooling.utils import DataType, DataSetError
 from sklearn.utils import indexable
 
 
-class DataSet:
+class DataSet(metaclass=abc.ABCMeta):
     _x: Optional[DataType] = None
     _y: Optional[DataType] = None
     test_x: Optional[DataType] = None

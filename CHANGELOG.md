@@ -1,3 +1,6 @@
+# v0.8.0
+- Replaced custom feature permutation importance with sklearns implementation from v0.22
+
 # v0.7.1
 - Joblib is now a dependency, instead of being vendored with scikit-learn
 - Updated requirements

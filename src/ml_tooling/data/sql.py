@@ -8,6 +8,12 @@ from sqlalchemy.engine import Connectable
 
 
 class SQLDataset(Dataset, metaclass=abc.ABCMeta):
+    """
+    Baseclass for creating SQL based Datasets. Subclass SQLDataset and provide a
+    :meth:`load_training_data` and :meth:`load_prediction_data` method.
+    SQLDataset takes a SQLAlchemy connection object or string URI to create the engine
+    """
+
     def __init__(self, conn, **engine_kwargs):
         if isinstance(conn, Connectable):
             self.engine = conn

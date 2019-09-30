@@ -1,6 +1,6 @@
-from .baseclass import ModelData
+from .baseclass import Model
 
-__all__ = ["ModelData"]
+__all__ = ["Model"]
 
 
 # Metadata for the package

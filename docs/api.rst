@@ -8,12 +8,12 @@ ModelData
 Abstract BaseClass to inherit from.
 Implements all the base functionality needed to create the wrapper
 
-.. autoclass:: ml_tooling.baseclass.ModelData
+.. autoclass:: ml_tooling.baseclass.Model
     :members:
 
     .. automethod:: log(self, run_name)
 
-    .. automethod:: setup_estimator()
+.. include:: dataset.inc.rst
 
 .. include:: config.inc.rst
 

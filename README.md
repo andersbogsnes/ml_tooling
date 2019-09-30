@@ -37,13 +37,13 @@ Your subclass must define two methods:
 Define a class using ModelData and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
-from ml_tooling import ModelData
+from ml_tooling import Model
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression, Ridge, LassoLars
 
 # Define a new class
 
-class BostonModel(ModelData):
+class BostonModel(Model):
     def get_prediction_data(self, idx):
         x, _ = load_boston(return_X_y=True)
         return x[idx] # Return given observation
@@ -151,14 +151,14 @@ Typically this would setup a pipeline and the selected model for easy training
 
 Returning to our previous example of the BostonModel, let us implement a setup_estimator method
 ```python
-from ml_tooling import ModelData
+from ml_tooling import Model
 from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 import pandas as pd
 
-class BostonModel(ModelData):
+class BostonModel(Model):
     def get_prediction_data(self, idx):
         data = load_boston()
         df = pd.DataFrame(data=data.data, columns=data.feature_names)

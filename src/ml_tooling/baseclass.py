@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn import clone
 from sklearn.base import BaseEstimator, is_classifier, is_regressor
+from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
 import joblib
 from sklearn.metrics import get_scorer
@@ -21,8 +22,6 @@ from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.result import Result, CVResult, ResultGroup
 from ml_tooling.utils import (
     MLToolingError,
-    get_git_hash,
-    find_estimator_file,
     _create_param_grid,
     _validate_estimator,
     DataSetError,
@@ -31,7 +30,7 @@ from ml_tooling.utils import (
 logger = create_logger("ml_tooling")
 
 
-class ModelData(metaclass=abc.ABCMeta):
+class Model(metaclass=abc.ABCMeta):
     """
     Base class for Models
     """
@@ -40,7 +39,7 @@ class ModelData(metaclass=abc.ABCMeta):
     config = ConfigGetter()
 
     def __init__(self, estimator):
-        self.estimator: BaseEstimator = _validate_estimator(estimator)
+        self.estimator: Union[BaseEstimator, Pipeline] = _validate_estimator(estimator)
         self.result: Optional[Result] = None
 
         if self.is_classifier:
@@ -48,10 +47,6 @@ class ModelData(metaclass=abc.ABCMeta):
 
         elif self.is_regressor:
             self._plotter = RegressionVisualize
-
-    @property
-    def class_name(self):
-        return self.__class__.__name__
 
     @property
     def is_classifier(self):
@@ -71,145 +66,72 @@ class ModelData(metaclass=abc.ABCMeta):
         return class_name
 
     @classmethod
-    def setup_estimator(cls) -> "ModelData":
-        """To be implemented by the user - `setup_estimator()` is a classmethod which loads up an
-        untrained estimator. Typically this would setup a pipeline and the selected estimator
-        for easy training
-
-        Example
-        -------
-
-        Returning to our previous example of the BostonModel, let us implement
-        a setup_estimator method:
-
-        .. code-block:: python
-
-            from ml_tooling import BaseClassModel
-            from sklearn.datasets import load_boston
-            from sklearn.preprocessing import StandardScaler
-            from sklearn.linear_model import LinearRegression
-            from sklearn.pipeline import Pipeline
-            import pandas as pd
-
-            class BostonModel(BaseClassModel):
-                def get_prediction_data(self, idx):
-                    data = load_boston()
-                    df = pd.DataFrame(data=data.data, columns=data.feature_names)
-                    return df.iloc[idx] # Return given observation
-
-                def get_training_data(self):
-                    data = load_boston()
-                    return pd.DataFrame(data=data.data, columns=data.feature_names), data.target
-
-                @classmethod
-                def setup_estimator(cls):
-                    pipeline = Pipeline([('scaler', StandardScaler()),
-                                         ('clf', LinearRegression())
-                                         ])
-                    return cls(pipeline)
-
-        Given this extra setup, it becomes easy to load the untrained estimator to train it::
-
-            estimator = BostonModel.setup_estimator()
-            estimator.train_estimator()
-
-
-        Returns
-        -------
-        ModelData
-            An instance of BaseClassModel with a full pipeline
-
-        """
-
-        raise NotImplementedError
-
-    @classmethod
-    def load_estimator(cls, path: Optional[str] = None) -> "ModelData":
+    def load_estimator(cls, path: str) -> "Model":
         """
         Instantiates the class with a joblib pickled estimator.
-        If no path is given, searches path for the newest file that matches
-        the git hash and ModelData name and loads that.
 
         Parameters
         ----------
         path: str, optional
-            Where to load the estimator from. If None, will load newest estimator that includes
-            the estimator name and class name
+            Path to estimator pickle file
 
         Example
         -------
         Having defined ModelData, we can load a trained estimator from disk::
 
-            my_estimator = BostonData.load_estimator('path/to/estimator')
+            my_estimator = Model.load_estimator('path/to/estimator')
 
         We now have a trained estimator loaded.
 
 
         Returns
         -------
-        ModelData
-            Instance of saved estimator
+        Model
+            Instance of Model with a saved estimator
         """
-        path = cls.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
-        estimator_file = find_estimator_file(path)
+        estimator_file = pathlib.Path(path)
         estimator = joblib.load(estimator_file)
         instance = cls(estimator)
-        logger.info(f"Loaded {instance.estimator_name} for {cls.__name__}")
+        logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def _generate_filename(self):
-        return f"{self.__class__.__name__}_{self.estimator_name}_{get_git_hash()}.pkl"
-
-    def save_estimator(
-        self, path: Optional[str] = None, filename: Optional[str] = None
-    ) -> pathlib.Path:
+    def save_estimator(self, path: str) -> pathlib.Path:
         """
-        Saves the estimator as a binary file. Defaults to current working directory,
-        with a filename of `<class_name>_<estimator_name>_<git_hash>.pkl`
+        Saves the estimator as a binary file.
 
 
         Parameters
         ----------
-        path : str, optional
-            Full path of directory for where to save the
-            estimator
-        filename : str, optional
-            A custom name for saved file can be given.
-            If not supplied the name will be autogenerated.
+        path : str
+            Path to save estimator
 
         Example
         -------
 
         If we have trained an estimator and we want to save it to disk we can write::
 
-            estimator.save('path/to/folder')
+            estimator.save('path/to/folder/filename.pkl')
 
-        to save in a given folder, otherwise::
-
-            estimator.save()
-
-        will save the estimator in the current directory
+        to save in the given folder.
 
         Returns
         -------
         pathlib.Path
-            The path to where the
-            estimator file was saved
+            The path to where the estimator file was saved
 
         """
 
-        current_dir = self.config.ESTIMATOR_DIR if path is None else pathlib.Path(path)
+        estimator_file = pathlib.Path(path)
 
-        logger.debug(f"Attempting to save estimator in {current_dir}")
-        if not current_dir.exists():
-            logger.debug(f"{current_dir} does not exist - creating")
-            current_dir.mkdir(parents=True)
+        if estimator_file.is_dir():
+            raise MLToolingError(
+                f"Passed directory {estimator_file} - need to pass a filename"
+            )
+        logger.debug(f"Attempting to save estimator in {estimator_file.parent}")
+        if not estimator_file.parent.exists():
+            logger.debug(f"{estimator_file.parent} does not exist - creating")
+            estimator_file.parent.mkdir(parents=True)
 
-        if not filename:
-            logger.debug(f"No file name supplied - autogenerating file name")
-            filename = self._generate_filename()
-
-        estimator_file = current_dir.joinpath(filename)
         joblib.dump(self.estimator, estimator_file)
 
         if self.config.LOG:
@@ -322,12 +244,15 @@ class ModelData(metaclass=abc.ABCMeta):
         metric: Optional[str] = None,
         cv: Union[int, bool] = False,
         log_dir: str = None,
-    ) -> Tuple["ModelData", ResultGroup]:
+    ) -> Tuple["Model", ResultGroup]:
         """
         Trains each estimator passed and returns a sorted list of results
 
         Parameters
         ----------
+        data: Dataset
+            An instantiated Dataset object with train_test data
+
         estimators: Sequence
             List of estimators to train
 
@@ -367,7 +292,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         return cls(best_estimator), ResultGroup(results)
 
-    def train_estimator(self, data: Dataset) -> "ModelData":
+    def train_estimator(self, data: Dataset) -> "Model":
         """Loads all training data and trains the estimator on all data.
         Typically used as the last step when estimator tuning is complete.
 
@@ -377,7 +302,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        ModelData
+        Model
             Returns an estimator trained on all the data, with no train-test split
 
         """
@@ -404,7 +329,7 @@ class ModelData(metaclass=abc.ABCMeta):
         Parameters
         ----------
         data: Dataset
-            An instantiated Dataset object
+            An instantiated Dataset object with create_train_test called
 
         metric: string
             Metric to use for scoring the estimator. Any sklearn metric string
@@ -460,8 +385,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         metric: str, optional
             Metric to use for scoring. Defaults to value in
-            :attr:`config.CLASSIFIER_METRIC`
-            or :attr:`config.REGRESSION_METRIC`
+            :attr:`self.default_metric`
 
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
@@ -471,7 +395,7 @@ class ModelData(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        best_estimator: sklearn.estimator
+        best_estimator: BaseEstimator
             Best estimator as found by the gridsearch
 
         result_group: ResultGroup
@@ -482,9 +406,7 @@ class ModelData(metaclass=abc.ABCMeta):
         metric = self.default_metric if metric is None else metric
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(
-            cv, data.train_y, baseline_estimator._estimator_type == "classifier"
-        )  # Stratify?
+        cv = check_cv(cv, data.train_y, is_classifier(baseline_estimator))  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
@@ -539,7 +461,7 @@ class ModelData(metaclass=abc.ABCMeta):
     @contextmanager
     def log(self, run_name: str):
         """:meth:`log` is a context manager that lets you turn on logging for any scoring methods
-        that follow. You can pass a log_dir to specify a subfolder to store the estimator in.
+        that follow. You can pass a log_dir to specify a subdirectory to store the estimator in.
         The output is a yaml file recording estimator parameters, package version numbers,
         metrics and other useful information
 
@@ -575,7 +497,7 @@ class ModelData(metaclass=abc.ABCMeta):
         ----------
         data: Dataset
             An instantiated Dataset object
-        estimator: sklearn.estimator
+        estimator: BaseEstimator, Pipeline
             Estimator to evaluate
 
         metric: string
@@ -655,4 +577,4 @@ class ModelData(metaclass=abc.ABCMeta):
         return cls
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}: {self.estimator_name}>"
+        return f"<Model: {self.estimator_name}>"

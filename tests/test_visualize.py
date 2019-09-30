@@ -12,7 +12,7 @@ from sklearn.metrics import roc_curve, precision_recall_curve, get_scorer
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from ml_tooling import ModelData
+from ml_tooling import Model
 from ml_tooling.metrics.permutation_importance import _get_feature_importance
 from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
@@ -164,7 +164,6 @@ class TestFeatureImportancePlot:
         )
         plt.close()
 
-    @pytest.mark.xfail
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_percent(
         self, classifier
     ):
@@ -240,7 +239,7 @@ class TestFeatureImportancePlot:
             ]
         )
 
-        model = ModelData(pipe)
+        model = Model(pipe)
         result = model.score_estimator(test_dataset)
         ax = result.plot.feature_importance(samples=100)
 

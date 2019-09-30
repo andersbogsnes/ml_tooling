@@ -187,7 +187,6 @@ class TestFeatureImportance:
         np.testing.assert_almost_equal(importance, expected_importance)
         assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
-    @pytest.mark.xfail
     def test_permutation_importances_works_as_expected_with_pipeline(
         self, base, pipeline_logistic, test_dataset
     ):
@@ -200,15 +199,12 @@ class TestFeatureImportance:
         importance, baseline = _permutation_importances(
             estimator, scorer, x, y, 1000, seed=1337
         )
-        expected_importance = np.array(
-            [-0.0190000000, 0.164000000000, 0.038000000, 0.0740]
-        )
-        expected_baseline = 0.759
+        expected_importance = np.array([-0.023, 0.175, -0.007, 0.047])
+        expected_baseline = 0.706
 
         np.testing.assert_almost_equal(importance, expected_importance)
         assert pytest.approx(baseline) == pytest.approx(expected_baseline)
 
-    @pytest.mark.xfail
     def test_permutation_importances_works_with_proba_scorer(
         self, base, pipeline_logistic, test_dataset
     ):
@@ -222,8 +218,8 @@ class TestFeatureImportance:
         importance, baseline = _permutation_importances(
             estimator, scorer, x, y, 1000, seed=1337
         )
-        expected_importance = np.array([0.0035604, 0.3021749, 0.1075911, 0.0688982])
-        expected_baseline = 0.8305146463829
+        expected_importance = np.array([0.0070968, 0.325446, 0.0514205, 0.0690075])
+        expected_baseline = 0.805245114
 
         np.testing.assert_almost_equal(importance, expected_importance)
         assert pytest.approx(baseline) == pytest.approx(expected_baseline)

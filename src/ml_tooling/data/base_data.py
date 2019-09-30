@@ -1,6 +1,8 @@
 import abc
 from typing import Optional, Tuple
 
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from ml_tooling.utils import DataType, DataSetError
 from sklearn.utils import indexable
@@ -43,7 +45,7 @@ class Dataset(metaclass=abc.ABCMeta):
 
         Returns
         -------
-        Dataset
+        self
         """
 
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
@@ -88,11 +90,28 @@ class Dataset(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, np.array]:
+        """Abstract method to be implemented by user.
+        Defines data to be used at training time where X is a dataframe and y is a numpy array
+
+        Returns
+        -------
+        x, y: Tuple of DataTypes
+            Training data to be used by the models
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load_prediction_data(self, *args, **kwargs) -> DataType:
+    def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+        """
+        Abstract method to be implemented by the user.
+        Defines data to be used at prediction time, defined as a DataFrame
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame of input features to get a prediction
+        """
         raise NotImplementedError
 
     def __repr__(self):

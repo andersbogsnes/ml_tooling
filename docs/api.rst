@@ -3,8 +3,8 @@ API
 
 .. _api:
 
-ModelData
---------------
+Model
+-----
 Abstract BaseClass to inherit from.
 Implements all the base functionality needed to create the wrapper
 

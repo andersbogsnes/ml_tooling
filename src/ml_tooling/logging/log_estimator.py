@@ -27,6 +27,29 @@ def log_results(
     estimator_path=None,
     overwrite=False,
 ):
+    """
+    Logs information about the result of a model in a .yaml file
+    .. todo::
+
+        Show parameters being logged
+
+    .. todo::
+
+        Fill out docstring
+
+    Parameters
+    ----------
+    metric_scores
+    estimator_name
+    estimator_params
+    run_dir
+    estimator_path
+    overwrite
+
+    Returns
+    -------
+
+    """
     from ml_tooling import __version__ as ml_tools_version
     from sklearn import __version__ as sklearn_version
     from pandas import __version__ as pandas_version

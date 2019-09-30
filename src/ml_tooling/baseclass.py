@@ -465,6 +465,10 @@ class Model(metaclass=abc.ABCMeta):
         The output is a yaml file recording estimator parameters, package version numbers,
         metrics and other useful information
 
+        .. todo::
+
+            Include example of output yaml
+
         Parameters
         ----------
         run_name: str

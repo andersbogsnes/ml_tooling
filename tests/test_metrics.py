@@ -99,8 +99,8 @@ class TestFeatureImportance:
         importance = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
 
         result_labels, result_importance = _sort_values(labels, importance, bottom_n=2)
-        assert ["Feature 1", "Feature 2"] == list(result_labels)
-        assert [0.1, 0.2] == list(result_importance)
+        assert ["Feature 2", "Feature 1"] == list(result_labels)
+        assert [0.2, 0.1] == list(result_importance)
 
     def test_sorted_feature_importance_bottom_n_percent_returns_as_expected(self):
         labels = np.array(
@@ -123,8 +123,8 @@ class TestFeatureImportance:
         result_labels, result_importance = _sort_values(
             labels, importance, bottom_n=2, top_n=1
         )
-        assert ["Feature 5", "Feature 1", "Feature 2"] == list(result_labels)
-        assert [0.5, 0.1, 0.2] == list(result_importance)
+        assert ["Feature 5", "Feature 2", "Feature 1"] == list(result_labels)
+        assert [0.5, 0.2, 0.1] == list(result_importance)
 
     def test_sorted_feature_importance_bottom_and_top_n_percent_returns_as_expected(
         self
@@ -146,7 +146,9 @@ class TestFeatureImportance:
         )
         importance = np.array([0.1, 0.2, 0.3, -0.4, -0.5])
 
-        result_labels, result_importance = _sort_values(labels, importance, sort="abs")
+        result_labels, result_importance = _sort_values(
+            labels, importance, abs_sort=True
+        )
 
         assert np.all(result_importance == np.array([-0.5, -0.4, 0.3, 0.2, 0.1]))
 

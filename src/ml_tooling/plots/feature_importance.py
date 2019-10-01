@@ -71,7 +71,7 @@ def plot_feature_importance(
             title = f"{title} - Bottom {bottom_n}"
 
     labels, importance = _sort_values(
-        labels, importance, sort="abs", top_n=top_n, bottom_n=bottom_n
+        labels, importance, abs_sort="abs", top_n=top_n, bottom_n=bottom_n
     )
     labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))

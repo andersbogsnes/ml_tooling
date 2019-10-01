@@ -80,5 +80,5 @@ class Result:
     def __repr__(self):
         return (
             f"<Result {self.estimator_name}: "
-            f"{self.metric}: {np.round(self.score, 2)} >"
+            f"{self.metric}: {np.round(self.score, 2)}>"
         )

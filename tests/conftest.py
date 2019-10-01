@@ -4,7 +4,7 @@ import random as rand
 import numpy as np
 import pytest
 from ml_tooling.config import DefaultConfig
-from ml_tooling import ModelData
+from ml_tooling import Model
 
 logging.disable(logging.CRITICAL)
 
@@ -20,7 +20,7 @@ def random():
 @pytest.fixture(name="base")
 def _base():
     # noinspection PyAbstractClass
-    class IrisModel(ModelData):
+    class IrisModel(Model):
         @classmethod
         def clean_model(cls):
             cls.config = DefaultConfig()

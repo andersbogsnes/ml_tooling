@@ -3,7 +3,12 @@ import pandas as pd
 import pytest
 
 from ml_tooling.metrics import lift_score, confusion_matrix, target_correlation
-from ml_tooling.metrics.utils import MetricError, _sort_values
+from ml_tooling.metrics.utils import (
+    MetricError,
+    _sort_values,
+    _get_top_n_idx,
+    _get_bottom_n_idx,
+)
 
 
 class TestLiftScore:
@@ -144,6 +149,26 @@ class TestFeatureImportance:
         result_labels, result_importance = _sort_values(labels, importance, sort="abs")
 
         assert np.all(result_importance == np.array([-0.5, -0.4, 0.3, 0.2, 0.1]))
+
+
+class TestUtils:
+    @pytest.mark.parametrize(
+        "n, expected",
+        [(2, np.array([20, 10])), (0.1, np.array([20])), (0.05, np.array([20]))],
+    )
+    def test_top_n_is_correct_when_given_int_and_float(self, n, expected):
+        input_array = np.array([20, 10, 5, 4, 2, 2, 1, 1, 0, 0])
+        result = _get_top_n_idx(input_array, n)
+        assert np.all(expected == result)
+
+    @pytest.mark.parametrize(
+        "n, expected",
+        [(2, np.array([0, 0])), (0.1, np.array([0])), (0.05, np.array([0]))],
+    )
+    def test_bottom_n_is_correct_when_given_int_and_float(self, n, expected):
+        input_array = np.array([20, 10, 5, 4, 2, 2, 1, 1, 0, 0])
+        result = _get_bottom_n_idx(input_array, n)
+        assert np.all(expected == result)
 
 
 class TestCorrelation:

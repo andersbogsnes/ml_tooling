@@ -1,74 +1,95 @@
 .. py:currentmodule:: ml_tooling.baseclass
 .. _baseclass:
+.. _model:
 
-BaseClass
-=========
+Model
+=====
 
-The BaseClass contains all the neat functionality of ML Tooling.
+The Model baseclass contains all the neat functionality of ML Tooling.
 
-In order to take advantage of this functionality, start by creating your DataClass
-which inherits from BaseClass. We will be using scikit-learn's built-in Boston houseprices
-dataset for demo purposes and we just want to try it out with a simple linear regression
+In order to take advantage of this functionality, simply wrap your Scikit-learn model
+using the Model class.
 
-Your subclass must implement two methods:
-
-- :meth:`~ModelData.get_training_data`
-
-Method that retrieves all training data. Used for training and evaluating the model
-
-
-- :meth:`~ModelData.get_prediction_data`
-
-Method that, given an input, fetches corresponding features. Used for predicting an unseen observation
+We will be using scikit-learn's built-in Boston houseprices dataset and try to fit a
+:class:`~sklearn.linear_model.LinearRegression`
 
 .. seealso::
     :ref:`api` for a full overview of methods
 
 Example Usage
 -------------
-We define a class using ModelData and implement the two required methods.
-In this example, we implement a linear regression on the Boston dataset using sklearn.datasets
+First we need to define how we want to load our data. This is done by defining a
+:class:`~ml_tooling.data.Dataset` class and creating the
+:meth:`~ml_tooling.data.Dataset.load_training_data`
+and :meth:`~ml_tooling.data.Dataset.load_prediction_data` methods. In this example, we use
+the Boston dataset from `sklearn.datasets`
 
-.. code-block:: python
+We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
+:class:`Model` class and we are ready to begin!
 
-    from ml_tooling import ModelData
-    from sklearn.datasets import load_boston
-    from sklearn.linear_model import LinearRegression
+.. doctest::
 
-    # Define our DataClass
-    class BostonData(ModelData):
-        # Tell the DataModel how to load data when training
-        def get_training_data(self):
-            return load_boston(return_X_y=True)
-
-        # Tell the DataModel how to load data when predicting
-        # In this example, we want to predict a single house at a time
-        def get_prediction_data(self, idx):
-            x, _ = load_boston(return_X_y=True)
-            return x[idx]
-
-    # Now we can instantiate our DataModel with our estimator
-    linear_boston = BostonData(LinearRegression())
-
-You can also instantiate a `BostonData` model without an estimator, but before you can use it
-to do any estimation, you need to use the :meth:`~ModelData.init_estimator` to set an estimator.
-
-.. code-block:: python
-
-    boston = BostonData()
-    boston.init_estimator(LinearRegression())
+    >>> from ml_tooling import Model
+    >>> from ml_tooling.data import Dataset
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> # Define our DataClass
+    >>> class BostonData(Dataset):
+    ...     # Tell the Dataset how to load data when training
+    ...     def load_training_data(self):
+    ...         return load_boston(return_X_y=True)
+    ...
+    ...     # Tell the Dataset how to load data when predicting
+    ...     # In this example, we want to predict a single house at a time
+    ...     def load_prediction_data(self, idx):
+    ...         x, _ = load_boston(return_X_y=True)
+    ...         return x[idx]
+    >>>
+    >>> # Now we can create our dataset and our model
+    >>> linear = Model(LinearRegression())
+    >>> bostondata = BostonData()
+    >>> # Remember to setup a train test split!
+    >>> bostondata.create_train_test()
+    <BostonData - Dataset>
 
 
 Configuration
 -------------
 
-To change the default configuration values, modify the :attr:`~ModelData.config` attributes directly::
+To change the default configuration values, modify the :attr:`~Model.config` attributes directly:
 
-    BostonData.config.RANDOM_STATE = 2
+.. doctest::
 
-That will update the configuration for all instances of BostonData
+    >>> linear.config.RANDOM_STATE = 2
 
 .. seealso::
     :ref:`config` for a list of available configuration options
+
+Logging
+-------
+
+We also have the ability to log our experiments using the :meth:`Model.log` context manager.
+
+.. doctest::
+
+    >>> with linear.log('test_dir'):
+    ...     linear.score_estimator(bostondata)
+    <Result LinearRegression: r2: 0.68>
+
+.. testcleanup::
+
+    import shutil
+    shutil.rmtree(linear.config.RUN_DIR.joinpath('test_dir'))
+
+This will write a yaml file specifying attributes of the model, results, git-hash of the model
+and other pertinent information.
+
+.. seealso::
+
+    Check out :meth:`Model.log` for more info on what is logged
+
+
+
 
 Continue to :doc:`plotting`

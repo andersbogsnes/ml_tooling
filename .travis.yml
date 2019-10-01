@@ -6,5 +6,6 @@ install:
 - pip install codecov tox
 script:
 - tox
+- tox -e docs
 after_success:
 - codecov

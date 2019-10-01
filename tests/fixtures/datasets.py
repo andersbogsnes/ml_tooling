@@ -1,3 +1,4 @@
+import pathlib
 from typing import Tuple
 
 import numpy as np
@@ -6,14 +7,14 @@ import pytest
 import sqlalchemy as sa
 from sklearn.datasets import load_boston, load_iris
 
-from ml_tooling.data import SQLDataSet
-from ml_tooling.data.base_data import DataSet
+from ml_tooling.data import SQLDataset, FileDataset
+from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 
 
 @pytest.fixture
 def base_dataset():
-    class IrisData(DataSet):
+    class IrisData(Dataset):
         def load_prediction_data(self, idx):
             data = load_iris()
             df = pd.DataFrame(data.data, columns=data.feature_names)
@@ -51,7 +52,7 @@ def test_db(test_df, test_engine):
 
 @pytest.fixture
 def test_sqldata(test_db):
-    class BostonDataSet(SQLDataSet):
+    class BostonData(SQLDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
             sql = "SELECT * FROM boston"
             df = pd.read_sql(sql, self.engine, index_col="index")
@@ -62,7 +63,30 @@ def test_sqldata(test_db):
             df = pd.read_sql(sql, self.engine, index_col="index")
             return df.iloc[0]
 
-    return BostonDataSet(test_db)
+    return BostonData(test_db)
+
+
+@pytest.fixture
+def test_csv(tmp_path: pathlib.Path):
+    output_path = tmp_path / "test.csv"
+    data = load_iris()
+    y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
+    df = pd.DataFrame(data.data, columns=data.feature_names).assign(target=y)
+    df.to_csv(output_path)
+    return output_path
+
+
+@pytest.fixture
+def test_filedata():
+    class CSVData(FileDataset):
+        def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+            df = pd.read_csv(self.file_path)
+            return df.drop(columns=["target"]), df.target
+
+        def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+            pass
+
+    return CSVData
 
 
 @pytest.fixture()

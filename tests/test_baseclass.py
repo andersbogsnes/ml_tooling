@@ -6,19 +6,12 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-
-from ml_tooling import ModelData
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
-    def test_class_name_property_returns_class_name(self, regression):
-        reg = regression
-        assert reg.class_name == "IrisModel"
-
     def test_instantiate_model_with_non_estimator_pipeline_fails(self, base):
         example_pipe = Pipeline([("scale", DFStandardScaler)])
         with pytest.raises(
@@ -79,7 +72,15 @@ class TestBaseClass:
             start=expected_index, stop=expected_index + 1, step=1
         )
 
-    def test_default_metric_getter_works_as_expected_classifer(self, base):
+    def test_score_estimator_fails_if_no_train_test_data_available(
+        self, base, base_dataset
+    ):
+        model = base(LinearRegression())
+
+        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
+            model.score_estimator(base_dataset())
+
+    def test_default_metric_getter_works_as_expected_classifier(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
         assert rf.config.REGRESSION_METRIC == "r2"
@@ -174,93 +175,49 @@ class TestBaseClass:
 
         assert best_estimator.estimator == estimators[0]
 
-    @pytest.mark.parametrize(
-        "sub_folder, filename",
-        [
-            (True, None),
-            (True, "saved_model.pkl"),
-            (False, None),
-            (False, "saved_model.pkl"),
-        ],
-    )
     def test_regression_model_can_be_saved(
-        self, classifier, tmpdir, base, monkeypatch, sub_folder, filename, test_dataset
+        self, classifier, tmp_path, base, test_dataset
     ):
-        def mockreturn():
-            return "1234"
-
-        monkeypatch.setattr("ml_tooling.baseclass.get_git_hash", mockreturn)
-
-        path = tmpdir.join("sub_folder") if sub_folder else tmpdir
-        expected_filename = (
-            "IrisModel_LogisticRegression_1234.pkl" if not filename else filename
-        )
+        expected_path = tmp_path / "test_model.pkl"
 
         classifier.score_estimator(test_dataset)
-        classifier.save_estimator(path, filename=filename)
+        classifier.save_estimator(expected_path)
 
-        expected_path = path.join(expected_filename)
-        assert expected_path.check()
+        assert expected_path.exists()
 
         loaded_model = base.load_estimator(str(expected_path))
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_save_model_saves_pipeline_correctly(
-        self, base, pipeline_logistic, monkeypatch, tmpdir, test_dataset
+        self, base, pipeline_logistic, tmp_path, test_dataset
     ):
-        def mockreturn():
-            return "1234"
 
-        monkeypatch.setattr("ml_tooling.baseclass.get_git_hash", mockreturn)
-        save_dir = tmpdir.mkdir("estimator")
+        save_dir = tmp_path / "test_model_1.pkl"
         model = base(pipeline_logistic)
         model.train_estimator(test_dataset)
         model.save_estimator(save_dir)
-        expected_name = "IrisModel_LogisticRegression_1234.pkl"
-        assert save_dir.join(expected_name).check()
+        assert save_dir.exists()
 
     def test_save_model_saves_logging_dir_correctly(
-        self, classifier, tmpdir, monkeypatch
+        self, classifier, tmp_path, monkeypatch
     ):
         def mockreturn():
             return "1234"
 
-        monkeypatch.setattr("ml_tooling.baseclass.get_git_hash", mockreturn)
-        save_dir = tmpdir.mkdir("estimator")
+        monkeypatch.setattr("ml_tooling.logging.log_estimator.get_git_hash", mockreturn)
+        save_dir = tmp_path / "estimator"
+        expected_file = save_dir / "test_model3.pkl"
         with classifier.log(save_dir):
-            classifier.save_estimator(save_dir)
+            classifier.save_estimator(expected_file)
 
-        expected_name = "IrisModel_LogisticRegression_1234.pkl"
-        assert save_dir.join(expected_name).check()
+        assert expected_file.exists()
         assert (
-            "LogisticRegression" in [str(file) for file in save_dir.visit("*.yaml")][0]
+            "LogisticRegression" in [str(file) for file in save_dir.rglob("*.yaml")][0]
         )
 
-    def test_setup_model_raises_not_implemented_error(self, base):
-        with pytest.raises(NotImplementedError):
-            base.setup_estimator()
-
-    def test_setup_model_works_when_implemented(self):
-        class DummyModel(ModelData):
-            def get_prediction_data(self, idx):
-                pass
-
-            def get_training_data(self):
-                pass
-
-            @classmethod
-            def setup_estimator(cls):
-                pipeline = Pipeline(
-                    [
-                        ("scaler", StandardScaler()),
-                        ("clf", LogisticRegression(solver="lbgfs")),
-                    ]
-                )
-                return cls(pipeline)
-
-        model = DummyModel.setup_estimator()
-        assert model.estimator_name == "LogisticRegression"
-        assert hasattr(model, "coef_") is False
+    def test_save_model_errors_if_path_is_dir(self, classifier, tmp_path):
+        with pytest.raises(MLToolingError, match=f"Passed directory {tmp_path}"):
+            classifier.save_estimator(tmp_path)
 
     def test_gridsearch_model_returns_as_expected(
         self, base, pipeline_logistic, test_dataset
@@ -356,10 +313,11 @@ class TestBaseClass:
                 assert model_name in {"RandomForestClassifier", "DummyClassifier"}
 
     def test_train_model_errors_correct_when_not_scored(
-        self, base, pipeline_logistic, tmpdir, test_dataset
+        self, base, pipeline_logistic, tmp_path, test_dataset
     ):
+
         model = base(pipeline_logistic)
         with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
-            with model.log(tmpdir):
+            with model.log(tmp_path):
                 model.train_estimator(test_dataset)
-                model.save_estimator(tmpdir)
+                model.save_estimator(tmp_path / "test_model4.pkl")

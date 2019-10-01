@@ -1,13 +1,19 @@
 import abc
 from typing import Optional, Tuple
 
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
+from ml_tooling.utils import DataType, DataSetError
 from sklearn.utils import indexable
 
-from ml_tooling.utils import DataType, DataSetError
 
+class Dataset(metaclass=abc.ABCMeta):
+    """
+    Baseclass for creating Datasets. Subclass Dataset and provide a :meth:`load_training_data`
+    and :meth:`load_prediction_data` method
+    """
 
-class DataSet(metaclass=abc.ABCMeta):
     _x: Optional[DataType] = None
     _y: Optional[DataType] = None
     test_x: Optional[DataType] = None
@@ -16,20 +22,30 @@ class DataSet(metaclass=abc.ABCMeta):
     train_x: Optional[DataType] = None
 
     def create_train_test(
-        self, stratify=None, shuffle=True, test_size=0.25, seed=42
-    ) -> "DataSet":
+        self,
+        stratify: Optional[DataType] = None,
+        shuffle: bool = True,
+        test_size: float = 0.25,
+        seed: int = 42,
+    ) -> "Dataset":
         """
         Creates a training and testing dataset and storing it on the data object.
-        :param stratify:
+
+        Parameters
+        ----------
+
+        stratify: DataType, optional
             What to stratify the split on. Usually y if given a classification problem
-        :param shuffle:
+        shuffle:
             Whether or not to shuffle the data
-        :param test_size:
+        test_size:
             What percentage of the data will be part of the test set
-         :param seed:
+        seed:
             Random seed for train_test_split
-        :return:
-            self
+
+        Returns
+        -------
+        self
         """
 
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
@@ -74,12 +90,29 @@ class DataSet(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, np.array]:
+        """Abstract method to be implemented by user.
+        Defines data to be used at training time where X is a dataframe and y is a numpy array
+
+        Returns
+        -------
+        x, y: Tuple of DataTypes
+            Training data to be used by the models
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load_prediction_data(self, *args, **kwargs) -> DataType:
+    def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+        """
+        Abstract method to be implemented by the user.
+        Defines data to be used at prediction time, defined as a DataFrame
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame of input features to get a prediction
+        """
         raise NotImplementedError
 
     def __repr__(self):
-        return f"<Dataset {self.__class__.__name__}>"
+        return f"<{self.__class__.__name__} - Dataset>"

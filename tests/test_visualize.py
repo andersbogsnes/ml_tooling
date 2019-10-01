@@ -12,7 +12,7 @@ from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
-from ml_tooling import ModelData
+from ml_tooling import Model
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -215,7 +215,7 @@ class TestFeatureImportancePlot:
             ]
         )
 
-        model = ModelData(pipe)
+        model = Model(pipe)
         result = model.score_estimator(test_dataset)
         ax = result.plot.feature_importance()
 

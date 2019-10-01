@@ -12,7 +12,7 @@ To use the visualizations, access them using the `.plot` accessor on the
 
 .. code-block:: python
 
-    >>> result = model.score_estimator()
+    >>> result = model.score_estimator(data)
     >>> result.plot.residuals()
 
 .. figure:: plots/residualplot.png
@@ -21,21 +21,21 @@ Any visualizer listed here also has a functional counterpart in :mod:`ml_tooling
 E.g if you want to use the function for plotting a confusion matrix without using
 the ml_tooling ModelData approach, you can instead do:
 
-.. code-block:: python
+.. doctest:: python
 
     >>> from ml_tooling.plots import plot_confusion_matrix
 
 These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred
 as arguments:
 
-.. code-block:: python
+.. doctest:: python
 
     >>> from ml_tooling.plots import plot_confusion_matrix
     >>> import numpy as np
     >>>
     >>> y_true = np.array([1, 0, 1, 0])
     >>> y_pred = np.array([1, 0, 0, 0])
-    >>> plot_confusion_matrix(y_true, y_pred)
+    >>> ax = plot_confusion_matrix(y_true, y_pred)
 
 .. figure:: plots/confusion_matrix.png
 

@@ -51,7 +51,7 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     >>> bostondata = BostonData()
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
-    <Dataset BostonData>
+    <BostonData - Dataset>
 
 
 Configuration

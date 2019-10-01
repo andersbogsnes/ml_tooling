@@ -52,7 +52,7 @@ Now we can start training our model:
 .. doctest::
 
     >>> data.create_train_test()
-    <Dataset BostonData>
+    <BostonData - Dataset>
     >>> result = regression.score_estimator(data)
     >>> result
     <Result LinearRegression: r2: 0.68>

@@ -32,10 +32,6 @@ All configuration options available
     Default number of cores to use when doing multiprocessing.
     -1 means use all available
 
-    :attr:`TEST_SIZE` = 0.25
-
-    Default test size percentage. How much data is witheld to use for testing
-
     :attr:`RANDOM_STATE` = 42
 
     Default random state seed for all functions involving randomness

@@ -15,8 +15,10 @@ INSTALL_REQUIRES = [
     "pyyaml",
     "gitpython",
     "joblib",
+    "sqlalchemy",
+    "pyarrow",
 ]
-KEYWORDS = ["ml", "framework", "tooling", "productionize"]
+KEYWORDS = ["ml", "framework", "tooling"]
 PROJECT_URLS = {
     "Documentation": "https://ml-tooling.readthedocs.io/en/stable/",
     "Bug Tracker": "https://github.com/andersbogsnes/ml_tooling/issues",

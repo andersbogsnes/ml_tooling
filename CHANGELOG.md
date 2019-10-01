@@ -1,4 +1,5 @@
 # v0.8.0
+- Breaking change - Dataset is now a separate object that has to be instantiated outside Modeldata
 - Added new properties `is_estimator` and `is_regressor` which checks what type of estimator is used
 
 # v0.7.1

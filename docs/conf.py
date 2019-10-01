@@ -41,12 +41,14 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx.ext.doctest",
+    "sphinx.ext.todo",
 ]
 
 intersphinx_mapping = {
     "pd": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
 }
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

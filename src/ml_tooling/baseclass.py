@@ -1,4 +1,3 @@
-import abc
 import pathlib
 from contextlib import contextmanager
 from itertools import product
@@ -30,7 +29,7 @@ from ml_tooling.utils import (
 logger = create_logger("ml_tooling")
 
 
-class Model(metaclass=abc.ABCMeta):
+class Model:
     """
     Base class for Models
     """

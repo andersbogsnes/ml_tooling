@@ -1,10 +1,8 @@
 import abc
-from typing import Union, Tuple
+from typing import Union
 
 from ml_tooling.data.base_data import Dataset
 import pathlib
-
-from ml_tooling.utils import DataType
 
 
 class FileDataset(Dataset, metaclass=abc.ABCMeta):
@@ -16,11 +14,3 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
 
     def __init__(self, path: Union[pathlib.Path, str]):
         self.file_path = pathlib.Path(path)
-
-    @abc.abstractmethod
-    def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
-        pass
-
-    @abc.abstractmethod
-    def load_prediction_data(self, *args, **kwargs) -> DataType:
-        pass

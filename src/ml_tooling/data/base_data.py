@@ -115,4 +115,4 @@ class Dataset(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def __repr__(self):
-        return f"<Dataset {self.__class__.__name__}>"
+        return f"<{self.__class__.__name__} - Dataset>"

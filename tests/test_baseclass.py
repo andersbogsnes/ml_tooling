@@ -72,7 +72,15 @@ class TestBaseClass:
             start=expected_index, stop=expected_index + 1, step=1
         )
 
-    def test_default_metric_getter_works_as_expected_classifer(self, base):
+    def test_score_estimator_fails_if_no_train_test_data_available(
+        self, base, base_dataset
+    ):
+        model = base(LinearRegression())
+
+        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
+            model.score_estimator(base_dataset())
+
+    def test_default_metric_getter_works_as_expected_classifier(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
         assert rf.config.REGRESSION_METRIC == "r2"
@@ -206,6 +214,10 @@ class TestBaseClass:
         assert (
             "LogisticRegression" in [str(file) for file in save_dir.rglob("*.yaml")][0]
         )
+
+    def test_save_model_errors_if_path_is_dir(self, classifier, tmp_path):
+        with pytest.raises(MLToolingError, match=f"Passed directory {tmp_path}"):
+            classifier.save_estimator(tmp_path)
 
     def test_gridsearch_model_returns_as_expected(
         self, base, pipeline_logistic, test_dataset

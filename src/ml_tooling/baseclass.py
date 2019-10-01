@@ -211,9 +211,10 @@ class Model:
     @property
     def default_metric(self):
         """
-        Finds estimator_type for estimator in a ModelData class and returns default
-        metric for this class as configured in .config. If passed estimator is a Pipeline,
-        assume last step is the estimator.
+        Defines default metric based on whether or not the estimator is a regressor or classifier.
+        Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
+        :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` is returned.
+        If passed estimator is a Pipeline, assume last step is the estimator.
 
         Returns
         -------

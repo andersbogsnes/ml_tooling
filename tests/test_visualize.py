@@ -8,13 +8,11 @@ from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, precision_recall_curve, get_scorer
+from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
 from ml_tooling import Model
-from ml_tooling.metrics.permutation_importance import _get_feature_importance
-from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -102,131 +100,109 @@ class TestConfusionMatrixPlot:
 
 class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_data(self, classifier):
-        ax = classifier.result.plot.feature_importance(samples=100)
+        ax = classifier.result.plot.feature_importance()
 
-        expected = {"0.09", "-0.04", "-0.04", "0.07"}
-        assert expected == {text._text for text in ax.texts}
+        expected = {"0.04", "0.08", "-0.03", "0.02"}
+        assert {text._text for text in ax.texts} == expected
         assert "Feature Importance - LogisticRegression" == ax.title._text
         assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_have_no_labels_if_value_is_false(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(values=False, samples=100)
-        assert 0 == len(ax.texts)
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
-        assert "Feature Importance - LogisticRegression" == ax.title._text
+        ax = classifier.result.plot.feature_importance(values=False)
+        assert len(ax.texts) == 0
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
+        assert ax.title._text == "Feature Importance - LogisticRegression"
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_set(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(top_n=2, samples=100)
+        ax = classifier.result.plot.feature_importance(top_n=2)
         assert 2 == len(ax.texts)
-        assert {"0.09", "0.07"} == {text._text for text in ax.texts}
-        assert "Feature Importance - LogisticRegression - Top 2" == ax.title._text
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        assert {text._text for text in ax.texts} == {"0.04", "0.08"}
+        assert ax.title._text == "Feature Importance - LogisticRegression - Top 2"
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_percent(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(top_n=0.2, samples=100)
-        assert 1 == len(ax.texts)
-        assert {"0.09"} == {text._text for text in ax.texts}
-        assert "Feature Importance - LogisticRegression - Top 20%" == ax.title._text
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        ax = classifier.result.plot.feature_importance(top_n=0.2)
+        assert len(ax.texts) == 1
+        assert {text._text for text in ax.texts} == {"0.08"}
+        assert ax.title._text == "Feature Importance - LogisticRegression - Top 20%"
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_int(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(bottom_n=2, samples=100)
-        assert 2 == len(ax.texts)
-        assert {"-0.04", "-0.04"} == {text._text for text in ax.texts}
-        assert "Feature Importance - LogisticRegression - Bottom 2" == ax.title._text
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        ax = classifier.result.plot.feature_importance(bottom_n=2)
+        assert len(ax.texts) == 2
+        assert {text._text for text in ax.texts} == {"0.02", "-0.03"}
+        assert ax.title._text == "Feature Importance - LogisticRegression - Bottom 2"
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_percent(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(bottom_n=0.2, samples=100)
-        assert 1 == len(ax.texts)
-        assert {"-0.04"} == {text._text for text in ax.texts}
-        assert "Feature Importance - LogisticRegression - Bottom 20%" == ax.title._text
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        ax = classifier.result.plot.feature_importance(bottom_n=0.2)
+        assert len(ax.texts) == 1
+        assert {text._text for text in ax.texts} == {"0.02"}
+        assert ax.title._text == "Feature Importance - LogisticRegression - Bottom 20%"
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1, samples=100)
-        assert 2 == len(ax.texts)
-        assert {"0.09", "-0.04"} == {text._text for text in ax.texts}
+        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
+        assert len(ax.texts) == 2
+        assert {text._text for text in ax.texts} == {"0.08", "0.02"}
         assert (
-            "Feature Importance - LogisticRegression - Top 1 - Bottom 1"
-            == ax.title._text
+            ax.title._text
+            == "Feature Importance - LogisticRegression - Top 1 - Bottom 1"
         )
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(
-            top_n=1, bottom_n=0.2, samples=100
-        )
+        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=0.2)
         assert 2 == len(ax.texts)
-        assert {"0.09", "-0.04"} == {text._text for text in ax.texts}
+        assert {text._text for text in ax.texts} == {"0.08", "0.02"}
         assert (
-            "Feature Importance - LogisticRegression - Top 1 - Bottom 20%"
-            == ax.title._text
+            ax.title._text
+            == "Feature Importance - LogisticRegression - Top 1 - Bottom 20%"
         )
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(
         self, classifier
     ):
-        ax = classifier.result.plot.feature_importance(
-            top_n=0.2, bottom_n=1, samples=100
-        )
-        assert 2 == len(ax.texts)
-        assert {"-0.04", "0.09"} == {text._text for text in ax.texts}
+        ax = classifier.result.plot.feature_importance(top_n=0.2, bottom_n=1)
+        assert len(ax.texts) == 2
+        assert {text._text for text in ax.texts} == {"0.02", "0.08"}
         assert (
-            "Feature Importance - LogisticRegression - Top 20% - Bottom 1"
-            == ax.title._text
+            ax.title._text
+            == "Feature Importance - LogisticRegression - Top 20% - Bottom 1"
         )
-        assert "Features" == ax.get_ylabel()
-        assert (
-            "Importance:  Decrease in accuracy from baseline of 0.64" == ax.get_xlabel()
-        )
+        assert ax.get_ylabel() == "Features"
+        assert ax.get_xlabel() == "Permuted Feature Importance Relative to Baseline"
         plt.close()
 
     def test_feature_importance_plots_correctly_in_pipeline(
@@ -241,7 +217,7 @@ class TestFeatureImportancePlot:
 
         model = Model(pipe)
         result = model.score_estimator(test_dataset)
-        ax = result.plot.feature_importance(samples=100)
+        ax = result.plot.feature_importance()
 
         assert "Feature Importance - RandomForestClassifier" == ax.title._text
         assert 4 == len(ax.get_yticklabels())
@@ -349,59 +325,3 @@ class TestPRCurve:
 
         assert ax is plot_pr_curve(y, y_proba, ax=ax)
         plt.close()
-
-
-class TestGetFeatureImportance:
-    def test_viz_get_feature_importance_regression_returns_importance(self, regression):
-        sample = 10
-        importance, baseline = _get_feature_importance(regression.result.plot, sample)
-
-        model = regression.result.plot._estimator
-        metric = get_scorer(regression.result.plot._config.REGRESSION_METRIC)
-        train_x = regression.result.plot._data.train_x
-        train_y = regression.result.plot._data.train_y
-
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)
-
-    def test_get_feature_importance_returns_importance_from_regression_pipeline(
-        self, base, pipeline_linear, test_dataset
-    ):
-        pipe = base(pipeline_linear)
-        pipe.score_estimator(test_dataset)
-        sample = 10
-        importance, baseline = _get_feature_importance(pipe.result.plot, sample)
-
-        model = pipe.result.plot._estimator
-        metric = get_scorer(pipe.result.plot._config.REGRESSION_METRIC)
-        train_x = pipe.result.plot._data.train_x
-        train_y = pipe.result.plot._data.train_y
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)
-
-    def test_viz_get_feature_importance_returns_feature_importance_from_classifier(
-        self, base, test_dataset
-    ):
-        classifier = base(RandomForestClassifier(n_estimators=10))
-        result = classifier.score_estimator(test_dataset)
-        sample = 10
-        importance, baseline = _get_feature_importance(result.plot, sample)
-
-        model = classifier.result.plot._estimator
-        metric = get_scorer(classifier.result.plot._config.CLASSIFIER_METRIC)
-        train_x = classifier.result.plot._data.train_x
-        train_y = classifier.result.plot._data.train_y
-        expected_importance, expected_baseline = _permutation_importances(
-            model, metric, train_x, train_y, sample
-        )
-
-        assert np.all(expected_baseline == baseline)
-        assert np.all(expected_importance == importance)

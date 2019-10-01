@@ -5,7 +5,7 @@ __all__ = ["Model"]
 
 # Metadata for the package
 # fmt: off
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __title__ = "ml_tooling"
 __url__ = "https://github.com/andersbogsnes/ml_tooling"
 

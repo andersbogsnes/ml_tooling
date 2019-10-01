@@ -2,7 +2,7 @@ from typing import Union
 
 from matplotlib import pyplot as plt
 
-from ml_tooling.metrics.permutation_importance import _get_feature_importance
+from ml_tooling.metrics.permutation_importance import permutation_importance
 from ml_tooling.plots import plot_feature_importance
 from ml_tooling.utils import _get_estimator_name
 
@@ -40,7 +40,7 @@ class BaseVisualize:
 
     def feature_importance(
         self,
-        samples,
+        n_repeats: int = 5,
         values: bool = True,
         top_n: Union[int, float] = None,
         bottom_n: Union[int, float] = None,
@@ -52,17 +52,8 @@ class BaseVisualize:
 
         Parameters
         ----------
-        samples : None, int, float
-
-            None - Original data set i used. Not recommended for small data sets
-
-            float - A new smaller data set is made from resampling with
-                replacement form the original data set. Not recommended for small data sets.
-                Recommended for very large data sets.
-
-            Int - A new  data set is made from resampling with replacement form the original data.
-                samples sets the number of resamples. Recommended for small data sets
-                to ensure stable estimates of feature importance.
+        n_repeats : int
+            Number of times to permute a feature
 
         values : bool
             Toggles value labels on end of each bar
@@ -79,7 +70,8 @@ class BaseVisualize:
             Overwrites N_JOBS from settings. Useful if data is to big to fit
             in memory multiple times.
 
-        kwargs
+        kwargs: dict
+            Passed to matplotlib
 
         Returns
         -------
@@ -88,23 +80,24 @@ class BaseVisualize:
 
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Feature Importance - {self._estimator_name}"
-        importance, baseline = _get_feature_importance(
-            self,
-            samples=samples,
-            seed=self._config.RANDOM_STATE,
+        result = permutation_importance(
+            estimator=self._estimator,
+            X=self._data.x,
+            y=self._data.y,
+            scoring=self.default_metric,
+            n_repeats=n_repeats,
+            random_state=self._config.RANDOM_STATE,
             n_jobs=n_jobs,
-            verbose=self._config.VERBOSITY,
         )
         labels = self._data.train_x.columns
-        x_label = f"Importance:  Decrease in {self.default_metric} from baseline of {baseline}"
 
         with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(
-                importance,
+                result.importances_mean,
                 labels,
                 values=values,
                 title=title,
-                x_label=x_label,
+                x_label="Permuted Feature Importance Relative to Baseline",
                 top_n=top_n,
                 bottom_n=bottom_n,
                 **kwargs,

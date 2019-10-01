@@ -1,6 +1,16 @@
-# flake8: noqa
-from .baseclass import ModelData
-import pkg_resources
+from .baseclass import Model
 
-__version__ = pkg_resources.get_distribution("ml_tooling").version
-__all__ = ["ModelData", "__version__"]
+__all__ = ["Model"]
+
+
+# Metadata for the package
+# fmt: off
+__version__ = "0.8.0"
+__title__ = "ml_tooling"
+__url__ = "https://github.com/andersbogsnes/ml_tooling"
+
+__description__ = "A library for machine learning utilities"
+__author__ = "Anders Bogsnes"
+__email__ = "abanbn@almbrand.dk"
+__license__ = "MIT"
+# fmt: on

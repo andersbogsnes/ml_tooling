@@ -3,6 +3,8 @@
 [![codecov](https://codecov.io/gh/andersbogsnes/ml_tooling/branch/develop/graph/badge.svg)](https://codecov.io/gh/andersbogsnes/ml_tooling)
 [![Python 3](https://pyup.io/repos/github/andersbogsnes/ml_tooling/python-3-shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
 [![Updates](https://pyup.io/repos/github/andersbogsnes/ml_tooling/shield.svg)](https://pyup.io/repos/github/andersbogsnes/ml_tooling/)
+[![CodeFactor](https://www.codefactor.io/repository/github/andersbogsnes/ml_tooling/badge)](https://www.codefactor.io/repository/github/andersbogsnes/ml_tooling)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 # Installation
 Use pip to install:
@@ -35,13 +37,13 @@ Your subclass must define two methods:
 Define a class using ModelData and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
 ```python
-from ml_tooling import ModelData
+from ml_tooling import Model
 from sklearn.datasets import load_boston
 from sklearn.linear_model import LinearRegression, Ridge, LassoLars
 
 # Define a new class
 
-class BostonModel(ModelData):
+class BostonModel(Model):
     def get_prediction_data(self, idx):
         x, _ = load_boston(return_X_y=True)
         return x[idx] # Return given observation
@@ -149,14 +151,14 @@ Typically this would setup a pipeline and the selected model for easy training
 
 Returning to our previous example of the BostonModel, let us implement a setup_estimator method
 ```python
-from ml_tooling import ModelData
+from ml_tooling import Model
 from sklearn.datasets import load_boston
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 import pandas as pd
 
-class BostonModel(ModelData):
+class BostonModel(Model):
     def get_prediction_data(self, idx):
         data = load_boston()
         df = pd.DataFrame(data=data.data, columns=data.feature_names)

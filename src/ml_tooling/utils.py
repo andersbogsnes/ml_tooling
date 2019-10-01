@@ -4,6 +4,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
@@ -14,8 +15,12 @@ class MLToolingError(Exception):
     """Error which occurs when using the library"""
 
 
-class TransformerError(Exception):
+class TransformerError(MLToolingError):
     """Error which occurs during a transform"""
+
+
+class DataSetError(MLToolingError):
+    """Error which occurs when using a DataSet"""
 
 
 def get_git_hash() -> str:
@@ -69,7 +74,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def _get_estimator_name(clf) -> str:
+def _get_estimator_name(clf: BaseEstimator) -> str:
     """
     Returns estimator name based on class name. If passed classifier is a :class:
     `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name
@@ -83,10 +88,12 @@ def _get_estimator_name(clf) -> str:
     str
         Name of estimator
     """
-    if clf.__class__.__name__ == "Pipeline":
+    class_name = clf.__class__.__name__
+
+    if class_name == "Pipeline":
         return clf.steps[-1][1].__class__.__name__
 
-    return clf.__class__.__name__
+    return class_name
 
 
 def listify(collection) -> list:

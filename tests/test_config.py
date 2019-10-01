@@ -1,12 +1,12 @@
 from sklearn.linear_model import LinearRegression
 
-from ml_tooling import ModelData
+from ml_tooling import Model
 from ml_tooling.config import DefaultConfig
 
 
 class TestConfig:
     def test_config_is_set_globally(self, pipeline_dummy_classifier, pipeline_linear):
-        class TestModel(ModelData):
+        class TestModel(Model):
             @classmethod
             def setup_estimator(cls):
                 pass
@@ -32,7 +32,7 @@ class TestConfig:
         assert new_model.config.N_JOBS == 1
 
     def test_can_change_config(self):
-        class SomeModel(ModelData):
+        class SomeModel(Model):
             @classmethod
             def setup_estimator(cls):
                 pass
@@ -58,7 +58,6 @@ class TestConfig:
             "CROSS_VALIDATION",
             "STYLE_SHEET",
             "N_JOBS",
-            "TEST_SIZE",
             "RANDOM_STATE",
         ]:
             assert key in config.__repr__()
@@ -75,7 +74,7 @@ class TestConfig:
     def test_from_different_classes_do_not_share_config(
         self, base, pipeline_logistic, pipeline_forest_classifier
     ):
-        class NoModel(ModelData):
+        class NoModel(Model):
             def get_prediction_data(self, idx):
                 pass
 

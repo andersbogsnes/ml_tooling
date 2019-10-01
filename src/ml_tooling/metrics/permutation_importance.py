@@ -1,176 +1,102 @@
-import math
-from copy import deepcopy
+"""Borrowed from sklearn v0.22:
+ https://github.com/scikit-learn/scikit-learn/blob/c4f372c2d/sklearn/inspection/permutation_importance.py
 
+ When v0.22 is released, replace this!
+ """
 import numpy as np
-import pandas as pd
-from sklearn.externals.joblib import Parallel, delayed
-from sklearn.metrics import get_scorer
-from sklearn.utils import check_random_state, resample
+from joblib import Parallel
+from joblib import delayed
 
-from ml_tooling.metrics.utils import _is_percent
-from ml_tooling.utils import MLToolingError
+from sklearn.metrics import check_scoring
+from sklearn.utils import check_random_state, Bunch
 
 
-def _get_column_importance(estimator, scorer, x, y, seed, col):
-    """
-    Helper function for _permutation_importances to calculate the importance of a single column.
-    When col=None the function calculates the baseline.
-
-    Parameters
-    ----------
-    estimator :
-        a trained estimator exposing a predict or predict_proba method depending on the metric
-
-    scorer : _ThresholdScorer or _PredictScorer
-        sklearn scorer
-
-    x : DataFrame
-        Feature data
-
-    y : DateSeries
-        Target data
-
-    seed :
-        Seed for random number generator for permutation.
-
-    col : str
-        Which column to permute.
-
-    Returns
-    -------
-
-    """
-    if col:
-        random_state = check_random_state(seed=seed)
-        save = x[col].copy()
-        x[col] = random_state.permutation(x[col])
-    measure = scorer(estimator, x, y)
-    if col:
-        x[col] = save
-    return measure
-
-
-def _permutation_importances(
-    estimator, scorer, x, y, samples, seed=1337, n_jobs=1, verbose=0
+def _calculate_permutation_scores(
+    estimator, X, y, col_idx, random_state, n_repeats, scorer
 ):
-    """
-    Uses random permutation to calculate feature importance.
-    By randomly permuting each column and measuring the difference in the estimator metric
-    against the baseline.
+    """Calculate score when `col_idx` is permuted."""
+    original_feature = X.iloc[:, col_idx].values.copy()
+    temp = original_feature.copy()
 
+    scores = np.zeros(n_repeats)
+    for n_round in range(n_repeats):
+        random_state.shuffle(temp)
+        X.iloc[:, col_idx] = temp
+        feature_score = scorer(estimator, X, y)
+        scores[n_round] = feature_score
+
+    X.iloc[:, col_idx] = original_feature
+    return scores
+
+
+def permutation_importance(
+    estimator, X, y, scoring=None, n_repeats=5, n_jobs=None, random_state=None
+):
+    """Permutation importance for feature evaluation [BRE]_.
+    The :term:`estimator` is required to be a fitted estimator. `X` can be the
+    data set used to train the estimator or a hold-out set. The permutation
+    importance of a feature is calculated as follows. First, a baseline metric,
+    defined by :term:`scoring`, is evaluated on a (potentially different)
+    dataset defined by the `X`. Next, a feature column from the validation set
+    is permuted and the metric is evaluated again. The permutation importance
+    is defined to be the difference between the baseline metric and metric from
+    permutating the feature column.
+    Read more in the :ref:`User Guide <permutation_importance>`.
     Parameters
     ----------
-    estimator :
-        a trained estimator exposing a predict or predict_proba method depending on the metric
-
-    scorer : _ThresholdScorer or _PredictScorer
-        sklearn scorer
-
-    x : pd.DataFrame
-        Feature data
-
-    y : np.ndarray, pd.DataFrame
-        Target data
-
-    samples : None, int, float
-
-        None - Original data set i used. Not recommended for small data sets
-
-        float - A new smaller data set is made from resampling with
-                replacement form the original data set. Not recommended for small data sets.
-                Recommended for very large data sets.
-
-        Int - A new  data set is made from resampling with replacement form the original data.
-              samples sets the number of resamples. Recommended for small data sets
-               to ensure stable estimates of feature importance.
-
-    seed : int
-        Seed for random number generator for permutation.
-
+    estimator : object
+        An estimator that has already been :term:`fitted` and is compatible
+        with :term:`scorer`.
+    X : ndarray or DataFrame, shape (n_samples, n_features)
+        Data on which permutation importance will be computed.
+    y : array-like or None, shape (n_samples, ) or (n_samples, n_classes)
+        Targets for supervised or `None` for unsupervised.
+    scoring : string, callable or None, default=None
+        Scorer to use. It can be a single
+        string (see :ref:`scoring_parameter`) or a callable (see
+        :ref:`scoring`). If None, the estimator's default scorer is used.
+    n_repeats : int, default=5
+        Number of times to permute a feature.
+    n_jobs : int or None, default=None
+        The number of jobs to use for the computation.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+    random_state : int, RandomState instance, or None, default=None
+        Pseudo-random number generator to control the permutations of each
+        feature. See :term:`random_state`.
     Returns
     -------
-    np.array
-        Decrease in score when permuting features
-    float
-        Baseline score without permutation
-
+    result : Bunch
+        Dictionary-like object, with attributes:
+        importances_mean : ndarray, shape (n_features, )
+            Mean of feature importance over `n_repeats`.
+        importances_std : ndarray, shape (n_features, )
+            Standard deviation over `n_repeats`.
+        importances : ndarray, shape (n_features, n_repeats)
+            Raw permutation importance scores.
+    References
+    ----------
+    .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+             2001. https://doi.org/10.1023/A:1010933404324
     """
 
-    random_state = check_random_state(seed=seed)
-    x = x.copy()
-    y = y.copy()
-    estimator = deepcopy(estimator)
+    X = X.copy()
+    random_state = check_random_state(random_state)
+    scorer = check_scoring(estimator, scoring=scoring)
 
-    if (
-        samples is not None
-        and not (isinstance(samples, int) and samples > 0)
-        and not (isinstance(samples, float) and 0 < samples < 1)
-    ):
-        raise MLToolingError("samples must be None, float or int.")
+    baseline_score = scorer(estimator, X, y)
 
-    if samples:
-        if _is_percent(samples):
-            samples = math.floor(samples * len(x)) or 1
-        x, y = resample(
-            x, y, n_samples=samples, replace=True, random_state=random_state
+    scores = Parallel(n_jobs=n_jobs)(
+        delayed(_calculate_permutation_scores)(
+            estimator, X, y, col_idx, random_state, n_repeats, scorer
         )
-
-    # Used to ensure random number generation is independent of parallelization
-    col_seeds = [None] + [i for i in range(seed, seed + len(x.columns))]
-    cols = [None] + x.columns.tolist()
-
-    measure = Parallel(n_jobs=n_jobs, verbose=verbose, max_nbytes=None)(
-        delayed(_get_column_importance)(estimator, scorer, x, y, col_seed, col)
-        for col, col_seed in zip(cols, col_seeds)
+        for col_idx in range(X.shape[1])
     )
 
-    baseline = measure[0]
-    drop_in_score = baseline - measure[1:]
-
-    return np.array(drop_in_score), baseline
-
-
-def _get_feature_importance(
-    viz, samples, seed=1337, n_jobs=1, verbose=0
-) -> pd.DataFrame:
-    """
-    Helper function for extracting importances.
-
-    Parameters
-    ----------
-    viz : BaseVisualize
-        An instance of BaseVisualizer
-
-    samples : None, int, float
-
-        None - Original data set i used. Not recommended for small data sets
-
-        float - A new smaller data set is made from resampling with
-                replacement form the original data set. Not recommended for small data sets.
-                Recommended for very large data sets.
-
-        Int - A new  data set is made from resampling with replacement form the original data.
-              samples sets the number of resamples. Recommended for small data sets
-               to ensure stable estimates of feature importance.
-
-    seed : int
-        Seed for random number generator for permutation.
-
-    Returns
-    -------
-
-    np.array
-        Decrease in score when permuting features
-
-    float
-        Baseline score without permutation
-
-    """
-    estimator = viz._estimator
-    scorer = get_scorer(viz.default_metric)
-    train_x = viz._data.train_x.copy()
-    train_y = viz._data.train_y.copy()
-
-    return _permutation_importances(
-        estimator, scorer, train_x, train_y, samples, seed, n_jobs, verbose
+    importances = baseline_score - np.array(scores)
+    return Bunch(
+        importances_mean=np.mean(importances, axis=1),
+        importances_std=np.std(importances, axis=1),
+        importances=importances,
     )

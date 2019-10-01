@@ -1,17 +1,14 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.metrics import get_scorer
 
 from ml_tooling.metrics import lift_score, confusion_matrix, target_correlation
-from ml_tooling.metrics.permutation_importance import _permutation_importances
 from ml_tooling.metrics.utils import (
     MetricError,
     _sort_values,
     _get_top_n_idx,
     _get_bottom_n_idx,
 )
-from ml_tooling.utils import MLToolingError
 
 
 class TestLiftScore:
@@ -102,8 +99,8 @@ class TestFeatureImportance:
         importance = np.array([0.1, 0.2, 0.3, 0.4, 0.5])
 
         result_labels, result_importance = _sort_values(labels, importance, bottom_n=2)
-        assert list(result_labels) == ["Feature 2", "Feature 1"]
-        assert list(result_importance) == [0.2, 0.1]
+        assert ["Feature 2", "Feature 1"] == list(result_labels)
+        assert [0.2, 0.1] == list(result_importance)
 
     def test_sorted_feature_importance_bottom_n_percent_returns_as_expected(self):
         labels = np.array(
@@ -150,105 +147,10 @@ class TestFeatureImportance:
         importance = np.array([0.1, 0.2, 0.3, -0.4, -0.5])
 
         result_labels, result_importance = _sort_values(
-            labels, importance, abs_sort="abs"
+            labels, importance, abs_sort=True
         )
 
         assert np.all(result_importance == np.array([-0.5, -0.4, 0.3, 0.2, 0.1]))
-
-    def test_permutation_importances_raises(self, regression, test_dataset):
-        estimator = regression.estimator
-        scorer = get_scorer(regression.default_metric)
-
-        with pytest.raises(MLToolingError, match="samples must be None, float or int."):
-            _permutation_importances(
-                estimator, scorer, test_dataset.x, test_dataset.y, "1"
-            )
-
-    @pytest.mark.parametrize(
-        "setting, expected_importance, expected_baseline",
-        [
-            (
-                None,
-                np.array([0.00273266410, 0.4262626, 0.9134092, 1.1119456]),
-                0.2671288886,
-            ),
-            (0.5, np.array([0.0043651, 0.6032381, 1.113386, 0.7495175]), 0.36053665),
-            (
-                1000,
-                np.array([0.0016836, 0.4391413, 0.8194372, 0.8254109]),
-                0.24313681138,
-            ),
-        ],
-    )
-    def test_permutation_importances_works_as_expected_with_estimator(
-        self, regression, setting, expected_importance, expected_baseline, test_dataset
-    ):
-        x = test_dataset.train_x
-        y = test_dataset.train_y
-        estimator = regression.estimator
-        scorer = get_scorer(regression.default_metric)
-        importance, baseline = _permutation_importances(
-            estimator, scorer, x, y, setting, seed=1337
-        )
-
-        np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
-
-    def test_permutation_importances_works_as_expected_with_pipeline(
-        self, base, pipeline_logistic, test_dataset
-    ):
-        pipe = base(pipeline_logistic)
-        pipe.score_estimator(test_dataset)
-        x = test_dataset.train_x
-        y = test_dataset.train_y
-        estimator = pipe.estimator
-        scorer = get_scorer(pipe.default_metric)
-        importance, baseline = _permutation_importances(
-            estimator, scorer, x, y, 1000, seed=1337
-        )
-        expected_importance = np.array([-0.023, 0.175, -0.007, 0.047])
-        expected_baseline = 0.706
-
-        np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
-
-    def test_permutation_importances_works_with_proba_scorer(
-        self, base, pipeline_logistic, test_dataset
-    ):
-        pipe = base(pipeline_logistic)
-        pipe.default_metric = "roc_auc"
-        pipe.score_estimator(test_dataset)
-        x = test_dataset.train_x
-        y = test_dataset.train_y
-        estimator = pipe.estimator
-        scorer = get_scorer(pipe.default_metric)
-        importance, baseline = _permutation_importances(
-            estimator, scorer, x, y, 1000, seed=1337
-        )
-        expected_importance = np.array([0.0070968, 0.325446, 0.0514205, 0.0690075])
-        expected_baseline = 0.805245114
-
-        np.testing.assert_almost_equal(importance, expected_importance)
-        assert pytest.approx(baseline) == pytest.approx(expected_baseline)
-
-    def test_permutation_importances_gives_same_result_in_parallel(
-        self, base, pipeline_logistic, test_dataset
-    ):
-        pipe = base(pipeline_logistic)
-        pipe.score_estimator(test_dataset)
-        x = test_dataset.train_x
-        y = test_dataset.train_y
-        estimator = pipe.estimator
-        scorer = get_scorer(pipe.default_metric)
-        importance_parellel, baseline_parellel = _permutation_importances(
-            estimator, scorer, x, y, 100, seed=1337, n_jobs=-1
-        )
-        importance_single, baseline_single = _permutation_importances(
-            estimator, scorer, x, y, 100, seed=1337, n_jobs=1
-        )
-
-        assert np.all(importance_parellel == importance_single)
-        assert baseline_single == baseline_parellel
 
 
 class TestUtils:

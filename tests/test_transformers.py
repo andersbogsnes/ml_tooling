@@ -1,11 +1,12 @@
 import pytest
 import pandas as pd
 import numpy as np
-from ml_tooling.result import CVResult, Result
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
+from ml_tooling.result import CVResult, Result
+from ml_tooling.utils import TransformerError
 from ml_tooling.transformers import (
     Select,
     FillNA,
@@ -20,8 +21,6 @@ from ml_tooling.transformers import (
     DFRowFunc,
     Binarize,
 )
-
-from ml_tooling.utils import TransformerError
 
 
 class TransformerBase:

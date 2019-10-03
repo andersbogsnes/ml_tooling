@@ -16,9 +16,10 @@ from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
-from ml_tooling.logging.log_estimator import log_results
-from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.logging.log_estimator import save_log
+
 from ml_tooling.result import Result, CVResult, ResultGroup
+from ml_tooling.result.viz import ClassificationVisualize, RegressionVisualize
 from ml_tooling.utils import (
     MLToolingError,
     _create_param_grid,
@@ -170,19 +171,32 @@ class Model:
                     "You haven't scored the estimator - no results available to log"
                 )
 
-            metric_scores = {self.result.metric: float(self.result.score)}
-
-            log_results(
-                metric_scores=metric_scores,
-                estimator_name=self.estimator_name,
-                estimator_params=self.result.estimator_params,
-                run_dir=self.config.RUN_DIR,
-                estimator_path=str(estimator_file),
-            )
+            log = self.result.dump(estimator_file)
+            save_log(log, self.config.RUN_DIR)
 
         logger.info(f"Saved estimator to {estimator_file}")
 
         return estimator_file
+
+    def dump(self):
+        if self.is_pipeline:
+            return [
+                {
+                    "name": step[0],
+                    "module": step[1].__class__.__module__,
+                    "classname": step[1].__class__.__name__,
+                    "params": step[1].get_params(),
+                }
+                for step in self.estimator.steps
+            ]
+        else:
+            return [
+                {
+                    "module": self.estimator.__class__.__module__,
+                    "classname": self.estimator.__class__.__name__,
+                    "params": self.estimator.get_params(),
+                }
+            ]
 
     def make_prediction(
         self,
@@ -284,16 +298,17 @@ class Model:
             )
             results.append(result)
             if log_dir:
-                result.log_estimator(log_dir)
+                log = result.dump()
+                save_log(log, pathlib.Path(log_dir))
 
         results.sort(reverse=True)
-        best_estimator = results[0].estimator
+        best_estimator = results[0].model
         logger.info(
-            f"Best estimator: {results[0].estimator_name} - "
+            f"Best estimator: {results[0].model.estimator_name} - "
             f"{results[0].metric}: {results[0].score}"
         )
 
-        return cls(best_estimator), ResultGroup(results)
+        return best_estimator, ResultGroup(results)
 
     def train_estimator(self, data: Dataset) -> "Model":
         """Loads all training data and trains the estimator on all data.
@@ -362,7 +377,8 @@ class Model:
             self.result = self._score_estimator(data, self.estimator, metric)
 
         if self.config.LOG:
-            result_file = self.result.log_estimator(self.config.RUN_DIR)
+            log = self.result.dump()
+            result_file = save_log(log, self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
         return self.result
 
@@ -443,8 +459,8 @@ class Model:
 
         results = [
             CVResult(
-                baseline_estimator.set_params(**param),
-                None,
+                Model(baseline_estimator.set_params(**param)),
+                data,
                 cv.n_splits,
                 scores[i],
                 metric,
@@ -460,7 +476,7 @@ class Model:
             result_file = self.result.log_estimator(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return results[0].estimator, self.result
+        return results[0].model, self.result
 
     @contextmanager
     def log(self, run_name: str):
@@ -521,9 +537,8 @@ class Model:
         scoring_func = get_scorer(metric)
 
         score = scoring_func(estimator, data.test_x, data.test_y)
-        viz = self._plotter(estimator=estimator, config=self.config, data=data)
 
-        result = Result(estimator=estimator, viz=viz, score=score, metric=metric)
+        result = Result(self, score=score, data=data, metric=metric)
 
         logger.info(f"{self.estimator_name} - {metric}: {score}")
 
@@ -563,14 +578,13 @@ class Model:
             verbose=self.config.VERBOSITY,
         )
 
-        viz = self._plotter(estimator=estimator, config=self.config, data=data)
-
         result = CVResult(
-            estimator=estimator, viz=viz, metric=metric, cross_val_scores=scores, cv=cv
+            self, data=data, metric=metric, cross_val_scores=scores, cv=cv
         )
 
         if self.config.LOG:
-            result.log_estimator(self.config.RUN_DIR)
+            log = result.dump()
+            save_log(log, self.config.RUN_DIR)
 
         logger.info(f"{self.estimator_name} - {metric}: {np.mean(scores)}")
         return result

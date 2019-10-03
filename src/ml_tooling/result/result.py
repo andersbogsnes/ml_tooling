@@ -2,10 +2,8 @@ from functools import total_ordering
 
 import numpy as np
 import pandas as pd
-from sklearn.pipeline import Pipeline
 
-from ml_tooling.logging import log_results
-from ml_tooling.utils import _get_estimator_name
+from ml_tooling.logging.log_estimator import create_log
 
 
 @total_ordering
@@ -15,35 +13,22 @@ class Result:
     Contains plotting methods, as well as being comparable with other results
     """
 
-    def __init__(self, estimator, score, viz=None, metric=None):
-        self.estimator = estimator
-        self.estimator_name = _get_estimator_name(estimator)
+    def __init__(self, model, data, score, metric=None):
+        self.model = model
         self.score = score
         self.metric = metric
-        self.plot = viz
+        self.data = data
+        self.plot = model._setup_plotter(data)
 
-    @property
-    def estimator_params(self) -> dict:
-        """
-        Calls get_params on estimator. Checks if estimator is a Pipeline, in which case it
-        assumes last step in pipeline is an estimator and calls get_params on that step only
-
-        Returns
-        -------
-        dict
-            Returns a dictionary of all params from the estimator
-        """
-        if isinstance(self.estimator, Pipeline):
-            return self.estimator.steps[-1][1].get_params()
-        return self.estimator.get_params()
-
-    def log_estimator(self, run_dir):
+    def dump(self, saved_estimator_path=None):
         metric_score = {self.metric: float(self.score)}
-        return log_results(
+        name = f"{self.data.class_name}_{self.model.estimator_name}"
+
+        return create_log(
+            name=name,
             metric_scores=metric_score,
-            estimator_name=self.estimator_name,
-            estimator_params=self.estimator_params,
-            run_dir=run_dir,
+            serialized_estimator=self.model.dump(),
+            saved_estimator_path=saved_estimator_path,
         )
 
     def to_dataframe(self, params=True) -> pd.DataFrame:
@@ -64,7 +49,7 @@ class Result:
         """
         estimator_params_dict = {}
         if params:
-            estimator_params_dict = self.estimator_params
+            estimator_params_dict = self.model.estimator.get_params()
 
         estimator_params_dict["score"] = self.score
         estimator_params_dict["metric"] = self.metric
@@ -79,6 +64,6 @@ class Result:
 
     def __repr__(self):
         return (
-            f"<Result {self.estimator_name}: "
+            f"<Result {self.model.estimator_name}: "
             f"{self.metric}: {np.round(self.score, 2)}>"
         )

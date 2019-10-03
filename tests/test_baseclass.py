@@ -1,3 +1,5 @@
+import pathlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -6,6 +8,8 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
+
+from ml_tooling import Model
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
@@ -169,8 +173,8 @@ class TestBaseClass:
 
         for result in results:
             assert (
-                result.estimator_name
-                == result.estimator.steps[-1][1].__class__.__name__
+                result.model.estimator_name
+                == result.model.estimator.steps[-1][1].__class__.__name__
             )
 
         assert best_estimator.estimator == estimators[0]
@@ -199,7 +203,7 @@ class TestBaseClass:
         assert save_dir.exists()
 
     def test_save_model_saves_logging_dir_correctly(
-        self, classifier, tmp_path, monkeypatch
+        self, classifier: Model, tmp_path: pathlib.Path, monkeypatch
     ):
         def mockreturn():
             return "1234"
@@ -226,7 +230,7 @@ class TestBaseClass:
         model, results = model.gridsearch(
             test_dataset, param_grid={"penalty": ["l1", "l2"]}
         )
-        assert isinstance(model, Pipeline)
+        assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
@@ -239,7 +243,7 @@ class TestBaseClass:
         best_model, results = model.gridsearch(
             test_dataset, param_grid={"penalty": ["l1", "l2"]}
         )
-        assert isinstance(best_model, Pipeline)
+        assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
@@ -248,7 +252,7 @@ class TestBaseClass:
         best_model, results = model.gridsearch(
             test_dataset, param_grid={"penalty": ["l1", "l2"]}
         )
-        assert isinstance(best_model, Pipeline)
+        assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
@@ -309,8 +313,11 @@ class TestBaseClass:
         for file in test_models_log.visit("*.yaml"):
             with open(file) as f:
                 result = yaml.safe_load(f)
-                model_name = result["estimator_name"]
-                assert model_name in {"RandomForestClassifier", "DummyClassifier"}
+                model_name = result["model_name"]
+                assert model_name in {
+                    "IrisData_RandomForestClassifier",
+                    "IrisData_DummyClassifier",
+                }
 
     def test_train_model_errors_correct_when_not_scored(
         self, base, pipeline_logistic, tmp_path, test_dataset
@@ -321,3 +328,10 @@ class TestBaseClass:
             with model.log(tmp_path):
                 model.train_estimator(test_dataset)
                 model.save_estimator(tmp_path / "test_model4.pkl")
+
+    def test_is_pipeline_works_as_expected(self, pipeline_linear):
+        model = Model(pipeline_linear)
+        assert model.is_pipeline is True
+
+        model2 = Model(LinearRegression())
+        assert model2.is_pipeline is False

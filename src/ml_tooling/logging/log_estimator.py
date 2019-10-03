@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Union
 
 import yaml
-
 from ml_tooling.utils import get_git_hash
 
 
@@ -19,13 +18,60 @@ def _make_run_dir(run_dir: str) -> pathlib.Path:
     return path
 
 
-def log_results(
+def create_log(
+    name: str,
     metric_scores: dict,
-    estimator_name: str,
-    estimator_params: dict,
-    run_dir: Union[pathlib.Path, str],
-    estimator_path=None,
-    overwrite=False,
+    serialized_estimator: dict,
+    saved_estimator_path: pathlib.Path,
+) -> dict:
+    from ml_tooling import __version__ as ml_tools_version
+    from sklearn import __version__ as sklearn_version
+    from pandas import __version__ as pandas_version
+
+    versions = {
+        "ml_tooling": ml_tools_version,
+        "sklearn": sklearn_version,
+        "pandas": pandas_version,
+    }
+
+    data = {
+        "model_name": name,
+        "time_created": datetime.now(),
+        "versions": versions,
+        "git_hash": get_git_hash(),
+        "metrics": {k: float(v) for k, v in metric_scores.items()},
+        "estimator": serialized_estimator,
+        "estimator_path": str(saved_estimator_path) if saved_estimator_path else None,
+    }
+    return data
+
+
+def save_log(log: dict, save_dir: pathlib.Path) -> pathlib.Path:
+    now = datetime.now()
+    save_dir = pathlib.Path(save_dir)
+    save_dir = _make_run_dir(save_dir / now.strftime("%Y%m%d"))
+
+    iteration = 0
+    output_file = f'{log["model_name"]}_{now.strftime("%H%M%S")}_{iteration}.yaml'
+    output_path = save_dir.joinpath(output_file)
+
+    while output_path.exists():
+        output_file = f'{log["model_name"]}_{now.strftime("%H%M%S")}_{iteration}.yaml'
+        output_path = save_dir.joinpath(output_file)
+        iteration += 1
+
+    with output_path.open(mode="w") as f:
+        yaml.safe_dump(log, f, default_flow_style=False, allow_unicode=True)
+
+    return output_path
+
+
+def log_results(
+    name: str,
+    metric_scores: dict,
+    serialized_estimator: dict,
+    save_dir: Union[pathlib.Path, str],
+    saved_estimator_path: pathlib.Path = None,
 ):
     """
     Logs information about the result of a model in a .yaml file
@@ -39,52 +85,22 @@ def log_results(
 
     Parameters
     ----------
-    metric_scores
-    estimator_name
-    estimator_params
-    run_dir
-    estimator_path
-    overwrite
+    name: str
+        Name used to identify estimator
+    metric_scores: dict
+        Dictionary of metric name -> score
+    serialized_estimator: dict
+        Dictionary containing the serialized version of the estimator
+    save_dir: pathlib.Path
+        Where to save the logging file
+    saved_estimator_path: pathlib.Path
+        Where the estimator pickle file has been saved
 
     Returns
     -------
-
+    pathlib.Path
+        Path where output has been saved
     """
-    from ml_tooling import __version__ as ml_tools_version
-    from sklearn import __version__ as sklearn_version
-    from pandas import __version__ as pandas_version
-
-    versions = {
-        "ml_tooling": ml_tools_version,
-        "sklearn": sklearn_version,
-        "pandas": pandas_version,
-    }
-
-    data = {
-        "time_created": datetime.now(),
-        "estimator_name": estimator_name,
-        "versions": versions,
-        "params": estimator_params,
-        "git_hash": get_git_hash(),
-        "metrics": {k: float(v) for k, v in metric_scores.items()},
-    }
-
-    if estimator_path:
-        data["estimator_path"] = str(estimator_path)
-
-    now = datetime.now()
-    metrics = "_".join([f"{k}_{v:.3f}" for k, v in metric_scores.items()])
-    run_dir = pathlib.Path(run_dir)
-
-    run_dir = _make_run_dir(run_dir.joinpath(now.strftime("%Y%m%d")))
-    output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M")}.yaml'
-    output_path = run_dir.joinpath(output_file)
-
-    if output_path.exists() and not overwrite:
-        output_file = f'{estimator_name}_{metrics}_{now.strftime("%H%M%S")}.yaml'
-        output_path = output_path.with_name(output_file)
-
-    with output_path.open(mode="w") as f:
-        yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True)
-
+    log = create_log(name, metric_scores, serialized_estimator, saved_estimator_path)
+    output_path = save_log(log, save_dir)
     return output_path

@@ -1,8 +1,10 @@
+import pathlib
 from typing import List
 
 import numpy as np
 import pandas as pd
 
+from ml_tooling.logging.log_estimator import save_log
 from ml_tooling.result.result import Result
 
 
@@ -35,9 +37,10 @@ class ResultGroup:
         results = "\n".join([str(result) for result in self.results])
         return f"[{results}]"
 
-    def log_estimator(self, log_dir):
+    def log_estimator(self, log_dir: pathlib.Path):
         for result in self.results:
-            result.log_estimator(log_dir)
+            log = result.dump()
+            save_log(log, log_dir)
 
     def mean_score(self):
         """

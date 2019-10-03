@@ -10,16 +10,12 @@ class CVResult(Result):
     Also implements comparison operators for finding max mean score
     """
 
-    def __init__(
-        self, estimator, viz=None, cv=None, cross_val_scores=None, metric=None
-    ):
+    def __init__(self, model, data, cv=None, cross_val_scores=None, metric=None):
         self.cv = cv
         self.cross_val_scores = cross_val_scores
         self.cross_val_mean = np.mean(cross_val_scores)
         self.cross_val_std = np.std(cross_val_scores)
-        super().__init__(
-            estimator=estimator, viz=viz, score=self.cross_val_mean, metric=metric
-        )
+        super().__init__(model, data=data, score=self.cross_val_mean, metric=metric)
 
     def to_dataframe(
         self, params: bool = True, cross_val_score: bool = False
@@ -60,7 +56,7 @@ class CVResult(Result):
     def __repr__(self):
         cross_val_type = f"{self.cv}-fold " if isinstance(self.cv, int) else ""
         return (
-            f"<Result {self.estimator_name}: "
+            f"<Result {self.model.estimator_name}: "
             f"{cross_val_type}Cross-validated {self.metric}: {np.round(self.score, 2)} "
             f"± {np.round(self.cross_val_std, 2)}>"
         )

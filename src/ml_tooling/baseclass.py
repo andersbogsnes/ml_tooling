@@ -31,7 +31,7 @@ logger = create_logger("ml_tooling")
 
 class Model:
     """
-    Base class for Models
+    Wrapper class for Estimators
     """
 
     _config = None
@@ -40,12 +40,6 @@ class Model:
     def __init__(self, estimator):
         self.estimator: Union[BaseEstimator, Pipeline] = _validate_estimator(estimator)
         self.result: Optional[Result] = None
-
-        if self.is_classifier:
-            self._plotter = ClassificationVisualize
-
-        elif self.is_regressor:
-            self._plotter = RegressionVisualize
 
     @property
     def is_classifier(self):
@@ -56,13 +50,50 @@ class Model:
         return is_regressor(self.estimator)
 
     @property
-    def estimator_name(self):
-        class_name = self.estimator.__class__.__name__
+    def is_pipeline(self):
+        if type(self.estimator).__name__ == "Pipeline":
+            return True
+        return False
 
-        if class_name == "Pipeline":
+    @property
+    def estimator_name(self):
+        if self.is_pipeline:
             return self.estimator.steps[-1][1].__class__.__name__
 
-        return class_name
+        return self.estimator.__class__.__name__
+
+    @property
+    def default_metric(self):
+        """
+        Defines default metric based on whether or not the estimator is a regressor or classifier.
+        Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
+        :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` is returned.
+        If passed estimator is a Pipeline, assume last step is the estimator.
+
+        Returns
+        -------
+        str
+            Name of the metric
+
+        """
+
+        return (
+            self.config.CLASSIFIER_METRIC
+            if self.is_classifier
+            else self.config.REGRESSION_METRIC
+        )
+
+    @default_metric.setter
+    def default_metric(self, metric):
+        if self.is_classifier:
+            self.config.CLASSIFIER_METRIC = metric
+        else:
+            self.config.REGRESSION_METRIC = metric
+
+    def _setup_plotter(self, data):
+        if self.is_classifier:
+            return ClassificationVisualize(self.estimator, data, self.config)
+        return RegressionVisualize(self.estimator, data, self.config)
 
     @classmethod
     def load_estimator(cls, path: str) -> "Model":
@@ -207,34 +238,6 @@ class Model:
                 f"or 'score_estimator' first"
             )
             raise MLToolingError(message) from None
-
-    @property
-    def default_metric(self):
-        """
-        Defines default metric based on whether or not the estimator is a regressor or classifier.
-        Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
-        :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` is returned.
-        If passed estimator is a Pipeline, assume last step is the estimator.
-
-        Returns
-        -------
-        str
-            Name of the metric
-
-        """
-
-        return (
-            self.config.CLASSIFIER_METRIC
-            if self.is_classifier
-            else self.config.REGRESSION_METRIC
-        )
-
-    @default_metric.setter
-    def default_metric(self, metric):
-        if self.is_classifier:
-            self.config.CLASSIFIER_METRIC = metric
-        else:
-            self.config.REGRESSION_METRIC = metric
 
     @classmethod
     def test_estimators(
@@ -403,6 +406,7 @@ class Model:
         """
 
         baseline_estimator = clone(self.estimator)
+
         metric = self.default_metric if metric is None else metric
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv

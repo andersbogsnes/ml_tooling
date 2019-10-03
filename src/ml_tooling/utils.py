@@ -175,3 +175,9 @@ def _validate_estimator(estimator):
         )
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")
+
+
+def is_pipeline(estimator):
+    if type(estimator).__name__ == "Pipeline":
+        return True
+    return False

@@ -1,6 +1,7 @@
+import importlib
 import pathlib
 import warnings
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
+Estimator = Union[BaseEstimator, Pipeline]
 
 
 class MLToolingError(Exception):
@@ -74,7 +76,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def _get_estimator_name(clf: BaseEstimator) -> str:
+def _get_estimator_name(clf: Estimator) -> str:
     """
     Returns estimator name based on class name. If passed classifier is a :class:
     `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name
@@ -118,7 +120,7 @@ def listify(collection) -> list:
     return collection
 
 
-def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
+def _create_param_grid(pipe: Estimator, param_grid: dict) -> ParameterGrid:
     """
     Creates a parameter grid from a :class:`~sklearn.pipeline.Pipeline`
 
@@ -146,7 +148,7 @@ def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
     return ParameterGrid(step_dict)
 
 
-def _validate_estimator(estimator):
+def _validate_estimator(estimator: Estimator):
     """
     Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
     or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`
@@ -177,7 +179,42 @@ def _validate_estimator(estimator):
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")
 
 
-def is_pipeline(estimator):
+def is_pipeline(estimator: Estimator):
     if type(estimator).__name__ == "Pipeline":
         return True
     return False
+
+
+def setup_pipeline_step(
+    definition: dict
+) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
+    module = importlib.import_module(definition["module"])
+    class_ = getattr(module, definition["classname"])().set_params(
+        **definition["params"]
+    )
+    if "name" in definition:
+        return definition["name"], class_
+    return class_
+
+
+def make_dir(path: pathlib.Path) -> pathlib.Path:
+    """
+    Checks that path is a directory and then creates that directory if it doesn't exist
+    Parameters
+    ----------
+    path: pathlib.Path
+        Directory to check
+
+    Returns
+    -------
+    pathlib.Path
+        Path to directory
+    """
+
+    if path.is_file():
+        raise IOError(f"{path} is a file - must pass a directory")
+
+    if not path.exists():
+        path.mkdir(parents=True)
+
+    return path

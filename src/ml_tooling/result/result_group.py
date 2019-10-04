@@ -4,7 +4,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from ml_tooling.logging.log_estimator import save_log
+from ml_tooling.logging import Log
 from ml_tooling.result.result import Result
 
 
@@ -39,8 +39,8 @@ class ResultGroup:
 
     def log_estimator(self, log_dir: pathlib.Path):
         for result in self.results:
-            log = result.dump()
-            save_log(log, log_dir)
+            log = Log.from_result(result)
+            log.save_log(log_dir)
 
     def mean_score(self):
         """

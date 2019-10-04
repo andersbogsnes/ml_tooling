@@ -3,7 +3,6 @@ import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from ml_tooling.logging.log_estimator import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 
@@ -150,10 +149,3 @@ class TestGridsearchParams:
         grid = _create_param_grid(model, param_grid)
 
         assert [param_grid] == grid.param_grid
-
-
-def test__make_run_dir_fails_if_passed_file(tmpdir):
-    new_file = tmpdir.mkdir("test").join("test.txt")
-    new_file.write("test hi")
-    with pytest.raises(IOError):
-        _make_run_dir(str(new_file))

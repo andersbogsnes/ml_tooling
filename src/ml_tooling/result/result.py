@@ -1,69 +1,31 @@
-from functools import total_ordering
+import attr
 
-import numpy as np
-import pandas as pd
+from ml_tooling.data import Dataset
+from ml_tooling.logging.log_estimator import Log
+from ml_tooling.metrics import Metrics
+from ml_tooling.result.viz import create_plotter, BaseVisualize
 
-from ml_tooling.logging.log_estimator import create_log
 
-
-@total_ordering
+@attr.s()
 class Result:
     """
-    Represents a single scoring of a estimator.
+    Contains the result of a given training run.
     Contains plotting methods, as well as being comparable with other results
     """
 
-    def __init__(self, model, data, score, metric=None):
-        self.model = model
-        self.score = score
-        self.metric = metric
-        self.data = data
-        self.plot = model._setup_plotter(data)
+    model = attr.ib()
+    metrics: Metrics = attr.ib()
+    data: Dataset = attr.ib()
+    plot: BaseVisualize = attr.ib()
 
-    def dump(self, saved_estimator_path=None):
-        metric_score = {self.metric: float(self.score)}
-        name = f"{self.data.class_name}_{self.model.estimator_name}"
+    @classmethod
+    def from_model(cls, model, data, metrics):
+        for metric in metrics:
+            metric.score_metric(model.estimator, data.test_x, data.test_y)
 
-        return create_log(
-            name=name,
-            metric_scores=metric_score,
-            serialized_estimator=self.model.dump(),
-            saved_estimator_path=saved_estimator_path,
+        return cls(
+            metrics=metrics, model=model, plot=create_plotter(model, data), data=data
         )
 
-    def to_dataframe(self, params=True) -> pd.DataFrame:
-        """
-        Output result as a dataframe for ease of inspecting and manipulating.
-        Defaults to including estimator params, which can be toggled with the params flag.
-        This is useful if you're comparing different models
-
-        Parameters
-        ----------
-        params: bool
-            Whether or not to include estimator parameters as columns.
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame of the result
-        """
-        estimator_params_dict = {}
-        if params:
-            estimator_params_dict = self.model.estimator.get_params()
-
-        estimator_params_dict["score"] = self.score
-        estimator_params_dict["metric"] = self.metric
-
-        return pd.DataFrame([estimator_params_dict])
-
-    def __eq__(self, other):
-        return self.score == other.score
-
-    def __lt__(self, other):
-        return self.score < other.score
-
-    def __repr__(self):
-        return (
-            f"<Result {self.model.estimator_name}: "
-            f"{self.metric}: {np.round(self.score, 2)}>"
-        )
+    def log(self, saved_estimator_path=None):
+        return Log.from_result(result=self, estimator_path=saved_estimator_path)

@@ -1,30 +1,33 @@
 import pathlib
 from contextlib import contextmanager
 from itertools import product
-from typing import Tuple, Optional, Sequence, Union
+from typing import Tuple, Optional, Sequence, Union, List
 
-import numpy as np
 import pandas as pd
+import numpy as np
+import yaml
 from sklearn import clone
 from sklearn.base import BaseEstimator, is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
 import joblib
 from sklearn.metrics import get_scorer
-from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
+from sklearn.model_selection import fit_grid_point, check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
-from ml_tooling.logging.log_estimator import save_log
-
-from ml_tooling.result import Result, CVResult, ResultGroup
-from ml_tooling.result.viz import ClassificationVisualize, RegressionVisualize
+from ml_tooling.result import Result, ResultGroup
+from ml_tooling.metrics import Metrics
 from ml_tooling.utils import (
     MLToolingError,
     _create_param_grid,
     _validate_estimator,
     DataSetError,
+    setup_pipeline_step,
+    Estimator,
+    is_pipeline,
 )
 
 logger = create_logger("ml_tooling")
@@ -39,7 +42,7 @@ class Model:
     config = ConfigGetter()
 
     def __init__(self, estimator):
-        self.estimator: Union[BaseEstimator, Pipeline] = _validate_estimator(estimator)
+        self.estimator: Estimator = _validate_estimator(estimator)
         self.result: Optional[Result] = None
 
     @property
@@ -52,9 +55,7 @@ class Model:
 
     @property
     def is_pipeline(self):
-        if type(self.estimator).__name__ == "Pipeline":
-            return True
-        return False
+        return is_pipeline(self.estimator)
 
     @property
     def estimator_name(self):
@@ -90,11 +91,6 @@ class Model:
             self.config.CLASSIFIER_METRIC = metric
         else:
             self.config.REGRESSION_METRIC = metric
-
-    def _setup_plotter(self, data):
-        if self.is_classifier:
-            return ClassificationVisualize(self.estimator, data, self.config)
-        return RegressionVisualize(self.estimator, data, self.config)
 
     @classmethod
     def load_estimator(cls, path: str) -> "Model":
@@ -171,8 +167,8 @@ class Model:
                     "You haven't scored the estimator - no results available to log"
                 )
 
-            log = self.result.dump(estimator_file)
-            save_log(log, self.config.RUN_DIR)
+            log = Log.from_result(self.result, estimator_path=estimator_file)
+            log.save_log(self.config.RUN_DIR)
 
         logger.info(f"Saved estimator to {estimator_file}")
 
@@ -197,6 +193,20 @@ class Model:
                     "params": self.estimator.get_params(),
                 }
             ]
+
+    @classmethod
+    def load(cls, log_file: pathlib.Path):
+        log_file = pathlib.Path(log_file)
+        with log_file.open("r") as f:
+            log = yaml.safe_load(f)
+            estimator_definition = log["estimator"]
+
+        steps = [setup_pipeline_step(definition) for definition in estimator_definition]
+
+        if len(steps) == 1:
+            return steps[0]
+
+        return cls(Pipeline(steps))
 
     def make_prediction(
         self,
@@ -258,7 +268,7 @@ class Model:
         cls,
         data: Dataset,
         estimators: Sequence,
-        metric: Optional[str] = None,
+        metrics: Union[str, List[str]],
         cv: Union[int, bool] = False,
         log_dir: str = None,
     ) -> Tuple["Model", ResultGroup]:
@@ -273,8 +283,8 @@ class Model:
         estimators: Sequence
             List of estimators to train
 
-        metric: str, optional
-            Metric to use in scoring of estimators
+        metrics: str, list of str
+            Metric or list of metrics to use in scoring of estimators
 
         cv: int, bool
             Whether or not to use cross-validation. If an int is passed, use that many folds
@@ -287,6 +297,10 @@ class Model:
         List of Result objects
         """
         results = []
+        if isinstance(metrics, str):
+            metrics = [metrics]
+
+        metrics = Metrics.from_list(metrics)
 
         for i, estimator in enumerate(estimators, start=1):
             logger.info(
@@ -294,18 +308,20 @@ class Model:
             )
             challenger_estimator = cls(estimator)
             result = challenger_estimator.score_estimator(
-                data=data, metric=metric, cv=cv
+                data=data, metrics=metrics, cv=cv
             )
+
             results.append(result)
+
             if log_dir:
-                log = result.dump()
-                save_log(log, pathlib.Path(log_dir))
+                log = Log.from_result(result)
+                log.save_log(pathlib.Path(log_dir))
 
         results.sort(reverse=True)
         best_estimator = results[0].model
         logger.info(
             f"Best estimator: {results[0].model.estimator_name} - "
-            f"{results[0].metric}: {results[0].score}"
+            f"{results[0].metrics[0].metric}: {results[0].metrics[0].score}"
         )
 
         return best_estimator, ResultGroup(results)
@@ -333,7 +349,10 @@ class Model:
         return self
 
     def score_estimator(
-        self, data: Dataset, metric: Optional[str] = None, cv: Optional[int] = False
+        self,
+        data: Dataset,
+        metrics: Union[str, List[str]] = "default",
+        cv: Optional[int] = False,
     ) -> "Result":
         """Scores the estimator based on training data from `data` and validates based on validation
         data from `data`.
@@ -349,8 +368,8 @@ class Model:
         data: Dataset
             An instantiated Dataset object with create_train_test called
 
-        metric: string
-            Metric to use for scoring the estimator. Any sklearn metric string
+        metrics: string, list of strings
+            Metric or metrics to use for scoring the estimator. Any sklearn metric string
 
         cv: int, optional
             Whether or not to use cross validation. Number of folds if an int is passed
@@ -361,7 +380,15 @@ class Model:
         Result
             A Result object that contains the results of the scoring
         """
-        metric = self.default_metric if metric is None else metric
+
+        if isinstance(metrics, str):
+            if metrics == "default":
+                metrics = [self.default_metric]
+            else:
+                metrics = [self.default_metric, metrics]
+
+        metrics = Metrics.from_list(metrics)
+
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
@@ -371,22 +398,22 @@ class Model:
 
         if cv:
             logger.info("Cross-validating...")
-            self.result = self._score_estimator_cv(data, self.estimator, metric, cv)
+            self.result = self._score_estimator_cv(data=data, metrics=metrics, cv=cv)
 
         else:
-            self.result = self._score_estimator(data, self.estimator, metric)
+            self.result = self._score_estimator(data=data, metrics=metrics)
 
         if self.config.LOG:
-            log = self.result.dump()
-            result_file = save_log(log, self.config.RUN_DIR)
+            log = Log.from_result(self.result)
+            result_file = log.save_log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
         return self.result
-
+    # TODO: Implement metrics method with gridsearch
     def gridsearch(
         self,
         data: Dataset,
         param_grid: dict,
-        metric: Optional[str] = None,
+        metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
         n_jobs: Optional[int] = None,
     ) -> Tuple[BaseEstimator, ResultGroup]:
@@ -402,8 +429,8 @@ class Model:
         param_grid: dict
             Parameters to use for grid search
 
-        metric: str, optional
-            Metric to use for scoring. Defaults to value in
+        metrics: str, list of str
+            Metric to use for scoring. A value of "default" sets metric equal to
             :attr:`self.default_metric`
 
         cv: int, optional
@@ -421,15 +448,19 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        baseline_estimator = clone(self.estimator)
+        if isinstance(metrics, str):
+            if metrics == "default":
+                metrics = [self.default_metric]
+            else:
+                metrics = [metrics]
 
-        metric = self.default_metric if metric is None else metric
+        metrics = Metrics.from_list(metrics)
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, data.train_y, is_classifier(baseline_estimator))  # Stratify?
+        cv = check_cv(cv, data.train_y, self.is_classifier)  # Stratify?
         self.result = None  # Fixes pickling recursion error in joblib
 
-        logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
+        logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.debug(f"Gridsearching using {param_grid}")
         param_grid = list(_create_param_grid(self.estimator, param_grid))
         logger.info("Starting gridsearch...")
@@ -440,10 +471,10 @@ class Model:
             joblib.delayed(fit_grid_point)(
                 X=data.train_x,
                 y=data.train_y,
-                estimator=clone(baseline_estimator),
+                estimator=clone(self.estimator),
                 train=train,
                 test=test,
-                scorer=get_scorer(metric),
+                scorer=get_scorer(metrics[0].metric),
                 verbose=self.config.VERBOSITY,
                 parameters=parameters,
             )
@@ -458,12 +489,10 @@ class Model:
         ]
 
         results = [
-            CVResult(
-                Model(baseline_estimator.set_params(**param)),
-                data,
-                cv.n_splits,
-                scores[i],
-                metric,
+            Result.from_model(
+                model=Model(clone(self.estimator).set_params(**param)),
+                metrics=metrics,
+                data=data,
             )
             for i, param in enumerate(param_grid)
         ]
@@ -479,19 +508,15 @@ class Model:
         return results[0].model, self.result
 
     @contextmanager
-    def log(self, run_name: str):
+    def log(self, run_directory: str):
         """:meth:`log` is a context manager that lets you turn on logging for any scoring methods
         that follow. You can pass a log_dir to specify a subdirectory to store the estimator in.
         The output is a yaml file recording estimator parameters, package version numbers,
         metrics and other useful information
 
-        .. todo::
-
-            Include example of output yaml
-
         Parameters
         ----------
-        run_name: str
+        run_directory: str
             Name of the folder to save the details in
 
         Example
@@ -506,14 +531,14 @@ class Model:
         """
         old_dir = self.config.RUN_DIR
         self.config.LOG = True
-        self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_name)
+        self.config.RUN_DIR = self.config.RUN_DIR.joinpath(run_directory)
         try:
             yield
         finally:
             self.config.LOG = False
             self.config.RUN_DIR = old_dir
 
-    def _score_estimator(self, data, estimator, metric: str) -> Result:
+    def _score_estimator(self, data: Dataset, metrics: Metrics) -> Result:
         """
         Scores estimator with a given score function.
 
@@ -521,12 +546,9 @@ class Model:
         ----------
         data: Dataset
             An instantiated Dataset object
-        estimator: BaseEstimator, Pipeline
-            Estimator to evaluate
 
-        metric: string
+        metrics: Metrics
             Which scoring function to use
-
 
         Returns
         -------
@@ -534,17 +556,16 @@ class Model:
 
         """
 
-        scoring_func = get_scorer(metric)
+        for metric in metrics:
+            metric.score_metric(self.estimator, data.test_x, data.test_y)
+            logger.info(f"{self.estimator_name} - {metric.metric}: {metric.score}")
 
-        score = scoring_func(estimator, data.test_x, data.test_y)
-
-        result = Result(self, score=score, data=data, metric=metric)
-
-        logger.info(f"{self.estimator_name} - {metric}: {score}")
+        result = Result.from_model(self, data, metrics)
 
         return result
 
-    def _score_estimator_cv(self, data, estimator, metric=None, cv=None) -> CVResult:
+    def _score_estimator_cv(self, data: Dataset, metrics: Metrics, cv: int) -> Result:
+
         """
         Scores estimator with given metric using cross-validation
 
@@ -553,11 +574,8 @@ class Model:
         data: Dataset
             An instantiated DataSet object with train_test split
 
-        estimator: BaseEstimator
-            A sklearn-compatible estimator to use for scoring
-
-        metric: string
-            Which scoring function to use
+        metrics: string, list of strings
+            Which scoring function or functions to use. Defaults to self.default_metric
 
         cv: int, optional
             How many folds to use - if None, use default configuration
@@ -566,27 +584,26 @@ class Model:
         -------
         CVResult
         """
-        cv = self.config.CROSS_VALIDATION if cv is None else cv
 
-        scores = cross_val_score(
-            estimator,
-            data.train_x,
-            data.train_y,
-            cv=cv,
-            scoring=metric,
-            n_jobs=self.config.N_JOBS,
-            verbose=self.config.VERBOSITY,
-        )
+        for metric in metrics:
+            metric.score_metric_cv(
+                self.estimator,
+                data.test_x,
+                data.test_y,
+                cv=cv,
+                n_jobs=self.config.N_JOBS,
+                verbose=self.config.VERBOSITY,
+            )
+            logger.info(
+                f"{self.estimator_name} - {metric.metric}: {metric.score} ± {metric.std}"
+            )
 
-        result = CVResult(
-            self, data=data, metric=metric, cross_val_scores=scores, cv=cv
-        )
+        result = Result.from_model(self, data, metrics)
 
         if self.config.LOG:
-            log = result.dump()
-            save_log(log, self.config.RUN_DIR)
+            log = Log.from_result(result)
+            log.save_log(self.config.RUN_DIR)
 
-        logger.info(f"{self.estimator_name} - {metric}: {np.mean(scores)}")
         return result
 
     @classmethod

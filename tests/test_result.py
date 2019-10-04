@@ -102,8 +102,10 @@ class TestResult:
 
         assert first_result is max_result
 
-    def test_result_log_model_returns_correctly(self, tmpdir, classifier, test_dataset):
-        runs = tmpdir.mkdir("runs")
+    def test_result_log_model_returns_correctly(
+        self, tmp_path, classifier, test_dataset
+    ):
+        runs = tmp_path / "runs"
         result = Result(classifier, data=test_dataset, score=0.7, metric="accuracy")
         log = result.dump(runs)
         run_info = save_log(log, runs)

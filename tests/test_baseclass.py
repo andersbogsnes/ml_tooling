@@ -6,6 +6,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
+from ml_tooling.storage import FileStorage
 from ml_tooling.result import CVResult, Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
@@ -181,12 +182,15 @@ class TestBaseClass:
         expected_path = tmp_path / "test_model.pkl"
 
         classifier.score_estimator(test_dataset)
-        classifier.save_estimator(expected_path)
+        load_storage = FileStorage(expected_path)
 
-        assert expected_path.exists()
+        with FileStorage(expected_path) as storage:
+            classifier.save_estimator(storage)
 
-        loaded_model = base.load_estimator(str(expected_path))
-        assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
+            assert expected_path.exists()
+
+            loaded_model = base.load_estimator(load_storage)
+            assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_save_model_saves_pipeline_correctly(
         self, base, pipeline_logistic, tmp_path, test_dataset

@@ -1,0 +1,108 @@
+from ml_tooling.storage.base import Storage, StorageEnvironment
+from ml_tooling.utils import MLToolingError
+
+from typing import List, Any
+from contextlib import contextmanager
+from pathlib import Path
+from joblib import load, dump
+
+
+class FileStorage(Storage):
+    
+    def __init__(self, dir_path=None):
+        self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
+        self.filename = None
+        self.file = None
+
+    def __enter__(self):
+        if not self.dir_path.exists():
+            self.dir_path.mkdir(parents=True)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
+
+    def get_list(self) -> List[Path]:
+        """
+        Finds a list of estimator filenames in the FileStorage directory,
+        if the path given is to a file, the directory in which the file resides
+        is used to find the list.
+
+        Parameters
+        ----------
+        None
+
+        Example
+        -------
+        Find and return estimators in a given directory:
+            my_estimators = FileStorage('path/to/dir').get_list()
+
+        Returns
+        -------
+        List[Path]
+            list of paths to files
+        """
+        return sorted(self.dir_path.glob('*.pkl'))
+    
+    def load(self, file_path) -> Any:
+        """
+        Loads a joblib pickled estimator from given filepath and returns a Model
+        instatiated with the estimator.
+
+        Parameters
+        ----------
+        file_path: str
+            Path to estimator pickle file
+
+        Example
+        -------
+        We can load a trained estimator from disk in two ways:
+            my_estimator = FileStorage('path/to/estimator')
+            
+            storage = FileStorage()
+            my_estimator = storage.load('path/to/estimator')
+
+        We now have a trained estimator loaded.
+
+        Returns
+        -------
+        Object
+            any python object loaded from disk
+        """
+        estimator_path = Path(file_path)
+        return load(estimator_path)
+
+    def save(self,
+        estimator_file,
+        env: StorageEnvironment = StorageEnvironment.DEV
+    ) -> Path:
+        """
+        Save a joblib pickled estimator.
+
+        Parameters
+        ----------
+        estimator: obj
+            The estimator object
+
+        Example
+        -------
+        To save your trained estimator, use the FileStorage context manager.
+            with FileStorage('/path/to/save/dir/') as storage:
+                storage.save(estimator_file_path)
+
+        We now have saved an estimator to a pickle file.
+
+        Returns
+        -------
+        Path
+            file_path: pathlib Path
+        """
+        if not self.dir_path.exists():
+            self.dir_path.mkdir(parents=True)
+        if self.filename is None:
+            raise MLToolingError(
+                f"No filename was set for storage, a filename must be specified"
+            )
+        file_path = self.dir_path.joinpath(self.filename)
+        dump(estimator_file, file_path)
+        return file_path

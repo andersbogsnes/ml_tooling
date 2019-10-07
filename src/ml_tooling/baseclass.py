@@ -1,7 +1,8 @@
 import pathlib
+import datetime
 from contextlib import contextmanager
 from itertools import product
-from typing import Tuple, Optional, Sequence, Union
+from typing import Tuple, Optional, Sequence, Union, List
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,7 @@ from sklearn.model_selection import cross_val_score, fit_grid_point, check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.storage.base import Storage
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.logging.log_estimator import log_results
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -28,6 +30,11 @@ from ml_tooling.utils import (
 
 logger = create_logger("ml_tooling")
 
+from enum import Enum
+class Environment(Enum):
+    DEV = 1
+    TEST = 2
+    PROD = 3
 
 class Model:
     """
@@ -65,7 +72,30 @@ class Model:
         return class_name
 
     @classmethod
-    def load_estimator(cls, path: str) -> "Model":
+    def list_estimators(cls, storage: Storage) -> List[pathlib.Path]:
+        """
+        Gets a list of estimators from the given Storage
+
+        Parameters
+        ----------
+        storage: Storage
+            Storage type object
+
+        Example
+        -------
+            model = Model(LinearRegression())
+            storage = FileStorage('path/to/estimators_dir')
+
+            estimator_list = Model.list_estimators(storage)
+
+        Returns
+        -------
+        filenames: list of strings
+        """
+        return storage.get_list()
+
+    @classmethod
+    def load_estimator(cls, storage: Storage, path: pathlib.Path) -> "Model":
         """
         Instantiates the class with a joblib pickled estimator.
 
@@ -82,22 +112,19 @@ class Model:
 
         We now have a trained estimator loaded.
 
-
         Returns
         -------
         Model
             Instance of Model with a saved estimator
         """
-        estimator_file = pathlib.Path(path)
-        estimator = joblib.load(estimator_file)
+        estimator = storage.load(path)
         instance = cls(estimator)
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, path: str) -> pathlib.Path:
+    def save_estimator(self, storage: Storage) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
-
 
         Parameters
         ----------
@@ -109,7 +136,9 @@ class Model:
 
         If we have trained an estimator and we want to save it to disk we can write::
 
-            estimator.save('path/to/folder/filename.pkl')
+            with FileStorage('/path/to/save/dir') as storage:
+                model = Model(LinearRegression())
+                model.save_estimator(storage)
 
         to save in the given folder.
 
@@ -117,21 +146,12 @@ class Model:
         -------
         pathlib.Path
             The path to where the estimator file was saved
-
         """
+        now_str = datetime.datetime.now().strftime("_%Y-%m-%d_%H:%M:%S")
+        storage.filename = self.estimator_name + now_str
+        estimator_file = storage.save(self.estimator)
 
-        estimator_file = pathlib.Path(path)
-
-        if estimator_file.is_dir():
-            raise MLToolingError(
-                f"Passed directory {estimator_file} - need to pass a filename"
-            )
-        logger.debug(f"Attempting to save estimator in {estimator_file.parent}")
-        if not estimator_file.parent.exists():
-            logger.debug(f"{estimator_file.parent} does not exist - creating")
-            estimator_file.parent.mkdir(parents=True)
-
-        joblib.dump(self.estimator, estimator_file)
+        logger.debug(f"Attempting to save estimator {estimator_file}")
 
         if self.config.LOG:
             if self.result is None:

@@ -1,3 +1,6 @@
+# v0.8.1
+- Removed gitpython as a dependency
+
 # v0.8.0
 - Replaced custom feature permutation importance with sklearns implementation from v0.22
 - Breaking change - Dataset is now a separate object that has to be instantiated outside Modeldata

@@ -13,7 +13,6 @@ INSTALL_REQUIRES = [
     "scikit-learn",
     "matplotlib",
     "pyyaml",
-    "gitpython",
     "joblib",
     "sqlalchemy",
     "pyarrow",

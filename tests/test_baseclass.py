@@ -179,28 +179,26 @@ class TestBaseClass:
     def test_regression_model_can_be_saved(
         self, classifier, tmp_path, base, test_dataset
     ):
-        expected_path = tmp_path / "test_model.pkl"
-
         classifier.score_estimator(test_dataset)
-        load_storage = FileStorage(expected_path)
+        load_storage = FileStorage(tmp_path)
 
-        with FileStorage(expected_path) as storage:
-            classifier.save_estimator(storage)
+        with FileStorage(tmp_path) as storage:
+            saved_model_path = classifier.save_estimator(storage)
 
-            assert expected_path.exists()
+            assert saved_model_path.exists()
 
-            loaded_model = base.load_estimator(load_storage)
+            loaded_model = base.load_estimator(load_storage, saved_model_path)
             assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_save_model_saves_pipeline_correctly(
         self, base, pipeline_logistic, tmp_path, test_dataset
     ):
 
-        save_dir = tmp_path / "test_model_1.pkl"
+        save_dir = tmp_path
         model = base(pipeline_logistic)
         model.train_estimator(test_dataset)
-        model.save_estimator(save_dir)
-        assert save_dir.exists()
+        saved_model_path = model.save_estimator(FileStorage(save_dir))
+        assert saved_model_path.exists()
 
     def test_save_model_saves_logging_dir_correctly(
         self, classifier, tmp_path, monkeypatch
@@ -210,18 +208,13 @@ class TestBaseClass:
 
         monkeypatch.setattr("ml_tooling.logging.log_estimator.get_git_hash", mockreturn)
         save_dir = tmp_path / "estimator"
-        expected_file = save_dir / "test_model3.pkl"
         with classifier.log(save_dir):
-            classifier.save_estimator(expected_file)
+            expected_file = classifier.save_estimator(FileStorage(save_dir))
 
         assert expected_file.exists()
         assert (
             "LogisticRegression" in [str(file) for file in save_dir.rglob("*.yaml")][0]
         )
-
-    def test_save_model_errors_if_path_is_dir(self, classifier, tmp_path):
-        with pytest.raises(MLToolingError, match=f"Passed directory {tmp_path}"):
-            classifier.save_estimator(tmp_path)
 
     def test_gridsearch_model_returns_as_expected(
         self, base, pipeline_logistic, test_dataset
@@ -324,4 +317,4 @@ class TestBaseClass:
         with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(tmp_path):
                 model.train_estimator(test_dataset)
-                model.save_estimator(tmp_path / "test_model4.pkl")
+                model.save_estimator(FileStorage(tmp_path))

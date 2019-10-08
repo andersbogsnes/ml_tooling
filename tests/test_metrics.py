@@ -25,6 +25,7 @@ class TestMetricClass:
         assert isinstance(metric.score, float)
 
         assert metric.cross_val_scores is None
+        assert metric.std is None
 
     def test_can_score_metric_cv(self, classifier, test_dataset):
         metric = Metric("accuracy")
@@ -36,19 +37,74 @@ class TestMetricClass:
             n_jobs=-1,
             verbose=0,
         )
-
         assert metric.metric == "accuracy"
         assert len(metric.cross_val_scores) == 2
         assert metric.score == np.mean(metric.cross_val_scores)
         assert metric.std == np.std(metric.cross_val_scores)
 
+
+class TestMetricsClass:
     def test_can_list_metrics(self):
         metric_names = ["accuracy", "roc_auc"]
         metrics = Metrics.from_list(metric_names)
         assert metric_names == metrics.to_list()
 
-        for key in metrics.to_dict():
-            assert key in metric_names
+    def test_can_access_attributes_from_underlying_metrics(self):
+        metric_names = ["accuracy", "roc_auc"]
+        metrics = Metrics.from_list(metric_names)
+
+        assert metrics.metric == "accuracy"
+        with pytest.raises(AttributeError):
+            metrics.not_an_attribute
+
+    def test_can_create_from_dict(self):
+        metrics = Metrics.from_list(["accuracy", "roc_auc"])
+        metrics_dict = metrics.to_dict()
+        metrics2 = Metrics.from_dict(metrics_dict)
+
+        assert metrics == metrics2
+
+    def test_scoring_multiple_metrics_works_correctly(self, classifier, test_dataset):
+        accuracy = Metric("accuracy")
+        roc_auc = Metric("roc_auc")
+        metrics = Metrics.from_list(["accuracy", "roc_auc"])
+
+        assert "accuracy" in metrics
+        assert "roc_auc" in metrics
+        assert ("not_a_metric" in metrics) is False
+
+        for metric in [accuracy, roc_auc]:
+            metric.score_metric(classifier.estimator, test_dataset.x, test_dataset.y)
+
+        metrics.score_estimator(classifier.estimator, test_dataset.x, test_dataset.y)
+
+        assert metrics[0] == accuracy
+        assert metrics[1] == roc_auc
+
+        for metric in [accuracy, roc_auc]:
+            metric.score_metric_cv(
+                estimator=classifier.estimator,
+                x=test_dataset.x,
+                y=test_dataset.y,
+                cv=2,
+                n_jobs=-1,
+                verbose=0,
+            )
+        metrics.score_estimator_cv(
+            estimator=classifier.estimator,
+            x=test_dataset.x,
+            y=test_dataset.y,
+            cv=2,
+            n_jobs=-1,
+            verbose=0,
+        )
+        assert (metrics[0].metric, metrics[0].score) == (
+            accuracy.metric,
+            accuracy.score,
+        )
+        assert (metrics[1].metric, metrics[1].score) == (roc_auc.metric, roc_auc.score)
+        assert all(metrics[0].cross_val_scores == accuracy.cross_val_scores)
+        assert all(metrics[1].cross_val_scores == roc_auc.cross_val_scores)
 
 
 class TestLiftScore:

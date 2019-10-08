@@ -8,6 +8,19 @@ from sklearn.model_selection import cross_val_score
 
 @attr.s
 class Metric:
+    """
+    Represents a single metric, containing a metric name and its corresponding score
+    A Metric knows how to generate it's own score by calling :meth:`score_metric`, passing
+    an estimator, an X and a Y.
+
+    Examples
+    ========
+
+
+
+
+    """
+
     metric: str = attr.ib()
     score: Union[float, int] = attr.ib(default=None)
     cross_val_scores: np.ndarray = attr.ib(default=None)
@@ -60,9 +73,10 @@ class Metrics:
     def __len__(self):
         return len(self.metrics)
 
-    def __getattr__(self, item):
-        if hasattr(self.metrics[0], item):
-            return getattr(self.metrics[0], item)
+    def __getattr__(self, name):
+        if hasattr(self.metrics[0], name):
+            return getattr(self.metrics[0], name)
+        raise AttributeError(f"{self.__class__.__name__} has no attribute {name}")
 
     def __getitem__(self, item):
         return self.metrics[item]

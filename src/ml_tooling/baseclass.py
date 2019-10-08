@@ -179,14 +179,14 @@ class Model:
                 }
                 for step in self.estimator.steps
             ]
-        else:
-            return [
-                {
-                    "module": self.estimator.__class__.__module__,
-                    "classname": self.estimator.__class__.__name__,
-                    "params": self.estimator.get_params(),
-                }
-            ]
+
+        return [
+            {
+                "module": self.estimator.__class__.__module__,
+                "classname": self.estimator.__class__.__name__,
+                "params": self.estimator.get_params(),
+            }
+        ]
 
     @classmethod
     def load(cls, log_file: pathlib.Path):

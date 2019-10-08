@@ -79,7 +79,7 @@ class Model:
         Parameters
         ----------
         storage: Storage
-            Storage type object
+            Storage class to list the estimators with
 
         Example
         -------
@@ -90,7 +90,8 @@ class Model:
 
         Returns
         -------
-        filenames: list of strings
+        List[pathlib.Path]
+            list of Paths
         """
         return storage.get_list()
 
@@ -101,14 +102,16 @@ class Model:
 
         Parameters
         ----------
+        storage : Storage
+            Storage class to load the estimator with
         path: str, optional
             Path to estimator pickle file
 
         Example
         -------
-        Having defined ModelData, we can load a trained estimator from disk::
-
-            my_estimator = Model.load_estimator('path/to/estimator')
+        We can load a trained estimator from disk::
+            storage = FileStorage()
+            my_estimator = Model.load_estimator(storage, 'path/to/estimator')
 
         We now have a trained estimator loaded.
 
@@ -128,8 +131,8 @@ class Model:
 
         Parameters
         ----------
-        path : str
-            Path to save estimator
+        storage : Storage
+            Storage class to save the estimator with
 
         Example
         -------
@@ -138,7 +141,7 @@ class Model:
 
             with FileStorage('/path/to/save/dir') as storage:
                 model = Model(LinearRegression())
-                model.save_estimator(storage)
+                saved_filename = model.save_estimator(storage)
 
         to save in the given folder.
 

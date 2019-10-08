@@ -34,7 +34,7 @@ class FileStorage(Storage):
 
         Example
         -------
-        Find and return estimators in a given directory:
+        Find and return estimator paths in a given directory:
             my_estimators = FileStorage('path/to/dir').get_list()
 
         Returns
@@ -56,9 +56,7 @@ class FileStorage(Storage):
 
         Example
         -------
-        We can load a trained estimator from disk in two ways:
-            my_estimator = FileStorage('path/to/estimator')
-            
+        We can load a saved pickled estimator from disk directly from FileStorage:
             storage = FileStorage()
             my_estimator = storage.load('path/to/estimator')
 
@@ -88,7 +86,7 @@ class FileStorage(Storage):
         -------
         To save your trained estimator, use the FileStorage context manager.
             with FileStorage('/path/to/save/dir/') as storage:
-                storage.save(estimator_file_path)
+                file_path = storage.save(estimator_file)
 
         We now have saved an estimator to a pickle file.
 

@@ -1,6 +1,6 @@
 import importlib
 import pathlib
-import warnings
+import subprocess
 from typing import Union, Tuple
 
 import numpy as np
@@ -35,16 +35,14 @@ def get_git_hash() -> str:
         git hash value of HEAD
     """
     try:
-        from git import Repo, InvalidGitRepositoryError
-    except ImportError:
-        warnings.warn("Git is not installed on this system")
-        return ""
-
-    try:
-        repo = Repo(search_parent_directories=True)
-    except InvalidGitRepositoryError:
-        return ""
-    return repo.head.object.hexsha
+        label = (
+            subprocess.check_output(["git", "rev-parse", "HEAD"])
+            .strip()
+            .decode("ascii")
+        )
+    except (OSError, FileNotFoundError):
+        label = ""
+    return label
 
 
 def find_estimator_file(path: str) -> pathlib.Path:

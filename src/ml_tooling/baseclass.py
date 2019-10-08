@@ -66,13 +66,11 @@ class Model:
         Defines default metric based on whether or not the estimator is a regressor or classifier.
         Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
         :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` is returned.
-        If passed estimator is a Pipeline, assume last step is the estimator.
 
         Returns
         -------
         str
             Name of the metric
-
         """
 
         return (
@@ -304,19 +302,18 @@ class Model:
             )
             results.append(result)
 
-            if log_dir:
-                log = Log.from_result(result)
-                log.save_log(pathlib.Path(log_dir))
+        results = ResultGroup(results).sort()
 
-        results = ResultGroup(results)
-        results.sort()
+        if log_dir:
+            results.log_estimator(pathlib.Path(log_dir))
+
         best_estimator = results[0].model
         logger.info(
-            f"Best estimator: {results[0].model.estimator_name} - "
-            f"{results[0].metrics[0].metric}: {results[0].metrics[0].score}"
+            f"Best estimator: {best_estimator.estimator_name} - "
+            f"{results[0].metrics.metric}: {results[0].metrics.score}"
         )
 
-        return best_estimator, ResultGroup(results)
+        return best_estimator, results
 
     def train_estimator(self, data: Dataset) -> "Model":
         """Loads all training data and trains the estimator on all data.
@@ -375,10 +372,7 @@ class Model:
         """
 
         if isinstance(metrics, str):
-            if metrics == "default":
-                metrics = [self.default_metric]
-            else:
-                metrics = [self.default_metric, metrics]
+            metrics = [self.default_metric] if metrics == "default" else [metrics]
 
         metrics = Metrics.from_list(metrics)
 
@@ -449,15 +443,12 @@ class Model:
         """
 
         if isinstance(metrics, str):
-            if metrics == "default":
-                metrics = [self.default_metric]
-            else:
-                metrics = [metrics]
+            metrics = [self.default_metric] if metrics == "default" else [metrics]
 
+        metrics = Metrics.from_list(metrics)
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, data.train_y, self.is_classifier)  # Stratify?
-        metrics = Metrics.from_list(metrics)
+        cv = check_cv(cv, data.train_y, self.is_classifier)
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.debug(f"Gridsearching using {param_grid}")
@@ -470,29 +461,27 @@ class Model:
             params=param_grid,
             n_jobs=n_jobs,
         )
-        results = []
-        for estimator in estimators:
-            model = Model(estimator)
-            results.append(
+        self.result = ResultGroup(
+            [
                 Result.from_model(
-                    model=model,
+                    model=Model(estimator),
                     data=data,
                     metrics=metrics,
                     cv=cv,
                     n_jobs=n_jobs,
                     verbose=self.config.VERBOSITY,
                 )
-            )
+                for estimator in estimators
+            ]
+        )
 
         logger.info("Done!")
-
-        self.result = ResultGroup(results)
 
         if self.config.LOG:
             result_file = self.result.log_estimator(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return results[0].model, self.result
+        return self.result[0].model, self.result
 
     @contextmanager
     def log(self, run_directory: str):
@@ -524,74 +513,6 @@ class Model:
         finally:
             self.config.LOG = False
             self.config.RUN_DIR = old_dir
-
-    def _score_estimator(self, data: Dataset, metrics: Metrics) -> Result:
-        """
-        Scores estimator with a given score function.
-
-        Parameters
-        ----------
-        data: Dataset
-            An instantiated Dataset object
-
-        metrics: Metrics
-            Which scoring function to use
-
-        Returns
-        -------
-        Result object
-
-        """
-
-        for metric in metrics:
-            metric.score_metric(self.estimator, data.test_x, data.test_y)
-            logger.info(f"{self.estimator_name} - {metric.metric}: {metric.score}")
-
-        result = Result.from_model(self, data, metrics)
-
-        return result
-
-    def _score_estimator_cv(self, data: Dataset, metrics: Metrics, cv: int) -> Result:
-
-        """
-        Scores estimator with given metric using cross-validation
-
-        Parameters
-        ----------
-        data: Dataset
-            An instantiated DataSet object with train_test split
-
-        metrics: string, list of strings
-            Which scoring function or functions to use. Defaults to self.default_metric
-
-        cv: int, optional
-            How many folds to use - if None, use default configuration
-
-        Returns
-        -------
-        CVResult
-        """
-
-        for metric in metrics:
-            metric.score_metric_cv(
-                self.estimator,
-                data.test_x,
-                data.test_y,
-                cv=cv,
-                n_jobs=self.config.N_JOBS,
-                verbose=self.config.VERBOSITY,
-            )
-            logger.info(
-                f"{self.estimator_name} - {metric.metric}: {metric.score} ± {metric.std}"
-            )
-
-        result = Result.from_model(self, data, metrics)
-
-        if self.config.LOG:
-            log = Log.from_result(result)
-            log.save_log(self.config.RUN_DIR)
-
-        return result
 
     @classmethod
     def reset_config(cls):

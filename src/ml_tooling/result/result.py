@@ -6,7 +6,7 @@ from ml_tooling.metrics import Metrics
 from ml_tooling.result.viz import create_plotter, BaseVisualize
 
 
-@attr.s()
+@attr.s
 class Result:
     """
     Contains the result of a given training run.

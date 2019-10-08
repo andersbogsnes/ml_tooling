@@ -188,22 +188,53 @@ def setup_pipeline_step(
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Rehydrates a class based on a dictionary definition, importing the module
-    and instantiating the class from the classname, setting the parameters
+    and instantiating the class from the classname, setting the parameters of the class as found
+    in the input dictionary
 
     Parameters
     ----------
-    definition
+    definition: dict
+        Dictionary definition including module name, classname and params. If pipeline is defined,
+        returns
 
     Returns
     -------
+    BaseEstimator or str, BaseEstimator
+        Instantiated BaseEstimator and optionally the name of the step
 
     """
     module = importlib.import_module(definition["module"])
-    class_ = getattr(module, definition["classname"])()
-    class_ = class_.set_params(**definition["params"])
+
+    if definition["classname"] == "DFFeatureUnion":
+        transformer_list = [
+            Pipeline([setup_pipeline_step(step) for step in pipeline])
+            for pipeline in definition["params"]
+        ]
+        class_ = getattr(module, definition["classname"])(transformer_list)
+
+    else:
+        class_ = getattr(module, definition["classname"])()
+        class_ = class_.set_params(**definition["params"])
+
     if "name" in definition:
         return definition["name"], class_
     return class_
+
+
+def serialize_pipeline(pipe):
+    results = [
+        {
+            "name": step[0],
+            "module": step[1].__class__.__module__,
+            "classname": step[1].__class__.__name__,
+            "params": [serialize_pipeline(s) for s in step[1].transformer_list]
+            if hasattr(step[1], "transformer_list")
+            else step[1].get_params(),
+        }
+        for step in pipe.steps
+    ]
+
+    return results
 
 
 def make_dir(path: pathlib.Path) -> pathlib.Path:

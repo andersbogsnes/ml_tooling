@@ -15,7 +15,7 @@ from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import _fit_gridpoint
-from ml_tooling.transformers import DFStandardScaler
+from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError
 
 
@@ -416,6 +416,67 @@ class TestBaseClass:
         ]
 
         assert serialized_model == expected
+
+    def test_to_dict_serializes_correctly_with_feature_union(
+        self, feature_union_classifier
+    ):
+        model = Model(feature_union_classifier)
+        result = model.to_dict()
+        assert len(result) == 2
+        union = result[0]
+        assert union["name"] == "features"
+        assert len(union["params"]) == 2
+        pipe1 = union["params"][0]
+        pipe2 = union["params"][1]
+
+        assert pipe1[0]["name"] == "select"
+        assert pipe1[0]["params"] == {
+            "columns": ["sepal length (cm)", "sepal width (cm)"]
+        }
+
+        assert pipe1[1]["name"] == "scale"
+        assert pipe1[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+        assert pipe2[0]["name"] == "select"
+        assert pipe2[0]["params"] == {
+            "columns": ["petal length (cm)", "petal width (cm)"]
+        }
+
+        assert pipe2[1]["name"] == "scale"
+        assert pipe2[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+    def test_from_yaml_serializes_correctly_with_feature_union(
+        self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
+    ):
+
+        model = Model(feature_union_classifier)
+        result = model.to_dict()
+
+        log = Log(
+            name="test", metrics=Metrics.from_list(["accuracy"]), estimator=result
+        )
+        save_path = log.save_log(tmp_path)
+
+        new_model = Model.from_yaml(save_path)
+
+        assert len(new_model.estimator.steps[0][1].transformer_list) == 2
+        new_steps = new_model.estimator.steps
+        old_steps = model.estimator.steps
+
+        assert new_steps[0][0] == old_steps[0][0]
+        assert isinstance(new_steps[0][1], type(old_steps[0][1]))
+
+        new_union = new_steps[0][1].transformer_list
+        old_union = old_steps[0][1].transformer_list
+
+        assert len(new_union) == len(old_union)
+
+        for new_transform, old_transform in zip(new_union, old_union):
+            assert new_transform.steps[0][0] == old_transform.steps[0][0]
+            assert (
+                new_transform.steps[0][1].get_params()
+                == old_transform.steps[0][1].get_params()
+            )
 
     def test_can_load_serialized_model_from_pipeline(
         self, pipeline_linear, tmp_path: pathlib.Path

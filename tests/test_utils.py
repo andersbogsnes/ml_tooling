@@ -1,3 +1,6 @@
+import pathlib
+from unittest.mock import patch
+
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
@@ -12,6 +15,7 @@ from ml_tooling.utils import (
     MLToolingError,
     _create_param_grid,
     _validate_estimator,
+    make_dir,
 )
 
 
@@ -19,6 +23,15 @@ def test_get_git_hash_returns_correctly():
     git_hash = get_git_hash()
     assert isinstance(git_hash, str)
     assert 10 < len(git_hash)
+
+
+@patch("ml_tooling.utils.subprocess")
+def test_get_git_hash_returns_empty_if_git_not_found(mock_subprocess):
+    mock_subprocess.check_output.side_effect = OSError
+    git_hash = get_git_hash()
+    assert git_hash == ""
+
+    mock_subprocess.check_output.assert_called_with(["git", "rev-parse", "HEAD"])
 
 
 def test_find_model_file_with_given_model_returns_correctly(tmpdir):
@@ -149,3 +162,19 @@ class TestGridsearchParams:
         grid = _create_param_grid(model, param_grid)
 
         assert [param_grid] == grid.param_grid
+
+    def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
+        file_path = tmp_path / "test.txt"
+
+        file_path.write_text("test\ntest")
+
+        with pytest.raises(IOError):
+            make_dir(file_path)
+
+    def test_make_dir_creates_folder_on_input_files(self, tmp_path: pathlib.Path):
+        file_path = tmp_path / "testing"
+        assert file_path.exists() is False
+
+        make_dir(file_path)
+
+        assert file_path.exists()

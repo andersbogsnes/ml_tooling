@@ -24,6 +24,7 @@ from ml_tooling.utils import (
     setup_pipeline_step,
     Estimator,
     is_pipeline,
+    serialize_pipeline,
 )
 
 logger = create_logger("ml_tooling")
@@ -170,15 +171,7 @@ class Model:
 
     def to_dict(self):
         if self.is_pipeline:
-            return [
-                {
-                    "name": step[0],
-                    "module": step[1].__class__.__module__,
-                    "classname": step[1].__class__.__name__,
-                    "params": step[1].get_params(),
-                }
-                for step in self.estimator.steps
-            ]
+            return serialize_pipeline(self.estimator)
 
         return [
             {

@@ -10,7 +10,7 @@ class Binner(BaseEstimator, TransformerMixin):
     see for further details
     """
 
-    def __init__(self, bins: Union[int, list], labels: list = None):
+    def __init__(self, bins: Union[int, list] = 5, labels: list = None):
         self.bins = bins
         self.labels = labels
 

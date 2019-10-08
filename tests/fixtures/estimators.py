@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml_tooling.transformers import DFStandardScaler
+from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
 
 
 @pytest.fixture()
@@ -54,6 +54,24 @@ def pipeline_linear():
 def pipeline_dummy_classifier():
     pipe = Pipeline([("scale", DFStandardScaler()), ("clf", DummyClassifier())])
     return pipe
+
+
+@pytest.fixture
+def feature_union_classifier():
+    pipe1 = Pipeline(
+        [
+            ("select", Select(["sepal length (cm)", "sepal width (cm)"])),
+            ("scale", DFStandardScaler()),
+        ]
+    )
+    pipe2 = Pipeline(
+        [
+            ("select", Select(["petal length (cm)", "petal width (cm)"])),
+            ("scale", DFStandardScaler()),
+        ]
+    )
+    union = DFFeatureUnion(transformer_list=[pipe1, pipe2])
+    return Pipeline([("features", union), ("clf", LogisticRegression())])
 
 
 @pytest.fixture

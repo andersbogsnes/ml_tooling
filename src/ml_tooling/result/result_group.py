@@ -1,13 +1,12 @@
 import pathlib
 from typing import List
 
-import numpy as np
-import pandas as pd
-
 from ml_tooling.logging import Log
 from ml_tooling.result.result import Result
+import attr
 
 
+@attr.s(auto_attribs=True)
 class ResultGroup:
     """
     A container for results. Proxies attributes to the best result. Supports indexing like a list.
@@ -16,16 +15,10 @@ class ResultGroup:
 
     """
 
-    def __init__(self, results: List[Result]):
-        self.results = sorted(results, reverse=True)
+    results: List[Result]
 
     def __getattr__(self, name):
         return getattr(self.results[0], name)
-
-    def __dir__(self):
-        proxied_dir = dir(self.results[0])
-        custom_methods = ["to_dataframe", "mean_score"]
-        return proxied_dir + custom_methods
 
     def __len__(self):
         return len(self.results)
@@ -33,35 +26,21 @@ class ResultGroup:
     def __getitem__(self, item):
         return self.results[item]
 
-    def __repr__(self):
-        results = "\n".join([str(result) for result in self.results])
-        return f"[{results}]"
+    def sort(self, by=None):
+        if by is None:
+            by = self.results[0].metrics[0].metric
+
+        scores = [
+            (i, metric.score)
+            for i, result in enumerate(self.results)
+            for metric in result.metrics
+            if by == metric.metric
+        ]
+        scores = sorted(scores, key=lambda x: x[1], reverse=True)
+        self.results = [self.results[i] for i, _ in scores]
+        return self
 
     def log_estimator(self, log_dir: pathlib.Path):
         for result in self.results:
             log = Log.from_result(result)
             log.save_log(log_dir)
-
-    def mean_score(self):
-        """
-        Calculates mean score across the results
-        :return:
-        """
-        return np.mean([result.score for result in self.results])
-
-    def to_dataframe(self, params=True) -> pd.DataFrame:
-        """
-        Outputs results as a DataFrame. By default, the DataFrame will contain
-        all possible estimator parameters. This behaviour can be toggled using `params=False`
-
-        :param params:
-            Boolean toggling whether or not to output params as part of the DataFrame
-        :return:
-            pd.DataFrame of results
-        """
-
-        output = [result.to_dataframe(params) for result in self.results]
-
-        return pd.concat(output, ignore_index=True).sort_values(
-            by="score", ascending=False
-        )

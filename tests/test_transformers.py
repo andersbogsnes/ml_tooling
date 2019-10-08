@@ -5,7 +5,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
-from ml_tooling.result import CVResult, Result
+from ml_tooling.result import Result
 from ml_tooling.utils import TransformerError
 from ml_tooling.transformers import (
     Select,
@@ -76,7 +76,7 @@ class TestDFSelector(TransformerBase):
     def test_df_selector_works_cross_validated(self, test_dataset, base):
         model = self.create_model(base, Select("sepal length (cm)"))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_df_selector_works_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(Select("sepal length (cm)"))
@@ -209,7 +209,7 @@ class TestFillNA(TransformerBase):
     def test_fillna_works_cross_validated(self, base, test_dataset):
         model = self.create_model(base, FillNA(0))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_fillna_works_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(FillNA(0))
@@ -261,7 +261,7 @@ class TestToCategorical(TransformerBase):
     def test_to_categorical_works_in_cv(self, base, test_dataset):
         model = self.create_model(base, ToCategorical())
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_to_categorical_works_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(ToCategorical())
@@ -297,7 +297,7 @@ class TestBinner(TransformerBase):
     def test_binner_can_be_used_cv(self, base, test_dataset):
         model = self.create_model(base, Binner(3))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_binner_works_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(Binner(3))
@@ -334,7 +334,7 @@ class TestRenamer(TransformerBase):
     def test_renamer_works_in_cv(self, base, test_dataset):
         model = self.create_model(base, Renamer(["1", "2", "3", "4"]))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_renamer_works_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(Renamer(["1", "2", "3", "4"]))
@@ -522,7 +522,7 @@ class TestStandardScaler(TransformerBase):
     def test_standard_scaler_works_in_cv(self, base, test_dataset):
         model = self.create_model(base, DFStandardScaler())
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_standard_scaler_works_in_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(DFStandardScaler())
@@ -565,7 +565,7 @@ class TestDFRowFunc(TransformerBase):
     def test_dfrowfunc_cross_validates_correctly(self, base, test_dataset):
         model = self.create_model(base, DFRowFunc(strategy="mean"))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_dfrowfunc_works_in_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(DFRowFunc(strategy="mean"))
@@ -631,7 +631,7 @@ class TestFuncTransformer(TransformerBase):
     def test_func_transformer_can_be_validated(self, base, test_dataset):
         model = self.create_model(base, FuncTransformer(np.sum))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_func_transformer_works_in_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(FuncTransformer(np.mean))
@@ -660,7 +660,7 @@ class TestBinarize(TransformerBase):
     def test_binarize_can_be_used_cv(self, base, test_dataset):
         model = self.create_model(base, Binarize(value="a1"))
         result = model.score_estimator(test_dataset, cv=2)
-        assert isinstance(result, CVResult)
+        assert isinstance(result, Result)
 
     def test_binarize_works_in_gridsearch(self, base, test_dataset):
         grid = self.create_gridsearch(Binarize(value=2))

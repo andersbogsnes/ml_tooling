@@ -19,9 +19,22 @@ class Result:
     plot: BaseVisualize = attr.ib()
 
     @classmethod
-    def from_model(cls, model, data, metrics):
-        for metric in metrics:
-            metric.score_metric(model.estimator, data.test_x, data.test_y)
+    def from_model(
+        cls, model, data: Dataset, metrics: Metrics, cv=None, n_jobs=None, verbose=None
+    ):
+        if cv:
+            metrics.score_estimator_cv(
+                estimator=model.estimator,
+                x=data.train_x,
+                y=data.train_y,
+                cv=cv,
+                n_jobs=n_jobs,
+                verbose=verbose,
+            )
+        else:
+            metrics.score_estimator(
+                estimator=model.estimator, x=data.test_x, y=data.test_y
+            )
 
         return cls(
             metrics=metrics, model=model, plot=create_plotter(model, data), data=data

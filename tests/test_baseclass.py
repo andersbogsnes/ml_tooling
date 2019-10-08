@@ -10,7 +10,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
-from ml_tooling.result import CVResult, Result
+from ml_tooling.result import Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
 
@@ -148,7 +148,7 @@ class TestBaseClass:
         best_model, results = base.test_estimators(test_dataset, models)
         assert models[1] is best_model.estimator
         assert 2 == len(results)
-        assert results[0].score >= results[1].score
+        assert results[0].metrics[0].score >= results[1].metrics[0].score
         for result in results:
             assert isinstance(result, Result)
 
@@ -160,10 +160,10 @@ class TestBaseClass:
             RandomForestClassifier(n_estimators=10),
         ]
         best_estimator, results = base.test_estimators(
-            test_dataset, estimators, metric="roc_auc"
+            test_dataset, estimators, metrics="roc_auc"
         )
         for result in results:
-            assert result.metric == "roc_auc"
+            assert "roc_auc" in result.metrics
 
     def test_model_selection_with_pipeline_works_as_expected(
         self, base, pipeline_logistic, pipeline_dummy_classifier, test_dataset
@@ -211,7 +211,7 @@ class TestBaseClass:
         monkeypatch.setattr("ml_tooling.logging.log_estimator.get_git_hash", mockreturn)
         save_dir = tmp_path / "estimator"
         expected_file = save_dir / "test_model3.pkl"
-        with classifier.log(save_dir):
+        with classifier.log(str(save_dir)):
             classifier.save_estimator(expected_file)
 
         assert expected_file.exists()
@@ -228,35 +228,35 @@ class TestBaseClass:
     ):
         model = base(pipeline_logistic)
         model, results = model.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
-            assert isinstance(result, CVResult)
+            assert isinstance(result, Result)
 
     def test_gridsearch_model_does_not_fail_when_run_twice(
         self, base, pipeline_logistic, test_dataset
     ):
         model = base(pipeline_logistic)
         best_model, results = model.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
-            assert isinstance(result, CVResult)
+            assert isinstance(result, Result)
 
         best_model, results = model.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
-            assert isinstance(result, CVResult)
+            assert isinstance(result, Result)
 
     def test_log_context_manager_works_as_expected(self, regression):
         assert regression.config.LOG is False

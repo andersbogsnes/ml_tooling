@@ -1,18 +1,14 @@
 import pathlib
 from contextlib import contextmanager
-from itertools import product
 from typing import Tuple, Optional, Sequence, Union, List
 
 import pandas as pd
-import numpy as np
 import yaml
-from sklearn import clone
 from sklearn.base import BaseEstimator, is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
 import joblib
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import fit_grid_point, check_cv
+from sklearn.model_selection import check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
@@ -20,9 +16,9 @@ from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.result import Result, ResultGroup
 from ml_tooling.metrics import Metrics
+from ml_tooling.search.gridsearch import gridsearch
 from ml_tooling.utils import (
     MLToolingError,
-    _create_param_grid,
     _validate_estimator,
     DataSetError,
     setup_pipeline_step,
@@ -122,7 +118,7 @@ class Model:
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, path: str) -> pathlib.Path:
+    def save_estimator(self, path: Union[str, pathlib.Path]) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
 
@@ -268,7 +264,7 @@ class Model:
         cls,
         data: Dataset,
         estimators: Sequence,
-        metrics: Union[str, List[str]],
+        metrics: Union[str, List[str]] = "default",
         cv: Union[int, bool] = False,
         log_dir: str = None,
     ) -> Tuple["Model", ResultGroup]:
@@ -297,10 +293,6 @@ class Model:
         List of Result objects
         """
         results = []
-        if isinstance(metrics, str):
-            metrics = [metrics]
-
-        metrics = Metrics.from_list(metrics)
 
         for i, estimator in enumerate(estimators, start=1):
             logger.info(
@@ -310,14 +302,14 @@ class Model:
             result = challenger_estimator.score_estimator(
                 data=data, metrics=metrics, cv=cv
             )
-
             results.append(result)
 
             if log_dir:
                 log = Log.from_result(result)
                 log.save_log(pathlib.Path(log_dir))
 
-        results.sort(reverse=True)
+        results = ResultGroup(results)
+        results.sort()
         best_estimator = results[0].model
         logger.info(
             f"Best estimator: {results[0].model.estimator_name} - "
@@ -342,6 +334,7 @@ class Model:
         """
         logger.info("Training estimator...")
         self.estimator.fit(data.x, data.y)
+
         # Prevent confusion, as train_estimator does not return a result
         self.result = None
         logger.info("Estimator trained!")
@@ -398,17 +391,24 @@ class Model:
 
         if cv:
             logger.info("Cross-validating...")
-            self.result = self._score_estimator_cv(data=data, metrics=metrics, cv=cv)
+            self.result = Result.from_model(
+                model=self,
+                data=data,
+                metrics=metrics,
+                cv=cv,
+                n_jobs=self.config.N_JOBS,
+                verbose=self.config.VERBOSITY,
+            )
 
         else:
-            self.result = self._score_estimator(data=data, metrics=metrics)
+            self.result = Result.from_model(model=self, data=data, metrics=metrics)
 
         if self.config.LOG:
             log = Log.from_result(self.result)
             result_file = log.save_log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
         return self.result
-    # TODO: Implement metrics method with gridsearch
+
     def gridsearch(
         self,
         data: Dataset,
@@ -454,48 +454,35 @@ class Model:
             else:
                 metrics = [metrics]
 
-        metrics = Metrics.from_list(metrics)
         n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         cv = check_cv(cv, data.train_y, self.is_classifier)  # Stratify?
-        self.result = None  # Fixes pickling recursion error in joblib
+        metrics = Metrics.from_list(metrics)
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.debug(f"Gridsearching using {param_grid}")
-        param_grid = list(_create_param_grid(self.estimator, param_grid))
         logger.info("Starting gridsearch...")
 
-        parallel = joblib.Parallel(n_jobs=n_jobs, verbose=self.config.VERBOSITY)
-
-        out = parallel(
-            joblib.delayed(fit_grid_point)(
-                X=data.train_x,
-                y=data.train_y,
-                estimator=clone(self.estimator),
-                train=train,
-                test=test,
-                scorer=get_scorer(metrics[0].metric),
-                verbose=self.config.VERBOSITY,
-                parameters=parameters,
-            )
-            for parameters, (train, test) in product(
-                param_grid, cv.split(data.train_x, data.train_y, None)
-            )
+        estimators = gridsearch(
+            estimator=self.estimator,
+            train_x=data.train_x,
+            train_y=data.train_y,
+            params=param_grid,
+            n_jobs=n_jobs,
         )
-
-        scores = [
-            np.array([score[0] for score in out if score[1] == par])
-            for par in param_grid
-        ]
-
-        results = [
-            Result.from_model(
-                model=Model(clone(self.estimator).set_params(**param)),
-                metrics=metrics,
-                data=data,
+        results = []
+        for estimator in estimators:
+            model = Model(estimator)
+            results.append(
+                Result.from_model(
+                    model=model,
+                    data=data,
+                    metrics=metrics,
+                    cv=cv,
+                    n_jobs=n_jobs,
+                    verbose=self.config.VERBOSITY,
+                )
             )
-            for i, param in enumerate(param_grid)
-        ]
 
         logger.info("Done!")
 

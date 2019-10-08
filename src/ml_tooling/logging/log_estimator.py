@@ -9,7 +9,7 @@ from ml_tooling.utils import get_git_hash, make_dir
 import attr
 
 
-@attr.s
+@attr.s(auto_attribs=True)
 class Log:
     name: str
     scores: Metrics
@@ -18,7 +18,7 @@ class Log:
 
     @classmethod
     def from_result(cls, result, estimator_path: Optional[pathlib.Path] = None):
-        cls(
+        return cls(
             name=f"{result.data.class_name}_{result.model.estimator_name}",
             scores=result.metrics,
             estimator=result.model.dump(),
@@ -94,7 +94,7 @@ class Log:
             "created_time": datetime.now(),
             "versions": versions,
             "git_hash": get_git_hash(),
-            "metrics": attr.asdict(self.scores),
+            "metrics": self.scores.dump(),
             "estimator": self.estimator,
             "estimator_path": str(self.estimator_path) if self.estimator_path else None,
         }

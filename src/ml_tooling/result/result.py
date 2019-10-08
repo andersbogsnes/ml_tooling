@@ -6,7 +6,7 @@ from ml_tooling.metrics import Metrics
 from ml_tooling.result.viz import create_plotter, BaseVisualize
 
 
-@attr.s
+@attr.s(repr=False)
 class Result:
     """
     Contains the result of a given training run.
@@ -42,3 +42,6 @@ class Result:
 
     def log(self, saved_estimator_path=None):
         return Log.from_result(result=self, estimator_path=saved_estimator_path)
+
+    def __repr__(self):
+        return f"Result {self.model.estimator.class_name} {self.metrics.to_dict()}"

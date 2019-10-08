@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union, List, Dict
 
 import attr
 import numpy as np
@@ -18,7 +18,7 @@ class Metric:
 
     @property
     def std(self):
-        if self.cross_val_scores:
+        if self.cross_val_scores is not None:
             return np.std(self.cross_val_scores)
 
     def score_metric_cv(self, estimator, x, y, cv, n_jobs, verbose):
@@ -36,11 +36,18 @@ class Metrics:
     def from_list(cls, metrics: List[str]):
         return cls([Metric(metric=metric) for metric in metrics])
 
-    def list_metrics(self):
+    @classmethod
+    def from_dict(cls, metrics: Dict[str, Union[float, int]]):
+        return cls([Metric(metric=key, score=value) for key, value in metrics.items()])
+
+    def to_list(self):
         return [m.metric for m in self.metrics]
 
-    def dump(self):
-        return {m.metric: float(m.score) for m in self.metrics}
+    def to_dict(self):
+        return {
+            m.metric: float(m.score) if m.score is not None else None
+            for m in self.metrics
+        }
 
     def score_estimator(self, estimator, x, y):
         for metric in self.metrics:

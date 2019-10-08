@@ -41,21 +41,18 @@ def pipeline_logistic(base):
     pipe = Pipeline(
         [("scale", StandardScaler()), ("clf", LogisticRegression(solver="liblinear"))]
     )
-
     return pipe
 
 
 @pytest.fixture
 def pipeline_linear():
     pipe = Pipeline([("scale", StandardScaler()), ("clf", LinearRegression())])
-
     return pipe
 
 
 @pytest.fixture
 def pipeline_dummy_classifier():
     pipe = Pipeline([("scale", DFStandardScaler()), ("clf", DummyClassifier())])
-
     return pipe
 
 
@@ -67,5 +64,4 @@ def pipeline_forest_classifier():
             ("clf", RandomForestClassifier(n_estimators=10)),
         ]
     )
-
     return pipe

@@ -12,7 +12,7 @@ import attr
 @attr.s(auto_attribs=True)
 class Log:
     name: str
-    scores: Metrics
+    metrics: Metrics
     estimator: dict
     estimator_path: pathlib.Path = attr.ib(default=None)
 
@@ -20,8 +20,8 @@ class Log:
     def from_result(cls, result, estimator_path: Optional[pathlib.Path] = None):
         return cls(
             name=f"{result.data.class_name}_{result.model.estimator_name}",
-            scores=result.metrics,
-            estimator=result.model.dump(),
+            metrics=result.metrics,
+            estimator=result.model.to_dict(),
             estimator_path=estimator_path,
         )
 
@@ -94,7 +94,7 @@ class Log:
             "created_time": datetime.now(),
             "versions": versions,
             "git_hash": get_git_hash(),
-            "metrics": self.scores.dump(),
+            "metrics": self.metrics.to_dict(),
             "estimator": self.estimator,
             "estimator_path": str(self.estimator_path) if self.estimator_path else None,
         }

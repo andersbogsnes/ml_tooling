@@ -4,7 +4,7 @@ from typing import Tuple, Optional, Sequence, Union, List
 
 import pandas as pd
 import yaml
-from sklearn.base import BaseEstimator, is_classifier, is_regressor
+from sklearn.base import is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
 import joblib
@@ -168,7 +168,7 @@ class Model:
 
         return estimator_file
 
-    def dump(self):
+    def to_dict(self):
         if self.is_pipeline:
             return [
                 {
@@ -189,7 +189,7 @@ class Model:
         ]
 
     @classmethod
-    def load(cls, log_file: pathlib.Path):
+    def from_dict(cls, log_file: pathlib.Path):
         log_file = pathlib.Path(log_file)
         with log_file.open("r") as f:
             log = yaml.safe_load(f)
@@ -198,7 +198,7 @@ class Model:
         steps = [setup_pipeline_step(definition) for definition in estimator_definition]
 
         if len(steps) == 1:
-            return steps[0]
+            return cls(steps[0])
 
         return cls(Pipeline(steps))
 
@@ -410,7 +410,7 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
         n_jobs: Optional[int] = None,
-    ) -> Tuple[BaseEstimator, ResultGroup]:
+    ) -> Tuple["Model", ResultGroup]:
         """
         Runs a gridsearch on the estimator with the passed in parameter grid.
         Ensure that it works inside a pipeline as well.
@@ -435,7 +435,7 @@ class Model:
 
         Returns
         -------
-        best_estimator: BaseEstimator
+        best_estimator: Model
             Best estimator as found by the gridsearch
 
         result_group: ResultGroup

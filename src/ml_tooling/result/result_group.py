@@ -10,9 +10,6 @@ import attr
 class ResultGroup:
     """
     A container for results. Proxies attributes to the best result. Supports indexing like a list.
-    Can output the mean score of all its results using .mean_score.
-    Can convert the results to a DataFrame of results, for ease of scanning and manipulating
-
     """
 
     results: List[Result]

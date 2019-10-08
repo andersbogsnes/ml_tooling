@@ -2,13 +2,53 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from ml_tooling.metrics import lift_score, confusion_matrix, target_correlation
+from ml_tooling.metrics import (
+    lift_score,
+    confusion_matrix,
+    target_correlation,
+    Metric,
+    Metrics,
+)
 from ml_tooling.metrics.utils import (
     MetricError,
     _sort_values,
     _get_top_n_idx,
     _get_bottom_n_idx,
 )
+
+
+class TestMetricClass:
+    def test_can_score_metric(self, classifier, test_dataset):
+        metric = Metric("accuracy")
+        metric.score_metric(classifier.estimator, test_dataset.x, test_dataset.y)
+        assert metric.metric == "accuracy"
+        assert isinstance(metric.score, float)
+
+        assert metric.cross_val_scores is None
+
+    def test_can_score_metric_cv(self, classifier, test_dataset):
+        metric = Metric("accuracy")
+        metric.score_metric_cv(
+            classifier.estimator,
+            test_dataset.train_x,
+            test_dataset.train_y,
+            cv=2,
+            n_jobs=-1,
+            verbose=0,
+        )
+
+        assert metric.metric == "accuracy"
+        assert len(metric.cross_val_scores) == 2
+        assert metric.score == np.mean(metric.cross_val_scores)
+        assert metric.std == np.std(metric.cross_val_scores)
+
+    def test_can_list_metrics(self):
+        metric_names = ["accuracy", "roc_auc"]
+        metrics = Metrics.from_list(metric_names)
+        assert metric_names == metrics.to_list()
+
+        for key in metrics.to_dict():
+            assert key in metric_names
 
 
 class TestLiftScore:

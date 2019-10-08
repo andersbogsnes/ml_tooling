@@ -10,12 +10,46 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
+from ml_tooling.data import Dataset
+from ml_tooling.logging import Log
+from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
 
 
 class TestBaseClass:
+    def test_is_properties_works(self, classifier, regression, pipeline_linear):
+        assert classifier.is_regressor is False
+        assert classifier.is_classifier is True
+        assert regression.is_regressor is True
+        assert regression.is_classifier is False
+        assert classifier.is_pipeline is False
+        assert regression.is_pipeline is False
+
+        pipeline = Model(pipeline_linear)
+        assert pipeline.is_pipeline is True
+
+    def test_can_use_default_metric(self, test_dataset):
+        model = Model(LogisticRegression())
+        result = model.score_estimator(test_dataset)
+
+        assert result.metrics.metric == "accuracy"
+
+    def test_can_use_specified_metric(self, test_dataset):
+        model = Model(LogisticRegression())
+        result = model.score_estimator(test_dataset, metrics="roc_auc")
+
+        assert result.metrics.metric == "roc_auc"
+
+    def test_can_use_multiple_metrics(self, test_dataset):
+        model = Model(LogisticRegression())
+        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
+
+        assert len(result.metrics) == 2
+        assert "accuracy" in result.metrics
+        assert "roc_auc" in result.metrics
+
     def test_instantiate_model_with_non_estimator_pipeline_fails(self, base):
         example_pipe = Pipeline([("scale", DFStandardScaler)])
         with pytest.raises(
@@ -329,9 +363,103 @@ class TestBaseClass:
                 model.train_estimator(test_dataset)
                 model.save_estimator(tmp_path / "test_model4.pkl")
 
-    def test_is_pipeline_works_as_expected(self, pipeline_linear):
-        model = Model(pipeline_linear)
-        assert model.is_pipeline is True
+    def test_dump_serializes_correctly_without_pipeline(self, regression):
+        serialized_model = regression.to_dict()
+        expected = [
+            {
+                "module": "sklearn.linear_model.base",
+                "classname": "LinearRegression",
+                "params": {
+                    "copy_X": True,
+                    "fit_intercept": True,
+                    "n_jobs": None,
+                    "normalize": False,
+                },
+            }
+        ]
 
-        model2 = Model(LinearRegression())
-        assert model2.is_pipeline is False
+        assert serialized_model == expected
+
+    def test_dump_serializes_correctly_with_pipeline(self, pipeline_linear: Pipeline):
+        serialized_model = Model(pipeline_linear).to_dict()
+        expected = [
+            {
+                "name": "scale",
+                "module": "sklearn.preprocessing.data",
+                "classname": "StandardScaler",
+                "params": {"copy": True, "with_mean": True, "with_std": True},
+            },
+            {
+                "name": "clf",
+                "module": "sklearn.linear_model.base",
+                "classname": "LinearRegression",
+                "params": {
+                    "copy_X": True,
+                    "fit_intercept": True,
+                    "n_jobs": None,
+                    "normalize": False,
+                },
+            },
+        ]
+
+        assert serialized_model == expected
+
+    def test_can_load_serialized_model_from_pipeline(
+        self, pipeline_linear, tmp_path: pathlib.Path
+    ):
+        model = Model(pipeline_linear)
+        log = Log(
+            name="test",
+            estimator=model.to_dict(),
+            metrics=Metrics([Metric("accuracy", score=1.0)]),
+        )
+        save_file = log.save_log(tmp_path)
+        model2 = Model.from_dict(save_file)
+
+        for model1, model2 in zip(model.estimator.steps, model2.estimator.steps):
+            assert model1[0] == model2[0]
+            assert model1[1].get_params() == model2[1].get_params()
+
+    def test_can_load_serialized_model_from_estimator(
+        self, classifier: Model, tmp_path: pathlib.Path
+    ):
+        log = Log(
+            name="test",
+            estimator=classifier.to_dict(),
+            metrics=Metrics([Metric("accuracy", score=1.0)]),
+        )
+        save_file = log.save_log(tmp_path)
+        model2 = Model.from_dict(save_file)
+        assert model2.estimator.get_params() == classifier.estimator.get_params()
+
+    def test_gridsearch_uses_default_metric(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.metric == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_gridsearch_can_take_multiple_metrics(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset,
+            param_grid={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.metric == "accuracy"
+            assert result.metrics.score == result.metrics[0].score

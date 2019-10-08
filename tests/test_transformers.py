@@ -495,6 +495,33 @@ class TestFeatureUnion(TransformerBase):
 
 
 class TestStandardScaler(TransformerBase):
+    def test_can_reset_scaler_parameters(self):
+        scaler = DFStandardScaler()
+        scaler.scale_ = 0.7
+        scaler.mean_ = 0.5
+        scaler._reset()
+        assert hasattr(scaler, "scale_") is False
+
+    def test_standard_scaler_with_mean_false_returns_correct_dataframe(self, numerical):
+        numerical_scaled = numerical.copy()
+        numerical_scaled["number_a"] = (numerical["number_a"]) / 1.118033988749895
+        numerical_scaled["number_b"] = (numerical["number_b"]) / 1.118033988749895
+
+        scaler = DFStandardScaler(with_mean=False)
+        result = scaler.fit_transform(numerical)
+
+        pd.testing.assert_frame_equal(result, numerical_scaled)
+
+    def test_standard_scaler_with_std_false_returns_correct_dataframe(self, numerical):
+        numerical_scaled = numerical.copy()
+        numerical_scaled["number_a"] = numerical["number_a"] - 2.5
+        numerical_scaled["number_b"] = numerical["number_b"] - 6.5
+
+        scaler = DFStandardScaler(with_std=False)
+        result = scaler.fit_transform(numerical)
+
+        pd.testing.assert_frame_equal(result, numerical_scaled)
+
     def test_standard_scaler_returns_correct_dataframe(self, numerical):
         numerical_scaled = numerical.copy()
         numerical_scaled["number_a"] = (numerical["number_a"] - 2.5) / 1.118033988749895

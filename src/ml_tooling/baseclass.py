@@ -189,7 +189,7 @@ class Model:
         ]
 
     @classmethod
-    def from_dict(cls, log_file: pathlib.Path):
+    def from_yaml(cls, log_file: pathlib.Path):
         log_file = pathlib.Path(log_file)
         with log_file.open("r") as f:
             log = yaml.safe_load(f)

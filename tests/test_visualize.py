@@ -58,6 +58,12 @@ class TestVisualize:
 
 
 class TestConfusionMatrixPlot:
+    def test_confusion_matrix_plots_can_be_given_an_ax(self, classifier):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.confusion_matrix(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_confusion_matrix_plots_have_correct_data(self, classifier):
         ax = classifier.result.plot.confusion_matrix()
 
@@ -95,6 +101,12 @@ class TestConfusionMatrixPlot:
 
 
 class TestFeatureImportancePlot:
+    def test_feature_importance_plots_can_be_given_an_ax(self, classifier):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.feature_importance(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_feature_importance_plots_have_correct_data(self, classifier):
         ax = classifier.result.plot.feature_importance()
 
@@ -221,6 +233,12 @@ class TestFeatureImportancePlot:
 
 
 class TestLiftCurvePlot:
+    def test_lift_curve_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.lift_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_lift_curve_have_correct_data(self, classifier):
         ax = classifier.result.plot.lift_curve()
 
@@ -241,6 +259,12 @@ class TestLiftCurvePlot:
 
 
 class TestPredictionErrorPlot:
+    def test_prediction_error_plots_can_be_given_an_ax(self, regression: Model):
+        fig, ax = plt.subplots()
+        test_ax = regression.result.plot.prediction_error(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_prediction_error_plots_have_correct_data(self, regression):
         ax = regression.result.plot.prediction_error()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
@@ -256,6 +280,12 @@ class TestPredictionErrorPlot:
 
 
 class TestResidualPlot:
+    def test_residuals_plots_can_be_given_an_ax(self, regression: Model):
+        fig, ax = plt.subplots()
+        test_ax = regression.result.plot.residuals(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_residual_plots_have_correct_data(self, regression):
         ax = regression.result.plot.residuals()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
@@ -272,6 +302,12 @@ class TestResidualPlot:
 
 
 class TestRocCurve:
+    def test_roc_curve_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.roc_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_roc_curve_have_correct_data(self, classifier):
         ax = classifier.result.plot.roc_curve()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
@@ -293,6 +329,12 @@ class TestRocCurve:
 
 
 class TestPRCurve:
+    def test_prediction_error_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.pr_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
     def test_pr_curve_have_correct_data(self, classifier):
         ax = classifier.result.plot.pr_curve()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y

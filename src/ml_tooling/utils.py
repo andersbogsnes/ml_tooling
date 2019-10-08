@@ -188,10 +188,21 @@ def is_pipeline(estimator: Estimator):
 def setup_pipeline_step(
     definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
+    """
+    Rehydrates a class based on a dictionary definition, importing the module
+    and instantiating the class from the classname, setting the parameters
+
+    Parameters
+    ----------
+    definition
+
+    Returns
+    -------
+
+    """
     module = importlib.import_module(definition["module"])
-    class_ = getattr(module, definition["classname"])().set_params(
-        **definition["params"]
-    )
+    class_ = getattr(module, definition["classname"])()
+    class_ = class_.set_params(**definition["params"])
     if "name" in definition:
         return definition["name"], class_
     return class_

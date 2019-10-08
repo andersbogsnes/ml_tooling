@@ -14,6 +14,7 @@ from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
+from ml_tooling.search.gridsearch import _fit_gridpoint
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import MLToolingError
 
@@ -292,6 +293,18 @@ class TestBaseClass:
         for result in results:
             assert isinstance(result, Result)
 
+    def test_fit_gridpoint_returns_new_estimator(self, test_dataset):
+        estimator = _fit_gridpoint(
+            LogisticRegression(),
+            params={"penalty": "l2"},
+            train_x=test_dataset.train_x,
+            train_y=test_dataset.train_y,
+        )
+
+        assert estimator.get_params()["penalty"] == "l2"
+        assert estimator.coef_ is not None
+        assert isinstance(estimator, LogisticRegression)
+
     def test_log_context_manager_works_as_expected(self, regression):
         assert regression.config.LOG is False
         assert "runs" == regression.config.RUN_DIR.name
@@ -414,7 +427,7 @@ class TestBaseClass:
             metrics=Metrics([Metric("accuracy", score=1.0)]),
         )
         save_file = log.save_log(tmp_path)
-        model2 = Model.from_dict(save_file)
+        model2 = Model.from_yaml(save_file)
 
         for model1, model2 in zip(model.estimator.steps, model2.estimator.steps):
             assert model1[0] == model2[0]
@@ -429,7 +442,7 @@ class TestBaseClass:
             metrics=Metrics([Metric("accuracy", score=1.0)]),
         )
         save_file = log.save_log(tmp_path)
-        model2 = Model.from_dict(save_file)
+        model2 = Model.from_yaml(save_file)
         assert model2.estimator.get_params() == classifier.estimator.get_params()
 
     def test_gridsearch_uses_default_metric(

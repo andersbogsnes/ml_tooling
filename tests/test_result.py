@@ -135,3 +135,11 @@ class TestResultGroup:
 
         assert len(run_files) == 2
         assert all(("IrisData_LogisticRegression" in file.name for file in run_files))
+
+    def test_logging_a_result_works_as_expected(self, classifier):
+        result = classifier.result
+        log = result.log()
+
+        assert log.name == "IrisData_LogisticRegression"
+        assert "accuracy" in log.metrics
+        assert log.estimator_path is None

@@ -147,7 +147,7 @@ class Model:
         pathlib.Path
             The path to where the estimator file was saved
         """
-        now_str = datetime.datetime.now().strftime("_%Y-%m-%d_%H:%M:%S")
+        now_str = datetime.datetime.now().strftime("_%Y-%m-%d_%H:%M:%S.%f.pkl")
         storage.filename = self.estimator_name + now_str
         estimator_file = storage.save(self.estimator)
 

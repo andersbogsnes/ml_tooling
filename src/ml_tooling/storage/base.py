@@ -8,7 +8,6 @@ class StorageEnvironment(Enum):
     PROD = 3
 
 class Storage(metaclass=ABCMeta):
-
     @abstractmethod
     def load(self, file_path):
         """
@@ -23,7 +22,7 @@ class Storage(metaclass=ABCMeta):
         raise NotImplementedError
     
     @abstractmethod
-    def save(self, estimator_file):
+    def save(self, estimator_file, filename):
         """
         Abstract method to be implemented by the user.
         Defines method used to save data from the storage type

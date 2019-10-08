@@ -1,18 +1,17 @@
 from ml_tooling.storage.base import Storage, StorageEnvironment
 from ml_tooling.utils import MLToolingError
 
+import joblib
 from typing import List, Any
 from contextlib import contextmanager
 from pathlib import Path
-from joblib import load, dump
+
 
 
 class FileStorage(Storage):
     
     def __init__(self, dir_path=None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
-        self.filename = None
-        self.file = None
 
     def __enter__(self):
         if not self.dir_path.exists():
@@ -68,10 +67,11 @@ class FileStorage(Storage):
             any python object loaded from disk
         """
         estimator_path = Path(file_path)
-        return load(estimator_path)
+        return joblib.load(estimator_path)
 
     def save(self,
-        estimator_file,
+        estimator,
+        filename,
         env: StorageEnvironment = StorageEnvironment.DEV
     ) -> Path:
         """
@@ -86,7 +86,7 @@ class FileStorage(Storage):
         -------
         To save your trained estimator, use the FileStorage context manager.
             with FileStorage('/path/to/save/dir/') as storage:
-                file_path = storage.save(estimator_file)
+                file_path = storage.save(estimator)
 
         We now have saved an estimator to a pickle file.
 
@@ -97,10 +97,10 @@ class FileStorage(Storage):
         """
         if not self.dir_path.exists():
             self.dir_path.mkdir(parents=True)
-        if self.filename is None:
+        if filename is None:
             raise MLToolingError(
-                f"No filename was set for storage, a filename must be specified"
+                f"No filename given to save, a filename must be specified"
             )
-        file_path = self.dir_path.joinpath(self.filename)
-        dump(estimator_file, file_path)
+        file_path = self.dir_path.joinpath(Path(filename))
+        joblib.dump(estimator, file_path)
         return file_path

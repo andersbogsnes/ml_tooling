@@ -12,25 +12,22 @@ except ImportError:
 
 class ArtifactoryStorage(Storage):
     
-    def __init__(self, repo_path=None, auth=None):
+    def __init__(self, repo_path=None, auth: Tuple[str, str] = None):
         self.auth = auth
-        self.repo_path = Path(repo_path)
-        self.filename = None
+        self.repo_path = repo_path
 
-    def load(self):
-        file_path = self.repo_path.joinpath(self.filename)
-        artifactory_path = ArtifactoryPath(
-            file_path,
-            auth=self.auth
-        )
-        
+    def load(self, filename):
+        file_path = f'{self.repo_path}{filename}'
+        artifactory_path = ArtifactoryPath(file_path, auth=self.auth)
         with artifactory_path.open() as f:
             return f.read()
 
-    def save(self, filename):
-        file_path = self.repo_path + filename
-        artifactory_path = ArtifactoryPath(file_path, auth=self.auth)
-        return artifactory_path.deploy_file(filename)
+    def save(self, filepath, env: StorageEnvironment = StorageEnvironment.DEV
+             ):
+        environment_path = f'{self.repo_path}/{env.name}/'
+        artifactory_path = ArtifactoryPath(environment_path, auth=self.auth)
+        artifactory_path.mkdir(exist_ok=True)
+        return artifactory_path.deploy_file(filepath)
 
     def get_list(self):
         # get estimators for this dataset? dataset + model?

@@ -30,12 +30,6 @@ from ml_tooling.utils import (
 
 logger = create_logger("ml_tooling")
 
-from enum import Enum
-class Environment(Enum):
-    DEV = 1
-    TEST = 2
-    PROD = 3
-
 class Model:
     """
     Base class for Models
@@ -71,8 +65,8 @@ class Model:
 
         return class_name
 
-    @classmethod
-    def list_estimators(cls, storage: Storage) -> List[pathlib.Path]:
+    @staticmethod
+    def list_estimators(storage: Storage) -> List[pathlib.Path]:
         """
         Gets a list of estimators from the given Storage
 
@@ -150,9 +144,9 @@ class Model:
         pathlib.Path
             The path to where the estimator file was saved
         """
-        now_str = datetime.datetime.now().strftime("_%Y-%m-%d_%H:%M:%S.%f.pkl")
-        storage.filename = self.estimator_name + now_str
-        estimator_file = storage.save(self.estimator)
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+        filename = f"{self.estimator_name}_{now_str}.pkl"
+        estimator_file = storage.save(self.estimator, filename)
 
         logger.debug(f"Attempting to save estimator {estimator_file}")
 

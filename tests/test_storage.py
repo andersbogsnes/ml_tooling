@@ -8,8 +8,7 @@ from ml_tooling.storage.file import FileStorage
 
 def test_can_save_file(classifier, tmp_path):
     storage = FileStorage(tmp_path)
-    storage.filename = 'estimator'
-    expected_file = storage.save(classifier.estimator)
+    expected_file = storage.save(classifier.estimator, 'estimator')
     assert expected_file.exists()
 
 def test_can_save_with_model(classifier, tmp_path):
@@ -23,8 +22,7 @@ def test_can_save_with_model(classifier, tmp_path):
 
 def test_can_load_file(classifier, tmp_path):
     storage = FileStorage(tmp_path)
-    storage.filename = 'estimator'
-    storage.save(classifier.estimator)
+    storage.save(classifier.estimator, 'estimator')
     loaded_file = storage.load(tmp_path / 'estimator')
     assert isinstance(loaded_file, BaseEstimator)
 

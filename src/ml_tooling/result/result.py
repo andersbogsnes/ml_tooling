@@ -44,4 +44,7 @@ class Result:
         return Log.from_result(result=self, estimator_path=saved_estimator_path)
 
     def __repr__(self):
-        return f"Result {self.model.estimator_name} {self.metrics.to_dict()}"
+        metrics = {
+            name: round(value, 2) for name, value in self.metrics.to_dict().items()
+        }
+        return f"<Result {self.model.estimator_name}: {metrics}>"

@@ -55,7 +55,7 @@ Now we can start training our model:
     <BostonData - Dataset>
     >>> result = regression.score_estimator(data)
     >>> result
-    <Result LinearRegression: r2: 0.68>
+    <Result LinearRegression: {'r2': 0.68}>
 
 We can get some pretty plots:
 
@@ -90,11 +90,9 @@ We can try out many different models:
     >>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
     >>> best_model, all_results = Model.test_estimators(data,
     ...                                                 models_to_try,
-    ...                                                 metric='neg_mean_squared_error')
+    ...                                                 metrics='neg_mean_squared_error')
     >>> all_results
-    [<Result LinearRegression: neg_mean_squared_error: -22.1>
-    <Result Ridge: neg_mean_squared_error: -22.48>
-    <Result LassoLars: neg_mean_squared_error: -72.26>]
+    ResultGroup(results=[<Result LinearRegression: {'neg_mean_squared_error': -22.1}>, <Result Ridge: {'neg_mean_squared_error': -22.48}>, <Result LassoLars: {'neg_mean_squared_error': -72.26}>])
 
 We get the results in sorted order for each model and see that LinearRegression gives us the best result!
 

@@ -77,10 +77,8 @@ class Model:
 
         Example
         -------
-            model = Model(LinearRegression())
-            storage = FileStorage('path/to/estimators_dir')
-
-            estimator_list = Model.list_estimators(storage)
+            with FileStorage('path/to/estimators_dir') as storage:
+                estimator_list = Model.list_estimators(storage)
 
         Returns
         -------
@@ -104,8 +102,8 @@ class Model:
         Example
         -------
         We can load a trained estimator from disk::
-            storage = FileStorage()
-            my_estimator = Model.load_estimator(storage, 'path/to/estimator')
+            with FileStorage() as storage:
+                my_estimator = Model.load_estimator(storage, 'path/to/estimator')
 
         We now have a trained estimator loaded.
 

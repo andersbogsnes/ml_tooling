@@ -2,10 +2,10 @@ from ml_tooling.storage.base import Storage, StorageEnvironment
 from ml_tooling.utils import MLToolingError
 
 import joblib
-from typing import List, Any
+from typing import List, Any, Union
 from contextlib import contextmanager
 from pathlib import Path
-
+from sklearn.base import BaseEstimator
 
 
 class FileStorage(Storage):
@@ -43,7 +43,7 @@ class FileStorage(Storage):
         """
         return sorted(self.dir_path.glob('*.pkl'))
     
-    def load(self, file_path) -> Any:
+    def load(self, file_path: Union[Path, str]) -> Any:
         """
         Loads a joblib pickled estimator from given filepath and returns a Model
         instatiated with the estimator.
@@ -70,8 +70,8 @@ class FileStorage(Storage):
         return joblib.load(estimator_path)
 
     def save(self,
-        estimator,
-        filename,
+        estimator: BaseEstimator,
+        filename: Union[Path, str],
         env: StorageEnvironment = StorageEnvironment.DEV
     ) -> Path:
         """

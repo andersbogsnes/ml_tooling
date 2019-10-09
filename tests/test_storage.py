@@ -38,9 +38,12 @@ def test_can_load_with_model(classifier, tmp_path):
 
 def test_can_list_estimators(classifier, tmp_path):
     storage = FileStorage(tmp_path)
-    saved_filenames = map(lambda _: classifier.save_estimator(storage), [1,2,3])
-    for filename in saved_filenames:
-        assert filename.exists()
+    for _ in range(3):
+        classifier.save_estimator(storage)
+    with FileStorage(tmp_path) as storage_context:
+        filenames_list = Model.list_estimators(storage_context)
+        for filename in filenames_list:
+            assert filename.exists()
 
 def test_cannot_instantiate_an_abstract_baseclass():
     with pytest.raises(TypeError):

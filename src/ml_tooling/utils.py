@@ -187,7 +187,7 @@ def setup_pipeline_step(
     definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
-    Rehydrates a class based on a dictionary definition, importing the module
+    Hydrates a class based on a dictionary definition, importing the module
     and instantiating the class from the classname, setting the parameters of the class as found
     in the input dictionary
 

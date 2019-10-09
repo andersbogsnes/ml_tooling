@@ -44,4 +44,4 @@ class Result:
         return Log.from_result(result=self, estimator_path=saved_estimator_path)
 
     def __repr__(self):
-        return f"Result {self.model.estimator.class_name} {self.metrics.to_dict()}"
+        return f"Result {self.model.estimator_name} {self.metrics.to_dict()}"

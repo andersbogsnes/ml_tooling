@@ -433,7 +433,6 @@ class TestBaseClass:
         assert pipe1[0]["params"] == {
             "columns": ["sepal length (cm)", "sepal width (cm)"]
         }
-
         assert pipe1[1]["name"] == "scale"
         assert pipe1[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
 
@@ -441,7 +440,6 @@ class TestBaseClass:
         assert pipe2[0]["params"] == {
             "columns": ["petal length (cm)", "petal width (cm)"]
         }
-
         assert pipe2[1]["name"] == "scale"
         assert pipe2[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
 

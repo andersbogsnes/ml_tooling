@@ -90,7 +90,7 @@ class Dataset(metaclass=abc.ABCMeta):
         return True
 
     @abc.abstractmethod
-    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, np.array]:
+    def load_training_data(self) -> Tuple[pd.DataFrame, np.array]:
         """Abstract method to be implemented by user.
         Defines data to be used at training time where X is a dataframe and y is a numpy array
 

@@ -1,3 +1,5 @@
+from typing import Any, Callable, Union
+
 import pytest
 import pandas as pd
 import numpy as np
@@ -5,6 +7,8 @@ from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
+from ml_tooling import Model
+from ml_tooling.data import Dataset
 from ml_tooling.result import Result
 from ml_tooling.utils import TransformerError
 from ml_tooling.transformers import (
@@ -25,17 +29,17 @@ from ml_tooling.transformers import (
 
 class TransformerBase:
     @staticmethod
-    def create_pipeline(transformer):
+    def create_pipeline(transformer) -> Pipeline:
         pipe = Pipeline([("transform", transformer), ("clf", DummyClassifier())])
         return pipe
 
-    def create_model(self, base, transformer):
+    def create_model(self, transformer) -> Model:
         pipe = self.create_pipeline(transformer)
-        model = base(pipe)
+        model = Model(pipe)
         model.config.N_JOBS = 2
         return model
 
-    def create_gridsearch(self, transformer):
+    def create_gridsearch(self, transformer) -> GridSearchCV:
         pipe = self.create_pipeline(transformer)
         return GridSearchCV(
             pipe,
@@ -49,7 +53,9 @@ class TestDFSelector(TransformerBase):
     @pytest.mark.parametrize(
         "container", [["category_a"], "category_a", ("category_a",)]
     )
-    def test_df_selector_returns_correct_dataframe(self, categorical, container):
+    def test_df_selector_returns_correct_dataframe(
+        self, categorical: pd.DataFrame, container
+    ):
         select = Select(container)
         result = select.fit_transform(categorical)
 
@@ -57,7 +63,7 @@ class TestDFSelector(TransformerBase):
         assert len(categorical) == len(result)
         assert {"category_a"} == set(result.columns)
 
-    def test_df_selector_with_multiple_columns(self, categorical):
+    def test_df_selector_with_multiple_columns(self, categorical: pd.DataFrame):
         select = Select(["category_a", "category_b"])
         result = select.fit_transform(categorical)
 
@@ -65,7 +71,7 @@ class TestDFSelector(TransformerBase):
         assert len(categorical) == len(result)
         assert {"category_a", "category_b"} == set(result.columns)
 
-    def test_df_selector_raise_missing_column(self, categorical):
+    def test_df_selector_raise_missing_column(self, categorical: pd.DataFrame):
         select = Select(["category_a", "category_b", "category_c"])
 
         with pytest.raises(
@@ -73,25 +79,27 @@ class TestDFSelector(TransformerBase):
         ):
             select.fit_transform(categorical)
 
-    def test_df_selector_works_cross_validated(self, test_dataset, base):
-        model = self.create_model(base, Select("sepal length (cm)"))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_df_selector_works_cross_validated(self, test_dataset: Dataset):
+        model = self.create_model(Select("sepal length (cm)"))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_df_selector_works_gridsearch(self, base, test_dataset):
+    def test_df_selector_works_gridsearch(self, test_dataset):
         grid = self.create_gridsearch(Select("sepal length (cm)"))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestFillNA(TransformerBase):
     @pytest.mark.parametrize("value, strategy", [(None, None), (0, "mean")])
-    def test_fillna_raises_error(self, numerical_na, value, strategy):
+    def test_fillna_raises_error(self, numerical_na: pd.DataFrame, value, strategy):
         with pytest.raises(TransformerError):
             FillNA(value=value, strategy=strategy).fit(numerical_na)
 
-    def test_fillna_returns_dataframe_unchanged_if_no_nans(self, categorical):
+    def test_fillna_returns_dataframe_unchanged_if_no_nans(
+        self, categorical: pd.DataFrame
+    ):
         imputer = FillNA("Unknown")
         result = imputer.fit_transform(categorical)
         pd.testing.assert_frame_equal(result, categorical)
@@ -122,7 +130,7 @@ class TestFillNA(TransformerBase):
         ],
     )
     def test_fillna_imputes_categorical_na_correct(
-        self, categorical_na, value, strategy, expected
+        self, categorical_na: pd.DataFrame, value: Any, strategy: Any, expected: Any
     ):
         imputer = FillNA(value=value, strategy=strategy)
         result = imputer.fit_transform(categorical_na)
@@ -162,7 +170,11 @@ class TestFillNA(TransformerBase):
         ],
     )
     def test_fill_na_imputes_numerical_na_correct(
-        self, numerical_na, value, strategy, expected
+        self,
+        numerical_na: pd.DataFrame,
+        value: None,
+        strategy: str,
+        expected: pd.DataFrame,
     ):
         imputer = FillNA(value=value, strategy=strategy)
         result = imputer.fit_transform(numerical_na)
@@ -196,7 +208,11 @@ class TestFillNA(TransformerBase):
         ],
     )
     def test_fillna_imputes_pandas_categorical_correct(
-        self, value, strategy, expected, categorical_na
+        self,
+        value: Any,
+        strategy: Any,
+        expected: pd.DataFrame,
+        categorical_na: pd.DataFrame,
     ):
         categorical_na["category_a"] = categorical_na["category_a"].astype("category")
         categorical_na["category_b"] = categorical_na["category_b"].astype("category")
@@ -206,20 +222,20 @@ class TestFillNA(TransformerBase):
 
         pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
-    def test_fillna_works_cross_validated(self, base, test_dataset):
-        model = self.create_model(base, FillNA(0))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_fillna_works_cross_validated(self, test_dataset: Dataset):
+        model = self.create_model(FillNA(0))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_fillna_works_gridsearch(self, base, test_dataset):
+    def test_fillna_works_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(FillNA(0))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestToCategorical(TransformerBase):
-    def test_to_categorical_returns_correct_dataframe(self, categorical):
+    def test_to_categorical_returns_correct_dataframe(self, categorical: pd.DataFrame):
         to_cat = ToCategorical()
         result = to_cat.fit_transform(categorical)
         expected_cols = [
@@ -237,7 +253,7 @@ class TestToCategorical(TransformerBase):
         for col in expected_cols:
             assert pd.api.types.is_numeric_dtype(result[col])
 
-    def test_to_categorical_discards_unseen_values(self, categorical):
+    def test_to_categorical_discards_unseen_values(self, categorical: pd.DataFrame):
         to_cat = ToCategorical()
         to_cat.fit(categorical)
         new_data = pd.DataFrame(
@@ -258,20 +274,20 @@ class TestToCategorical(TransformerBase):
         assert 0 == result.isna().sum().sum()
         assert set(expected_cols) == set(result.columns)
 
-    def test_to_categorical_works_in_cv(self, base, test_dataset):
-        model = self.create_model(base, ToCategorical())
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_to_categorical_works_in_cv(self, test_dataset: Dataset):
+        model = self.create_model(ToCategorical())
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_to_categorical_works_gridsearch(self, base, test_dataset):
+    def test_to_categorical_works_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(ToCategorical())
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestBinner(TransformerBase):
-    def test_binner_returns_correctly(self, numerical):
+    def test_binner_returns_correctly(self, numerical: pd.DataFrame):
         labels = ["1", "2", "3", "4"]
         binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
         result = binner.fit_transform(numerical[["number_a"]])
@@ -282,7 +298,7 @@ class TestBinner(TransformerBase):
         assert 4 == len(result["number_a"].cat.categories)
         assert set(labels) == set(result["number_a"].cat.categories)
 
-    def test_binner_returns_nan_on_unseen_data(self, numerical):
+    def test_binner_returns_nan_on_unseen_data(self, numerical: pd.DataFrame):
         labels = ["1", "2", "3", "4"]
         binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
         binner.fit(numerical[["number_a"]])
@@ -294,20 +310,20 @@ class TestBinner(TransformerBase):
         assert len(new_data) == len(result)
         assert len(new_data) == result.isna().sum().sum()
 
-    def test_binner_can_be_used_cv(self, base, test_dataset):
-        model = self.create_model(base, Binner(3))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_binner_can_be_used_cv(self, test_dataset: Dataset):
+        model = self.create_model(Binner(3))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_binner_works_gridsearch(self, base, test_dataset):
+    def test_binner_works_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(Binner(3))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestRenamer(TransformerBase):
-    def test_renamer_returns_correctly(self, numerical):
+    def test_renamer_returns_correctly(self, numerical: pd.DataFrame):
         new_col_names = ["test_a", "test_b"]
         renamer = Renamer(new_col_names)
         result = renamer.fit_transform(numerical)
@@ -316,7 +332,9 @@ class TestRenamer(TransformerBase):
         assert len(numerical) == len(result)
         assert set(new_col_names) == set(result.columns)
 
-    def test_renamer_works_correctly_if_only_given_string(self, numerical):
+    def test_renamer_works_correctly_if_only_given_string(
+        self, numerical: pd.DataFrame
+    ):
         single_column = numerical.iloc[:, 1].to_frame()
         renamer = Renamer("test")
         result = renamer.fit_transform(single_column)
@@ -325,26 +343,26 @@ class TestRenamer(TransformerBase):
         assert ["test"] == result.columns
         assert len(numerical) == len(result)
 
-    def test_mismatched_no_of_names_raises(self, numerical):
+    def test_mismatched_no_of_names_raises(self, numerical: pd.DataFrame):
         new_col_names = ["test_a"]
         renamer = Renamer(new_col_names)
         with pytest.raises(TransformerError):
             renamer.fit_transform(numerical)
 
-    def test_renamer_works_in_cv(self, base, test_dataset):
-        model = self.create_model(base, Renamer(["1", "2", "3", "4"]))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_renamer_works_in_cv(self, test_dataset: Dataset):
+        model = self.create_model(Renamer(["1", "2", "3", "4"]))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_renamer_works_gridsearch(self, base, test_dataset):
+    def test_renamer_works_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(Renamer(["1", "2", "3", "4"]))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestDateEncoder(TransformerBase):
-    def test_date_encoder_returns_correctly(self, dates):
+    def test_date_encoder_returns_correctly(self, dates: pd.DataFrame):
         date_coder = DateEncoder()
         result = date_coder.fit_transform(dates)
 
@@ -359,7 +377,7 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_month" in result.columns
         assert "date_a_week" in result.columns
 
-    def test_date_encoder_returns_only_year(self, dates):
+    def test_date_encoder_returns_only_year(self, dates: pd.DataFrame):
         year_coder = DateEncoder(day=False, month=False, week=False, year=True)
         result = year_coder.fit_transform(dates)
 
@@ -371,7 +389,7 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_month" not in result.columns
         assert "date_a_week" not in result.columns
 
-    def test_date_encoder_returns_only_month(self, dates):
+    def test_date_encoder_returns_only_month(self, dates: pd.DataFrame):
         month_coder = DateEncoder(day=False, month=True, week=False, year=False)
         result = month_coder.fit_transform(dates)
 
@@ -383,7 +401,7 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_month" in result.columns
         assert "date_a_week" not in result.columns
 
-    def test_date_encoder_returns_only_day(self, dates):
+    def test_date_encoder_returns_only_day(self, dates: pd.DataFrame):
         date_coder = DateEncoder(day=True, month=False, week=False, year=False)
         result = date_coder.fit_transform(dates)
 
@@ -395,7 +413,7 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_month" not in result.columns
         assert "date_a_week" not in result.columns
 
-    def test_date_encoder_returns_only_week(self, dates):
+    def test_date_encoder_returns_only_week(self, dates: pd.DataFrame):
         week_coder = DateEncoder(day=False, month=False, week=True, year=False)
         result = week_coder.fit_transform(dates)
 
@@ -407,12 +425,12 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_month" not in result.columns
         assert "date_a_week" in result.columns
 
-    def test_date_encoder_works_in_cv(self, dates):
+    def test_date_encoder_works_in_cv(self, dates: pd.DataFrame):
         pipe = self.create_pipeline(DateEncoder())
         score = cross_val_score(pipe, dates, [0, 1, 1], n_jobs=2, cv=2)
         assert 2 == len(score)
 
-    def test_date_encoder_works_in_grid_search(self, dates):
+    def test_date_encoder_works_in_grid_search(self, dates: pd.DataFrame):
         pipe = self.create_pipeline(DateEncoder())
         grid = GridSearchCV(
             pipe,
@@ -425,7 +443,7 @@ class TestDateEncoder(TransformerBase):
 
 
 class TestFreqFeature(TransformerBase):
-    def test_freqfeature_returns_correctly(self, categorical):
+    def test_freqfeature_returns_correctly(self, categorical: pd.DataFrame):
         freq_feature = FreqFeature()
         result = freq_feature.fit_transform(categorical)
 
@@ -440,7 +458,7 @@ class TestFreqFeature(TransformerBase):
         assert 0.25 == result.iloc[1, 1]
         assert np.all(1.5 == result.sum())
 
-    def test_freqfeature_handles_nans_correctly(self, categorical_na):
+    def test_freqfeature_handles_nans_correctly(self, categorical_na: pd.DataFrame):
         freq_feature = FreqFeature()
         result = freq_feature.fit_transform(categorical_na)
 
@@ -450,7 +468,9 @@ class TestFreqFeature(TransformerBase):
         assert 0 == result.isna().sum().sum()
         assert 2 / 3 == result.iloc[0, 0]
 
-    def test_freq_features_returns_0_when_unseen_value_is_given(self, categorical):
+    def test_freq_features_returns_0_when_unseen_value_is_given(
+        self, categorical: pd.DataFrame
+    ):
         freq_feature = FreqFeature()
         freq_feature.fit(categorical)
 
@@ -462,13 +482,13 @@ class TestFreqFeature(TransformerBase):
         assert 0 == result.iloc[-1, 0]
 
     def test_freq_feature_can_be_used_in_cross_validation_string_data(
-        self, categorical
+        self, categorical: pd.DataFrame
     ):
         pipe = self.create_pipeline(FreqFeature())
         score = cross_val_score(pipe, categorical, np.array([1, 0, 1, 0]), cv=2)
         assert np.all(score >= 0)
 
-    def test_freq_feature_can_be_used_in_grid_search(self, categorical):
+    def test_freq_feature_can_be_used_in_grid_search(self, categorical: pd.DataFrame):
         pipe = self.create_pipeline(FreqFeature())
         model = GridSearchCV(
             pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2
@@ -478,7 +498,9 @@ class TestFreqFeature(TransformerBase):
 
 
 class TestFeatureUnion(TransformerBase):
-    def test_featureunion_returns_concatenated_df(self, categorical, numerical):
+    def test_featureunion_returns_concatenated_df(
+        self, categorical: pd.DataFrame, numerical: pd.DataFrame
+    ):
         df = pd.concat([categorical, numerical], axis=1)
         first_pipe = make_pipeline(
             Select(["category_a", "category_b"]), ToCategorical()
@@ -502,7 +524,9 @@ class TestStandardScaler(TransformerBase):
         scaler._reset()
         assert hasattr(scaler, "scale_") is False
 
-    def test_standard_scaler_with_mean_false_returns_correct_dataframe(self, numerical):
+    def test_standard_scaler_with_mean_false_returns_correct_dataframe(
+        self, numerical: pd.DataFrame
+    ):
         numerical_scaled = numerical.copy()
         numerical_scaled["number_a"] = (numerical["number_a"]) / 1.118033988749895
         numerical_scaled["number_b"] = (numerical["number_b"]) / 1.118033988749895
@@ -512,7 +536,9 @@ class TestStandardScaler(TransformerBase):
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_standard_scaler_with_std_false_returns_correct_dataframe(self, numerical):
+    def test_standard_scaler_with_std_false_returns_correct_dataframe(
+        self, numerical: pd.DataFrame
+    ):
         numerical_scaled = numerical.copy()
         numerical_scaled["number_a"] = numerical["number_a"] - 2.5
         numerical_scaled["number_b"] = numerical["number_b"] - 6.5
@@ -522,7 +548,7 @@ class TestStandardScaler(TransformerBase):
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_standard_scaler_returns_correct_dataframe(self, numerical):
+    def test_standard_scaler_returns_correct_dataframe(self, numerical: pd.DataFrame):
         numerical_scaled = numerical.copy()
         numerical_scaled["number_a"] = (numerical["number_a"] - 2.5) / 1.118033988749895
         numerical_scaled["number_b"] = (numerical["number_b"] - 6.5) / 1.118033988749895
@@ -532,7 +558,9 @@ class TestStandardScaler(TransformerBase):
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_standard_scaler_works_in_pipeline_with_feature_union(self, numerical):
+    def test_standard_scaler_works_in_pipeline_with_feature_union(
+        self, numerical: pd.DataFrame
+    ):
         numerical_scaled = numerical.copy()
         numerical_scaled["number_a"] = (numerical["number_a"] - 2.5) / 1.118033988749895
         numerical_scaled["number_b"] = (numerical["number_b"] - 6.5) / 1.118033988749895
@@ -546,15 +574,15 @@ class TestStandardScaler(TransformerBase):
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_standard_scaler_works_in_cv(self, base, test_dataset):
-        model = self.create_model(base, DFStandardScaler())
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_standard_scaler_works_in_cv(self, test_dataset: Dataset):
+        model = self.create_model(DFStandardScaler())
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_standard_scaler_works_in_gridsearch(self, base, test_dataset):
+    def test_standard_scaler_works_in_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(DFStandardScaler())
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
@@ -567,7 +595,9 @@ class TestDFRowFunc(TransformerBase):
             (1337, "1337 is not a callable or a string"),
         ],
     )
-    def test_dfrowfunc_test_strategy_input(self, strategy, match, numerical_na):
+    def test_dfrowfunc_test_strategy_input(
+        self, strategy: Any, match: str, numerical_na: pd.DataFrame
+    ):
         with pytest.raises(TransformerError, match=match):
             DFRowFunc(strategy=strategy).fit(numerical_na)
 
@@ -583,21 +613,24 @@ class TestDFRowFunc(TransformerBase):
         ],
     )
     def test_dfrowfunc_sum_built_in_and_callable(
-        self, numerical_na, strategy, expected
+        self,
+        numerical_na: pd.DataFrame,
+        strategy: Union[Callable, str],
+        expected: pd.DataFrame,
     ):
         dfrowfunc = DFRowFunc(strategy=strategy)
         result = dfrowfunc.fit_transform(numerical_na)
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_dfrowfunc_cross_validates_correctly(self, base, test_dataset):
-        model = self.create_model(base, DFRowFunc(strategy="mean"))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_dfrowfunc_cross_validates_correctly(self, test_dataset: Dataset):
+        model = self.create_model(DFRowFunc(strategy="mean"))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_dfrowfunc_works_in_gridsearch(self, base, test_dataset):
+    def test_dfrowfunc_works_in_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(DFRowFunc(strategy="mean"))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
@@ -637,7 +670,7 @@ def wrapper_arbitrary_test_func(df, y, z):
     ],
 )
 def test_func_transformer_returns_correctly_numerical(
-    numerical, passed_func, expected, kwargs
+    numerical: pd.DataFrame, passed_func: Callable, expected: pd.DataFrame, kwargs: dict
 ):
     transformer = FuncTransformer(passed_func, **kwargs)
     result = transformer.fit_transform(numerical)
@@ -646,7 +679,9 @@ def test_func_transformer_returns_correctly_numerical(
 
 
 class TestFuncTransformer(TransformerBase):
-    def test_func_transformer_returns_correctly_on_categorical(self, categorical):
+    def test_func_transformer_returns_correctly_on_categorical(
+        self, categorical: pd.DataFrame
+    ):
         func_transformer = FuncTransformer(lambda x: x.str.upper())
         result = func_transformer.fit_transform(categorical)
 
@@ -655,20 +690,22 @@ class TestFuncTransformer(TransformerBase):
         for col in result.columns:
             assert result[col].str.isupper().all()
 
-    def test_func_transformer_can_be_validated(self, base, test_dataset):
-        model = self.create_model(base, FuncTransformer(np.sum))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_func_transformer_can_be_validated(self, test_dataset: Dataset):
+        model = self.create_model(FuncTransformer(np.sum))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_func_transformer_works_in_gridsearch(self, base, test_dataset):
+    def test_func_transformer_works_in_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(FuncTransformer(np.mean))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
 
 class TestBinarize(TransformerBase):
-    def test_binarize_returns_correctly_on_categorical_na(self, categorical_na):
+    def test_binarize_returns_correctly_on_categorical_na(
+        self, categorical_na: pd.DataFrame
+    ):
         binarize = Binarize(value="a1")
         result = binarize.fit_transform(categorical_na)
         expected = pd.DataFrame(
@@ -677,20 +714,22 @@ class TestBinarize(TransformerBase):
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
-    def test_binarize_returns_correctly_on_numerical_na(self, numerical_na):
+    def test_binarize_returns_correctly_on_numerical_na(
+        self, numerical_na: pd.DataFrame
+    ):
         binarize = Binarize(value=2)
         result = binarize.fit_transform(numerical_na)
         expected = pd.DataFrame({"number_a": [0, 1, 0, 0], "number_b": [0, 0, 0, 0]})
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
-    def test_binarize_can_be_used_cv(self, base, test_dataset):
-        model = self.create_model(base, Binarize(value="a1"))
-        result = model.score_metrics(test_dataset, cv=2)
+    def test_binarize_can_be_used_cv(self, test_dataset: Dataset):
+        model = self.create_model(Binarize(value="a1"))
+        result = model.score_estimator(test_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_binarize_works_in_gridsearch(self, base, test_dataset):
+    def test_binarize_works_in_gridsearch(self, test_dataset: Dataset):
         grid = self.create_gridsearch(Binarize(value=2))
-        model = base(grid)
-        result = model.score_metrics(test_dataset)
+        model = Model(grid)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)

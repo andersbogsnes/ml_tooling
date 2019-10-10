@@ -14,7 +14,9 @@ from ml_tooling.result.viz import create_plotter
 
 class TestResult:
     @pytest.mark.parametrize("cv", ["with_cv", "without_cv"])
-    def test_linear_model_returns_a_result(self, regression, regression_cv, cv):
+    def test_linear_model_returns_a_result(
+        self, regression: Model, regression_cv: Model, cv: str
+    ):
         if cv == "with_cv":
             result = regression_cv.result
             assert isinstance(result, Result)
@@ -31,7 +33,9 @@ class TestResult:
         assert result.model.estimator_name == "LinearRegression"
 
     @pytest.mark.parametrize("cv", ["with_cv", "without_cv"])
-    def test_regression_model_returns_a_result(self, classifier, classifier_cv, cv):
+    def test_regression_model_returns_a_result(
+        self, classifier: Model, classifier_cv: Model, cv: str
+    ):
         if cv == "with_cv":
             result = classifier_cv.result
             assert isinstance(result, Result)
@@ -49,25 +53,25 @@ class TestResult:
         assert result.model.estimator_name == "LogisticRegression"
 
     def test_pipeline_regression_returns_correct_result(
-        self, base, pipeline_linear, test_dataset
+        self, pipeline_linear: Pipeline, test_dataset: Dataset
     ):
-        model = base(pipeline_linear)
-        result = model.score_metrics(test_dataset)
+        model = Model(pipeline_linear)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LinearRegression"
         assert isinstance(result.model.estimator, Pipeline)
 
     def test_pipeline_logistic_returns_correct_result(
-        self, base, pipeline_logistic, test_dataset
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
-        model = base(pipeline_logistic)
-        result = model.score_metrics(test_dataset)
+        model = Model(pipeline_logistic)
+        result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LogisticRegression"
         assert isinstance(result.model.estimator, Pipeline)
 
     def test_result_log_model_returns_correctly(
-        self, tmp_path, classifier, test_dataset
+        self, tmp_path: pathlib.Path, classifier: Model, test_dataset: Dataset
     ):
         runs = tmp_path / "runs"
         result = Result(
@@ -136,7 +140,7 @@ class TestResultGroup:
         assert len(run_files) == 2
         assert all(("IrisData_LogisticRegression" in file.name for file in run_files))
 
-    def test_logging_a_result_works_as_expected(self, classifier):
+    def test_logging_a_result_works_as_expected(self, classifier: Model):
         result = classifier.result
         log = result.log()
 

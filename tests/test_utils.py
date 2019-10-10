@@ -13,7 +13,6 @@ from ml_tooling.utils import (
     get_git_hash,
     find_estimator_file,
     MLToolingError,
-    _create_param_grid,
     _validate_estimator,
     make_dir,
 )
@@ -137,32 +136,6 @@ def test_validate_estimator_should_raise_on_invalid_input():
 
 
 class TestGridsearchParams:
-    def test_create_gridsearch_params_in_pipeline_returns_correct(
-        self, pipeline_forest_classifier
-    ):
-        param_grid = {"n_estimators": [5, 10, 20], "max_depth": [3, 4, 5]}
-        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
-
-        assert [
-            {"clf__n_estimators": [5, 10, 20], "clf__max_depth": [3, 4, 5]}
-        ] == grid.param_grid
-
-    def test_create_gridsearch_params_returns_if_already_prepended(
-        self, pipeline_forest_classifier
-    ):
-        param_grid = {"clf__n_estimators": [5, 10, 20], "clf__max_depth": [3, 4, 5]}
-
-        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
-
-        assert [param_grid] == grid.param_grid
-
-    def test_create_gridsearch_params_without_pipeline_returns_correct(self):
-        param_grid = {"n_estimators": [5, 10, 20], "max_depth": [3, 4, 5]}
-        model = RandomForestClassifier()
-        grid = _create_param_grid(model, param_grid)
-
-        assert [param_grid] == grid.param_grid
-
     def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
         file_path = tmp_path / "test.txt"
 

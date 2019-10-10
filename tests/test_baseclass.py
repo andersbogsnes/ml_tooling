@@ -15,7 +15,7 @@ from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
-from ml_tooling.search.gridsearch import _fit_gridpoint
+from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError
 
@@ -318,16 +318,15 @@ class TestBaseClass:
             assert isinstance(result, Result)
 
     def test_fit_gridpoint_returns_new_estimator(self, test_dataset: Dataset):
-        estimator = _fit_gridpoint(
-            LogisticRegression(),
-            params={"penalty": "l2"},
-            train_x=test_dataset.train_x,
-            train_y=test_dataset.train_y,
+        estimators = prepare_gridsearch_estimators(
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}
         )
 
-        assert estimator.get_params()["penalty"] == "l2"
-        assert estimator.coef_ is not None
-        assert isinstance(estimator, LogisticRegression)
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+
+            assert estimator.get_params()["penalty"] == penalty
+            assert hasattr(estimator, "coef_") is False
+            assert isinstance(estimator, LogisticRegression)
 
     def test_log_context_manager_works_as_expected(self, regression: Model):
         assert regression.config.LOG is False

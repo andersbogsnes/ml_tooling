@@ -16,7 +16,7 @@ from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.result import Result, ResultGroup
 from ml_tooling.metrics import Metrics
-from ml_tooling.search.gridsearch import gridsearch
+from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
@@ -447,13 +447,6 @@ class Model:
         logger.debug(f"Gridsearching using {param_grid}")
         logger.info("Starting gridsearch...")
 
-        estimators = gridsearch(
-            estimator=self.estimator,
-            train_x=data.train_x,
-            train_y=data.train_y,
-            params=param_grid,
-            n_jobs=n_jobs,
-        )
         self.result = ResultGroup(
             [
                 Result.from_model(
@@ -464,7 +457,9 @@ class Model:
                     n_jobs=n_jobs,
                     verbose=self.config.VERBOSITY,
                 )
-                for estimator in estimators
+                for estimator in prepare_gridsearch_estimators(
+                    estimator=self.estimator, params=param_grid
+                )
             ]
         )
 

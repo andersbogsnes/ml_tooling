@@ -6,7 +6,6 @@ from typing import Union, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
@@ -116,34 +115,6 @@ def listify(collection) -> list:
         collection = list(collection)
 
     return collection
-
-
-def _create_param_grid(pipe: Estimator, param_grid: dict) -> ParameterGrid:
-    """
-    Creates a parameter grid from a :class:`~sklearn.pipeline.Pipeline`
-
-    Parameters
-    ----------
-    pipe: Pipeline
-        Input pipeline
-    param_grid: dict
-        dict of parameters to search over
-
-    Returns
-    -------
-    :class:`~sklearn.model_selection.ParameterGrid`
-    """
-    if not isinstance(pipe, Pipeline):
-        return ParameterGrid(param_grid)
-
-    step_name = pipe.steps[-1][0]
-
-    step_dict = {
-        f"{step_name}__{param}" if step_name not in param else param: value
-        for param, value in param_grid.items()
-    }
-
-    return ParameterGrid(step_dict)
 
 
 def _validate_estimator(estimator: Estimator):

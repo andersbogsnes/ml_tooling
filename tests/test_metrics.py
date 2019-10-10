@@ -76,7 +76,7 @@ class TestMetricsClass:
         for metric in [accuracy, roc_auc]:
             metric.score_metric(classifier.estimator, test_dataset.x, test_dataset.y)
 
-        metrics.score_estimator(classifier.estimator, test_dataset.x, test_dataset.y)
+        metrics.score_metrics(classifier.estimator, test_dataset.x, test_dataset.y)
 
         assert metrics[0] == accuracy
         assert metrics[1] == roc_auc
@@ -90,7 +90,7 @@ class TestMetricsClass:
                 n_jobs=-1,
                 verbose=0,
             )
-        metrics.score_estimator_cv(
+        metrics.score_metrics_cv(
             estimator=classifier.estimator,
             x=test_dataset.x,
             y=test_dataset.y,

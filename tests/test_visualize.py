@@ -323,7 +323,7 @@ class TestRocCurve:
 
     def test_roc_curve_fails_correctly_without_predict_proba(self, base, test_dataset):
         svc = base(SVC(gamma="scale"))
-        result = svc.score_estimator(test_dataset)
+        result = svc.score_metrics(test_dataset)
         with pytest.raises(VizError):
             result.plot.roc_curve()
 
@@ -351,7 +351,7 @@ class TestPRCurve:
 
     def test_pr_curve_fails_correctly_without_predict_proba(self, base, test_dataset):
         svc = base(SVC(gamma="scale"))
-        result = svc.score_estimator(test_dataset)
+        result = svc.score_metrics(test_dataset)
         with pytest.raises(VizError):
             result.plot.pr_curve()
         plt.close()

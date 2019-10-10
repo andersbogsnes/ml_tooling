@@ -25,27 +25,27 @@ Usually this takes an argument to select features for a given customer or item.
 .. doctest::
 
         >>> from ml_tooling import Model
-                >>> from ml_tooling.data import Dataset
-                >>> from sklearn.linear_model import LinearRegression
-                >>> from sklearn.datasets import load_boston
-                >>> import pandas as pd
-                >>>
-                >>> class BostonData(Dataset):
-                ...    def load_training_data(self):
-                ...        data = load_boston()
-                ...        return pd.DataFrame(data.data, columns=data.feature_names), data.target
-                ...
-                ...    # Define where to get prediction time data - returning a DataFrame
-                ...    def load_prediction_data(self, idx):
-                ...        data = load_boston()
-                ...        x = pd.DataFrame(data.data, labels=data.feature_names)
-                ...        return x.loc[idx] # Return given observation
-                >>>
-                >>> # Use your data with a given model
-                >>> data = BostonData()
-                >>> regression = Model(LinearRegression())
-                >>> regression
-                <Model: LinearRegression>
+        >>> from ml_tooling.data import Dataset
+        >>> from sklearn.linear_model import LinearRegression
+        >>> from sklearn.datasets import load_boston
+        >>> import pandas as pd
+        >>>
+        >>> class BostonData(Dataset):
+        ...    def load_training_data(self):
+        ...        data = load_boston()
+        ...        return pd.DataFrame(data.data, columns=data.feature_names), data.target
+        ...
+        ...    # Define where to get prediction time data - returning a DataFrame
+        ...    def load_prediction_data(self, idx):
+        ...        data = load_boston()
+        ...        x = pd.DataFrame(data.data, labels=data.feature_names)
+        ...        return x.loc[idx] # Return given observation
+        >>>
+        >>> # Use your data with a given model
+        >>> data = BostonData()
+        >>> regression = Model(LinearRegression())
+        >>> regression
+        <Model: LinearRegression>
 
 Now we can start training our model:
 
@@ -56,6 +56,7 @@ Now we can start training our model:
     >>> result = regression.score_estimator(data)
     >>> result
     <Result LinearRegression: {'r2': 0.68}>
+
 
 We can get some pretty plots:
 

@@ -117,7 +117,7 @@ class TestBaseClass:
         model = base(LinearRegression())
 
         with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(base_dataset())
+            model.score_metrics(base_dataset())
 
     def test_default_metric_getter_works_as_expected_classifier(self, base):
         rf = base(RandomForestClassifier(n_estimators=10))
@@ -171,7 +171,7 @@ class TestBaseClass:
     ):
         model = base(pipeline_logistic)
         model.train_estimator(test_dataset)
-        model.score_estimator(test_dataset)
+        model.score_metrics(test_dataset)
 
         assert isinstance(model.result, Result)
 
@@ -219,7 +219,7 @@ class TestBaseClass:
     ):
         expected_path = tmp_path / "test_model.pkl"
 
-        classifier.score_estimator(test_dataset)
+        classifier.score_metrics(test_dataset)
         classifier.save_estimator(expected_path)
 
         assert expected_path.exists()
@@ -324,7 +324,7 @@ class TestBaseClass:
 
         runs = tmpdir.mkdir("runs")
         with model.log(runs):
-            result = model.score_estimator(test_dataset)
+            result = model.score_metrics(test_dataset)
 
         for file in runs.visit("LinearRegression_*"):
             with open(file) as f:

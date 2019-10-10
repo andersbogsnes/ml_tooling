@@ -52,7 +52,7 @@ class TestResult:
         self, base, pipeline_linear, test_dataset
     ):
         model = base(pipeline_linear)
-        result = model.score_estimator(test_dataset)
+        result = model.score_metrics(test_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LinearRegression"
         assert isinstance(result.model.estimator, Pipeline)
@@ -61,7 +61,7 @@ class TestResult:
         self, base, pipeline_logistic, test_dataset
     ):
         model = base(pipeline_logistic)
-        result = model.score_estimator(test_dataset)
+        result = model.score_metrics(test_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LogisticRegression"
         assert isinstance(result.model.estimator, Pipeline)

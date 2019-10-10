@@ -11,28 +11,28 @@ from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
 @pytest.fixture()
 def regression(base, test_dataset):
     model = base(LinearRegression())
-    model.score_estimator(test_dataset)
+    model.score_metrics(test_dataset)
     return model
 
 
 @pytest.fixture()
 def regression_cv(base, test_dataset):
     model = base(LinearRegression())
-    model.score_estimator(test_dataset, cv=2)
+    model.score_metrics(test_dataset, cv=2)
     return model
 
 
 @pytest.fixture()
 def classifier(base, test_dataset):
     model = base(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset)
+    model.score_metrics(test_dataset)
     return model
 
 
 @pytest.fixture()
 def classifier_cv(base, test_dataset):
     model = base(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset, cv=2)
+    model.score_metrics(test_dataset, cv=2)
     return model
 
 

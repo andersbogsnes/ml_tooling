@@ -20,7 +20,7 @@ class Metric:
     number of folds
 
     Examples
-    ========
+    --------
 
     .. doctest::
 
@@ -143,6 +143,45 @@ class Metrics:
     - :meth:`from_dict` takes a dictionary of name -> score and instantiates one metric with
     the given score per dictionary item
 
+    Calling either :meth:`score_metrics` or :meth:`score_metrics_cv` will in turn call
+    :meth:`~ml_tooling.metrics.metric.Metric.score_metric` or
+    :meth:`~ml_tooling.metrics.metric.Metric.score_metric_cv` of each :class:`Metric` in its
+    collection
+
+    Examples
+    --------
+    To score multiple metrics, create a metrics object from a list and call :meth:`score_metrics`
+    to score all metrics in one operation
+
+    .. code-block::
+
+        >>> from ml_tooling.metrics import Metrics
+        >>> from sklearn.linear_model import LinearRegression
+        >>> import numpy as np
+        >>> metrics = Metrics.from_list(['r2', 'neg_mean_squared_error'])
+        >>> x = np.array([[1],[2],[3],[4]])
+        >>> y = np.array([[2], [4], [6], [8]])
+        >>> estimator = LinearRegression().fit(x, y)
+        >>> metrics.score_metrics(estimator=estimator, x=x, y=y)
+        >>> for metric in metrics:
+        ...     print(metric)
+        Metric(metric='r2', score=1.0, cross_val_scores=None)
+        Metric(metric='neg_mean_squared_error', score=-0.0, cross_val_scores=None)
+
+    We can convert metrics to a dictionary
+
+    .. code-block::
+
+        >>> metrics.to_dict()
+        {'r2': 1.0, 'neg_mean_squared_error': -0.0}
+
+    or a list
+
+    .. code-block::
+
+        >>> metrics.to_list()
+        ['r2', 'neg_mean_squared_error']
+
 
     """
 
@@ -165,11 +204,11 @@ class Metrics:
             for m in self.metrics
         }
 
-    def score_estimator(self, estimator, x, y):
+    def score_metrics(self, estimator, x, y):
         for metric in self.metrics:
             metric.score_metric(estimator, x, y)
 
-    def score_estimator_cv(self, estimator, x, y, cv, n_jobs, verbose):
+    def score_metrics_cv(self, estimator, x, y, cv, n_jobs=-1, verbose=0):
         for metric in self.metrics:
             metric.score_metric_cv(estimator, x, y, cv, n_jobs, verbose)
 

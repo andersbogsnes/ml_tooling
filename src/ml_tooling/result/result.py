@@ -23,7 +23,7 @@ class Result:
         cls, model, data: Dataset, metrics: Metrics, cv=None, n_jobs=None, verbose=None
     ):
         if cv:
-            metrics.score_estimator_cv(
+            metrics.score_metrics_cv(
                 estimator=model.estimator,
                 x=data.train_x,
                 y=data.train_y,
@@ -32,7 +32,7 @@ class Result:
                 verbose=verbose,
             )
         else:
-            metrics.score_estimator(
+            metrics.score_metrics(
                 estimator=model.estimator, x=data.test_x, y=data.test_y
             )
 

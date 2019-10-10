@@ -3,11 +3,14 @@ from abc import ABCMeta, abstractmethod, abstractclassmethod
 from enum import Enum
 
 class StorageEnvironment(Enum):
-    DEV = 1
-    TEST = 2
-    PROD = 3
+    dev = 1
+    test = 2
+    prod = 3
 
 class Storage(metaclass=ABCMeta):
+    """
+    Base class for Storage classes
+    """
     @abstractmethod
     def load(self, file_path):
         """

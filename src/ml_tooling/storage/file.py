@@ -72,7 +72,7 @@ class FileStorage(Storage):
     def save(self,
         estimator: BaseEstimator,
         filename: Union[Path, str],
-        env: StorageEnvironment = StorageEnvironment.DEV
+        env: StorageEnvironment = StorageEnvironment.dev
     ) -> Path:
         """
         Save a joblib pickled estimator.

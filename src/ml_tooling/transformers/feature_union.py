@@ -1,15 +1,17 @@
 from functools import reduce
 
 import pandas as pd
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import TransformerMixin
+from sklearn.utils.metaestimators import _BaseComposition
 
 
-class DFFeatureUnion(BaseEstimator, TransformerMixin):
+class DFFeatureUnion(TransformerMixin, _BaseComposition):
     """
     Merges together two pipelines based on index
     """
 
     def __init__(self, transformer_list: list):
+        super().__init__()
         self.transformer_list = transformer_list
 
     def fit(self, X: pd.DataFrame, y=None):

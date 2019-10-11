@@ -16,6 +16,7 @@ INSTALL_REQUIRES = [
     "joblib",
     "sqlalchemy",
     "pyarrow",
+    "attrs",
 ]
 KEYWORDS = ["ml", "framework", "tooling"]
 PROJECT_URLS = {

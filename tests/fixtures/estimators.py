@@ -4,68 +4,84 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from ml_tooling import Model
+from ml_tooling.data import Dataset
 
-from ml_tooling.transformers import DFStandardScaler
+from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
 
 
 @pytest.fixture()
-def regression(base, test_dataset):
-    model = base(LinearRegression())
+def regression(base: type, test_dataset: Dataset) -> Model:
+    model: Model = base(LinearRegression())
     model.score_estimator(test_dataset)
     return model
 
 
 @pytest.fixture()
-def regression_cv(base, test_dataset):
-    model = base(LinearRegression())
+def regression_cv(base: type, test_dataset: Dataset) -> Model:
+    model: Model = base(LinearRegression())
     model.score_estimator(test_dataset, cv=2)
     return model
 
 
 @pytest.fixture()
-def classifier(base, test_dataset):
-    model = base(LogisticRegression(solver="liblinear"))
+def classifier(base: type, test_dataset: Dataset) -> Model:
+    model: Model = base(LogisticRegression(solver="liblinear"))
     model.score_estimator(test_dataset)
     return model
 
 
 @pytest.fixture()
-def classifier_cv(base, test_dataset):
-    model = base(LogisticRegression(solver="liblinear"))
+def classifier_cv(base: type, test_dataset: Dataset) -> Model:
+    model: Model = base(LogisticRegression(solver="liblinear"))
     model.score_estimator(test_dataset, cv=2)
     return model
 
 
 @pytest.fixture
-def pipeline_logistic(base):
+def pipeline_logistic() -> Pipeline:
     pipe = Pipeline(
         [("scale", StandardScaler()), ("clf", LogisticRegression(solver="liblinear"))]
     )
-
     return pipe
 
 
 @pytest.fixture
-def pipeline_linear():
+def pipeline_linear() -> Pipeline:
     pipe = Pipeline([("scale", StandardScaler()), ("clf", LinearRegression())])
-
     return pipe
 
 
 @pytest.fixture
-def pipeline_dummy_classifier():
+def pipeline_dummy_classifier() -> Pipeline:
     pipe = Pipeline([("scale", DFStandardScaler()), ("clf", DummyClassifier())])
-
     return pipe
 
 
 @pytest.fixture
-def pipeline_forest_classifier():
+def feature_union_classifier() -> Pipeline:
+    pipe1 = Pipeline(
+        [
+            ("select", Select(["sepal length (cm)", "sepal width (cm)"])),
+            ("scale", DFStandardScaler()),
+        ]
+    )
+    pipe2 = Pipeline(
+        [
+            ("select", Select(["petal length (cm)", "petal width (cm)"])),
+            ("scale", DFStandardScaler()),
+        ]
+    )
+    union = DFFeatureUnion(transformer_list=[pipe1, pipe2])
+    return Pipeline([("features", union), ("clf", LogisticRegression())])
+
+
+@pytest.fixture
+def pipeline_forest_classifier() -> Pipeline:
     pipe = Pipeline(
         [
             ("scale", DFStandardScaler()),
             ("clf", RandomForestClassifier(n_estimators=10)),
         ]
     )
-
     return pipe

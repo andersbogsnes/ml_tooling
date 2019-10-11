@@ -22,3 +22,5 @@ Implements all the base functionality needed to create the wrapper
 .. include:: plots.inc.rst
 
 .. include:: transformers.inc.rst
+
+.. include:: metrics.inc.rst

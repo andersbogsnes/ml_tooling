@@ -30,7 +30,7 @@ def numerical_na(numerical):
 
 
 @pytest.fixture()
-def dates():
+def dates() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "date_a": pd.to_datetime(

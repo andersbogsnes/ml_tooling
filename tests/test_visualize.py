@@ -13,6 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 
 from ml_tooling import Model
+from ml_tooling.data import Dataset
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
 from ml_tooling.plots.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
@@ -20,49 +21,48 @@ from ml_tooling.transformers import ToCategorical
 
 
 class TestVisualize:
-    def test_result_regression_gets_correct_visualizers(self, regression):
+    def test_result_regression_gets_correct_visualizers(self, regression: Model):
         result = regression.result
         assert isinstance(result.plot, RegressionVisualize)
 
-    def test_result_classification_gets_correct_visualizers(self, classifier):
+    def test_result_classification_gets_correct_visualizers(self, classifier: Model):
         result = classifier.result
         assert isinstance(result.plot, ClassificationVisualize)
 
     @pytest.mark.parametrize(
-        "attr, option",
-        [("residuals", None), ("prediction_error", None), ("feature_importance", 100)],
+        "attr", ["residuals", "prediction_error", "feature_importance"]
     )
-    def test_regression_visualize_has_all_plots(self, attr, option, regression):
+    def test_regression_visualize_has_all_plots(self, attr: str, regression: Model):
         result = regression.result.plot
-        if option:
-            plotter = getattr(result, attr)(option)
-        else:
-            plotter = getattr(result, attr)()
+        plotter = getattr(result, attr)()
         assert isinstance(plotter, Axes)
         plt.close()
 
     @pytest.mark.parametrize(
-        "attr, option",
+        "attr",
         [
-            ("confusion_matrix", None),
-            ("roc_curve", None),
-            ("lift_curve", None),
-            ("feature_importance", 100),
-            ("pr_curve", None),
+            "confusion_matrix",
+            "roc_curve",
+            "lift_curve",
+            "feature_importance",
+            "pr_curve",
         ],
     )
-    def test_classifier_visualize_has_all_plots(self, attr, option, classifier):
+    def test_classifier_visualize_has_all_plots(self, attr: str, classifier: Model):
         result = classifier.result.plot
-        if option:
-            plotter = getattr(result, attr)(option)
-        else:
-            plotter = getattr(result, attr)()
+        plotter = getattr(result, attr)()
         assert isinstance(plotter, Axes)
         plt.close()
 
 
 class TestConfusionMatrixPlot:
-    def test_confusion_matrix_plots_have_correct_data(self, classifier):
+    def test_confusion_matrix_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.confusion_matrix(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_confusion_matrix_plots_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.confusion_matrix()
 
         assert "Confusion Matrix - LogisticRegression - Normalized" == ax.title._text
@@ -74,7 +74,7 @@ class TestConfusionMatrixPlot:
         plt.close()
 
     def test_confusion_matrix_plots_have_correct_data_when_not_normalized(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.confusion_matrix(normalized=False)
 
@@ -99,7 +99,13 @@ class TestConfusionMatrixPlot:
 
 
 class TestFeatureImportancePlot:
-    def test_feature_importance_plots_have_correct_data(self, classifier):
+    def test_feature_importance_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.feature_importance(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_feature_importance_plots_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.feature_importance()
 
         expected = {"0.04", "0.08", "-0.03", "0.02"}
@@ -110,7 +116,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_no_labels_if_value_is_false(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(values=False)
         assert len(ax.texts) == 0
@@ -120,7 +126,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_set(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(top_n=2)
         assert 2 == len(ax.texts)
@@ -131,7 +137,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_percent(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(top_n=0.2)
         assert len(ax.texts) == 1
@@ -142,7 +148,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_int(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=2)
         assert len(ax.texts) == 2
@@ -153,7 +159,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_percent(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=0.2)
         assert len(ax.texts) == 1
@@ -164,7 +170,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
         assert len(ax.texts) == 2
@@ -178,7 +184,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=0.2)
         assert 2 == len(ax.texts)
@@ -192,7 +198,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(
-        self, classifier
+        self, classifier: Model
     ):
         ax = classifier.result.plot.feature_importance(top_n=0.2, bottom_n=1)
         assert len(ax.texts) == 2
@@ -206,7 +212,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_correctly_in_pipeline(
-        self, base, categorical, test_dataset
+        self, categorical: Model, test_dataset: Dataset
     ):
         pipe = Pipeline(
             [
@@ -225,7 +231,13 @@ class TestFeatureImportancePlot:
 
 
 class TestLiftCurvePlot:
-    def test_lift_curve_have_correct_data(self, classifier):
+    def test_lift_curve_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.lift_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_lift_curve_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.lift_curve()
 
         assert "Lift Curve - LogisticRegression" == ax.title._text
@@ -245,10 +257,16 @@ class TestLiftCurvePlot:
 
 
 class TestPredictionErrorPlot:
-    def test_prediction_error_plots_have_correct_data(self, regression):
+    def test_prediction_error_plots_can_be_given_an_ax(self, regression: Model):
+        fig, ax = plt.subplots()
+        test_ax = regression.result.plot.prediction_error(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_prediction_error_plots_have_correct_data(self, regression: Model):
         ax = regression.result.plot.prediction_error()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.estimator.predict(x)
+        y_pred = regression.result.model.estimator.predict(x)
 
         assert "Prediction Error - LinearRegression" == ax.title._text
         assert "$\\hat{y}$" == ax.get_ylabel()
@@ -260,10 +278,16 @@ class TestPredictionErrorPlot:
 
 
 class TestResidualPlot:
-    def test_residual_plots_have_correct_data(self, regression):
+    def test_residuals_plots_can_be_given_an_ax(self, regression: Model):
+        fig, ax = plt.subplots()
+        test_ax = regression.result.plot.residuals(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_residual_plots_have_correct_data(self, regression: Model):
         ax = regression.result.plot.residuals()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.estimator.predict(x)
+        y_pred = regression.result.model.estimator.predict(x)
         expected = y_pred - y
 
         assert "Residual Plot - LinearRegression" == ax.title._text
@@ -276,7 +300,13 @@ class TestResidualPlot:
 
 
 class TestRocCurve:
-    def test_roc_curve_have_correct_data(self, classifier):
+    def test_roc_curve_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.roc_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_roc_curve_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.roc_curve()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
         y_proba = classifier.estimator.predict_proba(x)[:, 1]
@@ -289,15 +319,23 @@ class TestRocCurve:
         assert np.all(tpr == ax.lines[0].get_ydata())
         plt.close()
 
-    def test_roc_curve_fails_correctly_without_predict_proba(self, base, test_dataset):
-        svc = base(SVC(gamma="scale"))
+    def test_roc_curve_fails_correctly_without_predict_proba(
+        self, test_dataset: Dataset
+    ):
+        svc = Model(SVC(gamma="scale"))
         result = svc.score_estimator(test_dataset)
         with pytest.raises(VizError):
             result.plot.roc_curve()
 
 
 class TestPRCurve:
-    def test_pr_curve_have_correct_data(self, classifier):
+    def test_prediction_error_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.pr_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_pr_curve_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.pr_curve()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
         y_proba = classifier.estimator.predict_proba(x)[:, 1]
@@ -311,14 +349,14 @@ class TestPRCurve:
         assert np.all(precision == ax.lines[0].get_ydata())
         plt.close()
 
-    def test_pr_curve_fails_correctly_without_predict_proba(self, base, test_dataset):
-        svc = base(SVC(gamma="scale"))
+    def test_pr_curve_fails_correctly_without_predict_proba(self, test_dataset: Model):
+        svc = Model(SVC(gamma="scale"))
         result = svc.score_estimator(test_dataset)
         with pytest.raises(VizError):
             result.plot.pr_curve()
         plt.close()
 
-    def test_pr_curve_can_use_ax(self, classifier):
+    def test_pr_curve_can_use_ax(self, classifier: Model):
         fig, ax = plt.subplots()
         x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
         y_proba = classifier.estimator.predict_proba(x)[:, 1]

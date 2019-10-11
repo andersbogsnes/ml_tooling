@@ -75,7 +75,7 @@ We also have the ability to log our experiments using the :meth:`Model.log` cont
 
     >>> with linear.log('test_dir'):
     ...     linear.score_estimator(bostondata)
-    <Result LinearRegression: r2: 0.68>
+    <Result LinearRegression: {'r2': 0.68}>
 
 .. testcleanup::
 

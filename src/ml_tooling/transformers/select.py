@@ -11,7 +11,7 @@ class Select(BaseEstimator, TransformerMixin):
     Selects columns from DataFrame
     """
 
-    def __init__(self, columns: Union[list, str]):
+    def __init__(self, columns: Union[list, str] = None):
         self.columns = columns
 
     def fit(self, X: pd.DataFrame, y=None):

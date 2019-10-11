@@ -35,7 +35,11 @@ CLASSIFIERS = [
 
 META_PATH = os.path.join("src", NAME, "__init__.py")
 
-EXTRAS_REQUIRE = {"docs": ["sphinx"], "tests": ["coverage", "pytest"], "artifactory": ["dohq-artifactory"]}
+EXTRAS_REQUIRE = {
+    "docs": ["sphinx"],
+    "tests": ["coverage", "pytest"],
+    "artifactory": ["dohq-artifactory"],
+}
 EXTRAS_REQUIRE["dev"] = (
     EXTRAS_REQUIRE["tests"] + EXTRAS_REQUIRE["docs"] + ["pre-commit", "tox"]
 )

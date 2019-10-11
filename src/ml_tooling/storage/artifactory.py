@@ -1,10 +1,9 @@
 from ml_tooling.storage import Storage, StorageEnvironment
-from ml_tooling.config import ConfigGetter
 from ml_tooling.utils import MLToolingError
 
 import os
-import pickle
-from io import BytesIO
+import joblib
+from tempfile import TemporaryDirectory
 from typing import Tuple, Union, Optional, List
 from pathlib import Path
 from sklearn.base import BaseEstimator
@@ -19,11 +18,13 @@ class ArtifactoryStorage(Storage):
     """
     Artifactory Storage class
     """
-    def __init__(self,
-                 repo_path: Union[Path, str] = None,
-                 apikey: Optional[str] = None,
-                 auth: Optional[Tuple[str, str]] = None
-                 ):
+
+    def __init__(
+        self,
+        repo_path: Union[Path, str] = None,
+        apikey: Optional[str] = None,
+        auth: Optional[Tuple[str, str]] = None,
+    ):
         self.repo_path = repo_path
         self.auth = auth
         self.apikey = apikey
@@ -48,7 +49,7 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files
         """
-        return sorted(ArtifactoryPath(self.repo_path).glob('*/*.pkl'))
+        return sorted(ArtifactoryPath(self.repo_path).glob("*/*.pkl"))
 
     def load(self, filename: Union[str, Path, ArtifactoryPath]) -> BaseEstimator:
         """
@@ -75,17 +76,22 @@ class ArtifactoryStorage(Storage):
         if self.repo_path is None:
             filepath = filename
         else:
-            filepath = f'{self.repo_path}{filename}'
+            filepath = f"{self.repo_path}{filename}"
 
         artifactory_path = ArtifactoryPath(filepath, auth=self.auth, apikey=self.apikey)
         with artifactory_path.open() as f:
-            return pickle.loads(f.read())
+            with TemporaryDirectory() as tmpdir:
+                filepath = Path(tmpdir).joinpath("temp.pkl")
+                with open(filepath, "wb") as out:
+                    out.write(f.read())
+                return joblib.load(filepath)
 
-    def save(self,
-             estimator: BaseEstimator,
-             filepath: Union[Path, str],
-             env: StorageEnvironment = StorageEnvironment.dev
-             ) -> ArtifactoryPath:
+    def save(
+        self,
+        estimator: BaseEstimator,
+        filepath: Union[Path, str],
+        env: StorageEnvironment = StorageEnvironment.dev,
+    ) -> ArtifactoryPath:
         """
         Save a pickled estimator to artifactory.
 
@@ -107,8 +113,12 @@ class ArtifactoryStorage(Storage):
         BaseEstimator
             artyfactory_path: artifactory file path
         """
-        path_with_env = f'{self.repo_path}/{env.name}/{os.path.basename(filepath)}'
-        artifactory_path = ArtifactoryPath(path_with_env, auth=self.auth, apikey=self.apikey)
-        estimator_pickle = pickle.dumps(estimator)
-        artifactory_path.deploy(BytesIO(estimator_pickle))
+        path_with_env = f"{self.repo_path}/{env.name}/{os.path.basename(filepath)}"
+        artifactory_path = ArtifactoryPath(
+            path_with_env, auth=self.auth, apikey=self.apikey
+        )
+        with TemporaryDirectory() as tmpdir:
+            filepath = Path(tmpdir).joinpath("temp.pkl")
+            joblib.dump(estimator, filepath)
+            artifactory_path.deploy_file(filepath)
         return artifactory_path

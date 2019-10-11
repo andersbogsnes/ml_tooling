@@ -1,4 +1,6 @@
 import pytest
+import joblib
+import pathlib
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -69,3 +71,19 @@ def pipeline_forest_classifier():
     )
 
     return pipe
+
+
+@pytest.fixture
+def estimator_pickle(base, test_dataset, tmp_path):
+    file_path = tmp_path / "tmp.pkl"
+    model = base(LogisticRegression(solver="liblinear"))
+    model.score_estimator(test_dataset)
+    joblib.dump(model.estimator, file_path)
+    return pathlib.Path(file_path)
+
+
+@pytest.fixture
+def open_estimator_pickle(estimator_pickle, request):
+    f = open(estimator_pickle, "rb")
+    request.addfinalizer(f.close)
+    return f

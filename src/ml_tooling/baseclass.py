@@ -30,6 +30,7 @@ from ml_tooling.utils import (
 
 logger = create_logger("ml_tooling")
 
+
 class Model:
     """
     Base class for Models

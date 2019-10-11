@@ -188,16 +188,16 @@ class TestBaseClass:
             assert saved_model_path.exists()
 
             loaded_model = base.load_estimator(load_storage, saved_model_path)
-            assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
+            assert (
+                loaded_model.estimator.get_params() == classifier.estimator.get_params()
+            )
 
     def test_save_model_saves_pipeline_correctly(
         self, base, pipeline_logistic, tmp_path, test_dataset
     ):
-
-        save_dir = tmp_path
         model = base(pipeline_logistic)
         model.train_estimator(test_dataset)
-        saved_model_path = model.save_estimator(FileStorage(save_dir))
+        saved_model_path = model.save_estimator(FileStorage(tmp_path))
         assert saved_model_path.exists()
 
     def test_save_model_saves_logging_dir_correctly(

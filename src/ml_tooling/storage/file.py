@@ -3,13 +3,11 @@ from ml_tooling.utils import MLToolingError
 
 import joblib
 from typing import List, Any, Union
-from contextlib import contextmanager
 from pathlib import Path
 from sklearn.base import BaseEstimator
 
 
 class FileStorage(Storage):
-    
     def __init__(self, dir_path=None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
 
@@ -41,8 +39,8 @@ class FileStorage(Storage):
         List[Path]
             list of paths to files
         """
-        return sorted(self.dir_path.glob('*.pkl'))
-    
+        return sorted(self.dir_path.glob("*.pkl"))
+
     def load(self, file_path: Union[Path, str]) -> Any:
         """
         Loads a joblib pickled estimator from given filepath and returns a Model
@@ -69,10 +67,11 @@ class FileStorage(Storage):
         estimator_path = Path(file_path)
         return joblib.load(estimator_path)
 
-    def save(self,
+    def save(
+        self,
         estimator: BaseEstimator,
         filename: Union[Path, str],
-        env: StorageEnvironment = StorageEnvironment.dev
+        env: StorageEnvironment = StorageEnvironment.dev,
     ) -> Path:
         """
         Save a joblib pickled estimator.

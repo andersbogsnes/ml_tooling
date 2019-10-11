@@ -11,6 +11,15 @@ import attr
 
 @attr.s(auto_attribs=True)
 class Log:
+    """
+    Log object containing all relevant data for generating a logfile describing a given result
+
+    Can be instantiated directly from a result using :meth:`from_result`, passing the estimator
+    path if available
+
+    Save a yaml file to disk using :meth:`save_log`
+    """
+
     name: str
     metrics: Metrics
     estimator: dict

@@ -38,13 +38,13 @@ class TestBaseClass:
         model = Model(LogisticRegression())
         result = model.score_estimator(test_dataset)
 
-        assert result.metrics.metric == "accuracy"
+        assert result.metrics.name == "accuracy"
 
     def test_can_use_specified_metric(self, test_dataset: Dataset):
         model = Model(LogisticRegression())
         result = model.score_estimator(test_dataset, metrics="roc_auc")
 
-        assert result.metrics.metric == "roc_auc"
+        assert result.metrics.name == "roc_auc"
 
     def test_can_use_multiple_metrics(self, test_dataset: Dataset):
         model = Model(LogisticRegression())
@@ -538,7 +538,7 @@ class TestBaseClass:
 
         assert len(results) == 2
         assert results[0].metrics.score >= results[1].metrics.score
-        assert results[0].metrics.metric == "accuracy"
+        assert results[0].metrics.name == "accuracy"
 
         assert isinstance(model, Model)
 
@@ -558,5 +558,5 @@ class TestBaseClass:
             assert len(result.metrics) == 2
             assert "accuracy" in result.metrics
             assert "roc_auc" in result.metrics
-            assert result.metrics.metric == "accuracy"
+            assert result.metrics.name == "accuracy"
             assert result.metrics.score == result.metrics[0].score

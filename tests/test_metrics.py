@@ -21,7 +21,7 @@ class TestMetricClass:
     def test_can_score_metric(self, classifier, test_dataset):
         metric = Metric("accuracy")
         metric.score_metric(classifier.estimator, test_dataset.x, test_dataset.y)
-        assert metric.metric == "accuracy"
+        assert metric.name == "accuracy"
         assert isinstance(metric.score, float)
 
         assert metric.cross_val_scores is None
@@ -37,7 +37,7 @@ class TestMetricClass:
             n_jobs=-1,
             verbose=0,
         )
-        assert metric.metric == "accuracy"
+        assert metric.name == "accuracy"
         assert len(metric.cross_val_scores) == 2
         assert metric.score == np.mean(metric.cross_val_scores)
         assert metric.std == np.std(metric.cross_val_scores)
@@ -53,7 +53,7 @@ class TestMetricsClass:
         metric_names = ["accuracy", "roc_auc"]
         metrics = Metrics.from_list(metric_names)
 
-        assert metrics.metric == "accuracy"
+        assert metrics.name == "accuracy"
         with pytest.raises(AttributeError):
             metrics.not_an_attribute
 
@@ -98,11 +98,8 @@ class TestMetricsClass:
             n_jobs=-1,
             verbose=0,
         )
-        assert (metrics[0].metric, metrics[0].score) == (
-            accuracy.metric,
-            accuracy.score,
-        )
-        assert (metrics[1].metric, metrics[1].score) == (roc_auc.metric, roc_auc.score)
+        assert (metrics[0].name, metrics[0].score) == (accuracy.name, accuracy.score)
+        assert (metrics[1].name, metrics[1].score) == (roc_auc.name, roc_auc.score)
         assert all(metrics[0].cross_val_scores == accuracy.cross_val_scores)
         assert all(metrics[1].cross_val_scores == roc_auc.cross_val_scores)
 

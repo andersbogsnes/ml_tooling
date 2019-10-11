@@ -32,19 +32,19 @@ class Metric:
         >>> y = np.array([[2], [4], [6], [8]])
         >>> estimator = LinearRegression().fit(x, y)
         >>> metric.score_metric(estimator, x, y)
-        Metric(metric='r2', score=1.0, cross_val_scores=None)
+        Metric(name='r2', score=1.0, cross_val_scores=None)
         >>> metric.score
         1.0
-        >>> metric.metric
+        >>> metric.name
         'r2'
 
     .. doctest::
 
         >>> metric.score_metric_cv(estimator, x, y, cv=2)
-        Metric(metric='r2', score=1.0, cross_val_scores=array([1., 1.]))
+        Metric(name='r2', score=1.0, cross_val_scores=array([1., 1.]))
         >>> metric.score
         1.0
-        >>> metric.metric
+        >>> metric.name
         'r2'
         >>> metric.cross_val_scores
         array([1., 1.])
@@ -55,7 +55,7 @@ class Metric:
     .. _score: https://scikit-learn.org/stable/modules/model_evaluation.html#common-cases-predefined-values # noqa
     """
 
-    metric: str = attr.ib()
+    name: str = attr.ib()
     score: float = attr.ib(default=None)
     cross_val_scores: Optional[np.ndarray] = attr.ib(default=None)
 
@@ -78,7 +78,7 @@ class Metric:
         -------
         self
         """
-        scoring_func = get_scorer(self.metric)
+        scoring_func = get_scorer(self.name)
         self.score = scoring_func(estimator, x, y)
 
         # Ensure metric is reset if called multiple times
@@ -126,7 +126,7 @@ class Metric:
         self
         """
         self.cross_val_scores = cross_val_score(
-            estimator, x, y, cv=cv, scoring=self.metric, n_jobs=n_jobs, verbose=verbose
+            estimator, x, y, cv=cv, scoring=self.name, n_jobs=n_jobs, verbose=verbose
         )
         self.score = float(np.mean(self.cross_val_scores))
         return self
@@ -165,8 +165,8 @@ class Metrics:
         >>> metrics.score_metrics(estimator=estimator, x=x, y=y)
         >>> for metric in metrics:
         ...     print(metric)
-        Metric(metric='r2', score=1.0, cross_val_scores=None)
-        Metric(metric='neg_mean_squared_error', score=-0.0, cross_val_scores=None)
+        Metric(name='r2', score=1.0, cross_val_scores=None)
+        Metric(name='neg_mean_squared_error', score=-0.0, cross_val_scores=None)
 
     We can convert metrics to a dictionary
 
@@ -189,18 +189,18 @@ class Metrics:
 
     @classmethod
     def from_list(cls, metrics: List[str]):
-        return cls([Metric(metric=metric) for metric in metrics])
+        return cls([Metric(name=metric) for metric in metrics])
 
     @classmethod
     def from_dict(cls, metrics: Dict[str, Union[float, int]]):
-        return cls([Metric(metric=key, score=value) for key, value in metrics.items()])
+        return cls([Metric(name=key, score=value) for key, value in metrics.items()])
 
     def to_list(self):
-        return [m.metric for m in self.metrics]
+        return [m.name for m in self.metrics]
 
     def to_dict(self):
         return {
-            m.metric: float(m.score) if m.score is not None else None
+            m.name: float(m.score) if m.score is not None else None
             for m in self.metrics
         }
 
@@ -225,6 +225,6 @@ class Metrics:
 
     def __contains__(self, item):
         for metric in self.metrics:
-            if metric.metric == item:
+            if metric.name == item:
                 return True
         return False

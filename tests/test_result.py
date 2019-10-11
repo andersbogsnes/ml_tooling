@@ -29,7 +29,7 @@ class TestResult:
             assert regression.estimator == result.model.estimator
 
         assert isinstance(result.metrics[0].score, float)
-        assert result.metrics[0].metric == "r2"
+        assert result.metrics[0].name == "r2"
         assert result.model.estimator_name == "LinearRegression"
 
     @pytest.mark.parametrize("cv", ["with_cv", "without_cv"])
@@ -49,7 +49,7 @@ class TestResult:
             assert classifier.estimator == result.model.estimator
 
         assert result.metrics.score > 0
-        assert result.metrics.metric == "accuracy"
+        assert result.metrics.name == "accuracy"
         assert result.model.estimator_name == "LogisticRegression"
 
     def test_pipeline_regression_returns_correct_result(
@@ -77,7 +77,7 @@ class TestResult:
         result = Result(
             classifier,
             data=test_dataset,
-            metrics=Metrics([Metric(score=0.7, metric="accuracy")]),
+            metrics=Metrics([Metric(score=0.7, name="accuracy")]),
             plot=create_plotter(classifier, test_dataset),
         )
         log = Log.from_result(result)

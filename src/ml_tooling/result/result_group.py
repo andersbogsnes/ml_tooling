@@ -25,13 +25,13 @@ class ResultGroup:
 
     def sort(self, by=None):
         if by is None:
-            by = self.results[0].metrics[0].metric
+            by = self.results[0].metrics[0].name
 
         scores = [
             (i, metric.score)
             for i, result in enumerate(self.results)
             for metric in result.metrics
-            if by == metric.metric
+            if by == metric.name
         ]
         scores = sorted(scores, key=lambda x: x[1], reverse=True)
         self.results = [self.results[i] for i, _ in scores]

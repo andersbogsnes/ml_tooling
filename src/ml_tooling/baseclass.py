@@ -303,7 +303,7 @@ class Model:
         best_estimator = results[0].model
         logger.info(
             f"Best estimator: {best_estimator.estimator_name} - "
-            f"{results[0].metrics.metric}: {results[0].metrics.score}"
+            f"{results[0].metrics.name}: {results[0].metrics.score}"
         )
 
         return best_estimator, results

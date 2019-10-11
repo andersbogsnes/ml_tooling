@@ -15,5 +15,5 @@ require_artifactory = pytest.mark.skipif(
 @patch("ml_tooling.storage.artifactory.ArtifactoryPath", autospec=True)
 def test_can_load_from_artifactory(mock_artifactory_path, open_estimator_pickle):
     mock_artifactory_path.return_value.open.return_value = open_estimator_pickle
-    f = ArtifactoryStorage("test").load("test")
+    f = ArtifactoryStorage("testy", "test").load("test")
     assert isinstance(f, (BaseEstimator, Pipeline))

@@ -8,6 +8,10 @@ from sklearn.base import BaseEstimator
 
 
 class FileStorage(Storage):
+    """
+    File Storage class for handling storage of estimators to the file system
+    """
+
     def __init__(self, dir_path=None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
 

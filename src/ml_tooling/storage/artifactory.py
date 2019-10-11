@@ -4,9 +4,10 @@ from ml_tooling.utils import MLToolingError
 import os
 import joblib
 from tempfile import TemporaryDirectory
-from typing import Tuple, Union, Optional, List
+from typing import Tuple, Union, Optional, List, Text
 from pathlib import Path
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
 
 try:
     from artifactory import ArtifactoryPath
@@ -16,15 +17,21 @@ except ImportError:
 
 class ArtifactoryStorage(Storage):
     """
-    Artifactory Storage class
+    Artifactory Storage class for handling storage of estimators to JFrog artifactory
     """
 
     def __init__(
         self,
-        repo_path: Union[Path, str] = None,
+        artifactory_url: Text,
+        repo_path: Union[Path, str],
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
+        self.artifactory_url = (
+            artifactory_url
+            if artifactory_url.startswith("http://")
+            else f"http://{artifactory_url}"
+        )
         self.repo_path = repo_path
         self.auth = auth
         self.apikey = apikey
@@ -42,14 +49,16 @@ class ArtifactoryStorage(Storage):
         Example
         -------
         Find and return estimator paths in a given directory:
-            my_estimators = ArtifactoryStorage('path/to/dir').get_list()
+            my_estimators = ArtifactoryStorage('http://artifactory.com', 'path/to/repo').get_list()
 
         Returns
         -------
         List[ArtifactoryPath]
             list of paths to files
         """
-        return sorted(ArtifactoryPath(self.repo_path).glob("*/*.pkl"))
+        return sorted(
+            ArtifactoryPath(f"{self.artifactory_url}{self.repo_path}").glob("*/*.pkl")
+        )
 
     def load(self, filename: Union[str, Path, ArtifactoryPath]) -> BaseEstimator:
         """
@@ -63,8 +72,8 @@ class ArtifactoryStorage(Storage):
         Example
         -------
         We can load a saved pickled estimator from disk directly from FileStorage:
-            storage = ArtifactoryStorage()
-            my_estimator = storage.load('http://yourdomain/path/to/estimator')
+            storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
+            my_estimator = storage.load('estimatorfile')
 
         We now have a trained estimator loaded.
 
@@ -73,10 +82,10 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-        if self.repo_path is None:
+        if isinstance(filename, ArtifactoryPath):
             filepath = filename
         else:
-            filepath = f"{self.repo_path}{filename}"
+            filepath = f"{self.artifactory_url}{self.repo_path}{filename}"
 
         artifactory_path = ArtifactoryPath(filepath, auth=self.auth, apikey=self.apikey)
         with artifactory_path.open() as f:
@@ -88,7 +97,7 @@ class ArtifactoryStorage(Storage):
 
     def save(
         self,
-        estimator: BaseEstimator,
+        estimator: Union[BaseEstimator, Pipeline],
         filepath: Union[Path, str],
         env: StorageEnvironment = StorageEnvironment.dev,
     ) -> ArtifactoryPath:
@@ -103,17 +112,18 @@ class ArtifactoryStorage(Storage):
         Example
         -------
         To save your trained estimator:
-            storage = ArtifactoryStorage('http://yourdomain/path/to/save/dir/')
+            storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
             artyfactory_path = storage.save(estimator)
 
         We now have saved an estimator to a pickle file.
 
         Returns
         -------
-        BaseEstimator
-            artyfactory_path: artifactory file path
+        ArtifactoryPath
+            artifactory_path: artifactory file path
         """
-        path_with_env = f"{self.repo_path}/{env.name}/{os.path.basename(filepath)}"
+        repo = f"{self.artifactory_url}{self.repo_path}"
+        path_with_env = f"{repo}/{env.name}/{os.path.basename(filepath)}"
         artifactory_path = ArtifactoryPath(
             path_with_env, auth=self.auth, apikey=self.apikey
         )

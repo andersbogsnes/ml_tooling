@@ -258,6 +258,7 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Union[int, bool] = False,
         log_dir: str = None,
+        refit: bool = False,
     ) -> Tuple["Model", ResultGroup]:
         """
         Trains each estimator passed and returns a sorted list of results
@@ -278,6 +279,9 @@ class Model:
 
         log_dir: str, optional
             Where to store logged estimators. If None, don't log
+
+        refit: bool
+            Whether or not to refit the best model on all the training data
 
         Returns
         -------
@@ -300,11 +304,13 @@ class Model:
         if log_dir:
             results.log_estimator(pathlib.Path(log_dir))
 
-        best_estimator = results[0].model
+        best_estimator: Model = results[0].model
         logger.info(
             f"Best estimator: {best_estimator.estimator_name} - "
             f"{results[0].metrics.name}: {results[0].metrics.score}"
         )
+        if refit:
+            best_estimator.score_estimator(data)
 
         return best_estimator, results
 

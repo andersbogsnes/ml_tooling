@@ -15,14 +15,6 @@ class FileStorage(Storage):
     def __init__(self, dir_path=None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
 
-    def __enter__(self):
-        if not self.dir_path.exists():
-            self.dir_path.mkdir(parents=True)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        return False
-
     def get_list(self) -> List[Path]:
         """
         Finds a list of estimator filenames in the FileStorage directory,
@@ -41,7 +33,7 @@ class FileStorage(Storage):
         Returns
         -------
         List[Path]
-            list of paths to files
+            list of paths to files sorted by filename
         """
         return sorted(self.dir_path.glob("*.pkl"))
 
@@ -71,7 +63,7 @@ class FileStorage(Storage):
         estimator_path = Path(file_path)
         return joblib.load(estimator_path)
 
-    def save(self, estimator: BaseEstimator, filename: Union[Path, str]) -> Path:
+    def save(self, estimator: BaseEstimator, filename: str) -> Path:
         """
         Save a joblib pickled estimator.
 
@@ -83,8 +75,8 @@ class FileStorage(Storage):
         Example
         -------
         To save your trained estimator, use the FileStorage context manager.
-            with FileStorage('/path/to/save/dir/') as storage:
-                file_path = storage.save(estimator)
+            storage = FileStorage('/path/to/save/dir/')
+            file_path = storage.save(estimator, 'filename')
 
         We now have saved an estimator to a pickle file.
 
@@ -99,6 +91,6 @@ class FileStorage(Storage):
             raise MLToolingError(
                 f"No filename given to save, a filename must be specified"
             )
-        file_path = self.dir_path.joinpath(Path(filename))
+        file_path = self.dir_path.joinpath(filename)
         joblib.dump(estimator, file_path)
         return file_path

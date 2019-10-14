@@ -1,7 +1,6 @@
 from ml_tooling.storage import Storage
 from ml_tooling.utils import MLToolingError
 
-import os
 import joblib
 from tempfile import TemporaryDirectory
 from typing import Tuple, Union, Optional, List, Text
@@ -20,6 +19,11 @@ except ImportError:
 class ArtifactoryStorage(Storage):
     """
     Artifactory Storage class for handling storage of estimators to JFrog artifactory
+
+    Example
+    -------
+    Instantiate this class with a url and path to the repo like so:
+        storage = ArtifactoryStorage('http://artifactory.com', pathlib.Path('/path/to/artifact'))
     """
 
     def __init__(
@@ -29,11 +33,7 @@ class ArtifactoryStorage(Storage):
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
-        self.artifactory_url = (
-            artifactory_url
-            if artifactory_url.startswith("http://")
-            else f"http://{artifactory_url}"
-        )
+        self.artifactory_url = artifactory_url
         self.repo_path = repo_path
         self.auth = auth
         self.apikey = apikey
@@ -56,7 +56,7 @@ class ArtifactoryStorage(Storage):
         Returns
         -------
         List[ArtifactoryPath]
-            list of paths to files
+            list of paths to files sorted by filename
         """
         return sorted(
             ArtifactoryPath(f"{self.artifactory_url}{self.repo_path}").glob("*/*.pkl")
@@ -102,7 +102,7 @@ class ArtifactoryStorage(Storage):
     def save(
         self,
         estimator: Union[BaseEstimator, Pipeline],
-        filepath: Union[Path, str],
+        filename: str,
         prod: bool = False,
     ) -> ArtifactoryPath:
         """
@@ -110,14 +110,20 @@ class ArtifactoryStorage(Storage):
 
         Parameters
         ----------
-        estimator: BaseEstimator
+        estimator: Union[BaseEstimator, Pipeline]
             The estimator object
+        filename: str
+            Filename for the saved estimator
+        prod: bool
+            Production variable, set to True if saving a production-ready estimator
 
         Example
         -------
         To save your trained estimator:
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
-            artyfactory_path = storage.save(estimator)
+            artifactory_path = storage.save(estimator)
+        For production ready models set the prod parameter to True
+            artifactory_path = storage.save(estimator, prod=True)
 
         We now have saved an estimator to a pickle file.
 
@@ -128,12 +134,12 @@ class ArtifactoryStorage(Storage):
         """
         env_name = "prod" if prod else "dev"
         repo = f"{self.artifactory_url}{self.repo_path}"
-        path_with_env = f"{repo}/{env_name}/{os.path.basename(filepath)}"
+        path_with_env = f"{repo}/{env_name}/{filename}"
         artifactory_path = ArtifactoryPath(
             path_with_env, auth=self.auth, apikey=self.apikey
         )
         with TemporaryDirectory() as tmpdir:
-            filepath = Path(tmpdir).joinpath("temp.pkl")
-            joblib.dump(estimator, filepath)
-            artifactory_path.deploy_file(filepath)
+            file_path = Path(tmpdir).joinpath("temp.pkl")
+            joblib.dump(estimator, file_path)
+            artifactory_path.deploy_file(file_path)
         return artifactory_path

@@ -1,4 +1,4 @@
-from .log_estimator import log_results
 from .logger import create_logger
+from .log_estimator import Log
 
-__all__ = ["log_results", "create_logger"]
+__all__ = ["create_logger", "Log"]

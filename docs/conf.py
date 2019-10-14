@@ -49,7 +49,6 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -76,6 +75,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
+autodoc_typehints = "none"
+
 
 # -- Options for HTML output -------------------------------------------------
 

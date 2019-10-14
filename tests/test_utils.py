@@ -1,9 +1,11 @@
+import pathlib
+from unittest.mock import patch
+
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from ml_tooling.logging.log_estimator import _make_run_dir
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 
@@ -11,8 +13,8 @@ from ml_tooling.utils import (
     get_git_hash,
     find_estimator_file,
     MLToolingError,
-    _create_param_grid,
     _validate_estimator,
+    make_dir,
 )
 
 
@@ -20,6 +22,15 @@ def test_get_git_hash_returns_correctly():
     git_hash = get_git_hash()
     assert isinstance(git_hash, str)
     assert 10 < len(git_hash)
+
+
+@patch("ml_tooling.utils.subprocess")
+def test_get_git_hash_returns_empty_if_git_not_found(mock_subprocess):
+    mock_subprocess.check_output.side_effect = OSError
+    git_hash = get_git_hash()
+    assert git_hash == ""
+
+    mock_subprocess.check_output.assert_called_with(["git", "rev-parse", "HEAD"])
 
 
 def test_find_model_file_with_given_model_returns_correctly(tmpdir):
@@ -125,35 +136,18 @@ def test_validate_estimator_should_raise_on_invalid_input():
 
 
 class TestGridsearchParams:
-    def test_create_gridsearch_params_in_pipeline_returns_correct(
-        self, pipeline_forest_classifier
-    ):
-        param_grid = {"n_estimators": [5, 10, 20], "max_depth": [3, 4, 5]}
-        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+    def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
+        file_path = tmp_path / "test.txt"
 
-        assert [
-            {"clf__n_estimators": [5, 10, 20], "clf__max_depth": [3, 4, 5]}
-        ] == grid.param_grid
+        file_path.write_text("test\ntest")
 
-    def test_create_gridsearch_params_returns_if_already_prepended(
-        self, pipeline_forest_classifier
-    ):
-        param_grid = {"clf__n_estimators": [5, 10, 20], "clf__max_depth": [3, 4, 5]}
+        with pytest.raises(IOError):
+            make_dir(file_path)
 
-        grid = _create_param_grid(pipeline_forest_classifier, param_grid)
+    def test_make_dir_creates_folder_on_input_files(self, tmp_path: pathlib.Path):
+        file_path = tmp_path / "testing"
+        assert file_path.exists() is False
 
-        assert [param_grid] == grid.param_grid
+        make_dir(file_path)
 
-    def test_create_gridsearch_params_without_pipeline_returns_correct(self):
-        param_grid = {"n_estimators": [5, 10, 20], "max_depth": [3, 4, 5]}
-        model = RandomForestClassifier()
-        grid = _create_param_grid(model, param_grid)
-
-        assert [param_grid] == grid.param_grid
-
-
-def test__make_run_dir_fails_if_passed_file(tmpdir):
-    new_file = tmpdir.mkdir("test").join("test.txt")
-    new_file.write("test hi")
-    with pytest.raises(IOError):
-        _make_run_dir(str(new_file))
+        assert file_path.exists()

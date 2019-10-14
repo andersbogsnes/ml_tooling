@@ -1,14 +1,15 @@
+import importlib
 import pathlib
 import subprocess
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import ParameterGrid
 from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
+Estimator = Union[BaseEstimator, Pipeline]
 
 
 class MLToolingError(Exception):
@@ -72,7 +73,7 @@ def find_estimator_file(path: str) -> pathlib.Path:
     return newest_match
 
 
-def _get_estimator_name(clf: BaseEstimator) -> str:
+def _get_estimator_name(clf: Estimator) -> str:
     """
     Returns estimator name based on class name. If passed classifier is a :class:
     `~sklearn.pipeline.Pipeline`, assume last step is the estimator and return that classes name
@@ -116,35 +117,7 @@ def listify(collection) -> list:
     return collection
 
 
-def _create_param_grid(pipe: Pipeline, param_grid: dict) -> ParameterGrid:
-    """
-    Creates a parameter grid from a :class:`~sklearn.pipeline.Pipeline`
-
-    Parameters
-    ----------
-    pipe: Pipeline
-        Input pipeline
-    param_grid: dict
-        dict of parameters to search over
-
-    Returns
-    -------
-    :class:`~sklearn.model_selection.ParameterGrid`
-    """
-    if not isinstance(pipe, Pipeline):
-        return ParameterGrid(param_grid)
-
-    step_name = pipe.steps[-1][0]
-
-    step_dict = {
-        f"{step_name}__{param}" if step_name not in param else param: value
-        for param, value in param_grid.items()
-    }
-
-    return ParameterGrid(step_dict)
-
-
-def _validate_estimator(estimator):
+def _validate_estimator(estimator: Estimator):
     """
     Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
     or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`
@@ -173,3 +146,86 @@ def _validate_estimator(estimator):
         )
 
     raise MLToolingError(f"Expected a Pipeline or Estimator - got {type(estimator)}")
+
+
+def is_pipeline(estimator: Estimator):
+    if type(estimator).__name__ == "Pipeline":
+        return True
+    return False
+
+
+def setup_pipeline_step(
+    definition: dict
+) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
+    """
+    Hydrates a class based on a dictionary definition, importing the module
+    and instantiating the class from the classname, setting the parameters of the class as found
+    in the input dictionary
+
+    Parameters
+    ----------
+    definition: dict
+        Dictionary definition including module name, classname and params. If pipeline is defined,
+        returns
+
+    Returns
+    -------
+    BaseEstimator or str, BaseEstimator
+        Instantiated BaseEstimator and optionally the name of the step
+
+    """
+    module = importlib.import_module(definition["module"])
+
+    if definition["classname"] == "DFFeatureUnion":
+        transformer_list = [
+            Pipeline([setup_pipeline_step(step) for step in pipeline])
+            for pipeline in definition["params"]
+        ]
+        class_ = getattr(module, definition["classname"])(transformer_list)
+
+    else:
+        class_ = getattr(module, definition["classname"])()
+        class_ = class_.set_params(**definition["params"])
+
+    if "name" in definition:
+        return definition["name"], class_
+    return class_
+
+
+def serialize_pipeline(pipe):
+    results = [
+        {
+            "name": step[0],
+            "module": step[1].__class__.__module__,
+            "classname": step[1].__class__.__name__,
+            "params": [serialize_pipeline(s) for s in step[1].transformer_list]
+            if hasattr(step[1], "transformer_list")
+            else step[1].get_params(),
+        }
+        for step in pipe.steps
+    ]
+
+    return results
+
+
+def make_dir(path: pathlib.Path) -> pathlib.Path:
+    """
+    Checks that path is a directory and then creates that directory if it doesn't exist
+    Parameters
+    ----------
+    path: pathlib.Path
+        Directory to check
+
+    Returns
+    -------
+    pathlib.Path
+        Path to directory
+    """
+
+    if path.is_file():
+        raise IOError(f"{path} is a file - must pass a directory")
+
+    if not path.exists():
+        path.mkdir(parents=True)
+
+    return path

@@ -11,7 +11,7 @@ class Renamer(BaseEstimator, TransformerMixin):
     Renames columns to passed names.
     """
 
-    def __init__(self, column_names: Union[list, str]):
+    def __init__(self, column_names: Union[list, str] = None):
         self.column_names = column_names
 
     def fit(self, X: pd.DataFrame, y=None):

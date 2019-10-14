@@ -89,7 +89,9 @@ class ArtifactoryStorage(Storage):
         if isinstance(filename, type(ArtifactoryPath)):
             filepath = filename
         else:
-            filepath = f"{self.artifactory_url}{self.repo_path}{filename}"
+            filepath = f"{self.artifactory_url}/{self.repo_path}/{filename}".replace(
+                "//", "/"
+            )
 
         artifactory_path = ArtifactoryPath(filepath, auth=self.auth, apikey=self.apikey)
         with artifactory_path.open() as f:
@@ -134,7 +136,7 @@ class ArtifactoryStorage(Storage):
         """
         env_name = "prod" if prod else "dev"
         repo = f"{self.artifactory_url}{self.repo_path}"
-        path_with_env = f"{repo}/{env_name}/{filename}"
+        path_with_env = f"{repo}/{env_name}/{filename}".replace("//", "/")
         artifactory_path = ArtifactoryPath(
             path_with_env, auth=self.auth, apikey=self.apikey
         )

@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+import datetime
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -248,6 +249,16 @@ class TestBaseClass:
         assert saved_model_path.exists()
         loaded_model = classifier.load_estimator(load_storage, saved_model_path)
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
+
+    def test_regression_model_filename_is_generated_correctly(
+        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        storage = FileStorage(tmp_path)
+        saved_model_path = classifier.save_estimator(storage)
+        assert saved_model_path.exists()
+        assert datetime.datetime.strptime(
+            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
+        )
 
     def test_save_model_saves_pipeline_correctly(
         self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset

@@ -1,4 +1,4 @@
-from ml_tooling.storage import Storage, StorageEnvironment
+from ml_tooling.storage import Storage
 from ml_tooling.utils import MLToolingError
 
 import os
@@ -12,7 +12,9 @@ from sklearn.pipeline import Pipeline
 try:
     from artifactory import ArtifactoryPath
 except ImportError:
-    raise MLToolingError("Artifactory not installed - run pip install dohq-artifactory")
+    raise MLToolingError(
+        "Artifactory not installed - run pip install dohq-artifactory"
+    ) from None
 
 
 class ArtifactoryStorage(Storage):
@@ -60,7 +62,9 @@ class ArtifactoryStorage(Storage):
             ArtifactoryPath(f"{self.artifactory_url}{self.repo_path}").glob("*/*.pkl")
         )
 
-    def load(self, filename: Union[str, Path, ArtifactoryPath]) -> BaseEstimator:
+    def load(
+        self, filename: Union[str, Path, ArtifactoryPath]
+    ) -> Union[BaseEstimator, Pipeline]:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
@@ -82,7 +86,7 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-        if isinstance(filename, ArtifactoryPath):
+        if isinstance(filename, type(ArtifactoryPath)):
             filepath = filename
         else:
             filepath = f"{self.artifactory_url}{self.repo_path}{filename}"
@@ -99,7 +103,7 @@ class ArtifactoryStorage(Storage):
         self,
         estimator: Union[BaseEstimator, Pipeline],
         filepath: Union[Path, str],
-        env: StorageEnvironment = StorageEnvironment.dev,
+        prod: bool = False,
     ) -> ArtifactoryPath:
         """
         Save a pickled estimator to artifactory.
@@ -122,8 +126,9 @@ class ArtifactoryStorage(Storage):
         ArtifactoryPath
             artifactory_path: artifactory file path
         """
+        env_name = "prod" if prod else "dev"
         repo = f"{self.artifactory_url}{self.repo_path}"
-        path_with_env = f"{repo}/{env.name}/{os.path.basename(filepath)}"
+        path_with_env = f"{repo}/{env_name}/{os.path.basename(filepath)}"
         artifactory_path = ArtifactoryPath(
             path_with_env, auth=self.auth, apikey=self.apikey
         )

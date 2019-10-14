@@ -1,4 +1,4 @@
-from ml_tooling.storage.base import Storage, StorageEnvironment
+from ml_tooling.storage.base import Storage
 from ml_tooling.utils import MLToolingError
 
 import joblib
@@ -71,12 +71,7 @@ class FileStorage(Storage):
         estimator_path = Path(file_path)
         return joblib.load(estimator_path)
 
-    def save(
-        self,
-        estimator: BaseEstimator,
-        filename: Union[Path, str],
-        env: StorageEnvironment = StorageEnvironment.dev,
-    ) -> Path:
+    def save(self, estimator: BaseEstimator, filename: Union[Path, str]) -> Path:
         """
         Save a joblib pickled estimator.
 

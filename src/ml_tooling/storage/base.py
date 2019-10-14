@@ -1,11 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from enum import Enum
-
-
-class StorageEnvironment(Enum):
-    dev = 1
-    test = 2
-    prod = 3
 
 
 class Storage(metaclass=ABCMeta):

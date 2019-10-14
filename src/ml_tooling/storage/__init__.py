@@ -1,4 +1,4 @@
 from .file import FileStorage
-from .base import Storage, StorageEnvironment
+from .base import Storage
 
-__all__ = ["FileStorage", "Storage", "StorageEnvironment"]
+__all__ = ["FileStorage", "Storage"]

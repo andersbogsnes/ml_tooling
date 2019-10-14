@@ -7,6 +7,7 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+from ml_tooling.baseclass import Model
 from ml_tooling.transformers import DFStandardScaler
 
 
@@ -74,9 +75,9 @@ def pipeline_forest_classifier():
 
 
 @pytest.fixture
-def estimator_pickle(base, test_dataset, tmp_path):
+def estimator_pickle(test_dataset, tmp_path):
     file_path = tmp_path / "tmp.pkl"
-    model = base(LogisticRegression(solver="liblinear"))
+    model = Model(LogisticRegression(solver="liblinear"))
     model.score_estimator(test_dataset)
     joblib.dump(model.estimator, file_path)
     return pathlib.Path(file_path)

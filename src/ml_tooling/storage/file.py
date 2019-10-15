@@ -1,5 +1,4 @@
 from ml_tooling.storage.base import Storage
-from ml_tooling.utils import MLToolingError
 
 import joblib
 from typing import List, Any, Union
@@ -87,10 +86,6 @@ class FileStorage(Storage):
         """
         if not self.dir_path.exists():
             self.dir_path.mkdir(parents=True)
-        if filename is None:
-            raise MLToolingError(
-                f"No filename given to save, a filename must be specified"
-            )
         file_path = self.dir_path.joinpath(filename)
         joblib.dump(estimator, file_path)
         return file_path

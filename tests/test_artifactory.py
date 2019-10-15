@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
+from artifactory import PureArtifactoryPath
 from ml_tooling.storage.artifactory import ArtifactoryStorage
 
 
@@ -37,6 +38,28 @@ def test_can_save_to_artifactory(
     storage.save("test", "test")
     f = joblib.load(file_path)
     assert isinstance(f, (BaseEstimator, Pipeline))
+
+
+@require_artifactory
+@patch("ml_tooling.storage.artifactory.ArtifactoryPath.glob")
+@patch("ml_tooling.storage.artifactory.ArtifactoryPath")
+def test_can_get_list_of_paths(mock_artifactory_path, mock_purepath_glob):
+    url = "http://artifactory-singlep.p001.alm.brand.dk/artifactory/advanced-analytics/dev/"
+
+    paths = [
+        f"{url}LogisticRegression_2019-10-15_10:42:10.709197.pkl",
+        f"{url}LogisticRegression_2019-10-15_10:32:41.780990.pkl",
+        f"{url}LogisticRegression_2019-10-15_10:34:34.226695.pkl",
+        f"{url}LogisticRegression_2019-10-15_10:51:50.760746.pkl",
+        f"{url}LogisticRegression_2019-10-15_10:34:21.849358.pkl",
+    ]
+    mock_artifactory_path.return_value = mock_artifactory_path
+    mock_purepath_glob.return_value = [PureArtifactoryPath(path) for path in paths]
+
+    storage = ArtifactoryStorage("test", "test")
+    artifactory_paths = storage.get_list()
+    assert str(artifactory_paths[0]) == paths[1]
+    assert str(artifactory_paths[-1]) == paths[3]
 
 
 @require_artifactory

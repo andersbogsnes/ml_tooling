@@ -33,7 +33,7 @@ class ArtifactoryStorage(Storage):
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
-        self.artifactory_url = artifactory_url
+        self.artifactory_url = PureArtifactoryPath(artifactory_url)
         self.repo_path = Path(repo_path)
         self.auth = auth
         self.apikey = apikey
@@ -58,9 +58,9 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files sorted by filename
         """
-        artifactory_url = PureArtifactoryPath(self.artifactory_url)
-        repo_path = Path(self.repo_path)
-        return sorted(ArtifactoryPath(str(artifactory_url / repo_path)).glob("*/*.pkl"))
+        artifactory_url = self.artifactory_url
+        arifactory_path = ArtifactoryPath(str(artifactory_url / self.repo_path))
+        return sorted(arifactory_path.glob("*/*.pkl"))
 
     def load(
         self, filename: Union[str, Path, ArtifactoryPath]
@@ -86,7 +86,7 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-        artifactory_url = PureArtifactoryPath(self.artifactory_url)
+        artifactory_url = self.artifactory_url
         filename = f"{Path(filename).stem}{Path(filename).suffix}"
         artifactory_path = ArtifactoryPath(
             str(artifactory_url / self.repo_path / filename),
@@ -134,7 +134,7 @@ class ArtifactoryStorage(Storage):
             artifactory_path: artifactory file path
         """
         env_path = Path("prod/") if prod else Path("dev/")
-        artifactory_url = PureArtifactoryPath(self.artifactory_url)
+        artifactory_url = self.artifactory_url
         artifactory_path = ArtifactoryPath(
             str(artifactory_url / self.repo_path / env_path),
             auth=self.auth,

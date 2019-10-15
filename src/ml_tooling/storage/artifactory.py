@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 try:
-    from artifactory import ArtifactoryPath
+    from artifactory import ArtifactoryPath, PureArtifactoryPath
 except ImportError:
     raise MLToolingError(
         "Artifactory not installed - run pip install dohq-artifactory"
@@ -34,7 +34,7 @@ class ArtifactoryStorage(Storage):
         auth: Optional[Tuple[str, str]] = None,
     ):
         self.artifactory_url = artifactory_url
-        self.repo_path = repo_path
+        self.repo_path = Path(repo_path)
         self.auth = auth
         self.apikey = apikey
 
@@ -58,9 +58,9 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files sorted by filename
         """
-        return sorted(
-            ArtifactoryPath(f"{self.artifactory_url}{self.repo_path}").glob("*/*.pkl")
-        )
+        artifactory_url = PureArtifactoryPath(self.artifactory_url)
+        repo_path = Path(self.repo_path)
+        return sorted(ArtifactoryPath(str(artifactory_url / repo_path)).glob("*/*.pkl"))
 
     def load(
         self, filename: Union[str, Path, ArtifactoryPath]
@@ -86,14 +86,13 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-        if isinstance(filename, type(ArtifactoryPath)):
-            filepath = filename
-        else:
-            filepath = f"{self.artifactory_url}/{self.repo_path}/{filename}".replace(
-                "//", "/"
-            )
-
-        artifactory_path = ArtifactoryPath(filepath, auth=self.auth, apikey=self.apikey)
+        artifactory_url = PureArtifactoryPath(self.artifactory_url)
+        filename = f"{Path(filename).stem}{Path(filename).suffix}"
+        artifactory_path = ArtifactoryPath(
+            str(artifactory_url / self.repo_path / filename),
+            auth=self.auth,
+            apikey=self.apikey,
+        )
         with artifactory_path.open() as f:
             with TemporaryDirectory() as tmpdir:
                 filepath = Path(tmpdir).joinpath("temp.pkl")
@@ -104,7 +103,7 @@ class ArtifactoryStorage(Storage):
     def save(
         self,
         estimator: Union[BaseEstimator, Pipeline],
-        filename: str,
+        filename: Union[str, Path],
         prod: bool = False,
     ) -> ArtifactoryPath:
         """
@@ -134,14 +133,17 @@ class ArtifactoryStorage(Storage):
         ArtifactoryPath
             artifactory_path: artifactory file path
         """
-        env_name = "prod" if prod else "dev"
-        repo = f"{self.artifactory_url}{self.repo_path}"
-        path_with_env = f"{repo}/{env_name}/{filename}".replace("//", "/")
+        env_path = Path("prod/") if prod else Path("dev/")
+        artifactory_url = PureArtifactoryPath(self.artifactory_url)
         artifactory_path = ArtifactoryPath(
-            path_with_env, auth=self.auth, apikey=self.apikey
+            str(artifactory_url / self.repo_path / env_path),
+            auth=self.auth,
+            apikey=self.apikey,
         )
+        artifactory_path.mkdir(parents=True, exist_ok=True)
         with TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir).joinpath("temp.pkl")
+            filename = f"{Path(filename).stem}{Path(filename).suffix}"
+            file_path = Path(tmpdir).joinpath(filename)
             joblib.dump(estimator, file_path)
             artifactory_path.deploy_file(file_path)
         return artifactory_path

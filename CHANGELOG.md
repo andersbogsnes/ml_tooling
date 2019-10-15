@@ -1,3 +1,6 @@
+# v0.9.0
+- Breaking change - Model methods load_estimator and save_estimator now takes a Storage class that defines how and where to store estimators.
+
 # v0.8.1
 - Removed gitpython as a dependency
 

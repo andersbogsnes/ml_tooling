@@ -5,11 +5,13 @@ import numpy as np
 import pandas as pd
 import pytest
 import yaml
+import datetime
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 
+from ml_tooling.storage import FileStorage
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
@@ -239,25 +241,32 @@ class TestBaseClass:
     def test_regression_model_can_be_saved(
         self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
-        expected_path = tmp_path / "test_model.pkl"
-
         classifier.score_estimator(test_dataset)
-        classifier.save_estimator(expected_path)
+        load_storage = FileStorage(tmp_path)
 
-        assert expected_path.exists()
-
-        loaded_model = Model.load_estimator(str(expected_path))
+        storage = FileStorage(tmp_path)
+        saved_model_path = classifier.save_estimator(storage)
+        assert saved_model_path.exists()
+        loaded_model = classifier.load_estimator(load_storage, saved_model_path)
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
+
+    def test_regression_model_filename_is_generated_correctly(
+        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        storage = FileStorage(tmp_path)
+        saved_model_path = classifier.save_estimator(storage)
+        assert saved_model_path.exists()
+        assert datetime.datetime.strptime(
+            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
+        )
 
     def test_save_model_saves_pipeline_correctly(
         self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
-
-        save_dir = tmp_path / "test_model_1.pkl"
         model = Model(pipeline_logistic)
         model.train_estimator(test_dataset)
-        model.save_estimator(save_dir)
-        assert save_dir.exists()
+        saved_model_path = model.save_estimator(FileStorage(tmp_path))
+        assert saved_model_path.exists()
 
     @patch("ml_tooling.logging.log_estimator.get_git_hash")
     def test_save_model_saves_logging_dir_correctly(
@@ -266,21 +275,14 @@ class TestBaseClass:
         mock_hash.return_value = "1234"
 
         save_dir = tmp_path / "estimator"
-        expected_file = save_dir / "test_model3.pkl"
-        with classifier.log(str(save_dir)):
-            classifier.save_estimator(expected_file)
+        with classifier.log(save_dir):
+            expected_file = classifier.save_estimator(FileStorage(save_dir))
 
         assert expected_file.exists()
         assert (
             "LogisticRegression" in [str(file) for file in save_dir.rglob("*.yaml")][0]
         )
         mock_hash.assert_called_once()
-
-    def test_save_model_errors_if_path_is_dir(
-        self, classifier: Model, tmp_path: pathlib.Path
-    ):
-        with pytest.raises(MLToolingError, match=f"Passed directory {tmp_path}"):
-            classifier.save_estimator(tmp_path)
 
     def test_gridsearch_model_returns_as_expected(
         self, pipeline_logistic: Pipeline, test_dataset: Dataset
@@ -399,7 +401,7 @@ class TestBaseClass:
         with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(str(tmp_path)):
                 model.train_estimator(test_dataset)
-                model.save_estimator(tmp_path / "test_model4.pkl")
+                model.save_estimator(FileStorage(tmp_path))
 
     def test_dump_serializes_correctly_without_pipeline(self, regression: Model):
         serialized_model = regression.to_dict()

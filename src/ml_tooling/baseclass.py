@@ -1,4 +1,5 @@
 import pathlib
+import datetime
 from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union, List
 
@@ -7,11 +8,11 @@ import yaml
 from sklearn.base import is_classifier, is_regressor
 from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
-import joblib
 from sklearn.model_selection import check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.storage.base import Storage
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.result import Result, ResultGroup
@@ -87,52 +88,75 @@ class Model:
         else:
             self.config.REGRESSION_METRIC = metric
 
+    @staticmethod
+    def list_estimators(storage: Storage) -> List[pathlib.Path]:
+        """
+        Gets a list of estimators from the given Storage
+
+        Parameters
+        ----------
+        storage: Storage
+            Storage class to list the estimators with
+
+        Example
+        -------
+            with FileStorage('path/to/estimators_dir') as storage:
+                estimator_list = Model.list_estimators(storage)
+
+        Returns
+        -------
+        List[pathlib.Path]
+            list of Paths
+        """
+        return storage.get_list()
+
     @classmethod
-    def load_estimator(cls, path: str) -> "Model":
+    def load_estimator(cls, storage: Storage, path: pathlib.Path) -> "Model":
         """
         Instantiates the class with a joblib pickled estimator.
 
         Parameters
         ----------
+        storage : Storage
+            Storage class to load the estimator with
         path: str, optional
             Path to estimator pickle file
 
         Example
         -------
-        Having defined ModelData, we can load a trained estimator from disk::
-
-            my_estimator = Model.load_estimator('path/to/estimator')
+        We can load a trained estimator from disk::
+            with FileStorage() as storage:
+                my_estimator = Model.load_estimator(storage, 'path/to/estimator')
 
         We now have a trained estimator loaded.
-
 
         Returns
         -------
         Model
             Instance of Model with a saved estimator
         """
-        estimator_file = pathlib.Path(path)
-        estimator = joblib.load(estimator_file)
+        estimator = storage.load(path)
         instance = cls(estimator)
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, path: Union[str, pathlib.Path]) -> pathlib.Path:
+    def save_estimator(self, storage: Storage) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
 
-
         Parameters
         ----------
-        path : str
-            Path to save estimator
+        storage : Storage
+            Storage class to save the estimator with
 
         Example
         -------
 
         If we have trained an estimator and we want to save it to disk we can write::
 
-            estimator.save('path/to/folder/filename.pkl')
+            with FileStorage('/path/to/save/dir') as storage:
+                model = Model(LinearRegression())
+                saved_filename = model.save_estimator(storage)
 
         to save in the given folder.
 
@@ -140,21 +164,12 @@ class Model:
         -------
         pathlib.Path
             The path to where the estimator file was saved
-
         """
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+        filename = f"{self.estimator_name}_{now_str}.pkl"
+        estimator_file = storage.save(self.estimator, filename)
 
-        estimator_file = pathlib.Path(path)
-
-        if estimator_file.is_dir():
-            raise MLToolingError(
-                f"Passed directory {estimator_file} - need to pass a filename"
-            )
-        logger.debug(f"Attempting to save estimator in {estimator_file.parent}")
-        if not estimator_file.parent.exists():
-            logger.debug(f"{estimator_file.parent} does not exist - creating")
-            estimator_file.parent.mkdir(parents=True)
-
-        joblib.dump(self.estimator, estimator_file)
+        logger.debug(f"Attempting to save estimator {estimator_file}")
 
         if self.config.LOG:
             if self.result is None:

@@ -7,7 +7,7 @@
 --index-url http://artifactory-singlep.p001.alm.brand.dk/artifactory/api/pypi/pypi-virtual/simple
 --trusted-host artifactory-singlep.p001.alm.brand.dk
 
-attrs==19.2.0
+attrs==19.3.0
 cycler==0.10.0            # via matplotlib
 gitdb2==2.0.5             # via gitpython
 gitpython==3.0.2

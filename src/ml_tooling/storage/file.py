@@ -42,14 +42,14 @@ class FileStorage(Storage):
         """
         return sorted(self.dir_path.glob("*.pkl"))
 
-    def load(self, filename: str) -> Any:
+    def load(self, file_path: Pathlike) -> Any:
         """
         Loads a joblib pickled estimator from given filepath and returns the unpickled object
 
         Parameters
         ----------
 
-        filename: str
+        file_path: str
             filename of estimator pickle file
 
         Example
@@ -66,7 +66,7 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        estimator_path = self.dir_path / filename
+        estimator_path = self.dir_path / file_path
         return joblib.load(estimator_path)
 
     def save(self, estimator: Estimator, filename: str) -> Path:

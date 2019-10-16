@@ -1,11 +1,11 @@
 import pathlib
 from datetime import datetime
-from typing import Union, Optional
+from typing import Optional
 
 import yaml
 
 from ml_tooling.metrics import Metrics
-from ml_tooling.utils import get_git_hash, make_dir
+from ml_tooling.utils import get_git_hash, make_dir, Pathlike
 import attr
 
 
@@ -109,7 +109,7 @@ class Log:
         }
         return data
 
-    def save_log(self, save_dir: Union[pathlib.Path, str]) -> pathlib.Path:
+    def save_log(self, save_dir: Pathlike) -> pathlib.Path:
         """
         Saves a log to a given directory
 
@@ -124,7 +124,7 @@ class Log:
             Path where logfile was saved
         """
 
-        output_path = self._generate_output_path(save_dir)
+        output_path: pathlib.Path = self._generate_output_path(save_dir)
         log = self.dump()
 
         with output_path.open(mode="w") as f:

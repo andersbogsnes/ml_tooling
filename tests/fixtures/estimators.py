@@ -98,7 +98,7 @@ def estimator_pickle_path(test_dataset, tmp_path):
 
 
 @pytest.fixture
-def open_estimator_pickle(estimator_pickle_path, request):
-    f = open(estimator_pickle_path, "rb")
+def open_estimator_pickle(estimator_pickle_path: pathlib.Path, request):
+    f = estimator_pickle_path.open(mode="rb")
     request.addfinalizer(f.close)
     return f

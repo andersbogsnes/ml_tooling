@@ -4,9 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from ..metrics.utils import _is_percent, _sort_values
-from .utils import _generate_text_labels
-from ..utils import DataType
+from ml_tooling.metrics.utils import _is_percent, _sort_values
+from ml_tooling.plots.utils import _generate_text_labels
+from ml_tooling.utils import DataType
 
 
 def plot_feature_importance(
@@ -71,7 +71,7 @@ def plot_feature_importance(
             title = f"{title} - Bottom {bottom_n}"
 
     labels, importance = _sort_values(
-        labels, importance, abs_sort="abs", top_n=top_n, bottom_n=bottom_n
+        labels, importance, abs_sort=True, top_n=top_n, bottom_n=bottom_n
     )
     labels, importance = labels[::-1], importance[::-1]
     ax.barh(labels, np.abs(importance))

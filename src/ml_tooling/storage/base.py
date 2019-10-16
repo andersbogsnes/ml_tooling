@@ -1,4 +1,7 @@
 from abc import ABCMeta, abstractmethod
+from typing import List
+
+from ml_tooling.utils import Pathlike, Estimator
 
 
 class Storage(metaclass=ABCMeta):
@@ -7,27 +10,40 @@ class Storage(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def load(self, file_path):
+    def load(self, file_path: Pathlike) -> Estimator:
         """
         Abstract method to be implemented by the user.
         Defines method used to load data from the storage type
 
         Returns
         -------
-        Model
-            Instance of Model with a saved estimator
+        Estimator
+            Returns the unpickled object
         """
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, estimator_file, filename):
+    def save(self, estimator: Estimator, filename: str) -> Pathlike:
         """
         Abstract method to be implemented by the user.
         Defines method used to save data from the storage type
 
         Returns
         -------
-        Model
-            Instance of Model with a saved estimator
+        Pathlike
+            Path to where the pickled object is saved
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_list(self) -> List[Pathlike]:
+        """
+        Abstract method to be implemented by the user.
+        Defines method used to show which objects have been saved
+
+        Returns
+        -------
+        List[Path]
+            Paths to each of the estimators sorted lexically
         """
         raise NotImplementedError

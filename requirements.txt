@@ -14,7 +14,7 @@ gitpython==3.0.2
 joblib==0.13.2
 kiwisolver==1.1.0         # via matplotlib
 matplotlib==3.1.1
-numpy==1.17.2             # via matplotlib, pandas, pyarrow, scikit-learn, scipy
+numpy==1.17.3             # via matplotlib, pandas, pyarrow, scikit-learn, scipy
 pandas==0.25.1
 pyarrow==0.14.1
 pyparsing==2.4.2          # via matplotlib

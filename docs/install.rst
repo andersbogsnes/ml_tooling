@@ -1,18 +1,24 @@
-.. _install:
-
 Installation
 ============
 
-There are two officially recommended ways of installing ML Tooling
+.. highlight:: bash
 
-With ``pip``
-------------
-The most common method would be to use ``pip``::
-    ``pip install ml_tooling``
+:Requirements: **Python 3.x >= 3.6**
 
-With ``conda``
---------------
-``conda`` is a great way to manage Pydata packages::
-    ``conda install -c conda-forge ml_tooling``
+To install the latest released version of ml_tooling::
 
-Continue to :doc:`quickstart`
+  $ pip install ml_tooling
+
+  $ conda install -c conda-forge ml_tooling
+
+From Source
+-----------
+
+You can install ml_tooling from source just as you would install any other
+Python package::
+
+    $ pip install git+https://github.com/anders_bogsnes/ml_tooling.git
+
+This will allow you to keep up to date with development on GitHub::
+
+    $ pip install -U git+https://github.com/anders_bogsnes/ml_tooling.git

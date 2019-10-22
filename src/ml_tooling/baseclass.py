@@ -361,7 +361,7 @@ class Model:
         data: Dataset,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = False,
-    ) -> "Result":
+    ) -> Result:
         """
         Scores the estimator based on training data from `data` and validates based on validation
         data from `data`.

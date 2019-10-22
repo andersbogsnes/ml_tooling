@@ -2,11 +2,12 @@ import pathlib
 import sys
 import pytest
 import joblib
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
 from ml_tooling.storage.artifactory import ArtifactoryStorage
+from ml_tooling.utils import MLToolingError
 
 require_artifactory = pytest.mark.skipif(
     "artifactory" not in sys.modules, reason="artifactory must be installed"
@@ -83,3 +84,13 @@ def test_artifactory_initialization_with_artifactory_suffix_works_as_expected():
     assert storage.artifactory_path.repo == "test"
     assert storage.artifactory_path.drive == "http://www.testy.com/artifactory"
     assert storage.artifactory_path.auth is None
+
+
+@patch("ml_tooling.storage.artifactory._has_artifactory")
+def test_using_artifactory_without_installed_fails(mock_const):
+    mock_const.__bool__.return_value = False
+    with pytest.raises(
+        MLToolingError,
+        match="Artifactory not installed - run pip install dohq-artifactory",
+    ):
+        ArtifactoryStorage("test", "test")

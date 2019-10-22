@@ -1,4 +1,5 @@
 from ml_tooling.storage.base import Storage
+from ml_tooling.utils import MLToolingError
 
 import joblib
 from typing import List, Any
@@ -14,6 +15,10 @@ class FileStorage(Storage):
 
     def __init__(self, dir_path: Pathlike = None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
+        if not self.dir_path.is_dir():
+            raise MLToolingError(
+                f"dir_path is {self.dir_path} which is not a directory"
+            )
 
     def get_list(self) -> List[Path]:
         """
@@ -37,14 +42,15 @@ class FileStorage(Storage):
         """
         return sorted(self.dir_path.glob("*.pkl"))
 
-    def load(self, file_path: Pathlike) -> Any:
+    def load(self, filename: str) -> Any:
         """
         Loads a joblib pickled estimator from given filepath and returns the unpickled object
 
         Parameters
         ----------
-        file_path: str
-            Path to estimator pickle file
+
+        filename: str
+            filename of estimator pickle file
 
         Example
         -------
@@ -60,10 +66,8 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        file_path = Path(file_path)
-        if self.dir_path not in file_path.parents:
-            file_path = self.dir_path / file_path
-        return joblib.load(file_path)
+        estimator_path = self.dir_path / filename
+        return joblib.load(estimator_path)
 
     def save(self, estimator: Estimator, filename: str) -> Path:
         """

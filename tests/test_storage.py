@@ -5,6 +5,7 @@ from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
+from ml_tooling.utils import MLToolingError
 from ml_tooling.storage import Storage
 from ml_tooling.storage.file import FileStorage
 
@@ -28,7 +29,7 @@ def test_can_save_with_model(classifier: Model, tmp_path: pathlib.Path):
 def test_can_load_file(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     storage.save(classifier.estimator, "estimator")
-    loaded_file = storage.load(tmp_path / "estimator")
+    loaded_file = storage.load("estimator")
     assert isinstance(loaded_file, (BaseEstimator, Pipeline))
 
 
@@ -59,6 +60,13 @@ def test_can_list_estimators(classifier: Model, tmp_path: pathlib.Path):
     filenames_list = Model.list_estimators(storage_context)
     for filename in filenames_list:
         assert filename.exists()
+
+
+def test_raise_when_non_dir(classifier: Model, tmp_path: pathlib.Path):
+    with pytest.raises(
+        MLToolingError, match="dir_path is /not/a/dir.file which is not a directory"
+    ):
+        _ = FileStorage("/not/a/dir.file")
 
 
 def test_cannot_instantiate_an_abstract_baseclass():

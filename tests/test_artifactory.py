@@ -1,13 +1,12 @@
+import pathlib
 import sys
 import pytest
 import joblib
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 from sklearn.pipeline import Pipeline
 from sklearn.base import BaseEstimator
-from artifactory import PureArtifactoryPath
 from ml_tooling.storage.artifactory import ArtifactoryStorage
-
 
 require_artifactory = pytest.mark.skipif(
     "artifactory" not in sys.modules, reason="artifactory must be installed"
@@ -15,35 +14,38 @@ require_artifactory = pytest.mark.skipif(
 
 
 @require_artifactory
-@patch("ml_tooling.storage.artifactory.ArtifactoryPath", autospec=True)
-def test_can_load_from_artifactory(mock_artifactory_path, open_estimator_pickle):
-    mock_artifactory_path.return_value.open.return_value = open_estimator_pickle
-    f = ArtifactoryStorage("testy", "test").load("test")
+def test_can_load_from_artifactory(open_estimator_pickle):
+    mock_open = MagicMock()
+    mock_open.open.return_value.__enter__.return_value = open_estimator_pickle
+
+    mock_path = MagicMock()
+    mock_path.__truediv__.return_value.__truediv__.return_value = mock_open
+
+    storage = ArtifactoryStorage("testy", "test")
+    storage.artifactory_path = mock_path
+    f = storage.load("test")
     assert isinstance(f, (BaseEstimator, Pipeline))
 
 
 @require_artifactory
-@patch("ml_tooling.storage.artifactory.ArtifactoryPath", autospec=True)
-def test_can_save_to_artifactory(
-    mock_artifactory_path, open_estimator_pickle, tmp_path
-):
+def test_can_save_to_artifactory(open_estimator_pickle, tmp_path: pathlib.Path):
     file_path = tmp_path.joinpath("temp.pkl")
 
     def mock_deploy_file(*args, **kwargs):
-        return open(file_path, "wb").write(open_estimator_pickle.read())
+        return file_path.write_bytes(open_estimator_pickle.read())
 
-    mock_artifactory_path.return_value.deploy_file = mock_deploy_file
+    mock = MagicMock()
+    mock.__truediv__.deploy_file.return_value = mock_deploy_file()
 
     storage = ArtifactoryStorage("http://www.testy.com", "/test")
+    storage.artifactory_path = mock
     storage.save("test", "test")
     f = joblib.load(file_path)
     assert isinstance(f, (BaseEstimator, Pipeline))
 
 
 @require_artifactory
-@patch("ml_tooling.storage.artifactory.ArtifactoryPath.glob")
-@patch("ml_tooling.storage.artifactory.ArtifactoryPath")
-def test_can_get_list_of_paths(mock_artifactory_path, mock_purepath_glob):
+def test_can_get_list_of_paths():
     url = "http://artifactory-singlep.p001.alm.brand.dk/artifactory/advanced-analytics/dev/"
 
     paths = [
@@ -53,32 +55,31 @@ def test_can_get_list_of_paths(mock_artifactory_path, mock_purepath_glob):
         f"{url}LogisticRegression_2019-10-15_10:51:50.760746.pkl",
         f"{url}LogisticRegression_2019-10-15_10:34:21.849358.pkl",
     ]
-    mock_artifactory_path.return_value = mock_artifactory_path
-    mock_purepath_glob.return_value = [PureArtifactoryPath(path) for path in paths]
+    mock = MagicMock()
+    mock.__truediv__.return_value.glob.return_value = paths
 
     storage = ArtifactoryStorage("test", "test")
+    storage.artifactory_path = mock
     artifactory_paths = storage.get_list()
     assert str(artifactory_paths[0]) == paths[1]
     assert str(artifactory_paths[-1]) == paths[3]
 
 
 @require_artifactory
-@patch("ml_tooling.storage.artifactory.ArtifactoryPath", autospec=True)
-def test_artifactory_initialization_path(
-    mock_artifactory_path, open_estimator_pickle, classifier
-):
-    mock_artifactory_path.return_value = mock_artifactory_path
-    mock_artifactory_path.__str__.return_value = "http://www.testy.com"
+def test_artifactory_initialization_path():
+    from dohq_artifactory.auth import XJFrogArtApiAuth
 
-    filename = "estimator.pkl"
-    storage = ArtifactoryStorage("http://www.testy.com", "/test", apikey="key")
-    storage.save(classifier.estimator, filename)
-    mock_artifactory_path.assert_called_with(
-        "http://www.testy.com/test/dev", apikey="key", auth=None
-    )
+    storage = ArtifactoryStorage("http://www.testy.com", "test", apikey="key")
 
-    mock_artifactory_path.return_value.open.return_value = open_estimator_pickle
-    storage.load("estimator.pkl")
-    mock_artifactory_path.assert_called_with(
-        "http://www.testy.com/test/estimator.pkl", apikey="key", auth=None
-    )
+    assert storage.artifactory_path.repo == "test"
+    assert storage.artifactory_path.drive == "http://www.testy.com/artifactory"
+    assert isinstance(storage.artifactory_path.auth, XJFrogArtApiAuth)
+    assert storage.artifactory_path.auth.apikey == "key"
+
+
+@require_artifactory
+def test_artifactory_initialization_with_artifactory_suffix_works_as_expected():
+    storage = ArtifactoryStorage("http://www.testy.com/artifactory", "test")
+    assert storage.artifactory_path.repo == "test"
+    assert storage.artifactory_path.drive == "http://www.testy.com/artifactory"
+    assert storage.artifactory_path.auth is None

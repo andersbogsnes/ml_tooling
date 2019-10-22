@@ -10,10 +10,11 @@ from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
 Estimator = Union[BaseEstimator, Pipeline]
+Pathlike = Union[str, pathlib.Path]
 
 
 class MLToolingError(Exception):
-    """Error which occurs when using the library"""
+    """Error which occurs when using ML Tooling library"""
 
 
 class TransformerError(MLToolingError):
@@ -22,6 +23,10 @@ class TransformerError(MLToolingError):
 
 class DataSetError(MLToolingError):
     """Error which occurs when using a DataSet"""
+
+
+class VizError(MLToolingError):
+    """Error which occurs when using a Visualization"""
 
 
 def get_git_hash() -> str:
@@ -42,35 +47,6 @@ def get_git_hash() -> str:
     except (OSError, FileNotFoundError):
         label = ""
     return label
-
-
-def find_estimator_file(path: str) -> pathlib.Path:
-    """
-    Helper to find a estimator file in a given directory.
-    If path is a directory - returns newest estimator that matches the git hash
-
-    Parameters
-    ----------
-    path: str
-        directory or path to estimator. If a directory is passed, will load the newest model found
-
-    Returns
-    -------
-    pathlib.Path
-        path to pickled estimator
-    """
-    path = pathlib.Path(path)
-
-    if path.is_file():
-        return path
-
-    all_models = list(path.glob(f"*.pkl"))
-
-    if not all_models:
-        raise MLToolingError(f"No models found - check your directory: {path}")
-
-    newest_match = max(all_models, key=lambda x: x.stat().st_mtime)
-    return newest_match
 
 
 def _get_estimator_name(clf: Estimator) -> str:

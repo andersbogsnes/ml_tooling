@@ -9,13 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 
-from ml_tooling.utils import (
-    get_git_hash,
-    find_estimator_file,
-    MLToolingError,
-    _validate_estimator,
-    make_dir,
-)
+from ml_tooling.utils import get_git_hash, MLToolingError, _validate_estimator, make_dir
 
 
 def test_get_git_hash_returns_correctly():
@@ -31,50 +25,6 @@ def test_get_git_hash_returns_empty_if_git_not_found(mock_subprocess):
     assert git_hash == ""
 
     mock_subprocess.check_output.assert_called_with(["git", "rev-parse", "HEAD"])
-
-
-def test_find_model_file_with_given_model_returns_correctly(tmpdir):
-    model_folder = tmpdir.mkdir("estimator")
-    model1 = "TestModel1_1234.pkl"
-    model1_file = model_folder.join(model1)
-    model1_file.write("test")
-
-    model2 = "TestModel2_1234.pkl"
-    model2_file = model_folder.join(model2)
-    model2_file.write("test")
-
-    result = find_estimator_file(model1_file)
-
-    assert model1_file == result
-
-
-def test_find_model_raise_when_no_model_found():
-    with pytest.raises(
-        MLToolingError, match="No models found - check your directory: nonsense"
-    ):
-        find_estimator_file("nonsense")
-
-
-def test_find_model_file_if_multiple_with_same_hash(tmpdir, monkeypatch):
-    def mockreturn():
-        return "1234"
-
-    monkeypatch.setattr("ml_tooling.utils.get_git_hash", mockreturn)
-
-    model_folder = tmpdir.mkdir("estimator")
-    model1 = "TestModel1_1234.pkl"
-    model1_file = model_folder.join(model1)
-    model1_file.write("test")
-    first_file_mtime = model1_file.mtime()
-
-    model2 = "TestModel2_1234.pkl"
-    model2_file = model_folder.join(model2)
-    model2_file.write("test")
-    model2_file.setmtime(first_file_mtime + 100)  # Ensure second file is newer
-
-    result = find_estimator_file(model_folder)
-
-    assert model2_file == result
 
 
 @pytest.mark.parametrize(

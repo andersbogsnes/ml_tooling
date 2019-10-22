@@ -1,7 +1,7 @@
 import pathlib
 import datetime
 from contextlib import contextmanager
-from typing import Tuple, Optional, Sequence, Union, List
+from typing import Tuple, Optional, Sequence, Union, List, Iterable
 
 import pandas as pd
 import yaml
@@ -15,8 +15,9 @@ from ml_tooling.data.base_data import Dataset
 from ml_tooling.storage.base import Storage
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
-from ml_tooling.result import Result, ResultGroup
-from ml_tooling.metrics import Metrics
+from ml_tooling.result.result import Result
+from ml_tooling.result.result_group import ResultGroup
+from ml_tooling.metrics.metric import Metrics
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.utils import (
     MLToolingError,
@@ -26,6 +27,7 @@ from ml_tooling.utils import (
     Estimator,
     is_pipeline,
     serialize_pipeline,
+    _get_estimator_name,
 )
 
 logger = create_logger("ml_tooling")
@@ -57,10 +59,7 @@ class Model:
 
     @property
     def estimator_name(self):
-        if self.is_pipeline:
-            return self.estimator.steps[-1][1].__class__.__name__
-
-        return self.estimator.__class__.__name__
+        return _get_estimator_name(self.estimator)
 
     @property
     def default_metric(self):
@@ -125,8 +124,9 @@ class Model:
         Example
         -------
         We can load a trained estimator from disk::
-            with FileStorage() as storage:
-                my_estimator = Model.load_estimator(storage, 'path/to/estimator')
+
+            storage = FileStorage('path/to/dir')
+            my_estimator = Model.load_estimator(storage, 'my_model.pkl')
 
         We now have a trained estimator loaded.
 
@@ -154,9 +154,9 @@ class Model:
 
         If we have trained an estimator and we want to save it to disk we can write::
 
-            with FileStorage('/path/to/save/dir') as storage:
-                model = Model(LinearRegression())
-                saved_filename = model.save_estimator(storage)
+            storage = FileStorage('/path/to/save/dir')
+            model = Model(LinearRegression())
+            saved_filename = model.save_estimator(storage)
 
         to save in the given folder.
 
@@ -177,6 +177,7 @@ class Model:
                     "You haven't scored the estimator - no results available to log"
                 )
 
+            # TODO: Can log be a result  method? `result.log(estimator_path=file)`
             log = Log.from_result(self.result, estimator_path=estimator_file)
             log.save_log(self.config.RUN_DIR)
 
@@ -198,6 +199,7 @@ class Model:
 
     @classmethod
     def from_yaml(cls, log_file: pathlib.Path):
+        # TODO: This logic can be moved out of baseclass - read_yaml()
         log_file = pathlib.Path(log_file)
         with log_file.open("r") as f:
             log = yaml.safe_load(f)
@@ -218,10 +220,10 @@ class Model:
         use_index: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
-        """Makes a prediction given an input. For example a customer number.
+        """
+        Makes a prediction given an input. For example a customer number.
         Calls `load_prediction_data(*args)` and passes resulting data to `predict()`
         on the estimator
-
 
         Parameters
         ----------
@@ -260,8 +262,8 @@ class Model:
 
         except NotFittedError:
             message = (
-                f"You haven't fitted the estimator. Call 'train_estimator' "
-                f"or 'score_estimator' first"
+                f"You haven't fitted the estimator. Call `.train_estimator` "
+                f"or `.score_estimator` first"
             )
             raise MLToolingError(message) from None
 
@@ -303,12 +305,13 @@ class Model:
         List of Result objects
         """
         results = []
-
+        # TODO: Move this out - train_estimators() -> Resultgroup
         for i, estimator in enumerate(estimators, start=1):
-            logger.info(
-                f"Training estimator {i}/{len(estimators)}: " f"{cls.estimator_name}"
-            )
             challenger_estimator = cls(estimator)
+            logger.info(
+                f"Training estimator {i}/{len(estimators)}: {challenger_estimator.estimator_name}"
+            )
+
             result = challenger_estimator.score_estimator(
                 data=data, metrics=metrics, cv=cv
             )
@@ -330,7 +333,8 @@ class Model:
         return best_estimator, results
 
     def train_estimator(self, data: Dataset) -> "Model":
-        """Loads all training data and trains the estimator on all data.
+        """
+        Loads all training data and trains the estimator on all data.
         Typically used as the last step when estimator tuning is complete.
 
         .. warning::
@@ -358,7 +362,8 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = False,
     ) -> "Result":
-        """Scores the estimator based on training data from `data` and validates based on validation
+        """
+        Scores the estimator based on training data from `data` and validates based on validation
         data from `data`.
 
         Defaults to no cross-validation. If you want to cross-validate the results,
@@ -426,8 +431,7 @@ class Model:
         n_jobs: Optional[int] = None,
     ) -> Tuple["Model", ResultGroup]:
         """
-        Runs a gridsearch on the estimator with the passed in parameter grid.
-        Ensure that it works inside a pipeline as well.
+        Runs a cross-validated gridsearch on the estimator with the passed in parameter grid.
 
         Parameters
         ----------
@@ -438,8 +442,8 @@ class Model:
             Parameters to use for grid search
 
         metrics: str, list of str
-            Metric to use for scoring. A value of "default" sets metric equal to
-            :attr:`self.default_metric`
+            Metrics to use for scoring. "default" sets metric equal to
+            :attr:`self.default_metric`. First metric is used to sort results.
 
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
@@ -468,6 +472,10 @@ class Model:
         logger.debug(f"Gridsearching using {param_grid}")
         logger.info("Starting gridsearch...")
 
+        estimators: Iterable[Estimator] = prepare_gridsearch_estimators(
+            estimator=self.estimator, params=param_grid
+        )
+
         self.result = ResultGroup(
             [
                 Result.from_model(
@@ -478,9 +486,7 @@ class Model:
                     n_jobs=n_jobs,
                     verbose=self.config.VERBOSITY,
                 )
-                for estimator in prepare_gridsearch_estimators(
-                    estimator=self.estimator, params=param_grid
-                )
+                for estimator in estimators
             ]
         )
 

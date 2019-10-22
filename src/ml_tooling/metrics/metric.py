@@ -79,6 +79,7 @@ class Metric:
         self
         """
         scoring_func = get_scorer(self.name)
+        # TODO: Can we allow for generic scoring func?
         self.score = scoring_func(estimator, x, y)
 
         # Ensure metric is reset if called multiple times

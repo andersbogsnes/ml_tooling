@@ -147,3 +147,31 @@ class TestResultGroup:
         assert log.name == "IrisData_LogisticRegression"
         assert "accuracy" in log.metrics
         assert log.estimator_path is None
+
+    def test_resultgroup_sorts_correctly(self, classifier):
+        result1 = Result(
+            classifier,
+            metrics=Metrics.from_dict({"accuracy": 0.9, "roc_auc": 0.1}),
+            data=None,
+            plot=None,
+        )
+        result2 = Result(
+            classifier,
+            metrics=Metrics.from_dict({"accuracy": 0.5, "roc_auc": 0.5}),
+            data=None,
+            plot=None,
+        )
+
+        result3 = Result(
+            classifier,
+            metrics=Metrics.from_dict({"accuracy": 0.1, "roc_auc": 0.9}),
+            data=None,
+            plot=None,
+        )
+        results = ResultGroup([result1, result2, result3])
+
+        results.sort()
+        assert results.results == [result1, result2, result3]
+
+        results.sort(by="roc_auc")
+        assert results.results == [result3, result2, result1]

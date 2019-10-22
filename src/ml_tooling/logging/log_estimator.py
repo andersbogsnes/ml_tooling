@@ -23,8 +23,8 @@ class Log:
     name: str
     metrics: Metrics = attr.ib(repr=False)
     estimator: dict = attr.ib(repr=False)
-    estimator_path: pathlib.Path = attr.ib(default=None)
-    output_path: pathlib.Path = attr.ib(default=None)
+    estimator_path: Optional[pathlib.Path] = attr.ib(default=None)
+    output_path: Optional[pathlib.Path] = attr.ib(default=None)
 
     @classmethod
     def from_result(cls, result, estimator_path: Optional[pathlib.Path] = None):
@@ -124,7 +124,7 @@ class Log:
         pathlib.Path
             Path where logfile was saved
         """
-
+        save_dir = pathlib.Path(save_dir)
         output_path: pathlib.Path = self._generate_output_path(save_dir)
         log = self.dump()
 

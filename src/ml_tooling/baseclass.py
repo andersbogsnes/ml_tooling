@@ -1,7 +1,7 @@
 import pathlib
 import datetime
 from contextlib import contextmanager
-from typing import Tuple, Optional, Sequence, Union, List, Iterable
+from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
 import pandas as pd
 from sklearn.base import is_classifier, is_regressor
@@ -26,6 +26,7 @@ from ml_tooling.utils import (
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
+    ResultType,
 )
 
 logger = create_logger("ml_tooling")
@@ -41,26 +42,26 @@ class Model:
 
     def __init__(self, estimator):
         self.estimator: Estimator = _validate_estimator(estimator)
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     @property
-    def is_classifier(self):
+    def is_classifier(self) -> bool:
         return is_classifier(self.estimator)
 
     @property
-    def is_regressor(self):
+    def is_regressor(self) -> bool:
         return is_regressor(self.estimator)
 
     @property
-    def is_pipeline(self):
+    def is_pipeline(self) -> bool:
         return is_pipeline(self.estimator)
 
     @property
-    def estimator_name(self):
+    def estimator_name(self) -> str:
         return _get_estimator_name(self.estimator)
 
     @property
-    def default_metric(self):
+    def default_metric(self) -> str:
         """
         Defines default metric based on whether or not the estimator is a regressor or classifier.
         Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
@@ -79,7 +80,7 @@ class Model:
         )
 
     @default_metric.setter
-    def default_metric(self, metric):
+    def default_metric(self, metric: str):
         if self.is_classifier:
             self.config.CLASSIFIER_METRIC = metric
         else:
@@ -183,7 +184,14 @@ class Model:
 
         return estimator_file
 
-    def to_dict(self):
+    def to_dict(self) -> List[dict]:
+        """
+        Serializes the estimator to a dictionary
+
+        Returns
+        -------
+        List of dicts
+        """
         if self.is_pipeline:
             return serialize_pipeline(self.estimator)
 
@@ -196,7 +204,7 @@ class Model:
         ]
 
     @classmethod
-    def from_yaml(cls, log_file: pathlib.Path):
+    def from_yaml(cls, log_file: pathlib.Path) -> "Model":
         definitions = read_yaml(log_file)["estimator"]
         pipeline = make_pipeline_from_definition(definitions)
 
@@ -371,7 +379,7 @@ class Model:
         if isinstance(metrics, str):
             metrics = [self.default_metric] if metrics == "default" else [metrics]
 
-        metrics = Metrics.from_list(metrics)
+        score_metrics = Metrics.from_list(metrics)
         cv = cv if cv else None
 
         if cv:
@@ -390,7 +398,7 @@ class Model:
         self.result = Result.from_model(
             model=self,
             data=data,
-            metrics=metrics,
+            metrics=score_metrics,
             cv=cv,
             n_jobs=self.config.N_JOBS,
             verbose=self.config.VERBOSITY,
@@ -505,7 +513,15 @@ class Model:
         return f"<Model: {self.estimator_name}>"
 
 
-def train_estimators(estimators, data, metrics, cv):
+def train_estimators(
+    estimators: Sequence[Estimator],
+    data: Dataset,
+    metrics: Union[str, List[str]],
+    cv: Any,
+) -> ResultGroup:
+    if isinstance(metrics, str):
+        metrics = [metrics]
+
     results = []
     for i, estimator in enumerate(estimators, start=1):
         challenger_estimator = Model(estimator)

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -11,7 +11,7 @@ class Select(BaseEstimator, TransformerMixin):
     Selects columns from DataFrame
     """
 
-    def __init__(self, columns: Union[list, str] = None):
+    def __init__(self, columns: Union[List[str], str]):
         self.columns = columns
 
     def fit(self, X: pd.DataFrame, y=None):

@@ -17,7 +17,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         self.value = value
         self.strategy = strategy
-        self.value_map_ = None
+        self.value_map_: Optional[dict] = None
 
         self.func_map_ = {
             "mean": pd.DataFrame.mean,

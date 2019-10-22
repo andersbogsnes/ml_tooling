@@ -10,7 +10,7 @@ class Storage(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def load(self, file_path: Pathlike) -> Estimator:
+    def load(self, filename: str) -> Estimator:
         """
         Abstract method to be implemented by the user.
         Defines method used to load data from the storage type

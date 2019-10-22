@@ -1,6 +1,6 @@
 import pathlib
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 import yaml
 
@@ -22,7 +22,7 @@ class Log:
 
     name: str
     metrics: Metrics = attr.ib(repr=False)
-    estimator: dict = attr.ib(repr=False)
+    estimator: List[dict] = attr.ib(repr=False)
     estimator_path: Optional[pathlib.Path] = attr.ib(default=None)
     output_path: Optional[pathlib.Path] = attr.ib(default=None)
 

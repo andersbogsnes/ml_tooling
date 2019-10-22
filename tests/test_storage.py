@@ -28,7 +28,7 @@ def test_can_save_with_model(classifier: Model, tmp_path: pathlib.Path):
 def test_can_load_file(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     storage.save(classifier.estimator, "estimator")
-    loaded_file = storage.load(tmp_path / "estimator")
+    loaded_file = storage.load("estimator")
     assert isinstance(loaded_file, (BaseEstimator, Pipeline))
 
 

@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import MLToolingError, Pathlike, Estimator
+from ml_tooling.utils import MLToolingError, Estimator
 
 import joblib
 from tempfile import TemporaryDirectory
@@ -67,7 +67,7 @@ class ArtifactoryStorage(Storage):
         artifactory_path = self.artifactory_path / env_path
         return sorted(artifactory_path.glob("*/*.pkl"))
 
-    def load(self, filename: Pathlike, prod=False) -> Estimator:
+    def load(self, filename: str, prod=False) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
@@ -92,8 +92,6 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-
-        filename = Path(filename).name
         env_path = "prod" if prod else "dev"
 
         artifactory_path = self.artifactory_path / env_path / filename

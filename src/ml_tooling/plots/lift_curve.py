@@ -1,9 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from ..metrics import lift_score
-from ..metrics.utils import _cum_gain_curve
-from .utils import VizError
+from ml_tooling.metrics import lift_score
+from ml_tooling.metrics.utils import _cum_gain_curve
+from ml_tooling.utils import VizError
 
 
 def plot_lift_curve(y_true, y_proba, title=None, ax=None):
@@ -27,14 +27,14 @@ def plot_lift_curve(y_true, y_proba, title=None, ax=None):
     """
 
     if y_proba.ndim > 1:
-        raise VizError("Only works in binary classification. Pass a 1d list")
+        raise VizError("Only works in binary classification. Pass a 1d array")
 
     if ax is None:
         fig, ax = plt.subplots()
 
     title = "Lift Curve" if title is None else title
 
-    # Get numpy array as _cum_gain_curve takes numpy arrays
+    # Convert to numpy array as _cum_gain_curve takes numpy arrays
     y_true = np.array(y_true)
 
     percents, gains = _cum_gain_curve(y_true, y_proba)

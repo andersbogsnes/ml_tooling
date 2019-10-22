@@ -15,7 +15,7 @@ from sklearn.svm import SVC
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.plots import plot_lift_curve, plot_confusion_matrix, plot_pr_curve
-from ml_tooling.plots.utils import VizError
+from ml_tooling.utils import VizError
 from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import ToCategorical
 

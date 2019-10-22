@@ -238,6 +238,18 @@ class TestBaseClass:
 
         assert best_estimator.estimator == estimators[0]
 
+    def test_model_selection_refits_final_model(self, test_dataset):
+        estimators = [LogisticRegression(solver="liblinear")]
+
+        model = LogisticRegression(solver="liblinear").fit(
+            test_dataset.train_x, test_dataset.train_y
+        )
+        model2, results2 = Model.test_estimators(
+            test_dataset, estimators, cv=2, refit=True
+        )
+
+        assert (model.coef_ == model2.estimator.coef_).all()
+
     def test_regression_model_can_be_saved(
         self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
@@ -325,7 +337,6 @@ class TestBaseClass:
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
-
             assert estimator.get_params()["penalty"] == penalty
             assert hasattr(estimator, "coef_") is False
             assert isinstance(estimator, LogisticRegression)

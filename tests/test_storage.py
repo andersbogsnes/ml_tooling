@@ -1,3 +1,5 @@
+import pathlib
+
 import pytest
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
@@ -7,13 +9,13 @@ from ml_tooling.storage import Storage
 from ml_tooling.storage.file import FileStorage
 
 
-def test_can_save_file(classifier, tmp_path):
+def test_can_save_file(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     expected_file = storage.save(classifier.estimator, "estimator")
     assert expected_file.exists()
 
 
-def test_can_save_with_model(classifier, tmp_path):
+def test_can_save_with_model(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     expected_file = classifier.save_estimator(storage)
     assert expected_file.exists()
@@ -23,14 +25,22 @@ def test_can_save_with_model(classifier, tmp_path):
     assert context_expected_file.exists()
 
 
-def test_can_load_file(classifier, tmp_path):
+def test_can_load_file(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     storage.save(classifier.estimator, "estimator")
     loaded_file = storage.load(tmp_path / "estimator")
     assert isinstance(loaded_file, (BaseEstimator, Pipeline))
 
 
-def test_can_load_with_model(classifier, tmp_path):
+def test_can_load_file_by_filename(classifier: Model, tmp_path: pathlib.Path):
+    storage = FileStorage(tmp_path)
+    storage.save(classifier.estimator, "estimator.file")
+    loaded_file = storage.load("estimator.file")
+    assert isinstance(loaded_file, (BaseEstimator, Pipeline))
+    assert classifier.estimator.get_params() == loaded_file.get_params()
+
+
+def test_can_load_with_model(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     expected_file = classifier.save_estimator(storage)
     assert expected_file.exists()
@@ -41,7 +51,7 @@ def test_can_load_with_model(classifier, tmp_path):
     assert isinstance(context_loaded_file, Model)
 
 
-def test_can_list_estimators(classifier, tmp_path):
+def test_can_list_estimators(classifier: Model, tmp_path: pathlib.Path):
     storage = FileStorage(tmp_path)
     for _ in range(3):
         classifier.save_estimator(storage)

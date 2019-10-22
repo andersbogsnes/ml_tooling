@@ -6,7 +6,7 @@ from ml_tooling.plots import (
     plot_lift_curve,
     plot_pr_curve,
 )
-from ml_tooling.plots.utils import VizError
+from ml_tooling.utils import VizError
 from ml_tooling.result.viz import BaseVisualize
 
 

@@ -1,10 +1,6 @@
 import matplotlib.pyplot as plt
 
 
-class VizError(Exception):
-    """Base Exception for visualization errors"""
-
-
 def _generate_text_labels(ax: plt.Axes, horizontal=False):
     """
     Helper for generating text labels for bar charts

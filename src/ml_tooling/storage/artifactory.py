@@ -1,19 +1,28 @@
+from io import BytesIO
+
 from ml_tooling.storage import Storage
-from ml_tooling.utils import MLToolingError
+from ml_tooling.utils import Pathlike, Estimator, MLToolingError
 
 import joblib
 from tempfile import TemporaryDirectory
-from typing import Tuple, Union, Optional, List, Text
+from typing import Tuple, Optional, List
 from pathlib import Path
-from sklearn.base import BaseEstimator
-from sklearn.pipeline import Pipeline
+
+_has_artifactory = True
 
 try:
-    from artifactory import ArtifactoryPath, PureArtifactoryPath
+    from artifactory import ArtifactoryPath
 except ImportError:
-    raise MLToolingError(
-        "Artifactory not installed - run pip install dohq-artifactory"
-    ) from None
+    _has_artifactory = False
+
+
+def generate_url(
+    artifactory_url: str, repo: str, apikey=None, auth=None
+) -> "ArtifactoryPath":
+    if not artifactory_url.endswith("artifactory"):
+        artifactory_url = f"{artifactory_url}/artifactory"
+
+    return ArtifactoryPath(f"{artifactory_url}/{repo}", apikey=apikey, auth=auth)
 
 
 class ArtifactoryStorage(Storage):
@@ -23,30 +32,32 @@ class ArtifactoryStorage(Storage):
     Example
     -------
     Instantiate this class with a url and path to the repo like so:
-        storage = ArtifactoryStorage('http://artifactory.com', pathlib.Path('/path/to/artifact'))
+
+        storage = ArtifactoryStorage('http://artifactory.com','/path/to/artifact')
     """
 
     def __init__(
         self,
-        artifactory_url: Text,
-        repo_path: Union[Path, str],
+        artifactory_url: str,
+        repo: str,
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
-        self.artifactory_url = PureArtifactoryPath(artifactory_url)
-        self.repo_path = Path(repo_path)
-        self.auth = auth
-        self.apikey = apikey
 
-    def get_list(self) -> List[ArtifactoryPath]:
+        if not _has_artifactory:
+            raise MLToolingError(
+                "Artifactory not installed - run pip install dohq-artifactory"
+            )
+
+        self.artifactory_path: ArtifactoryPath = generate_url(
+            artifactory_url, repo, apikey, auth
+        )
+
+    def get_list(self, prod: bool = False) -> List["ArtifactoryPath"]:
         """
         Finds a list of estimator filenames in the ArtifactoryStorage repo,
         if the path given is for a file, the directory in which the file resides
         is used to find the list.
-
-        Parameters
-        ----------
-        None
 
         Example
         -------
@@ -58,24 +69,25 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files sorted by filename
         """
-        artifactory_url = self.artifactory_url
-        arifactory_path = ArtifactoryPath(str(artifactory_url / self.repo_path))
-        return sorted(arifactory_path.glob("*/*.pkl"))
+        env_path = "prod" if prod else "dev"
+        artifactory_path = self.artifactory_path / env_path
+        return sorted(artifactory_path.glob("*/*.pkl"))
 
-    def load(
-        self, filename: Union[str, Path, ArtifactoryPath]
-    ) -> Union[BaseEstimator, Pipeline]:
+    def load(self, filename: Pathlike, prod=False) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
         Parameters
         ----------
-        file_path: str, Path, ArtifactoryPath
+        filename: Pathlike
             Path to estimator pickle file
+        prod: bool
+            Whether or not to load the prod model
 
         Example
         -------
-        We can load a saved pickled estimator from disk directly from FileStorage:
+        We can load a saved pickled estimator from disk directly from Artifactory:
+
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
             my_estimator = storage.load('estimatorfile')
 
@@ -86,32 +98,26 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
-        artifactory_url = self.artifactory_url
-        filename = f"{Path(filename).stem}{Path(filename).suffix}"
-        artifactory_path = ArtifactoryPath(
-            str(artifactory_url / self.repo_path / filename),
-            auth=self.auth,
-            apikey=self.apikey,
-        )
+
+        filename = Path(filename).name
+        env_path = "prod" if prod else "dev"
+
+        artifactory_path = self.artifactory_path / env_path / filename
         with artifactory_path.open() as f:
-            with TemporaryDirectory() as tmpdir:
-                filepath = Path(tmpdir).joinpath("temp.pkl")
-                with open(filepath, "wb") as out:
-                    out.write(f.read())
-                return joblib.load(filepath)
+            by = BytesIO()
+            by.write(f.read())
+            by.seek(0)
+            return joblib.load(by)
 
     def save(
-        self,
-        estimator: Union[BaseEstimator, Pipeline],
-        filename: Union[str, Path],
-        prod: bool = False,
-    ) -> ArtifactoryPath:
+        self, estimator: Estimator, filename: str, prod: bool = False
+    ) -> "ArtifactoryPath":
         """
         Save a pickled estimator to artifactory.
 
         Parameters
         ----------
-        estimator: Union[BaseEstimator, Pipeline]
+        estimator: Estimator
             The estimator object
         filename: str
             Filename for the saved estimator
@@ -121,9 +127,12 @@ class ArtifactoryStorage(Storage):
         Example
         -------
         To save your trained estimator:
+
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
             artifactory_path = storage.save(estimator)
+
         For production ready models set the prod parameter to True
+
             artifactory_path = storage.save(estimator, prod=True)
 
         We now have saved an estimator to a pickle file.
@@ -131,18 +140,15 @@ class ArtifactoryStorage(Storage):
         Returns
         -------
         ArtifactoryPath
-            artifactory_path: artifactory file path
+            File path to stored estimator
         """
-        env_path = Path("prod/") if prod else Path("dev/")
-        artifactory_url = self.artifactory_url
-        artifactory_path = ArtifactoryPath(
-            str(artifactory_url / self.repo_path / env_path),
-            auth=self.auth,
-            apikey=self.apikey,
-        )
+        env_path = "prod" if prod else "dev"
+
+        artifactory_path = self.artifactory_path / env_path
+
         artifactory_path.mkdir(parents=True, exist_ok=True)
+
         with TemporaryDirectory() as tmpdir:
-            filename = f"{Path(filename).stem}{Path(filename).suffix}"
             file_path = Path(tmpdir).joinpath(filename)
             joblib.dump(estimator, file_path)
             artifactory_path.deploy_file(file_path)

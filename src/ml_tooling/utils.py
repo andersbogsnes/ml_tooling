@@ -93,6 +93,9 @@ def get_git_hash() -> str:
     except CalledProcessError:
         warnings.warn("Error using git - skipping git hash. Did you call `git init`?")
         label = ""
+    except subprocess.CalledProcessError:
+        warnings.warn("Error using git - skipping git hash. Did you call `git init`?")
+        label = ""
     return label
 
 

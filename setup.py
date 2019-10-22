@@ -15,7 +15,6 @@ INSTALL_REQUIRES = [
     "pyyaml",
     "joblib",
     "sqlalchemy",
-    "pyarrow",
     "attrs",
 ]
 KEYWORDS = ["ml", "framework", "tooling"]

@@ -290,13 +290,12 @@ class TestBaseClass:
     ):
         mock_hash.return_value = "1234"
 
-        save_dir = tmp_path / "estimator"
-        with classifier.log(save_dir):
-            expected_file = classifier.save_estimator(FileStorage(save_dir))
+        with classifier.log(tmp_path):
+            expected_file = classifier.save_estimator(FileStorage(tmp_path))
 
         assert expected_file.exists()
         assert (
-            "LogisticRegression" in [str(file) for file in save_dir.rglob("*.yaml")][0]
+            "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
         )
         mock_hash.assert_called_once()
 
@@ -409,7 +408,7 @@ class TestBaseClass:
                     "IrisData_DummyClassifier",
                 }
 
-    def test_train_model_errors_corstrrect_when_not_scored(
+    def test_train_model_errors_correct_when_not_scored(
         self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
 

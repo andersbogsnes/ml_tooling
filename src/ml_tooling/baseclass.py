@@ -269,8 +269,8 @@ class Model:
     def test_estimators(
         cls,
         data: Dataset,
-        estimators: Sequence,
-        metrics: Union[str, List[str]],
+        estimators: Sequence[Estimator],
+        metrics: Union[str, List[str]] = "default",
         cv: Union[int, bool] = False,
         log_dir: str = None,
         refit: bool = False,
@@ -283,7 +283,7 @@ class Model:
         data: Dataset
             An instantiated Dataset object with train_test data
 
-        estimators: Sequence
+        estimators: Sequence[Estimator]
             List of estimators to train
 
         metrics: str, list of str

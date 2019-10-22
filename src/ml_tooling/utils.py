@@ -17,7 +17,7 @@ logger = logging.getLogger("ml_tooling")
 
 
 class MLToolingError(Exception):
-    """Error which occurs when using ML Tooling library"""
+    """Error which occurs when using ML Tooling"""
 
 
 class TransformerError(MLToolingError):

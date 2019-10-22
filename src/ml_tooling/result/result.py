@@ -1,6 +1,3 @@
-import pathlib
-from typing import Optional
-
 import attr
 
 from ml_tooling.data import Dataset
@@ -43,7 +40,7 @@ class Result:
             metrics=metrics, model=model, plot=create_plotter(model, data), data=data
         )
 
-    def log(self, saved_estimator_path=None, savedir=None) -> Optional[pathlib.Path]:
+    def log(self, saved_estimator_path=None, savedir=None) -> Log:
         log = Log.from_result(result=self, estimator_path=saved_estimator_path)
         if savedir:
             log.save_log(savedir)

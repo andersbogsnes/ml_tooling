@@ -405,8 +405,8 @@ class Model:
         )
 
         if self.config.LOG:
-            log = self.result.log()
-            logger.info(f"Saved run info at {log}")
+            log = self.result.log(savedir=self.config.RUN_DIR)
+            logger.info(f"Saved run info at {log.output_path}")
         return self.result
 
     def gridsearch(

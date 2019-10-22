@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
+import warnings
 
 DataType = Union[pd.DataFrame, np.ndarray]
 Estimator = Union[BaseEstimator, Pipeline]
@@ -85,6 +86,9 @@ def get_git_hash() -> str:
             .decode("ascii")
         )
     except (OSError, FileNotFoundError):
+        label = ""
+    except subprocess.CalledProcessError:
+        warnings.warn("Error using git - skipping git hash. Did you call `git init`?")
         label = ""
     return label
 

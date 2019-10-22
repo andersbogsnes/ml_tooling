@@ -2,15 +2,19 @@ import importlib
 import pathlib
 import subprocess
 from typing import Union, Tuple
+import logging
 
 import numpy as np
 import pandas as pd
+import yaml
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
 DataType = Union[pd.DataFrame, np.ndarray]
 Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
+
+logger = logging.getLogger("ml_tooling")
 
 
 class MLToolingError(Exception):
@@ -27,6 +31,19 @@ class DataSetError(MLToolingError):
 
 class VizError(MLToolingError):
     """Error which occurs when using a Visualization"""
+
+
+def read_yaml(filepath):
+    log_file = pathlib.Path(filepath)
+    with log_file.open("r") as f:
+        return yaml.safe_load(f)
+
+
+def make_pipeline_from_definition(definitions):
+    steps = [import_pipeline_step(definition) for definition in definitions]
+    if len(steps) == 1:
+        return steps[0]
+    return Pipeline(steps)
 
 
 def get_git_hash() -> str:
@@ -130,7 +147,7 @@ def is_pipeline(estimator: Estimator):
     return False
 
 
-def setup_pipeline_step(
+def import_pipeline_step(
     definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
@@ -154,7 +171,7 @@ def setup_pipeline_step(
 
     if definition["classname"] == "DFFeatureUnion":
         transformer_list = [
-            Pipeline([setup_pipeline_step(step) for step in pipeline])
+            Pipeline([import_pipeline_step(step) for step in pipeline])
             for pipeline in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(transformer_list)

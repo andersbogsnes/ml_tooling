@@ -21,9 +21,10 @@ class Log:
     """
 
     name: str
-    metrics: Metrics
-    estimator: dict
+    metrics: Metrics = attr.ib(repr=False)
+    estimator: dict = attr.ib(repr=False)
     estimator_path: pathlib.Path = attr.ib(default=None)
+    output_path: pathlib.Path = attr.ib(default=None)
 
     @classmethod
     def from_result(cls, result, estimator_path: Optional[pathlib.Path] = None):
@@ -109,7 +110,7 @@ class Log:
         }
         return data
 
-    def save_log(self, save_dir: Pathlike) -> pathlib.Path:
+    def save_log(self, save_dir: Pathlike) -> "Log":
         """
         Saves a log to a given directory
 
@@ -129,5 +130,5 @@ class Log:
 
         with output_path.open(mode="w") as f:
             yaml.safe_dump(log, f, default_flow_style=False, allow_unicode=True)
-
-        return output_path
+        self.output_path = output_path
+        return self

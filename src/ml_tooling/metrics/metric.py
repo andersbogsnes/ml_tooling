@@ -57,7 +57,7 @@ class Metric:
 
     name: str = attr.ib()
     score: float = attr.ib(default=None)
-    cross_val_scores: Optional[np.ndarray] = attr.ib(default=None)
+    cross_val_scores: Optional[np.ndarray] = attr.ib(default=None, eq=False, repr=False)
 
     def score_metric(self, estimator: Estimator, x: DataType, y: DataType) -> "Metric":
         """

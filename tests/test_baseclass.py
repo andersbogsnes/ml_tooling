@@ -201,7 +201,9 @@ class TestBaseClass:
             LogisticRegression(solver="liblinear"),
             RandomForestClassifier(n_estimators=10),
         ]
-        best_model, results = Model.test_estimators(test_dataset, models)
+        best_model, results = Model.test_estimators(
+            test_dataset, models, metrics="accuracy"
+        )
         assert models[1] is best_model.estimator
         assert 2 == len(results)
         assert results[0].metrics[0].score >= results[1].metrics[0].score
@@ -228,7 +230,9 @@ class TestBaseClass:
         test_dataset: Dataset,
     ):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
-        best_estimator, results = Model.test_estimators(test_dataset, estimators)
+        best_estimator, results = Model.test_estimators(
+            test_dataset, estimators, "accuracy"
+        )
 
         for result in results:
             assert (
@@ -245,7 +249,7 @@ class TestBaseClass:
             test_dataset.train_x, test_dataset.train_y
         )
         model2, results2 = Model.test_estimators(
-            test_dataset, estimators, cv=2, refit=True
+            test_dataset, estimators, cv=2, refit=True, metrics="accuracy"
         )
 
         assert (model.coef_ == model2.estimator.coef_).all()
@@ -393,6 +397,7 @@ class TestBaseClass:
             test_dataset,
             [RandomForestClassifier(n_estimators=10), DummyClassifier()],
             log_dir=str(test_models_log),
+            metrics="accuracy",
         )
 
         for file in test_models_log.rglob("*.yaml"):
@@ -491,9 +496,9 @@ class TestBaseClass:
         log = Log(
             name="test", metrics=Metrics.from_list(["accuracy"]), estimator=result
         )
-        save_path = log.save_log(tmp_path)
+        log.save_log(tmp_path)
 
-        new_model = Model.from_yaml(save_path)
+        new_model = Model.from_yaml(log.output_path)
 
         assert len(new_model.estimator.steps[0][1].transformer_list) == 2
         new_steps = new_model.estimator.steps
@@ -523,8 +528,8 @@ class TestBaseClass:
             estimator=model.to_dict(),
             metrics=Metrics([Metric("accuracy", score=1.0)]),
         )
-        save_file = log.save_log(tmp_path)
-        model2 = Model.from_yaml(save_file)
+        log.save_log(tmp_path)
+        model2 = Model.from_yaml(log.output_path)
 
         for model1, model2 in zip(model.estimator.steps, model2.estimator.steps):
             assert model1[0] == model2[0]
@@ -538,8 +543,8 @@ class TestBaseClass:
             estimator=classifier.to_dict(),
             metrics=Metrics([Metric("accuracy", score=1.0)]),
         )
-        save_file = log.save_log(tmp_path)
-        model2 = Model.from_yaml(save_file)
+        log.save_log(tmp_path)
+        model2 = Model.from_yaml(log.output_path)
         assert model2.estimator.get_params() == classifier.estimator.get_params()
 
     def test_gridsearch_uses_default_metric(

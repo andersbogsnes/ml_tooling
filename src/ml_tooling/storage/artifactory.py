@@ -1,24 +1,24 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import MLToolingError, Pathlike, Estimator
+from ml_tooling.utils import Pathlike, Estimator, MLToolingError
 
 import joblib
 from tempfile import TemporaryDirectory
 from typing import Tuple, Optional, List
 from pathlib import Path
 
+_has_artifactory = True
+
 try:
     from artifactory import ArtifactoryPath
 except ImportError:
-    raise MLToolingError(
-        "Artifactory not installed - run pip install dohq-artifactory"
-    ) from None
+    _has_artifactory = False
 
 
 def generate_url(
     artifactory_url: str, repo: str, apikey=None, auth=None
-) -> ArtifactoryPath:
+) -> "ArtifactoryPath":
     if not artifactory_url.endswith("artifactory"):
         artifactory_url = f"{artifactory_url}/artifactory"
 
@@ -43,11 +43,17 @@ class ArtifactoryStorage(Storage):
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
+
+        if not _has_artifactory:
+            raise MLToolingError(
+                "Artifactory not installed - run pip install dohq-artifactory"
+            )
+
         self.artifactory_path: ArtifactoryPath = generate_url(
             artifactory_url, repo, apikey, auth
         )
 
-    def get_list(self, prod: bool = False) -> List[ArtifactoryPath]:
+    def get_list(self, prod: bool = False) -> List["ArtifactoryPath"]:
         """
         Finds a list of estimator filenames in the ArtifactoryStorage repo,
         if the path given is for a file, the directory in which the file resides
@@ -105,7 +111,7 @@ class ArtifactoryStorage(Storage):
 
     def save(
         self, estimator: Estimator, filename: str, prod: bool = False
-    ) -> ArtifactoryPath:
+    ) -> "ArtifactoryPath":
         """
         Save a pickled estimator to artifactory.
 

@@ -10,12 +10,9 @@ import yaml
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.result import Result, ResultGroup
-
 DataType = Union[pd.DataFrame, np.ndarray]
 Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
-ResultType = Union[Result, ResultGroup]
 logger = logging.getLogger("ml_tooling")
 
 

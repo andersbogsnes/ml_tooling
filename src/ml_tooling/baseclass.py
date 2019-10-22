@@ -10,6 +10,7 @@ from sklearn.model_selection import check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.result import ResultType
 from ml_tooling.storage.base import Storage
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.result.result import Result
@@ -26,7 +27,6 @@ from ml_tooling.utils import (
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
-    ResultType,
 )
 
 logger = create_logger("ml_tooling")

@@ -27,7 +27,6 @@ from ml_tooling.utils import (
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
-    ResultType,
 )
 
 logger = create_logger("ml_tooling")

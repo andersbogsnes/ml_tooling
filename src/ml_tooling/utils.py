@@ -1,6 +1,7 @@
 import importlib
 import pathlib
 import subprocess
+from subprocess import CalledProcessError
 from typing import Union, Tuple, List
 import logging
 
@@ -86,8 +87,9 @@ def get_git_hash() -> str:
             .decode("ascii")
         )
     except (OSError, FileNotFoundError):
+        warnings.warn("Error using git - is `git` installed?")
         label = ""
-    except subprocess.CalledProcessError:
+    except CalledProcessError:
         warnings.warn("Error using git - skipping git hash. Did you call `git init`?")
         label = ""
     return label

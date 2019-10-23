@@ -261,3 +261,23 @@ def make_dir(path: pathlib.Path) -> pathlib.Path:
         path.mkdir(parents=True)
 
     return path
+
+
+def find_src_dir(max_level=2):
+    current_path = pathlib.Path.cwd()
+    current_level = 0
+    # Is setup.py in this directory?
+    while not current_path.joinpath("setup.py").exists():
+        if current_level == max_level:
+            raise MLToolingError(
+                "Exceeded max_level. Does your project have a setup.py?"
+            )
+        current_path = current_path.parent
+        current_level += 1
+
+    output_folder = current_path / "src"
+    if not output_folder.exists():
+        raise MLToolingError("Project must have a src folder!")
+    for child in output_folder.glob("*"):
+        if child.joinpath("__init__.py").exists():
+            return child

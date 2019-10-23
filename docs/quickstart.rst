@@ -73,19 +73,28 @@ We can plot the prediction errors:
 .. figure:: plots/prederror.png
     :alt: Plot of prediction errors from Linear Regression
 
+
+.. testsetup::
+
+    import pathlib
+    pathlib.Path('./estimator_dir').mkdir()
+
 We can save and load our model:
-.. code-block:: python
+.. doctest:: python
 
-    >>> import tempfile
-    >>> temp_dir = tempfile.TemporaryDirectory().name
-
+    >>> estimator_dir = './estimator_dir'
+    >>>
     >>> from ml_tooling.storage import FileStorage
-    >>> storage = FileStorage(temp_dir)
+    >>> storage = FileStorage(estimator_dir)
     >>> file_path = regression.save_estimator(storage)
-    >>> filename = file_path.name
-    >>> my_new_model = regression.load_estimator(storage, filename)
-    >>> print(my_new_model)
+    >>> my_new_model = regression.load_estimator(storage, file_path.name)
+    >>> my_new_model
     <Model: LinearRegression>
+
+.. testcleanup::
+
+    import shutil
+    shutil.rmtree(pathlib.Path('./estimator_dir'))
 
 We can try out many different models:
 
@@ -97,7 +106,9 @@ We can try out many different models:
     ...                                                 models_to_try,
     ...                                                 metrics='neg_mean_squared_error')
     >>> all_results
-    ResultGroup(results=[<Result LinearRegression: {'neg_mean_squared_error': -22.1}>, <Result Ridge: {'neg_mean_squared_error': -22.48}>, <Result LassoLars: {'neg_mean_squared_error': -72.26}>])
+    <Result LinearRegression: {'neg_mean_squared_error': -22.1}>
+    <Result Ridge: {'neg_mean_squared_error': -22.48}>
+    <Result LassoLars: {'neg_mean_squared_error': -72.26}>
 
 We get the results in sorted order for each model and see that LinearRegression gives us the best result!
 

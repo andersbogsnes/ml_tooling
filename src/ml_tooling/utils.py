@@ -264,7 +264,7 @@ def make_dir(path: pathlib.Path) -> pathlib.Path:
 
 
 def find_setup_file(path, level, max_level):
-    if level >= max_level:
+    if level > max_level:
         raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
     if path.joinpath("setup.py").exists():
         return path

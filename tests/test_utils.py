@@ -137,14 +137,41 @@ class TestFindSrcDir:
         )
         assert result == temp_project_structure
 
-    def test_can_find_setup_file_from_outside_project(self, temp_project_structure):
+    def test_can_find_setup_file_from_outside_project(
+        self, temp_project_structure: pathlib.Path
+    ):
         result = find_setup_file(temp_project_structure / "notebooks", 0, 3)
         assert result == temp_project_structure
 
-    def test_can_find_src_dir_from_root_folder_structure(self, temp_project_structure):
+    def test_find_setup_file_errors_when_no_setup_file_found(
+        self, tmp_path: pathlib.Path
+    ):
+        with pytest.raises(MLToolingError):
+            find_setup_file(tmp_path / "test" / "test", 0, 2)
+
+    def test_can_find_src_dir_from_root_folder_structure(
+        self, temp_project_structure: pathlib.Path
+    ):
         result = find_src_dir(temp_project_structure)
         assert result == temp_project_structure / "src" / "my_test_project"
 
-    def test_can_find_src_dir_from_inside_project(self, temp_project_structure):
+    def test_can_find_src_dir_from_inside_project(
+        self, temp_project_structure: pathlib.Path
+    ):
         result = find_src_dir(temp_project_structure / "notebooks")
         assert result == temp_project_structure / "src" / "my_test_project"
+
+    def test_find_src_dir_errors_when_no_src_is_found(self, tmp_path: pathlib.Path):
+        tmp_path.joinpath("setup.py").write_text("I exist")
+        with pytest.raises(MLToolingError, match="Project must have a src folder!"):
+            find_src_dir(tmp_path / "test" / "test")
+
+    def test_find_src_dir_errors_when_no_init_is_found(self, tmp_path: pathlib.Path):
+        tmp_path.joinpath("setup.py").write_text("I exist")
+        output_folder = tmp_path / "src" / "test"
+        with pytest.raises(
+            MLToolingError,
+            match=f"No modules found in {output_folder}! "
+            f"Is there an __init__.py file in your module?",
+        ):
+            find_src_dir(output_folder)

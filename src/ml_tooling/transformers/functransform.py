@@ -1,10 +1,10 @@
-from typing import Callable, Any
+from typing import Callable
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from ml_tooling.utils import DataType, TransformerError
+from ml_tooling.utils import TransformerError
 
 
 class FuncTransformer(BaseEstimator, TransformerMixin):
@@ -12,7 +12,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[[DataType, Any], pd.DataFrame], **kwargs):
+    def __init__(self, func: Callable[..., pd.DataFrame], **kwargs):
         self.func = func
         self.kwargs = kwargs
 

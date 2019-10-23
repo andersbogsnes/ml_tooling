@@ -1,20 +1,25 @@
 import importlib
 import pathlib
 import subprocess
-from typing import Union, Tuple
+from subprocess import CalledProcessError
+from typing import Union, Tuple, List
+import logging
 
 import numpy as np
 import pandas as pd
+import yaml
 from sklearn.base import BaseEstimator
 from sklearn.pipeline import Pipeline
+import warnings
 
 DataType = Union[pd.DataFrame, np.ndarray]
 Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
+logger = logging.getLogger("ml_tooling")
 
 
 class MLToolingError(Exception):
-    """Error which occurs when using ML Tooling library"""
+    """Error which occurs when using ML Tooling"""
 
 
 class TransformerError(MLToolingError):
@@ -27,6 +32,43 @@ class DataSetError(MLToolingError):
 
 class VizError(MLToolingError):
     """Error which occurs when using a Visualization"""
+
+
+def read_yaml(filepath: Pathlike) -> dict:
+    """
+    Loads a yaml file safely, returning a dictionary
+    Parameters
+    ----------
+    filepath: Pathlike
+        Location of yaml file
+
+    Returns
+    -------
+    dict
+    """
+    log_file = pathlib.Path(filepath)
+    with log_file.open("r") as f:
+        return yaml.safe_load(f)
+
+
+def make_pipeline_from_definition(definitions: List[dict]) -> Estimator:
+    """
+    Goes through each step of a list of estimator definitions and deserialized them.
+
+    Parameters
+    ----------
+    definitions: List of dicts
+        List of serialized estimators to deserialize
+
+    Returns
+    -------
+    Estimator
+    Deserialized estimator
+    """
+    steps = [import_pipeline_step(definition) for definition in definitions]
+    if len(steps) == 1:
+        return steps[0]
+    return Pipeline(steps)
 
 
 def get_git_hash() -> str:
@@ -45,6 +87,10 @@ def get_git_hash() -> str:
             .decode("ascii")
         )
     except (OSError, FileNotFoundError):
+        warnings.warn("Error using git - is `git` installed?")
+        label = ""
+    except CalledProcessError:
+        warnings.warn("Error using git - skipping git hash. Did you call `git init`?")
         label = ""
     return label
 
@@ -130,7 +176,7 @@ def is_pipeline(estimator: Estimator):
     return False
 
 
-def setup_pipeline_step(
+def import_pipeline_step(
     definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
@@ -146,7 +192,7 @@ def setup_pipeline_step(
 
     Returns
     -------
-    BaseEstimator or str, BaseEstimator
+    BaseEstimator or (str, BaseEstimator)
         Instantiated BaseEstimator and optionally the name of the step
 
     """
@@ -154,7 +200,7 @@ def setup_pipeline_step(
 
     if definition["classname"] == "DFFeatureUnion":
         transformer_list = [
-            Pipeline([setup_pipeline_step(step) for step in pipeline])
+            Pipeline([import_pipeline_step(step) for step in pipeline])
             for pipeline in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(transformer_list)
@@ -168,8 +214,20 @@ def setup_pipeline_step(
     return class_
 
 
-def serialize_pipeline(pipe):
-    results = [
+def serialize_pipeline(pipe: Pipeline) -> List[dict]:
+    """
+    Serialize a pipeline to a dictionary.
+    If a FeatureUnion is present, recursively serialize its transfomer list
+    Parameters
+    ----------
+    pipe: Pipeline
+        Pipeline to serialize
+
+    Returns
+    -------
+    List of dicts
+    """
+    return [
         {
             "name": step[0],
             "module": step[1].__class__.__module__,
@@ -180,8 +238,6 @@ def serialize_pipeline(pipe):
         }
         for step in pipe.steps
     ]
-
-    return results
 
 
 def make_dir(path: pathlib.Path) -> pathlib.Path:

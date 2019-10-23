@@ -1,7 +1,6 @@
 import abc
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from ml_tooling.utils import DataType, DataSetError
@@ -14,12 +13,12 @@ class Dataset(metaclass=abc.ABCMeta):
     and :meth:`load_prediction_data` method
     """
 
-    _x: Optional[DataType] = None
+    _x: Optional[pd.DataFrame] = None
     _y: Optional[DataType] = None
-    test_x: Optional[DataType] = None
+    test_x: Optional[pd.DataFrame] = None
     test_y: Optional[DataType] = None
     train_y: Optional[DataType] = None
-    train_x: Optional[DataType] = None
+    train_x: Optional[pd.DataFrame] = None
 
     def create_train_test(
         self,
@@ -94,7 +93,7 @@ class Dataset(metaclass=abc.ABCMeta):
         return self.__class__.__name__
 
     @abc.abstractmethod
-    def load_training_data(self) -> Tuple[pd.DataFrame, np.array]:
+    def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
         """Abstract method to be implemented by user.
         Defines data to be used at training time where X is a dataframe and y is a numpy array
 

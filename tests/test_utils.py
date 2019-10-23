@@ -1,4 +1,5 @@
 import pathlib
+import subprocess
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
@@ -21,10 +22,25 @@ def test_get_git_hash_returns_correctly():
 @patch("ml_tooling.utils.subprocess")
 def test_get_git_hash_returns_empty_if_git_not_found(mock_subprocess):
     mock_subprocess.check_output.side_effect = OSError
-    git_hash = get_git_hash()
+    with pytest.warns(UserWarning, match="Error using git - is `git` installed?"):
+        git_hash = get_git_hash()
     assert git_hash == ""
 
     mock_subprocess.check_output.assert_called_with(["git", "rev-parse", "HEAD"])
+
+
+@patch("ml_tooling.utils.subprocess")
+def test_get_git_hash_returns_empty_and_emits_warning_if_git_not_found(mock_subprocess):
+    mock_subprocess.check_output.side_effect = subprocess.CalledProcessError(
+        128, cmd=["git", "rev-parse", "HEAD"]
+    )
+    with pytest.warns(
+        UserWarning,
+        match="Error using git - skipping git hash. Did you call `git init`?",
+    ):
+        git_hash = get_git_hash()
+
+    assert git_hash == ""
 
 
 @pytest.mark.parametrize(

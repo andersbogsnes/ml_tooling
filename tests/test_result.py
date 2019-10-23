@@ -81,9 +81,9 @@ class TestResult:
             plot=create_plotter(classifier, test_dataset),
         )
         log = Log.from_result(result)
-        run_info = log.save_log(runs)
+        log.save_log(runs)
 
-        with run_info.open(mode="r") as f:
+        with log.output_path.open(mode="r") as f:
             logged = yaml.safe_load(f)
 
         assert 0.7 == logged["metrics"]["accuracy"]
@@ -133,7 +133,7 @@ class TestResultGroup:
         )
 
         group = ResultGroup([result1, result2])
-        group.log_estimator(runs)
+        group.log(runs)
 
         run_files = list(runs.rglob("IrisData_LogisticRegression*"))
 

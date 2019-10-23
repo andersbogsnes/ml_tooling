@@ -98,8 +98,8 @@ class Model:
 
         Example
         -------
-            with FileStorage('path/to/estimators_dir') as storage:
-                estimator_list = Model.list_estimators(storage)
+            storage = FileStorage('path/to/estimators_dir')
+            estimator_list = Model.list_estimators(storage)
 
         Returns
         -------

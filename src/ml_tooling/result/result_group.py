@@ -1,7 +1,6 @@
 import pathlib
 from typing import List
 
-from ml_tooling.logging import Log
 from ml_tooling.result.result import Result
 import attr
 
@@ -37,7 +36,6 @@ class ResultGroup:
         self.results = [self.results[i] for i, _ in scores]
         return self
 
-    def log_estimator(self, log_dir: pathlib.Path):
+    def log(self, log_dir: pathlib.Path):
         for result in self.results:
-            log = Log.from_result(result)
-            log.save_log(log_dir)
+            result.log(savedir=log_dir)

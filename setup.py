@@ -15,7 +15,6 @@ INSTALL_REQUIRES = [
     "pyyaml",
     "joblib",
     "sqlalchemy",
-    "pyarrow",
     "attrs",
 ]
 KEYWORDS = ["ml", "framework", "tooling"]
@@ -25,13 +24,13 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/andersbogsnes/ml_tooling",
 }
 CLASSIFIERS = [
-    "Programming Language:: Python:: 3.6",
-    "Programming Language:: Python:: 3.7",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: Implementation :: CPython",
     "Intended Audience :: Developers",
-    "Development Status:: 3 - Alpha",
-    "License:: OSI Approved:: MIT License",
-    "Operating System:: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
 
 META_PATH = os.path.join("src", NAME, "__init__.py")

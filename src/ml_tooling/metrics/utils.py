@@ -1,5 +1,5 @@
 import math
-from typing import Union, Tuple
+from typing import Union, Tuple, List
 
 import numpy as np
 
@@ -8,7 +8,7 @@ class MetricError(Exception):
     pass
 
 
-def _get_top_n_idx(idx: np.array, top_n: Union[int, float]) -> np.array:
+def _get_top_n_idx(idx: np.ndarray, top_n: Union[int, float]) -> np.ndarray:
     """
     Gets top n idx, where n can be a float representing a percentage,
     or an int representing number of elements to return
@@ -28,7 +28,9 @@ def _get_top_n_idx(idx: np.array, top_n: Union[int, float]) -> np.array:
     """
 
     if _is_percent(top_n):
-        top_n = math.floor(top_n * len(idx)) or 1  # If floor rounds to 0, use 1 instead
+        top_n: int = math.floor(
+            top_n * len(idx)
+        ) or 1  # If floor rounds to 0, use 1 instead
     return idx[:top_n]
 
 
@@ -103,7 +105,7 @@ def _sort_values(
     else:
         idx = np.argsort(values)[::-1]
 
-    sorted_idx = []
+    sorted_idx: List[int] = []
 
     if top_n:
         sorted_idx.extend(_get_top_n_idx(idx, top_n))

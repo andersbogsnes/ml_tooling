@@ -1,19 +1,17 @@
 import pathlib
 import datetime
 from contextlib import contextmanager
-from typing import Tuple, Optional, Sequence, Union, List, Iterable
+from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
 import pandas as pd
-import yaml
 from sklearn.base import is_classifier, is_regressor
-from sklearn.pipeline import Pipeline
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.result import ResultType
 from ml_tooling.storage.base import Storage
-from ml_tooling.logging.log_estimator import Log
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
@@ -23,11 +21,12 @@ from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
     DataSetError,
-    setup_pipeline_step,
     Estimator,
     is_pipeline,
     serialize_pipeline,
     _get_estimator_name,
+    make_pipeline_from_definition,
+    read_yaml,
 )
 
 logger = create_logger("ml_tooling")
@@ -43,26 +42,26 @@ class Model:
 
     def __init__(self, estimator):
         self.estimator: Estimator = _validate_estimator(estimator)
-        self.result: Optional[Result] = None
+        self.result: Optional[ResultType] = None
 
     @property
-    def is_classifier(self):
+    def is_classifier(self) -> bool:
         return is_classifier(self.estimator)
 
     @property
-    def is_regressor(self):
+    def is_regressor(self) -> bool:
         return is_regressor(self.estimator)
 
     @property
-    def is_pipeline(self):
+    def is_pipeline(self) -> bool:
         return is_pipeline(self.estimator)
 
     @property
-    def estimator_name(self):
+    def estimator_name(self) -> str:
         return _get_estimator_name(self.estimator)
 
     @property
-    def default_metric(self):
+    def default_metric(self) -> str:
         """
         Defines default metric based on whether or not the estimator is a regressor or classifier.
         Then :attr:`~ml_tooling.config.DefaultConfig.CLASSIFIER_METRIC` or
@@ -81,7 +80,7 @@ class Model:
         )
 
     @default_metric.setter
-    def default_metric(self, metric):
+    def default_metric(self, metric: str):
         if self.is_classifier:
             self.config.CLASSIFIER_METRIC = metric
         else:
@@ -177,15 +176,22 @@ class Model:
                     "You haven't scored the estimator - no results available to log"
                 )
 
-            # TODO: Can log be a result  method? `result.log(estimator_path=file)`
-            log = Log.from_result(self.result, estimator_path=estimator_file)
-            log.save_log(self.config.RUN_DIR)
+            self.result.log(
+                saved_estimator_path=estimator_file, savedir=self.config.RUN_DIR
+            )
 
         logger.info(f"Saved estimator to {estimator_file}")
 
         return estimator_file
 
-    def to_dict(self):
+    def to_dict(self) -> List[dict]:
+        """
+        Serializes the estimator to a dictionary
+
+        Returns
+        -------
+        List of dicts
+        """
         if self.is_pipeline:
             return serialize_pipeline(self.estimator)
 
@@ -198,19 +204,11 @@ class Model:
         ]
 
     @classmethod
-    def from_yaml(cls, log_file: pathlib.Path):
-        # TODO: This logic can be moved out of baseclass - read_yaml()
-        log_file = pathlib.Path(log_file)
-        with log_file.open("r") as f:
-            log = yaml.safe_load(f)
-            estimator_definition = log["estimator"]
+    def from_yaml(cls, log_file: pathlib.Path) -> "Model":
+        definitions = read_yaml(log_file)["estimator"]
+        pipeline = make_pipeline_from_definition(definitions)
 
-        steps = [setup_pipeline_step(definition) for definition in estimator_definition]
-
-        if len(steps) == 1:
-            return cls(steps[0])
-
-        return cls(Pipeline(steps))
+        return cls(pipeline)
 
     def make_prediction(
         self,
@@ -304,23 +302,11 @@ class Model:
         -------
         List of Result objects
         """
-        results = []
-        # TODO: Move this out - train_estimators() -> Resultgroup
-        for i, estimator in enumerate(estimators, start=1):
-            challenger_estimator = cls(estimator)
-            logger.info(
-                f"Training estimator {i}/{len(estimators)}: {challenger_estimator.estimator_name}"
-            )
 
-            result = challenger_estimator.score_estimator(
-                data=data, metrics=metrics, cv=cv
-            )
-            results.append(result)
-
-        results = ResultGroup(results).sort()
+        results = train_estimators(estimators, data, metrics, cv)
 
         if log_dir:
-            results.log_estimator(pathlib.Path(log_dir))
+            results.log(pathlib.Path(log_dir))
 
         best_estimator: Model = results[0].model
         logger.info(
@@ -393,7 +379,11 @@ class Model:
         if isinstance(metrics, str):
             metrics = [self.default_metric] if metrics == "default" else [metrics]
 
-        metrics = Metrics.from_list(metrics)
+        score_metrics = Metrics.from_list(metrics)
+        cv = cv if cv else None
+
+        if cv:
+            cv = check_cv(cv, data.train_y, self.is_classifier)
 
         logger.info("Scoring estimator...")
 
@@ -404,22 +394,19 @@ class Model:
 
         if cv:
             logger.info("Cross-validating...")
-            self.result = Result.from_model(
-                model=self,
-                data=data,
-                metrics=metrics,
-                cv=cv,
-                n_jobs=self.config.N_JOBS,
-                verbose=self.config.VERBOSITY,
-            )
 
-        else:
-            self.result = Result.from_model(model=self, data=data, metrics=metrics)
+        self.result = Result.from_model(
+            model=self,
+            data=data,
+            metrics=score_metrics,
+            cv=cv,
+            n_jobs=self.config.N_JOBS,
+            verbose=self.config.VERBOSITY,
+        )
 
         if self.config.LOG:
-            log = Log.from_result(self.result)
-            result_file = log.save_log(self.config.RUN_DIR)
-            logger.info(f"Saved run info at {result_file}")
+            log = self.result.log(savedir=self.config.RUN_DIR)
+            logger.info(f"Saved run info at {log.output_path}")
         return self.result
 
     def gridsearch(
@@ -428,7 +415,6 @@ class Model:
         param_grid: dict,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
-        n_jobs: Optional[int] = None,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated gridsearch on the estimator with the passed in parameter grid.
@@ -448,9 +434,6 @@ class Model:
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
-        n_jobs: int, optional
-            How many cores to use. Defaults to value in :attr:`config.N_JOBS`.
-
         Returns
         -------
         best_estimator: Model
@@ -461,10 +444,8 @@ class Model:
         """
 
         if isinstance(metrics, str):
-            metrics = [self.default_metric] if metrics == "default" else [metrics]
+            metrics = self.default_metric if metrics == "default" else metrics
 
-        metrics = Metrics.from_list(metrics)
-        n_jobs = self.config.N_JOBS if n_jobs is None else n_jobs
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         cv = check_cv(cv, data.train_y, self.is_classifier)
 
@@ -476,24 +457,14 @@ class Model:
             estimator=self.estimator, params=param_grid
         )
 
-        self.result = ResultGroup(
-            [
-                Result.from_model(
-                    model=Model(estimator),
-                    data=data,
-                    metrics=metrics,
-                    cv=cv,
-                    n_jobs=n_jobs,
-                    verbose=self.config.VERBOSITY,
-                )
-                for estimator in estimators
-            ]
+        self.result = train_estimators(
+            list(estimators), data=data, metrics=metrics, cv=cv
         )
 
         logger.info("Done!")
 
         if self.config.LOG:
-            result_file = self.result.log_estimator(self.config.RUN_DIR)
+            result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
         return self.result[0].model, self.result
@@ -540,3 +511,24 @@ class Model:
 
     def __repr__(self):
         return f"<Model: {self.estimator_name}>"
+
+
+def train_estimators(
+    estimators: Sequence[Estimator],
+    data: Dataset,
+    metrics: Union[str, List[str]],
+    cv: Any,
+) -> ResultGroup:
+    if isinstance(metrics, str):
+        metrics = [metrics]
+
+    results = []
+    for i, estimator in enumerate(estimators, start=1):
+        challenger_estimator = Model(estimator)
+        logger.info(
+            f"Training estimator {i}/{len(estimators)}: {challenger_estimator.estimator_name}"
+        )
+        result = challenger_estimator.score_estimator(data, metrics=metrics, cv=cv)
+        results.append(result)
+
+    return ResultGroup(results).sort()

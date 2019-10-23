@@ -98,6 +98,8 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
+
+        filename = Path(filename).name
         env_path = "prod" if prod else "dev"
 
         artifactory_path = self.artifactory_path / env_path / filename

@@ -13,15 +13,15 @@ class Result:
     Contains plotting methods, as well as being comparable with other results
     """
 
-    model = attr.ib()
+    model = attr.ib(eq=False)
     metrics: Metrics = attr.ib()
-    data: Dataset = attr.ib()
-    plot: BaseVisualize = attr.ib()
+    data: Dataset = attr.ib(eq=False)
+    plot: BaseVisualize = attr.ib(eq=False, repr=False)
 
     @classmethod
     def from_model(
         cls, model, data: Dataset, metrics: Metrics, cv=None, n_jobs=None, verbose=None
-    ):
+    ) -> "Result":
         if cv:
             metrics.score_metrics_cv(
                 estimator=model.estimator,
@@ -40,8 +40,11 @@ class Result:
             metrics=metrics, model=model, plot=create_plotter(model, data), data=data
         )
 
-    def log(self, saved_estimator_path=None):
-        return Log.from_result(result=self, estimator_path=saved_estimator_path)
+    def log(self, saved_estimator_path=None, savedir=None) -> Log:
+        log = Log.from_result(result=self, estimator_path=saved_estimator_path)
+        if savedir:
+            log.save_log(savedir)
+        return log
 
     def __repr__(self):
         metrics = {

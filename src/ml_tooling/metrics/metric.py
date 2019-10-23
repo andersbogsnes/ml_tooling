@@ -32,7 +32,7 @@ class Metric:
         >>> y = np.array([[2], [4], [6], [8]])
         >>> estimator = LinearRegression().fit(x, y)
         >>> metric.score_metric(estimator, x, y)
-        Metric(name='r2', score=1.0, cross_val_scores=None)
+        Metric(name='r2', score=1.0)
         >>> metric.score
         1.0
         >>> metric.name
@@ -41,7 +41,7 @@ class Metric:
     .. doctest::
 
         >>> metric.score_metric_cv(estimator, x, y, cv=2)
-        Metric(name='r2', score=1.0, cross_val_scores=array([1., 1.]))
+        Metric(name='r2', score=1.0)
         >>> metric.score
         1.0
         >>> metric.name
@@ -57,7 +57,7 @@ class Metric:
 
     name: str = attr.ib()
     score: float = attr.ib(default=None)
-    cross_val_scores: Optional[np.ndarray] = attr.ib(default=None)
+    cross_val_scores: Optional[np.ndarray] = attr.ib(default=None, eq=False, repr=False)
 
     def score_metric(self, estimator: Estimator, x: DataType, y: DataType) -> "Metric":
         """

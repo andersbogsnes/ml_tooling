@@ -31,20 +31,20 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 
     >>> from ml_tooling import Model
     >>> from ml_tooling.data import Dataset
-    >>> from sklearn.datasets import load_boston
     >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.datasets import load_boston
+    >>> import pandas as pd
     >>>
-    >>> # Define our DataClass
     >>> class BostonData(Dataset):
-    ...     # Tell the Dataset how to load data when training
-    ...     def load_training_data(self):
-    ...         return load_boston(return_X_y=True)
+    ...    def load_training_data(self):
+    ...        data = load_boston()
+    ...        return pd.DataFrame(data.data, columns=data.feature_names), data.target
     ...
-    ...     # Tell the Dataset how to load data when predicting
-    ...     # In this example, we want to predict a single house at a time
-    ...     def load_prediction_data(self, idx):
-    ...         x, _ = load_boston(return_X_y=True)
-    ...         return x[idx]
+    ...    # Define where to get prediction time data - returning a DataFrame
+    ...    def load_prediction_data(self, idx):
+    ...        data = load_boston()
+    ...        x = pd.DataFrame(data.data, labels=data.feature_names)
+    ...        return x.loc[idx] # Return given observation
     >>>
     >>> # Now we can create our dataset and our model
     >>> linear = Model(LinearRegression())

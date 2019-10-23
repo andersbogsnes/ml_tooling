@@ -1,4 +1,5 @@
 import logging
+import pathlib
 import random as rand
 
 import numpy as np
@@ -37,3 +38,17 @@ def monkeypatch_git_hash(monkeypatch):
         return "1234"
 
     monkeypatch.setattr("ml_tooling.utils.get_git_hash", mockreturn)
+
+
+@pytest.fixture
+def temp_project_structure(tmp_path: pathlib.Path) -> pathlib.Path:
+    # Write a setup.py file
+    tmp_path.joinpath("setup.py").write_text("my_setup\nfile")
+
+    # Setup a src project
+    project = tmp_path.joinpath("src").joinpath("my_test_project")
+    project.mkdir(parents=True)
+
+    # Make sure there's an __init__ file there
+    project.joinpath("__init__.py").write_text("__version__ == 0.1.0")
+    return tmp_path

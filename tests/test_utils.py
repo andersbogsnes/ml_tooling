@@ -10,7 +10,14 @@ from sklearn.preprocessing import StandardScaler
 from ml_tooling.metrics.utils import _is_percent
 from ml_tooling.plots.utils import _generate_text_labels
 
-from ml_tooling.utils import get_git_hash, MLToolingError, _validate_estimator, make_dir
+from ml_tooling.utils import (
+    get_git_hash,
+    MLToolingError,
+    _validate_estimator,
+    make_dir,
+    find_src_dir,
+    find_setup_file,
+)
 
 
 def test_get_git_hash_returns_correctly():
@@ -117,3 +124,27 @@ class TestGridsearchParams:
         make_dir(file_path)
 
         assert file_path.exists()
+
+
+class TestFindSrcDir:
+    def test_can_find_setup_file_from_root(self, temp_project_structure):
+        result = find_setup_file(temp_project_structure, 0, 2)
+        assert result == temp_project_structure
+
+    def test_can_find_setup_file_from_inside_project(self, temp_project_structure):
+        result = find_setup_file(
+            temp_project_structure / "src" / "my_test_project", 0, 3
+        )
+        assert result == temp_project_structure
+
+    def test_can_find_setup_file_from_outside_project(self, temp_project_structure):
+        result = find_setup_file(temp_project_structure / "notebooks", 0, 3)
+        assert result == temp_project_structure
+
+    def test_can_find_src_dir_from_root_folder_structure(self, temp_project_structure):
+        result = find_src_dir(temp_project_structure)
+        assert result == temp_project_structure / "src" / "my_test_project"
+
+    def test_can_find_src_dir_from_inside_project(self, temp_project_structure):
+        result = find_src_dir(temp_project_structure / "notebooks")
+        assert result == temp_project_structure / "src" / "my_test_project"

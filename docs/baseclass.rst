@@ -53,6 +53,43 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     >>> bostondata.create_train_test()
     <BostonData - Dataset>
 
+Storage
+-------
+
+In order to store our estimators for later use or comparison, we use a
+:class:`~ml_tooling.storage.Storage` class and pass it to :meth:`~ml_tooling.Model.save_estimator`.
+
+.. testsetup::
+
+    import pathlib
+    pathlib.Path('./estimator_dir').mkdir()
+
+.. doctest::
+
+    >>> from ml_tooling.storage import FileStorage
+    >>>
+    >>> estimator_dir = './estimator_dir'
+    >>> storage = FileStorage(estimator_dir)
+    >>> estimator_path = linear.save_estimator(storage)
+    >>> estimator_path.name # doctest: +SKIP
+    'LinearRegression_2019-10-23_13:23:22.058684.pkl' # doctest: +SKIP
+
+The model creates a filename for the model estimator based on the current date and time and the estimator name.
+
+We can also load the model from a storage by specifying the filename to load in the Storage directory.
+
+.. doctest::
+
+    >>> loaded_linear = linear.load_estimator(storage, estimator_path.name)
+    >>> loaded_linear
+    <Model: LinearRegression>
+
+.. testcleanup::
+
+    import shutil
+    shutil.rmtree(pathlib.Path('./estimator_dir'))
+
+
 
 Configuration
 -------------
@@ -65,6 +102,8 @@ To change the default configuration values, modify the :attr:`~Model.config` att
 
 .. seealso::
     :ref:`config` for a list of available configuration options
+
+
 
 Logging
 -------

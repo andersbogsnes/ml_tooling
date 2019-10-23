@@ -13,6 +13,8 @@ Implements all the base functionality needed to create the wrapper
 
 .. include:: dataset.inc.rst
 
+.. include:: storage.inc.rst
+
 .. include:: config.inc.rst
 
 .. include:: result.inc.rst

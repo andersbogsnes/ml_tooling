@@ -22,9 +22,7 @@ class FileStorage(Storage):
 
     def get_list(self) -> List[Path]:
         """
-        Finds a list of estimator filenames in the FileStorage directory,
-        if the path given is to a file, the directory in which the file resides
-        is used to find the list.
+        Finds a list of estimator file paths in the FileStorage directory.
 
         Parameters
         ----------

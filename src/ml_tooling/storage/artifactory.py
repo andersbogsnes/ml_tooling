@@ -55,9 +55,7 @@ class ArtifactoryStorage(Storage):
 
     def get_list(self, prod: bool = False) -> List["ArtifactoryPath"]:
         """
-        Finds a list of estimator filenames in the ArtifactoryStorage repo,
-        if the path given is for a file, the directory in which the file resides
-        is used to find the list.
+        Finds a list of estimator artifact paths in the ArtifactoryStorage repo.
 
         Example
         -------

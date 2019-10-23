@@ -56,6 +56,9 @@ Available Classifier plots
 - :meth:`~ClassificationVisualize.lift_curve`
     Visualizes how much of the target class we capture by setting different thresholds for probability
 
+- :meth:`~ClassificationVisualize.pr_curve`
+    Visualize a Precision-Recall curve for a classification estimator. Estimator must implement a `predict_proba` method.
+
 Available Regression Plots
 --------------------------
 

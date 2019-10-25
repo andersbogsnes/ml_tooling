@@ -53,7 +53,7 @@ class ArtifactoryStorage(Storage):
             artifactory_url, repo, apikey, auth
         )
 
-    def get_list(self, prod: bool = False) -> List["ArtifactoryPath"]:
+    def get_list(self) -> List["ArtifactoryPath"]:
         """
         Finds a list of estimator filenames in the ArtifactoryStorage repo,
         if the path given is for a file, the directory in which the file resides
@@ -69,11 +69,10 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files sorted by filename
         """
-        env_path = "prod" if prod else "dev"
-        artifactory_path = self.artifactory_path / env_path
-        return sorted(artifactory_path.glob("*/*.pkl"))
 
-    def load(self, filename: str, prod=False) -> Estimator:
+        return sorted(self.artifactory_path.glob("*/*.pkl"))
+
+    def load(self, filename: str) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
@@ -81,8 +80,6 @@ class ArtifactoryStorage(Storage):
         ----------
         filename: str
             Path to estimator pickle file
-        prod: bool
-            Whether or not to load the prod model
 
         Example
         -------
@@ -100,9 +97,8 @@ class ArtifactoryStorage(Storage):
         """
 
         filename = Path(filename).name
-        env_path = "prod" if prod else "dev"
 
-        artifactory_path = self.artifactory_path / env_path / filename
+        artifactory_path = self.artifactory_path / filename
         with artifactory_path.open() as f:
             by = BytesIO()
             by.write(f.read())
@@ -142,6 +138,13 @@ class ArtifactoryStorage(Storage):
         ArtifactoryPath
             File path to stored estimator
         """
+
+        if prod:
+            raise NotImplementedError(
+                "Artifactory Storage doesn't currently implement production storage. "
+                "Use FileStorage instead"
+            )
+
         env_path = "prod" if prod else "dev"
 
         artifactory_path = self.artifactory_path / env_path

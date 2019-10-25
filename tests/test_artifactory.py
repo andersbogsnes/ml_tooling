@@ -20,7 +20,7 @@ def test_can_load_from_artifactory(open_estimator_pickle):
     mock_open.open.return_value.__enter__.return_value = open_estimator_pickle
 
     mock_path = MagicMock()
-    mock_path.__truediv__.return_value.__truediv__.return_value = mock_open
+    mock_path.__truediv__.return_value = mock_open
 
     storage = ArtifactoryStorage("testy", "test")
     storage.artifactory_path = mock_path
@@ -57,7 +57,7 @@ def test_can_get_list_of_paths():
         f"{url}LogisticRegression_2019-10-15_10:34:21.849358.pkl",
     ]
     mock = MagicMock()
-    mock.__truediv__.return_value.glob.return_value = paths
+    mock.glob.return_value = paths
 
     storage = ArtifactoryStorage("test", "test")
     storage.artifactory_path = mock

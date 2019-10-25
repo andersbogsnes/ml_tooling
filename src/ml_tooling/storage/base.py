@@ -23,7 +23,7 @@ class Storage(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, estimator: Estimator, filename: str) -> Pathlike:
+    def save(self, estimator: Estimator, filename: str, prod: bool = False) -> Pathlike:
         """
         Abstract method to be implemented by the user.
         Defines method used to save data from the storage type

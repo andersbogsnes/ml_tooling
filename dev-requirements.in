@@ -2,3 +2,4 @@
 tox
 pre-commit
 pytest
+dohq-artifactory

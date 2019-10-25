@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import Estimator, MLToolingError
+from ml_tooling.utils import Estimator, MLToolingError, Pathlike
 
 import joblib
 from tempfile import TemporaryDirectory
@@ -72,7 +72,7 @@ class ArtifactoryStorage(Storage):
 
         return sorted(self.artifactory_path.glob("*/*.pkl"))
 
-    def load(self, filename: str) -> Estimator:
+    def load(self, filename: Pathlike) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
@@ -96,8 +96,6 @@ class ArtifactoryStorage(Storage):
             estimator unpickled object
         """
 
-        filename = Path(filename).name
-
         artifactory_path = self.artifactory_path / filename
         with artifactory_path.open() as f:
             by = BytesIO()
@@ -106,7 +104,7 @@ class ArtifactoryStorage(Storage):
             return joblib.load(by)
 
     def save(
-        self, estimator: Estimator, filename: str, prod: bool = False
+        self, estimator: Estimator, file_path: Pathlike, prod: bool = False
     ) -> "ArtifactoryPath":
         """
         Save a pickled estimator to artifactory.
@@ -115,8 +113,8 @@ class ArtifactoryStorage(Storage):
         ----------
         estimator: Estimator
             The estimator object
-        filename: str
-            Filename for the saved estimator
+        file_path: str
+            Filepath for the saved estimator relative to ArtifactoryStorage
         prod: bool
             Production variable, set to True if saving a production-ready estimator
 
@@ -145,14 +143,12 @@ class ArtifactoryStorage(Storage):
                 "Use FileStorage instead"
             )
 
-        env_path = "prod" if prod else "dev"
-
-        artifactory_path = self.artifactory_path / env_path
+        artifactory_path = self.artifactory_path / file_path
 
         artifactory_path.mkdir(parents=True, exist_ok=True)
 
         with TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir).joinpath(filename)
+            file_path = Path(tmpdir).joinpath(file_path)
             joblib.dump(estimator, file_path)
             artifactory_path.deploy_file(file_path)
         return artifactory_path

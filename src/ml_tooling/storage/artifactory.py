@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import Pathlike, Estimator, MLToolingError
+from ml_tooling.utils import Estimator, MLToolingError
 
 import joblib
 from tempfile import TemporaryDirectory

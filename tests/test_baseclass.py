@@ -39,19 +39,19 @@ class TestBaseClass:
         assert pipeline.is_pipeline is True
 
     def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset)
 
         assert result.metrics.name == "accuracy"
 
     def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset, metrics="roc_auc")
 
         assert result.metrics.name == "roc_auc"
 
     def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
 
         assert len(result.metrics) == 2

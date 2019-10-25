@@ -269,8 +269,8 @@ def find_setup_file(path, level, max_level):
         raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
     if path.joinpath("setup.py").exists():
         return path
-    else:
-        return find_setup_file(path.parent, level + 1, max_level)
+
+    return find_setup_file(path.parent, level + 1, max_level)
 
 
 def find_src_dir(path=None, max_level=2):
@@ -285,7 +285,6 @@ def find_src_dir(path=None, max_level=2):
         if child.joinpath("__init__.py").exists():
             return child
 
-    else:
-        raise MLToolingError(
-            f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
-        )
+    raise MLToolingError(
+        f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
+    )

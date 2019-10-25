@@ -169,9 +169,10 @@ class TestFindSrcDir:
     def test_find_src_dir_errors_when_no_init_is_found(self, tmp_path: pathlib.Path):
         tmp_path.joinpath("setup.py").write_text("I exist")
         output_folder = tmp_path / "src" / "test"
+        output_folder.mkdir(parents=True)
         with pytest.raises(
             MLToolingError,
-            match=f"No modules found in {output_folder}! "
+            match=f"No modules found in {output_folder.parent}! "
             f"Is there an __init__.py file in your module?",
         ):
             find_src_dir(output_folder)

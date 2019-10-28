@@ -171,11 +171,11 @@ class Model:
             The path to where the estimator file was saved
         """
         if prod:
-            filename = f"{self.estimator_name}_trained.pkl"
+            file_name = "production_model.pkl"
         else:
             now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
-            filename = f"{self.estimator_name}_{now_str}.pkl"
-        estimator_file = storage.save(self.estimator, filename, prod=prod)
+            file_name = f"{self.estimator_name}_{now_str}.pkl"
+        estimator_file = storage.save(self.estimator, file_name, prod=prod)
 
         logger.debug(f"Attempting to save estimator {estimator_file}")
 
@@ -511,7 +511,7 @@ class Model:
 
     @classmethod
     def load_production_estimator(cls, module_name):
-        file_name = f"{module_name}_prod.pkl"
+        file_name = "production_model.pkl"
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)
         return cls(estimator)

@@ -427,7 +427,7 @@ class TestBaseClass:
                     "IrisData_DummyClassifier",
                 }
 
-    def test_train_model_errors_corstrrect_when_not_scored(
+    def test_train_model_errors_correctly_when_not_scored(
         self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
 

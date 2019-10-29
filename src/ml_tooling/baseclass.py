@@ -1,8 +1,10 @@
+from importlib.resources import path as import_path
 import pathlib
 import datetime
 from contextlib import contextmanager
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
+import joblib
 import pandas as pd
 from sklearn.base import is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
@@ -134,19 +136,23 @@ class Model:
         Model
             Instance of Model with a saved estimator
         """
-        estimator = storage.load(path)
+        filename = pathlib.Path(path).name
+        estimator = storage.load(filename)
         instance = cls(estimator)
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, storage: Storage) -> pathlib.Path:
+    def save_estimator(self, storage: Storage, prod=False) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
 
         Parameters
         ----------
-        storage : Storage
+        storage: Storage
             Storage class to save the estimator with
+
+        prod: bool
+            Whether this is a production model to be saved
 
         Example
         -------
@@ -164,9 +170,12 @@ class Model:
         pathlib.Path
             The path to where the estimator file was saved
         """
-        now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
-        filename = f"{self.estimator_name}_{now_str}.pkl"
-        estimator_file = storage.save(self.estimator, filename)
+        if prod:
+            file_name = "production_model.pkl"
+        else:
+            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+            file_name = f"{self.estimator_name}_{now_str}.pkl"
+        estimator_file = storage.save(self.estimator, file_name, prod=prod)
 
         logger.debug(f"Attempting to save estimator {estimator_file}")
 
@@ -499,6 +508,13 @@ class Model:
         finally:
             self.config.LOG = False
             self.config.RUN_DIR = old_dir
+
+    @classmethod
+    def load_production_estimator(cls, module_name):
+        file_name = "production_model.pkl"
+        with import_path(module_name, file_name) as path:
+            estimator = joblib.load(path)
+        return cls(estimator)
 
     @classmethod
     def reset_config(cls):

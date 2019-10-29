@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 import yaml
 import datetime
+
+from sklearn.base import BaseEstimator
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -36,20 +38,20 @@ class TestBaseClass:
         pipeline = Model(pipeline_linear)
         assert pipeline.is_pipeline is True
 
-    def test_can_use_default_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+    def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset)
 
         assert result.metrics.name == "accuracy"
 
-    def test_can_use_specified_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+    def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset, metrics="roc_auc")
 
         assert result.metrics.name == "roc_auc"
 
-    def test_can_use_multiple_metrics(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
+    def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
 
         assert len(result.metrics) == 2
@@ -285,7 +287,7 @@ class TestBaseClass:
         assert saved_model_path.exists()
 
     @patch("ml_tooling.logging.log_estimator.get_git_hash")
-    def test_save_model_saves_logging_dir_correctly(
+    def test_save_estimator_saves_logging_dir_correctly(
         self, mock_hash: MagicMock, classifier: Model, tmp_path: pathlib.Path
     ):
         mock_hash.return_value = "1234"
@@ -298,6 +300,23 @@ class TestBaseClass:
             "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
         )
         mock_hash.assert_called_once()
+
+    def test_save_estimator_with_prod_flag_saves_correctly(self, classifier: Model):
+        mock_storage = MagicMock()
+        classifier.save_estimator(mock_storage, prod=True)
+
+        mock_storage.save.assert_called_once_with(
+            classifier.estimator, "production_model.pkl", prod=True
+        )
+
+    @patch("ml_tooling.baseclass.import_path")
+    def test_can_load_production_estimator(
+        self, mock_path: MagicMock, open_estimator_pickle
+    ):
+        mock_path.return_value.__enter__.return_value = open_estimator_pickle
+        model = Model.load_production_estimator("test")
+        assert isinstance(model, Model)
+        assert isinstance(model.estimator, BaseEstimator)
 
     def test_gridsearch_model_returns_as_expected(
         self, pipeline_logistic: Pipeline, test_dataset: Dataset
@@ -408,7 +427,7 @@ class TestBaseClass:
                     "IrisData_DummyClassifier",
                 }
 
-    def test_train_model_errors_correct_when_not_scored(
+    def test_train_model_errors_correctly_when_not_scored(
         self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
 

@@ -1,5 +1,5 @@
 from ml_tooling.storage.base import Storage
-from ml_tooling.utils import MLToolingError
+from ml_tooling.utils import MLToolingError, find_src_dir
 
 import joblib
 from typing import List, Any
@@ -24,10 +24,6 @@ class FileStorage(Storage):
         """
         Finds a list of estimator file paths in the FileStorage directory.
 
-        Parameters
-        ----------
-        None
-
         Example
         -------
         Find and return estimator paths in a given directory:
@@ -40,14 +36,14 @@ class FileStorage(Storage):
         """
         return sorted(self.dir_path.glob("*.pkl"))
 
-    def load(self, filename: str) -> Any:
+    def load(self, file_path: Pathlike) -> Any:
         """
         Loads a joblib pickled estimator from given filepath and returns the unpickled object
 
         Parameters
         ----------
 
-        filename: str
+        file_path: str
             filename of estimator pickle file
 
         Example
@@ -64,10 +60,10 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        estimator_path = self.dir_path / filename
+        estimator_path = self.dir_path / file_path
         return joblib.load(estimator_path)
 
-    def save(self, estimator: Estimator, filename: str) -> Path:
+    def save(self, estimator: Estimator, filepath: str, prod: bool = False) -> Path:
         """
         Save a joblib pickled estimator.
 
@@ -76,8 +72,13 @@ class FileStorage(Storage):
         estimator: obj
             The estimator object
 
-        filename: str
-            Name of file to save
+        filepath: str
+            Path where to save file - relative to FileStorage
+
+        prod: bool
+            Whether or not to save in "production mode" -
+            Production mode saves to /src/<projectname>/ regardless of what FileStorage
+            was instantiated with
 
         Example
         -------
@@ -94,6 +95,10 @@ class FileStorage(Storage):
             Path to the saved object
         """
 
-        file_path = make_dir(self.dir_path).joinpath(filename)
+        if prod:
+            file_path = find_src_dir() / filepath
+        else:
+            file_path = make_dir(self.dir_path) / filepath
+
         joblib.dump(estimator, file_path)
         return file_path

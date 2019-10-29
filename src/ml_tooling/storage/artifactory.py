@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import Estimator, MLToolingError
+from ml_tooling.utils import Estimator, MLToolingError, Pathlike
 
 import joblib
 from tempfile import TemporaryDirectory
@@ -53,7 +53,7 @@ class ArtifactoryStorage(Storage):
             artifactory_url, repo, apikey, auth
         )
 
-    def get_list(self, prod: bool = False) -> List["ArtifactoryPath"]:
+    def get_list(self) -> List["ArtifactoryPath"]:
         """
         Finds a list of estimator artifact paths in the ArtifactoryStorage repo.
 
@@ -67,20 +67,17 @@ class ArtifactoryStorage(Storage):
         List[ArtifactoryPath]
             list of paths to files sorted by filename
         """
-        env_path = "prod" if prod else "dev"
-        artifactory_path = self.artifactory_path / env_path
-        return sorted(artifactory_path.glob("*/*.pkl"))
 
-    def load(self, filename: str, prod=False) -> Estimator:
+        return sorted(self.artifactory_path.glob("*/*.pkl"))
+
+    def load(self, filename: Pathlike) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
         Parameters
         ----------
-        filename: str
+        filename: Pathlike
             Path to estimator pickle file
-        prod: bool
-            Whether or not to load the prod model
 
         Example
         -------
@@ -97,10 +94,7 @@ class ArtifactoryStorage(Storage):
             estimator unpickled object
         """
 
-        filename = Path(filename).name
-        env_path = "prod" if prod else "dev"
-
-        artifactory_path = self.artifactory_path / env_path / filename
+        artifactory_path = self.artifactory_path / filename
         with artifactory_path.open() as f:
             by = BytesIO()
             by.write(f.read())
@@ -108,7 +102,7 @@ class ArtifactoryStorage(Storage):
             return joblib.load(by)
 
     def save(
-        self, estimator: Estimator, filename: str, prod: bool = False
+        self, estimator: Estimator, file_path: Pathlike, prod: bool = False
     ) -> "ArtifactoryPath":
         """
         Save a pickled estimator to artifactory.
@@ -117,8 +111,8 @@ class ArtifactoryStorage(Storage):
         ----------
         estimator: Estimator
             The estimator object
-        filename: str
-            Filename for the saved estimator
+        file_path: str
+            Filepath for the saved estimator relative to ArtifactoryStorage
         prod: bool
             Production variable, set to True if saving a production-ready estimator
 
@@ -140,14 +134,19 @@ class ArtifactoryStorage(Storage):
         ArtifactoryPath
             File path to stored estimator
         """
-        env_path = "prod" if prod else "dev"
 
-        artifactory_path = self.artifactory_path / env_path
+        if prod:
+            raise NotImplementedError(
+                "Artifactory Storage doesn't currently implement production storage. "
+                "Use FileStorage instead"
+            )
+
+        artifactory_path = self.artifactory_path / file_path
 
         artifactory_path.mkdir(parents=True, exist_ok=True)
 
         with TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir).joinpath(filename)
+            file_path = Path(tmpdir).joinpath(file_path)
             joblib.dump(estimator, file_path)
             artifactory_path.deploy_file(file_path)
         return artifactory_path

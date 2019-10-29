@@ -1,6 +1,6 @@
+import pathlib
 from abc import ABCMeta, abstractmethod
 from typing import List
-
 from ml_tooling.utils import Pathlike, Estimator
 
 
@@ -10,7 +10,7 @@ class Storage(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def load(self, filename: str) -> Estimator:
+    def load(self, file_path: Pathlike) -> Estimator:
         """
         Abstract method to be implemented by the user.
         Defines method used to load data from the storage type
@@ -23,7 +23,9 @@ class Storage(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def save(self, estimator: Estimator, filename: str) -> Pathlike:
+    def save(
+        self, estimator: Estimator, file_path: Pathlike, prod: bool = False
+    ) -> Pathlike:
         """
         Abstract method to be implemented by the user.
         Defines method used to save data from the storage type
@@ -36,7 +38,7 @@ class Storage(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def get_list(self) -> List[Pathlike]:
+    def get_list(self) -> List[pathlib.Path]:
         """
         Abstract method to be implemented by the user.
         Defines method used to show which objects have been saved

@@ -80,6 +80,6 @@ class TestFileStorage:
 
         storage = FileStorage(other_folder)
         storage.save(classifier.estimator, "prod.pkl", prod=True)
-        assert tmp_path.joinpath("src").joinpath("prod.pkl").exists()
+        assert src_dir.joinpath("prod.pkl").exists()
 
         mock_dir.assert_called_with()

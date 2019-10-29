@@ -230,14 +230,6 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
 
     return_list = []
 
-    def is_double_list(iterable):
-        try:
-            if isinstance(iterable, list) and isinstance(iterable[0], list):
-                return True
-        except IndexError:
-            pass
-        return False
-
     if isinstance(pipe, tuple):
         step_list = [pipe]
     elif isinstance(pipe, Pipeline):
@@ -251,14 +243,11 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
         classname = step[1].__class__.__name__
 
         if hasattr(step[1], "transformer_list"):
-            params = [serialize_pipeline(s) for s in step[1].transformer_list]
+            params = [serialize_pipeline(s)[0] for s in step[1].transformer_list]
         elif hasattr(step[1], "steps"):
-            params = [serialize_pipeline(s) for s in step[1].steps]
+            params = [serialize_pipeline(s)[0] for s in step[1].steps]
         else:
             params = step[1].get_params()
-
-        if is_double_list(params):
-            params = [parm[0] for parm in params]
 
         return_list.append(
             {

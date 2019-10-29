@@ -17,6 +17,8 @@ Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
 logger = logging.getLogger("ml_tooling")
 
+logger = logging.getLogger("ml_tooling")
+
 
 class MLToolingError(Exception):
     """Error which occurs when using ML Tooling"""
@@ -261,3 +263,29 @@ def make_dir(path: pathlib.Path) -> pathlib.Path:
         path.mkdir(parents=True)
 
     return path
+
+
+def find_setup_file(path, level, max_level):
+    if level > max_level:
+        raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
+    if path.joinpath("setup.py").exists():
+        return path
+
+    return find_setup_file(path.parent, level + 1, max_level)
+
+
+def find_src_dir(path=None, max_level=2):
+    current_path = pathlib.Path.cwd() if path is None else path
+    setup_path = find_setup_file(current_path, 0, max_level)
+
+    output_folder = setup_path / "src"
+    if not output_folder.exists():
+        raise MLToolingError("Project must have a src folder!")
+    # Make sure there's an __init__ file in the project
+    for child in output_folder.glob("*"):
+        if child.joinpath("__init__.py").exists():
+            return child
+
+    raise MLToolingError(
+        f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
+    )

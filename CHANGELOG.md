@@ -1,5 +1,7 @@
 # v0.9.0
 - Breaking change - Model methods load_estimator and save_estimator now takes a Storage class that defines how and where to store estimators.
+- Added the ability to declare that a saved model should be a production estimator.
+- Added corresponding `.load_production_estimator` to `Model`
 
 # v0.8.1
 - Removed gitpython as a dependency

@@ -83,8 +83,8 @@ def get_git_hash() -> str:
     try:
         label = (
             subprocess.check_output(["git", "rev-parse", "HEAD"])
-            .strip()
-            .decode("ascii")
+                .strip()
+                .decode("ascii")
         )
     except (OSError, FileNotFoundError):
         warnings.warn("Error using git - is `git` installed?")
@@ -177,7 +177,7 @@ def is_pipeline(estimator: Estimator):
 
 
 def import_pipeline_step(
-    definition: dict
+        definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Hydrates a class based on a dictionary definition, importing the module
@@ -227,17 +227,48 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
     -------
     List of dicts
     """
-    return [
-        {
-            "name": step[0],
-            "module": step[1].__class__.__module__,
-            "classname": step[1].__class__.__name__,
-            "params": [serialize_pipeline(s) for s in step[1].transformer_list]
-            if hasattr(step[1], "transformer_list")
-            else step[1].get_params(),
-        }
-        for step in pipe.steps
-    ]
+
+    return_list = []
+
+    def is_double_list(iterable):
+        try:
+            if isinstance(iterable, list) and isinstance(iterable[0], list):
+                return True
+        except IndexError:
+            pass
+        return False
+
+    if isinstance(pipe, tuple):
+        step_list = [pipe]
+    elif isinstance(pipe, Pipeline):
+        step_list = pipe.steps
+    else:
+        step_list = pipe
+
+    for step in step_list:
+        name = step[0]
+        module = step[1].__class__.__module__
+        classname = step[1].__class__.__name__
+
+        if hasattr(step[1], "transformer_list"):
+            params = [serialize_pipeline(s) for s in step[1].transformer_list]
+        elif hasattr(step[1], "steps"):
+            params = [serialize_pipeline(s) for s in step[1].steps]
+        else:
+            params = step[1].get_params()
+
+        if is_double_list(params):
+            params = [parm[0] for parm in params]
+
+        return_list.append(
+            {
+                "name": name,
+                "module": module,
+                "classname": classname,
+                "params": params
+            }
+        )
+    return return_list
 
 
 def make_dir(path: pathlib.Path) -> pathlib.Path:

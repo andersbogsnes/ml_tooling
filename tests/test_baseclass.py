@@ -306,7 +306,7 @@ class TestBaseClass:
         classifier.save_estimator(mock_storage, prod=True)
 
         mock_storage.save.assert_called_once_with(
-            classifier.estimator, f"{classifier.estimator_name}_trained.pkl", prod=True
+            classifier.estimator, "production_model.pkl", prod=True
         )
 
     @patch("ml_tooling.baseclass.import_path")

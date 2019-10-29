@@ -1,8 +1,9 @@
 import abc
-from typing import Union
 
 from ml_tooling.data.base_data import Dataset
 import pathlib
+
+from ml_tooling.utils import Pathlike
 
 
 class FileDataset(Dataset, metaclass=abc.ABCMeta):
@@ -12,5 +13,5 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
     as its initialization argument
     """
 
-    def __init__(self, path: Union[pathlib.Path, str]):
+    def __init__(self, path: Pathlike):
         self.file_path = pathlib.Path(path)

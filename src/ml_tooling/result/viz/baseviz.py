@@ -12,7 +12,7 @@ class BaseVisualize:
     Base class for visualizers
     """
 
-    def __init__(self, estimator, config, data):
+    def __init__(self, estimator, data, config):
         self._estimator = estimator
         self._estimator_name = _get_estimator_name(estimator)
         self._config = config

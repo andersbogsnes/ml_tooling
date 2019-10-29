@@ -1,5 +1,8 @@
+from typing import Union
+
 from .result import Result
 from .result_group import ResultGroup
-from .cv_result import CVResult
 
-__all__ = ["Result", "ResultGroup", "CVResult"]
+ResultType = Union[Result, ResultGroup]
+
+__all__ = ["Result", "ResultGroup"]

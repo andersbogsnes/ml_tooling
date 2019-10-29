@@ -9,7 +9,7 @@ from ml_tooling.utils import DataType
 def plot_target_correlation(
     features: pd.DataFrame,
     target: DataType,
-    method="spearman",
+    method: str = "spearman",
     ax: Axes = None,
     top_n=None,
     bottom_n=None,

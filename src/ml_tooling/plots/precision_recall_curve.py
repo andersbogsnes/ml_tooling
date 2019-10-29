@@ -42,8 +42,8 @@ def plot_pr_curve(
     ax.set_title(title)
     ax.set_ylabel("Precision")
     ax.set_xlabel("Recall")
-    ax.set_ylim([0.0, 1.05])
-    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim(bottom=0.0, top=1.05)
+    ax.set_xlim(left=0.0, right=1.0)
     ax.legend(loc="best")
     plt.tight_layout()
     return ax

@@ -75,7 +75,8 @@ def feature_union_classifier() -> Pipeline:
     )
     union = DFFeatureUnion(transformer_list=[('pipe1', pipe1),
                                              ('pipe2', pipe2)])
-    return Pipeline([("features", union), ("clf", LogisticRegression(solver="lbfgs"))])
+    return Pipeline([("features", union), ("clf", LogisticRegression(solver="liblinear"))])
+
 
 
 @pytest.fixture

@@ -179,7 +179,7 @@ def is_pipeline(estimator: Estimator):
 
 
 def import_pipeline_step(
-    definition: dict
+    definition: dict,
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Hydrates a class based on a dictionary definition, importing the module

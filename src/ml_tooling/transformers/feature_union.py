@@ -7,10 +7,17 @@ from sklearn.utils.metaestimators import _BaseComposition
 
 class DFFeatureUnion(TransformerMixin, _BaseComposition):
     """
-    Merges together two pipelines based on index
+    Merges together two pipelines based on index.
+
+    transformer_list is a list of (name, transform) tuples (implementing fit/transform).
     """
 
     def __init__(self, transformer_list: list):
+        """
+
+        :param transformer_list:
+            List of (name, transform) tuples (implementing fit/transform).
+        """
         super().__init__()
         self.transformer_list = transformer_list
 

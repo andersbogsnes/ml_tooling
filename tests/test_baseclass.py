@@ -587,3 +587,8 @@ class TestBaseClass:
             assert "roc_auc" in result.metrics
             assert result.metrics.name == "accuracy"
             assert result.metrics.score == result.metrics[0].score
+
+    def test_gridsearch_can_log_with_context_manager(self, feature_union_classifier, test_dataset: Dataset):
+        classifier = Model(feature_union_classifier)
+        with classifier.log("gridsearch_union_test"):
+            _, _ = classifier.gridsearch(test_dataset, param_grid={"clf__penalty": ["l1", "l2"]})

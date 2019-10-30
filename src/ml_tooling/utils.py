@@ -234,10 +234,13 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
     List of dicts
     """
 
-    def extract_parmas(transformer):
+    def extract_params(transformer):
         """
 
         :param element:
+            (`name`, `transformer`) tuple where `transfomer` has the
+            attribute `transformer_list`, `steps` or
+            have the method `get_params`.
         :return:
         """
         if hasattr(transformer[1], "transformer_list"):
@@ -252,10 +255,8 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
 
     if isinstance(pipe, tuple):
         transformer_list = [pipe]
-    elif isinstance(pipe, Pipeline):
-        transformer_list = pipe.steps
     else:
-        transformer_list = pipe
+        transformer_list = pipe.steps
 
     return_list = []
 
@@ -263,7 +264,7 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
         name = transformer[0]
         module = transformer[1].__class__.__module__
         classname = transformer[1].__class__.__name__
-        params = extract_parmas(transformer)
+        params = extract_params(transformer)
 
         return_list.append(
             {"name": name, "module": module, "classname": classname, "params": params}

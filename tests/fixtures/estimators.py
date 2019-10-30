@@ -73,7 +73,8 @@ def feature_union_classifier() -> Pipeline:
             ("scale", DFStandardScaler()),
         ]
     )
-    union = DFFeatureUnion(transformer_list=[pipe1, pipe2])
+    union = DFFeatureUnion(transformer_list=[('pipe1', pipe1),
+                                             ('pipe2', pipe2)])
     return Pipeline([("features", union), ("clf", LogisticRegression())])
 
 

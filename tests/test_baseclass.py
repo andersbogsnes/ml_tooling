@@ -24,7 +24,7 @@ from ml_tooling.utils import MLToolingError
 
 class TestBaseClass:
     def test_is_properties_works(
-        self, classifier: Model, regression: Model, pipeline_linear: Pipeline
+            self, classifier: Model, regression: Model, pipeline_linear: Pipeline
     ):
         assert classifier.is_regressor is False
         assert classifier.is_classifier is True
@@ -59,30 +59,30 @@ class TestBaseClass:
     def test_instantiate_model_with_non_estimator_pipeline_fails(self):
         example_pipe = Pipeline([("scale", DFStandardScaler)])
         with pytest.raises(
-            MLToolingError,
-            match="You passed a Pipeline without an estimator as the last step",
+                MLToolingError,
+                match="You passed a Pipeline without an estimator as the last step",
         ):
             Model(example_pipe)
 
     def test_instantiate_model_with_other_object_fails(self):
         with pytest.raises(
-            MLToolingError,
-            match=f"Expected a Pipeline or Estimator - got <class 'dict'>",
+                MLToolingError,
+                match=f"Expected a Pipeline or Estimator - got <class 'dict'>",
         ):
             Model({})
 
     def test_make_prediction_errors_when_model_is_not_fitted(
-        self, test_dataset: Dataset
+            self, test_dataset: Dataset
     ):
         with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
             model = Model(LinearRegression())
             model.make_prediction(test_dataset, 5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
-        self, test_dataset: Dataset
+            self, test_dataset: Dataset
     ):
         with pytest.raises(
-            MLToolingError, match="LinearRegression does not have a `predict_proba`"
+                MLToolingError, match="LinearRegression does not have a `predict_proba`"
         ):
             model = Model(LinearRegression())
             model.train_estimator(test_dataset)
@@ -90,11 +90,11 @@ class TestBaseClass:
 
     @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
     def test_make_prediction_returns_prediction_if_proba_is_false(
-        self,
-        classifier: Model,
-        use_index: bool,
-        expected_index: int,
-        test_dataset: Dataset,
+            self,
+            classifier: Model,
+            use_index: bool,
+            expected_index: int,
+            test_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             test_dataset, 5, proba=False, use_index=use_index
@@ -109,11 +109,11 @@ class TestBaseClass:
 
     @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
     def test_make_prediction_returns_proba_if_proba_is_true(
-        self,
-        classifier: Model,
-        use_index: bool,
-        expected_index: int,
-        test_dataset: Dataset,
+            self,
+            classifier: Model,
+            use_index: bool,
+            expected_index: int,
+            test_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             test_dataset, 5, proba=True, use_index=use_index
@@ -167,7 +167,7 @@ class TestBaseClass:
         linreg.reset_config()
 
     def test_default_metric_works_as_expected_with_pipeline(
-        self, pipeline_logistic: Pipeline, pipeline_linear: Pipeline
+            self, pipeline_logistic: Pipeline, pipeline_linear: Pipeline
     ):
         logreg = Model(pipeline_logistic)
         linreg = Model(pipeline_linear)
@@ -181,14 +181,14 @@ class TestBaseClass:
         linreg.reset_config()
 
     def test_train_model_sets_result_to_none(
-        self, regression: Model, test_dataset: Dataset
+            self, regression: Model, test_dataset: Dataset
     ):
         assert regression.result is not None
         regression.train_estimator(test_dataset)
         assert regression.result is None
 
     def test_train_model_followed_by_score_model_returns_correctly(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+            self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
         model = Model(pipeline_logistic)
         model.train_estimator(test_dataset)
@@ -211,7 +211,7 @@ class TestBaseClass:
             assert isinstance(result, Result)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(
-        self, test_dataset: Dataset
+            self, test_dataset: Dataset
     ):
         estimators = [
             LogisticRegression(solver="liblinear"),
@@ -224,10 +224,10 @@ class TestBaseClass:
             assert "roc_auc" in result.metrics
 
     def test_model_selection_with_pipeline_works_as_expected(
-        self,
-        pipeline_logistic: Pipeline,
-        pipeline_dummy_classifier: Pipeline,
-        test_dataset: Dataset,
+            self,
+            pipeline_logistic: Pipeline,
+            pipeline_dummy_classifier: Pipeline,
+            test_dataset: Dataset,
     ):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
         best_estimator, results = Model.test_estimators(
@@ -236,8 +236,8 @@ class TestBaseClass:
 
         for result in results:
             assert (
-                result.model.estimator_name
-                == result.model.estimator.steps[-1][1].__class__.__name__
+                    result.model.estimator_name
+                    == result.model.estimator.steps[-1][1].__class__.__name__
             )
 
         assert best_estimator.estimator == estimators[0]
@@ -255,7 +255,7 @@ class TestBaseClass:
         assert (model.coef_ == model2.estimator.coef_).all()
 
     def test_regression_model_can_be_saved(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         classifier.score_estimator(test_dataset)
         load_storage = FileStorage(tmp_path)
@@ -267,7 +267,7 @@ class TestBaseClass:
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_regression_model_filename_is_generated_correctly(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         storage = FileStorage(tmp_path)
         saved_model_path = classifier.save_estimator(storage)
@@ -277,7 +277,7 @@ class TestBaseClass:
         )
 
     def test_save_model_saves_pipeline_correctly(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         model = Model(pipeline_logistic)
         model.train_estimator(test_dataset)
@@ -286,7 +286,7 @@ class TestBaseClass:
 
     @patch("ml_tooling.logging.log_estimator.get_git_hash")
     def test_save_model_saves_logging_dir_correctly(
-        self, mock_hash: MagicMock, classifier: Model, tmp_path: pathlib.Path
+            self, mock_hash: MagicMock, classifier: Model, tmp_path: pathlib.Path
     ):
         mock_hash.return_value = "1234"
 
@@ -295,12 +295,12 @@ class TestBaseClass:
 
         assert expected_file.exists()
         assert (
-            "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
+                "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
         )
         mock_hash.assert_called_once()
 
     def test_gridsearch_model_returns_as_expected(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+            self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
         model = Model(pipeline_logistic)
         model, results = model.gridsearch(
@@ -313,7 +313,7 @@ class TestBaseClass:
             assert isinstance(result, Result)
 
     def test_gridsearch_model_does_not_fail_when_run_twice(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+            self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.gridsearch(
@@ -357,7 +357,7 @@ class TestBaseClass:
         assert "test" not in regression.config.RUN_DIR.parts
 
     def test_log_context_manager_logs_when_scoring_model(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         model = Model(LinearRegression())
 
@@ -373,7 +373,7 @@ class TestBaseClass:
             assert result.model.estimator_name == log_result["estimator_name"]
 
     def test_log_context_manager_logs_when_gridsearching(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         model = Model(LinearRegression())
         runs = tmp_path / "runs"
@@ -389,7 +389,7 @@ class TestBaseClass:
             assert result.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
         test_models_log = tmp_path / "test_estimators"
         Model.test_estimators(
@@ -409,7 +409,7 @@ class TestBaseClass:
                 }
 
     def test_train_model_errors_correct_when_not_scored(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+            self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
 
         model = Model(pipeline_logistic)
@@ -460,7 +460,7 @@ class TestBaseClass:
         assert serialized_model == expected
 
     def test_to_dict_serializes_correctly_with_feature_union(
-        self, feature_union_classifier: DFFeatureUnion
+            self, feature_union_classifier: DFFeatureUnion
     ):
         model = Model(feature_union_classifier)
         result = model.to_dict()
@@ -471,22 +471,32 @@ class TestBaseClass:
         pipe1 = union["params"][0]
         pipe2 = union["params"][1]
 
-        assert pipe1[0]["name"] == "select"
-        assert pipe1[0]["params"] == {
-            "columns": ["sepal length (cm)", "sepal width (cm)"]
-        }
-        assert pipe1[1]["name"] == "scale"
-        assert pipe1[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
+        assert pipe1["name"] == "pipe1"
+        select1 = pipe1["params"][0]
+        scale1 = pipe1["params"][1]
 
-        assert pipe2[0]["name"] == "select"
-        assert pipe2[0]["params"] == {
-            "columns": ["petal length (cm)", "petal width (cm)"]
-        }
-        assert pipe2[1]["name"] == "scale"
-        assert pipe2[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
+        assert select1["name"] == "select"
+        assert select1["classname"] == "Select"
+        assert select1["params"] == {"columns": ["sepal length (cm)", "sepal width (cm)"]}
+
+        assert scale1["name"] == "scale"
+        assert scale1["classname"] == "DFStandardScaler"
+        assert scale1["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+        assert pipe2["name"] == "pipe2"
+        select2 = pipe2["params"][0]
+        scale2 = pipe2["params"][1]
+
+        assert select2["name"] == "select"
+        assert select2["classname"] == "Select"
+        assert select2["params"] == {"columns": ["petal length (cm)", "petal width (cm)"]}
+
+        assert scale2["name"] == "scale"
+        assert scale2["classname"] == "DFStandardScaler"
+        assert scale2["params"] == {"copy": True, "with_mean": True, "with_std": True}
 
     def test_from_yaml_serializes_correctly_with_feature_union(
-        self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
+            self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
     ):
 
         model = Model(feature_union_classifier)
@@ -512,14 +522,14 @@ class TestBaseClass:
         assert len(new_union) == len(old_union)
 
         for new_transform, old_transform in zip(new_union, old_union):
-            assert new_transform.steps[0][0] == old_transform.steps[0][0]
+            assert new_transform[1].steps[0][0] == old_transform[1].steps[0][0]
             assert (
-                new_transform.steps[0][1].get_params()
-                == old_transform.steps[0][1].get_params()
+                    new_transform[1].steps[0][1].get_params()
+                    == old_transform[1].steps[0][1].get_params()
             )
 
     def test_can_load_serialized_model_from_pipeline(
-        self, pipeline_linear: Pipeline, tmp_path: pathlib.Path
+            self, pipeline_linear: Pipeline, tmp_path: pathlib.Path
     ):
         model = Model(pipeline_linear)
         log = Log(
@@ -535,7 +545,7 @@ class TestBaseClass:
             assert model1[1].get_params() == model2[1].get_params()
 
     def test_can_load_serialized_model_from_estimator(
-        self, classifier: Model, tmp_path: pathlib.Path
+            self, classifier: Model, tmp_path: pathlib.Path
     ):
         log = Log(
             name="test",
@@ -547,7 +557,7 @@ class TestBaseClass:
         assert model2.estimator.get_params() == classifier.estimator.get_params()
 
     def test_gridsearch_uses_default_metric(
-        self, classifier: Model, test_dataset: Dataset
+            self, classifier: Model, test_dataset: Dataset
     ):
         model, results = classifier.gridsearch(
             test_dataset, param_grid={"penalty": ["l1", "l2"]}
@@ -560,7 +570,7 @@ class TestBaseClass:
         assert isinstance(model, Model)
 
     def test_gridsearch_can_take_multiple_metrics(
-        self, classifier: Model, test_dataset: Dataset
+            self, classifier: Model, test_dataset: Dataset
     ):
         model, results = classifier.gridsearch(
             test_dataset,

@@ -200,11 +200,17 @@ def import_pipeline_step(
 
     if definition["classname"] == "DFFeatureUnion":
         transformer_list = [
-            Pipeline([import_pipeline_step(step) for step in pipeline])
-            for pipeline in definition["params"]
+            import_pipeline_step(transformers)
+            for transformers in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(transformer_list)
 
+    elif definition["classname"] == "Pipeline":
+        steps = [
+            import_pipeline_step(transformers)
+            for transformers in definition["params"]
+        ]
+        class_ = getattr(module, definition["classname"])(steps=steps)
     else:
         class_ = getattr(module, definition["classname"])()
         class_ = class_.set_params(**definition["params"])

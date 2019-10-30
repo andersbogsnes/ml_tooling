@@ -1,3 +1,9 @@
+# v0.9.2
+- Bug fix for logging when feature unions (DFFeatureUnion) had tuples
+
+# v0.9.1
+- Hot fix python version to 3.7
+
 # v0.9.0
 - Breaking change - Model methods load_estimator and save_estimator now takes a Storage class that defines how and where to store estimators.
 - Added the ability to declare that a saved model should be a production estimator.

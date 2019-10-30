@@ -83,8 +83,8 @@ def get_git_hash() -> str:
     try:
         label = (
             subprocess.check_output(["git", "rev-parse", "HEAD"])
-                .strip()
-                .decode("ascii")
+            .strip()
+            .decode("ascii")
         )
     except (OSError, FileNotFoundError):
         warnings.warn("Error using git - is `git` installed?")
@@ -177,7 +177,7 @@ def is_pipeline(estimator: Estimator):
 
 
 def import_pipeline_step(
-        definition: dict
+    definition: dict
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Hydrates a class based on a dictionary definition, importing the module
@@ -200,15 +200,13 @@ def import_pipeline_step(
 
     if definition["classname"] == "DFFeatureUnion":
         transformer_list = [
-            import_pipeline_step(transformers)
-            for transformers in definition["params"]
+            import_pipeline_step(transformer) for transformer in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(transformer_list)
 
     elif definition["classname"] == "Pipeline":
         steps = [
-            import_pipeline_step(transformers)
-            for transformers in definition["params"]
+            import_pipeline_step(transformer) for transformer in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(steps=steps)
     else:
@@ -234,34 +232,39 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
     List of dicts
     """
 
-    return_list = []
+    def extract_parmas(transformer):
+        """
+
+        :param element:
+        :return:
+        """
+        if hasattr(transformer[1], "transformer_list"):
+            extract = [
+                serialize_pipeline(s)[0] for s in transformer[1].transformer_list
+            ]
+        elif hasattr(transformer[1], "steps"):
+            extract = [serialize_pipeline(s)[0] for s in transformer[1].steps]
+        else:
+            extract = transformer[1].get_params()
+        return extract
 
     if isinstance(pipe, tuple):
-        step_list = [pipe]
+        transformer_list = [pipe]
     elif isinstance(pipe, Pipeline):
-        step_list = pipe.steps
+        transformer_list = pipe.steps
     else:
-        step_list = pipe
+        transformer_list = pipe
 
-    for step in step_list:
-        name = step[0]
-        module = step[1].__class__.__module__
-        classname = step[1].__class__.__name__
+    return_list = []
 
-        if hasattr(step[1], "transformer_list"):
-            params = [serialize_pipeline(s)[0] for s in step[1].transformer_list]
-        elif hasattr(step[1], "steps"):
-            params = [serialize_pipeline(s)[0] for s in step[1].steps]
-        else:
-            params = step[1].get_params()
+    for transformer in transformer_list:
+        name = transformer[0]
+        module = transformer[1].__class__.__module__
+        classname = transformer[1].__class__.__name__
+        params = extract_parmas(transformer)
 
         return_list.append(
-            {
-                "name": name,
-                "module": module,
-                "classname": classname,
-                "params": params
-            }
+            {"name": name, "module": module, "classname": classname, "params": params}
         )
     return return_list
 

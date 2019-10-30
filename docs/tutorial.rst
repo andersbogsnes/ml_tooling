@@ -4,10 +4,3 @@
 
 Tutorial
 ==========
-
-
-Dataset
--------
-
-SQLDataset
-~~~~~~~~~~

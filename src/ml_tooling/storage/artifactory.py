@@ -33,7 +33,7 @@ class ArtifactoryStorage(Storage):
     -------
     Instantiate this class with a url and path to the repo like so:
 
-        storage = ArtifactoryStorage('http://artifactory.com','/path/to/artifact')
+        storage = ArtifactoryStorage('http://artifactory.com','path/to/artifact')
     """
 
     def __init__(
@@ -121,11 +121,7 @@ class ArtifactoryStorage(Storage):
         To save your trained estimator:
 
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
-            artifactory_path = storage.save(estimator)
-
-        For production ready models set the prod parameter to True
-
-            artifactory_path = storage.save(estimator, prod=True)
+            artifactory_path = storage.save(estimator, 'estimator.pkl')
 
         We now have saved an estimator to a pickle file.
 

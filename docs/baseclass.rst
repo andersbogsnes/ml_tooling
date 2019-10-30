@@ -53,6 +53,25 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     >>> bostondata.create_train_test()
     <BostonData - Dataset>
 
+
+Training your model
+~~~~~~~~~~~~~~~~~~~
+
+Performing a gridsearch
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Feature importance
+~~~~~~~~~~~~~~~~~~
+
+
+Scoring your model
+~~~~~~~~~~~~~~~~~~
+
+Testing your model
+~~~~~~~~~~~~~~~~~~
+
+
+
 Storage
 -------
 
@@ -89,6 +108,28 @@ We can also load the model from a storage by specifying the filename to load in 
     import shutil
     shutil.rmtree(pathlib.Path('./estimator_dir'))
 
+Saving an estimator ready for production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You have a trained estimator ready to be saved for use in production on your filesystem.
+
+.. code-block::
+
+    >>> from ml_tooling.storage import FileStorage
+    >>> from ml_tooling import Model
+    ...
+    >>> storage = FileStorage('./estimators/')
+    >>> estimator = Filestorage.load('your_prodready_estimator.pkl')
+    ...
+    >>> model = Model(estimator)
+    ...
+    >>> model.save_estimator(storage, prod=True)
+
+now users of your model package can always find your estimator through :meth:`~ml_tooling.Model.load_production_estimator` using the module name.
+
+.. code-block::
+
+    >>> model.load_production_estimator('your_module_name')
 
 
 Configuration

@@ -8,6 +8,8 @@ Table of Contents
    quickstart.rst
    tutorial.rst
    baseclass.rst
+   dataset.rst
+   storage.rst
    plotting.rst
    transformers.rst
 

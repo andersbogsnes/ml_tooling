@@ -220,7 +220,7 @@ class TestFeatureImportance:
         assert [0.5, 0.2, 0.1] == list(result_importance)
 
     def test_sorted_feature_importance_bottom_and_top_n_percent_returns_as_expected(
-        self
+        self,
     ):
         labels = np.array(
             ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5"]

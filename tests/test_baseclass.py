@@ -490,19 +490,33 @@ class TestBaseClass:
         pipe1 = union["params"][0]
         pipe2 = union["params"][1]
 
-        assert pipe1[0]["name"] == "select"
-        assert pipe1[0]["params"] == {
+        assert pipe1["name"] == "pipe1"
+        select1 = pipe1["params"][0]
+        scale1 = pipe1["params"][1]
+
+        assert select1["name"] == "select"
+        assert select1["classname"] == "Select"
+        assert select1["params"] == {
             "columns": ["sepal length (cm)", "sepal width (cm)"]
         }
-        assert pipe1[1]["name"] == "scale"
-        assert pipe1[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
 
-        assert pipe2[0]["name"] == "select"
-        assert pipe2[0]["params"] == {
+        assert scale1["name"] == "scale"
+        assert scale1["classname"] == "DFStandardScaler"
+        assert scale1["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+        assert pipe2["name"] == "pipe2"
+        select2 = pipe2["params"][0]
+        scale2 = pipe2["params"][1]
+
+        assert select2["name"] == "select"
+        assert select2["classname"] == "Select"
+        assert select2["params"] == {
             "columns": ["petal length (cm)", "petal width (cm)"]
         }
-        assert pipe2[1]["name"] == "scale"
-        assert pipe2[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+        assert scale2["name"] == "scale"
+        assert scale2["classname"] == "DFStandardScaler"
+        assert scale2["params"] == {"copy": True, "with_mean": True, "with_std": True}
 
     def test_from_yaml_serializes_correctly_with_feature_union(
         self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
@@ -531,10 +545,10 @@ class TestBaseClass:
         assert len(new_union) == len(old_union)
 
         for new_transform, old_transform in zip(new_union, old_union):
-            assert new_transform.steps[0][0] == old_transform.steps[0][0]
+            assert new_transform[1].steps[0][0] == old_transform[1].steps[0][0]
             assert (
-                new_transform.steps[0][1].get_params()
-                == old_transform.steps[0][1].get_params()
+                new_transform[1].steps[0][1].get_params()
+                == old_transform[1].steps[0][1].get_params()
             )
 
     def test_can_load_serialized_model_from_pipeline(
@@ -596,3 +610,12 @@ class TestBaseClass:
             assert "roc_auc" in result.metrics
             assert result.metrics.name == "accuracy"
             assert result.metrics.score == result.metrics[0].score
+
+    def test_gridsearch_can_log_with_context_manager(
+        self, feature_union_classifier, test_dataset: Dataset
+    ):
+        classifier = Model(feature_union_classifier)
+        with classifier.log("gridsearch_union_test"):
+            _, _ = classifier.gridsearch(
+                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            )

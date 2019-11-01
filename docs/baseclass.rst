@@ -7,17 +7,13 @@ Model
 
 The Model baseclass contains all the neat functionality of ML Tooling.
 
-In order to take advantage of this functionality, simply wrap your Scikit-learn model
-using the Model class.
+In order to take advantage of this functionality, simply wrap a model that follows the Scikit-learn API using the Model class.
 
-We will be using scikit-learn's built-in Boston houseprices dataset and try to fit a
-:class:`~sklearn.linear_model.LinearRegression`
+We will be using scikit-learn's built-in Boston houseprices dataset to present the methods of ML Tooling.
 
 .. seealso::
     :ref:`api` for a full overview of methods
 
-Example Usage
--------------
 First we need to define how we want to load our data. This is done by defining a
 :class:`~ml_tooling.data.Dataset` class and creating the
 :meth:`~ml_tooling.data.Dataset.load_training_data`
@@ -29,9 +25,7 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 
 .. doctest::
 
-    >>> from ml_tooling import Model
     >>> from ml_tooling.data import Dataset
-    >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.datasets import load_boston
     >>> import pandas as pd
     >>>
@@ -46,19 +40,73 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     ...        x = pd.DataFrame(data.data, labels=data.feature_names)
     ...        return x.loc[idx] # Return given observation
     >>>
-    >>> # Now we can create our dataset and our model
-    >>> linear = Model(LinearRegression())
     >>> bostondata = BostonData()
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
     <BostonData - Dataset>
 
+Creating your model
+~~~~~~~~~~~~~~~~~~~
+
+.. doctest::
+
+    >>> from ml_tooling import Model
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> linear = Model(LinearRegression())
+    >>> linear
+    <Model: LinearRegression>
 
 Training your model
 ~~~~~~~~~~~~~~~~~~~
 
+.. doctest::
+
+    >>> linear.train_estimator(bostondata)
+    <Model: LinearRegression>
+
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+.. doctest::
+
+    >>> linear.gridsearch(bostondata, { "normalize": [False, True] })
+    (<Model: LinearRegression>, ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>]))
+
+
+Using the logging capability of Model :meth:`~ml_tooling.Model.log` method,
+one can write intermediate results to yaml files.
+
+.. doctest::
+
+    >>> with linear.log("./bostondata_linear"):
+    ...     linear.gridsearch(bostondata, { "normalize": [False, True] })
+    (<Model: LinearRegression>, ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>]))
+
+This will generate a yaml file for each
+
+.. code-block::
+
+    created_time: 2019-10-31 17:32:08.233522
+    estimator:
+    - classname: LinearRegression
+    module: sklearn.linear_model.base
+    params:
+        copy_X: true
+        fit_intercept: true
+        n_jobs: null
+        normalize: true
+    estimator_path: null
+    git_hash: afa6def92a1e8a0ac571bec254129818bb337c49
+    metrics:
+    r2: 0.7160133196648374
+    model_name: BostonData_LinearRegression
+    versions:
+    ml_tooling: 0.9.1
+    pandas: 0.25.2
+    sklearn: 0.21.3
+
+
 
 Feature importance
 ~~~~~~~~~~~~~~~~~~
@@ -81,7 +129,7 @@ In order to store our estimators for later use or comparison, we use a
 .. testsetup::
 
     import pathlib
-    pathlib.Path('./estimator_dir').mkdir()
+    pathlib.Path('./estimator_dir').mkdir(exist_ok=True)
 
 .. doctest::
 
@@ -131,7 +179,7 @@ now users of your model package can always find your estimator through :meth:`~m
 
     >>> model.load_production_estimator('your_module_name')
 
-
+test_dir
 Configuration
 -------------
 

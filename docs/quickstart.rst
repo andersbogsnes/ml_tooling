@@ -77,7 +77,7 @@ We can plot the prediction errors:
 .. testsetup::
 
     import pathlib
-    pathlib.Path('./estimator_dir').mkdir()
+    pathlib.Path('./estimator_dir').mkdir(exist_ok=True)
 
 We can save and load our model:
 .. doctest:: python

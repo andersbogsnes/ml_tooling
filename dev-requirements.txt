@@ -32,7 +32,7 @@ pre-commit==1.18.3
 py==1.8.0                 # via pytest, tox
 pyparsing==2.4.2
 pytest==5.1.2
-python-dateutil==2.8.0
+python-dateutil==2.8.1
 pytz==2019.3
 pyyaml==5.1.2
 requests==2.22.0          # via dohq-artifactory

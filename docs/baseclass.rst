@@ -37,8 +37,8 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     ...    # Define where to get prediction time data - returning a DataFrame
     ...    def load_prediction_data(self, idx):
     ...        data = load_boston()
-    ...        x = pd.DataFrame(data.data, labels=data.feature_names)
-    ...        return x.loc[idx] # Return given observation
+    ...        x = pd.DataFrame(data.data, columns=data.feature_names)
+    ...        return x.loc[[idx]] # Return given observation
     >>>
     >>> bostondata = BostonData()
     >>> # Remember to setup a train test split!
@@ -47,6 +47,9 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 
 Creating your model
 ~~~~~~~~~~~~~~~~~~~
+
+The first step to be done after createing a dataset is to create make_predictiona model.
+This is done by supplying a estimator to the :class:`~ml_tooling.baseclass.Model`.
 
 .. doctest::
 
@@ -57,16 +60,68 @@ Creating your model
     >>> linear
     <Model: LinearRegression>
 
+Scoring your model
+~~~~~~~~~~~~~~~~~~
+
+In order to access the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
+This will train the estimator on the train split of dataset and evaluates it on the test split.
+It returns a :class:`~ml_tooling.result.Result` instance.
+
+.. doctest::
+
+    >>> result = linear.score_estimator(bostondata)
+    >>> result
+    <Result LinearRegression: {'r2': 0.68}>
+
+
+
+Testing your model
+~~~~~~~~~~~~~~~~~~
+
+To test which estimator performance best use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
+This method trains the models on the train split and acces the performance on the test split. It returns a model
+with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
+
+.. doctest::
+
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> best_model, results = Model.test_estimators(
+    ...     bostondata,
+    ...     [LinearRegression(), RandomForestRegressor(random_state=1337)],
+    ...     metrics=['r2']
+    ... )
+    >>> results
+    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result LinearRegression: {'r2': 0.68}>])
+
 Training your model
 ~~~~~~~~~~~~~~~~~~~
+
+When the best model has been found use :meth:`~ml_tooling.baseclass.Model.train_estimator` to train the model
+on the full training set (not the training split). This should be the last step before saving the model for production.
 
 .. doctest::
 
     >>> linear.train_estimator(bostondata)
     <Model: LinearRegression>
 
+Predicting with your model
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To make a prediction use the method :meth:`~ml_tooling.baseclass.Model.make_prediction`.
+This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined in your dataset.
+
+.. doctest::
+
+    >>> id = 42
+    >>> linear.make_prediction(bostondata, id)
+               0
+    0  25.203866
+
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
+
+To find the best hyper parameters for a estimator one can use the :meth:`~ml_tooling.baseclass.Model.gridsearch`.
 
 .. doctest::
 
@@ -106,20 +161,6 @@ This will generate a yaml file for each
     pandas: 0.25.2
     sklearn: 0.21.3
 
-
-
-Feature importance
-~~~~~~~~~~~~~~~~~~
-
-
-Scoring your model
-~~~~~~~~~~~~~~~~~~
-
-Testing your model
-~~~~~~~~~~~~~~~~~~
-
-
-
 Storage
 -------
 
@@ -155,6 +196,7 @@ We can also load the model from a storage by specifying the filename to load in 
 
     import shutil
     shutil.rmtree(pathlib.Path('./estimator_dir'))
+    shutil.rmtree(pathlib.Path('./runs'))
 
 Saving an estimator ready for production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,7 +221,7 @@ now users of your model package can always find your estimator through :meth:`~m
 
     >>> model.load_production_estimator('your_module_name')
 
-test_dir
+
 Configuration
 -------------
 
@@ -216,8 +258,6 @@ and other pertinent information.
 .. seealso::
 
     Check out :meth:`Model.log` for more info on what is logged
-
-
 
 
 Continue to :doc:`plotting`

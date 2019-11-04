@@ -138,6 +138,11 @@ one can write intermediate results to yaml files.
     ...     linear.gridsearch(bostondata, { "normalize": [False, True] })
     (<Model: LinearRegression>, ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>]))
 
+.. testcleanup::
+
+    import shutil
+    shutil.rmtree(linear.config.RUN_DIR.joinpath('bostondata_linear'))
+
 This will generate a yaml file for each
 
 .. code-block::
@@ -196,7 +201,6 @@ We can also load the model from a storage by specifying the filename to load in 
 
     import shutil
     shutil.rmtree(pathlib.Path('./estimator_dir'))
-    shutil.rmtree(pathlib.Path('./runs'))
 
 Saving an estimator ready for production
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

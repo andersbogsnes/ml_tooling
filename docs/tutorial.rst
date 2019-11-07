@@ -80,7 +80,7 @@ We do the gridsearch in a .log() context manager so we can inspect the gridsearc
 
 .. code-block::
 
-    >>> best_model.plot.feature_importance()
+    >>> best_model.result.plot.feature_importance()
 
 .. plot::
 

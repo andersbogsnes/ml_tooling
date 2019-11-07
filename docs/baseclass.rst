@@ -79,7 +79,7 @@ Testing your model
 ~~~~~~~~~~~~~~~~~~
 
 To test which estimator performance best use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
-This method trains the models on the train split and acces the performance on the test split. It returns a model
+This method trains the models on the train split and evaluates the performance on the test split. It returns a model
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
 
 .. doctest::

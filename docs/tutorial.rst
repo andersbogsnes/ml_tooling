@@ -31,6 +31,8 @@ Tutorial
     >>> data.create_train_test()
     <IrisData - Dataset>
 
+With our data object sorted lets move on to the model object.
+
 .. doctest::
 
     >>> from ml_tooling import Model
@@ -42,7 +44,7 @@ Tutorial
     <Result LogisticRegression: {'accuracy': 0.74}>
 
 We have a few more model we'd like to try out and see what performs best.
-We can include a random classifier to
+We can include a random classifier to have a baseline metric score.
 
 .. doctest::
 
@@ -105,15 +107,24 @@ We do the gridsearch in a .log() context manager so we can inspect the gridsearc
     >>> best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
     >>> best_model.result.plot.feature_importance()
 
+.. testsetup::
+
+    import pathlib
+    pathlib.Path('./estimators').mkdir(exist_ok=True)
+
 .. doctest::
 
     >>> from ml_tooling.storage import FileStorage
     >>>
-    >>> storage = FileStorage('./estimators)
-    >>> best_model.save_estimator(storage)
+    >>> storage = FileStorage('./estimators')
+    >>> saved_path = best_model.save_estimator(storage)
 
 .. testcleanup::
 
     import shutil
     import pathlib
     shutil.rmtree(pathlib.Path('./estimators'))
+
+If you are interested in more examples of how to use ml-tooling, please see the project notebooks.
+
+Continue to :doc:`dataset`

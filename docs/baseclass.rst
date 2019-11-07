@@ -121,7 +121,7 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To find the best hyper parameters for a estimator one can use the :meth:`~ml_tooling.baseclass.Model.gridsearch`.
+To find the best hyper parameters for an estimator you can use the :meth:`~ml_tooling.baseclass.Model.gridsearch`.
 
 .. doctest::
 

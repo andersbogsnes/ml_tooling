@@ -49,7 +49,7 @@ Creating your model
 ~~~~~~~~~~~~~~~~~~~
 
 The first thing to do after creating a dataset object is to create a model object.
-This is done by supplying a estimator to the :class:`~ml_tooling.baseclass.Model`.
+This is done by supplying an estimator to the :class:`~ml_tooling.baseclass.Model`.
 
 .. doctest::
 

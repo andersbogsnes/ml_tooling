@@ -48,7 +48,7 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 Creating your model
 ~~~~~~~~~~~~~~~~~~~
 
-The first step to be done after createing a dataset is to create make_predictiona model.
+The first thing to do after creating a dataset object is to create a model object.
 This is done by supplying a estimator to the :class:`~ml_tooling.baseclass.Model`.
 
 .. doctest::

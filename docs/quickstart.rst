@@ -52,7 +52,7 @@ The estimator must scikit-learn standard API.
     >>> regression
     <Model: LinearRegression>
 
-Now we can start training our model, first we split the data into training and test data
+Now we can train our model. We start by splittinh the data into training and test data
 by calling :meth:`~ml_tooling.data.Dataset.create_train_test`
 
 .. doctest::

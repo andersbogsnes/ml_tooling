@@ -10,7 +10,7 @@ You have to define two methods in your class:
 
 * :meth:`~ml_tooling.data.Dataset.load_training_data`
 
-How to load in your training data - whether it's reading from an excel file or loading from a database.
+How to load your training data - whether it's reading from an excel file or loading from a database.
 This method should read in your data and return a DataFrame containing your features and a target
 - usually as a numpy array or a pandas Series.
 This method is called the first time ML Tooling needs to gather data and is only called once.
@@ -18,7 +18,7 @@ This method is called the first time ML Tooling needs to gather data and is only
 
 * :meth:`~ml_tooling.data.Dataset.load_prediction_data`
 
-How to load in your prediction data. When predicting, you have to tell ML Tooling what data to load in.
+How to load your prediction data. When predicting, you have to tell ML Tooling what data to load in.
 Usually this takes an argument to select features for a given customer or item.
 
 .. doctest::
@@ -44,7 +44,7 @@ Usually this takes an argument to select features for a given customer or item.
     >>> data = BostonData()
 
 To create a model, use the Model class by giving it an estimator to instantiate the class.
-The estimator must scikit-learn standard API.
+The estimator must use scikit-learn's standard API.
 
 .. doctest::
 
@@ -52,7 +52,7 @@ The estimator must scikit-learn standard API.
     >>> regression
     <Model: LinearRegression>
 
-Now we can train our model. We start by splittinh the data into training and test data
+Now we can train our model. We start by splitting the data into training and test data
 by calling :meth:`~ml_tooling.data.Dataset.create_train_test`
 
 .. doctest::

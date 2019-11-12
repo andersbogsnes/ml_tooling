@@ -9,7 +9,7 @@ The Model baseclass contains all the neat functionality of ML Tooling.
 
 In order to take advantage of this functionality, simply wrap a model that follows the Scikit-learn API using the Model class.
 
-We will be using scikit-learn's built-in Boston houseprices dataset to present the methods of ML Tooling.
+We will be using scikit-learn's built-in Boston houseprices dataset to demonstrate how to use ML Tooling.
 
 .. seealso::
     :ref:`api` for a full overview of methods
@@ -63,8 +63,8 @@ This is done by supplying an estimator to the :class:`~ml_tooling.baseclass.Mode
 Scoring your model
 ~~~~~~~~~~~~~~~~~~
 
-In order to access the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
-This will train the estimator on the train split of dataset and evaluates it on the test split.
+In order to evaluate the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
+This will train the estimator on the training split of our `bostondata` Dataset and evaluate it on the test split.
 It returns a :class:`~ml_tooling.result.Result` instance.
 
 .. doctest::
@@ -78,8 +78,8 @@ It returns a :class:`~ml_tooling.result.Result` instance.
 Testing your model
 ~~~~~~~~~~~~~~~~~~
 
-To test which estimator performance best use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
-This method trains the models on the train split and evaluates the performance on the test split. It returns a model
+To test which estimator performs best, use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
+This method trains each estimator on the train split and evaluates the performance on the test split. It returns a new :class:`~ml_tooling.baseclass.Model` instance with the best-performing estimator
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
 
 .. doctest::
@@ -113,15 +113,15 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
 
 .. doctest::
 
-    >>> id = 42
-    >>> linear.make_prediction(bostondata, id)
+    >>> customer_id = 42
+    >>> linear.make_prediction(bostondata, customer_id)
                0
     0  25.203866
 
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To find the best hyper parameters for an estimator you can use the :meth:`~ml_tooling.baseclass.Model.gridsearch`.
+To find the best hyperparameters for an estimator you can use :meth:`~ml_tooling.baseclass.Model.gridsearch`, passing a dictionary of hyperparameters to try
 
 .. doctest::
 
@@ -130,7 +130,7 @@ To find the best hyper parameters for an estimator you can use the :meth:`~ml_to
 
 
 Using the logging capability of Model :meth:`~ml_tooling.Model.log` method,
-one can write intermediate results to yaml files.
+we can save each result to a yaml file.
 
 .. doctest::
 
@@ -159,12 +159,12 @@ This will generate a yaml file for each
     estimator_path: null
     git_hash: afa6def92a1e8a0ac571bec254129818bb337c49
     metrics:
-    r2: 0.7160133196648374
+        r2: 0.7160133196648374
     model_name: BostonData_LinearRegression
     versions:
-    ml_tooling: 0.9.1
-    pandas: 0.25.2
-    sklearn: 0.21.3
+        ml_tooling: 0.9.1
+        pandas: 0.25.2
+        sklearn: 0.21.3
 
 Storage
 -------
@@ -213,7 +213,7 @@ You have a trained estimator ready to be saved for use in production on your fil
     >>> from ml_tooling import Model
     ...
     >>> storage = FileStorage('./estimators/')
-    >>> estimator = Filestorage.load('your_prodready_estimator.pkl')
+    >>> estimator = Filestorage.load('current_best_model.pkl')
     ...
     >>> model = Model(estimator)
     ...

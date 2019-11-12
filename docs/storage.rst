@@ -7,7 +7,7 @@ Storage
 ArtifactoryStorage
 ------------------
 
-First install the optional artifactory module :code:`pip install ml_tooling['artifactory']`.
+If you want to use Artifactory as a backend, first install the optional dependencies by running :code:`pip install ml_tooling['artifactory']`.
 
 
 Saving and loading an estimator from Artifactory

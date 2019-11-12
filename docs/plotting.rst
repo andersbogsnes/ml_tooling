@@ -31,7 +31,7 @@ To use the visualizations, access them using the `.plot` accessor on the
 
     >>> result.plot.residuals()
 
-Any visualizer listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
+Any visualization listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
 the ml_tooling ModelData approach, you can instead do:
 
@@ -39,7 +39,7 @@ the ml_tooling ModelData approach, you can instead do:
 
     >>> from ml_tooling.plots import plot_confusion_matrix
 
-These functional counterparts all mirror sklearn metrics api, taking y_target and y_pred
+These functional counterparts all mirror the sklearn metrics api, taking y_target and y_pred
 as arguments:
 
 .. code-block:: python
@@ -64,7 +64,7 @@ as arguments:
 Available Base plots
 --------------------
 - :meth:`~RegressionVisualize.feature_importance`
-    Uses random permutation to calculate feature importance. By randomly permuting each column
+    Uses random permutation to calculate feature importance by randomly permuting each column
     and measuring the difference in the model metric against the baseline.
 
 Available Classifier plots

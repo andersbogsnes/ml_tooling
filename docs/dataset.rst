@@ -7,7 +7,7 @@ SQLDataset
 Creating a SQLDataset from a table in a db
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~ml_tooling.data.SQLDataset` should be used for making datasets that get their data from a SQL based source.
+:class:`~ml_tooling.data.SQLDataset` should be used for creating datasets based on SQL database source.
 SQLDatasets must be provided with a :py:class:`sqlalchemy.engine.Connectable` or a valid connection string.
 
 
@@ -22,10 +22,10 @@ SQLDatasets must be provided with a :py:class:`sqlalchemy.engine.Connectable` or
     ...     table = "TableName"
     ...
     ...     def load_training_data(self):
-    ...         return pd.read_sql_table(table, self.engine)
+    ...         return pd.read_sql(table, self.engine)
     ...
     ...     def load_prediction_data(self, idx):
-    ...         return pd.read_sql_table(table, self.engine).loc(idx)
+    ...         return pd.read_sql(table, self.engine).loc[idx]
     >>>
     >>> engine = create_engine("postgresql://username:password@localhost/test")
     >>>
@@ -39,7 +39,7 @@ FileDataset
 Creating a FileDataset from a csv file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Creating a FileDataset, one should define how the data is loaded based on the :code:`self.file_path` variable
+When we create a FileDataset, we need to specify the location of our datafiles - this will be available in the :code:`self.file_path` attribute
 A more elaborate example of using this dataset can be found at :file:`../notebooks/Titanic Demo.ipynb`.
 
 .. code-block::

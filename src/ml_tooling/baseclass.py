@@ -312,7 +312,7 @@ class Model:
         List of Result objects
         """
 
-        results = train_estimators(estimators, data, metrics, cv)
+        results = _train_estimators(estimators, data, metrics, cv)
 
         if log_dir:
             results.log(pathlib.Path(log_dir))
@@ -466,7 +466,7 @@ class Model:
             estimator=self.estimator, params=param_grid
         )
 
-        self.result = train_estimators(
+        self.result = _train_estimators(
             list(estimators), data=data, metrics=metrics, cv=cv
         )
 
@@ -529,14 +529,33 @@ class Model:
         return f"<Model: {self.estimator_name}>"
 
 
-def train_estimators(
+def _train_estimators(
     estimators: Sequence[Estimator],
     data: Dataset,
     metrics: Union[str, List[str]],
     cv: Any,
 ) -> ResultGroup:
-    if isinstance(metrics, str):
-        metrics = [metrics]
+    """
+    Sequentially train a series of models and create a ResultGroup of the results
+
+    Parameters
+    ----------
+    estimators: Sequence[Estimator]
+        A sequence of estimators to compare
+    data: DataSet
+        Dataset object containing the training data
+    metrics: Union[str, List[str]]
+        Which metric to use to score the estimators
+    cv: Any
+        If an int is passed, perform that many CV splits. Alternatively, pass a sklearn CV object
+        to use that for CV.
+        If False, do not perform cross-validation
+
+    Returns
+    -------
+    ResultGroup
+        The results of the scoring
+    """
 
     results = []
     for i, estimator in enumerate(estimators, start=1):

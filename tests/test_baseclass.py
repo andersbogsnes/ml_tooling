@@ -212,50 +212,6 @@ class TestBaseClass:
         for result in results:
             assert isinstance(result, Result)
 
-    def test_model_selection_with_nonstandard_metric_works_as_expected(
-        self, test_dataset: Dataset
-    ):
-        estimators = [
-            LogisticRegression(solver="liblinear"),
-            RandomForestClassifier(n_estimators=10),
-        ]
-        best_estimator, results = Model.test_estimators(
-            test_dataset, estimators, metrics="roc_auc"
-        )
-        for result in results:
-            assert "roc_auc" in result.metrics
-
-    def test_model_selection_with_pipeline_works_as_expected(
-        self,
-        pipeline_logistic: Pipeline,
-        pipeline_dummy_classifier: Pipeline,
-        test_dataset: Dataset,
-    ):
-        estimators = [pipeline_logistic, pipeline_dummy_classifier]
-        best_estimator, results = Model.test_estimators(
-            test_dataset, estimators, "accuracy"
-        )
-
-        for result in results:
-            assert (
-                result.model.estimator_name
-                == result.model.estimator.steps[-1][1].__class__.__name__
-            )
-
-        assert best_estimator.estimator == estimators[0]
-
-    def test_model_selection_refits_final_model(self, test_dataset):
-        estimators = [LogisticRegression(solver="liblinear")]
-
-        model = LogisticRegression(solver="liblinear").fit(
-            test_dataset.train_x, test_dataset.train_y
-        )
-        model2, results2 = Model.test_estimators(
-            test_dataset, estimators, cv=2, refit=True, metrics="accuracy"
-        )
-
-        assert (model.coef_ == model2.estimator.coef_).all()
-
     def test_regression_model_can_be_saved(
         self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
@@ -619,3 +575,75 @@ class TestBaseClass:
             _, _ = classifier.gridsearch(
                 test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
             )
+
+
+class TestModelSelection:
+    def test_model_selection_works_with_default_metric(self, test_dataset: Dataset):
+        models = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=2),
+        ]
+        best_model, results = Model.test_estimators(test_dataset, models)
+
+        assert models[1] is best_model.estimator
+        assert 2 == len(results)
+        assert results[0].metrics[0].name == "accuracy"
+        assert results[1].metrics[0].name == "accuracy"
+
+    def test_model_selection_works_with_multiple_metrics(self, test_dataset: Dataset):
+        models = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=2),
+        ]
+        best_model, results = Model.test_estimators(
+            test_dataset, models, metrics=["accuracy", "roc_auc"]
+        )
+
+        assert models[1] is best_model.estimator
+        assert 2 == len(results)
+        assert 2 == len(results[0].metrics)
+        assert 2 == len(results[1].metrics)
+
+    def test_model_selection_with_nonstandard_metric_works_as_expected(
+        self, test_dataset: Dataset
+    ):
+        estimators = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=10),
+        ]
+        best_estimator, results = Model.test_estimators(
+            test_dataset, estimators, metrics="roc_auc"
+        )
+        for result in results:
+            assert "roc_auc" in result.metrics
+
+    def test_model_selection_with_pipeline_works_as_expected(
+        self,
+        pipeline_logistic: Pipeline,
+        pipeline_dummy_classifier: Pipeline,
+        test_dataset: Dataset,
+    ):
+        estimators = [pipeline_logistic, pipeline_dummy_classifier]
+        best_estimator, results = Model.test_estimators(
+            test_dataset, estimators, "accuracy"
+        )
+
+        for result in results:
+            assert (
+                result.model.estimator_name
+                == result.model.estimator.steps[-1][1].__class__.__name__
+            )
+
+        assert best_estimator.estimator == estimators[0]
+
+    def test_model_selection_refits_final_model(self, test_dataset):
+        estimators = [LogisticRegression(solver="liblinear")]
+
+        model = LogisticRegression(solver="liblinear").fit(
+            test_dataset.train_x, test_dataset.train_y
+        )
+        model2, results2 = Model.test_estimators(
+            test_dataset, estimators, cv=2, refit=True, metrics="accuracy"
+        )
+
+        assert (model.coef_ == model2.estimator.coef_).all()

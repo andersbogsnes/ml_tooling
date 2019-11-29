@@ -10,4 +10,4 @@ def prepare_gridsearch_estimators(
     estimator: Estimator, params: dict
 ) -> Iterator[Estimator]:
     grid = ParameterGrid(params)
-    return [clone(estimator).set_params(**p) for p in grid]
+    yield from (clone(estimator).set_params(**p) for p in grid)

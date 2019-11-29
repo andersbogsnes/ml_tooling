@@ -26,8 +26,8 @@ def _safe_column_indexing(X, col_idx):
     """Return column from X using `col_idx`"""
     if hasattr(X, "iloc"):
         return X.iloc[:, col_idx].values
-    else:
-        return X[:, col_idx]
+
+    return X[:, col_idx]
 
 
 def _calculate_permutation_scores(

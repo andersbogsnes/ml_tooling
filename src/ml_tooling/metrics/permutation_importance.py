@@ -3,29 +3,48 @@
 
  When v0.22 is released, replace this!
  """
+
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
 
 from sklearn.metrics import check_scoring
-from sklearn.utils import check_random_state, Bunch
+from sklearn.utils import check_random_state
+from sklearn.utils import check_array
+from sklearn.utils import Bunch
+
+
+def _safe_column_setting(X, col_idx, values):
+    """Set column on X using `col_idx`"""
+    if hasattr(X, "iloc"):
+        X.iloc[:, col_idx] = values
+    else:
+        X[:, col_idx] = values
+
+
+def _safe_column_indexing(X, col_idx):
+    """Return column from X using `col_idx`"""
+    if hasattr(X, "iloc"):
+        return X.iloc[:, col_idx].values
+    else:
+        return X[:, col_idx]
 
 
 def _calculate_permutation_scores(
     estimator, X, y, col_idx, random_state, n_repeats, scorer
 ):
     """Calculate score when `col_idx` is permuted."""
-    original_feature = X.iloc[:, col_idx].values.copy()
+    original_feature = _safe_column_indexing(X, col_idx).copy()
     temp = original_feature.copy()
 
     scores = np.zeros(n_repeats)
     for n_round in range(n_repeats):
         random_state.shuffle(temp)
-        X.iloc[:, col_idx] = temp
+        _safe_column_setting(X, col_idx, temp)
         feature_score = scorer(estimator, X, y)
         scores[n_round] = feature_score
 
-    X.iloc[:, col_idx] = original_feature
+    _safe_column_setting(X, col_idx, original_feature)
     return scores
 
 
@@ -80,14 +99,18 @@ def permutation_importance(
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
              2001. https://doi.org/10.1023/A:1010933404324
     """
+    if hasattr(X, "iloc"):
+        X = X.copy()  # Dataframe
+    else:
+        X = check_array(X, force_all_finite="allow-nan", dtype=np.object, copy=True)
 
-    X = X.copy()
     random_state = check_random_state(random_state)
     scorer = check_scoring(estimator, scoring=scoring)
 
     baseline_score = scorer(estimator, X, y)
+    scores = np.zeros((X.shape[1], n_repeats))
 
-    scores = Parallel(n_jobs=n_jobs)(
+    scores = Parallel(n_jobs=n_jobs, max_nbytes=None)(
         delayed(_calculate_permutation_scores)(
             estimator, X, y, col_idx, random_state, n_repeats, scorer
         )

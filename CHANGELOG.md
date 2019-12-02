@@ -1,6 +1,8 @@
 # v0.9.2
 - Bug fix for logging when feature unions (DFFeatureUnion) had tuples
 - Bug fix for calculating feature importance when passing large amounts of data
+- Bug fix when using default metric in `test_estimators`
+
 
 # v0.9.1
 - Hot fix python version to 3.7

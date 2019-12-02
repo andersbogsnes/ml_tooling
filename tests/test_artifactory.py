@@ -29,7 +29,9 @@ def test_can_load_from_artifactory(open_estimator_pickle):
 
 
 @require_artifactory
-def test_can_save_to_artifactory(open_estimator_pickle, tmp_path: pathlib.Path):
+def test_can_save_to_artifactory(
+    open_estimator_pickle, tmp_path: pathlib.Path, regression
+):
     file_path = tmp_path.joinpath("temp.pkl")
 
     def mock_deploy_file(*args, **kwargs):
@@ -37,10 +39,11 @@ def test_can_save_to_artifactory(open_estimator_pickle, tmp_path: pathlib.Path):
 
     mock = MagicMock()
     mock.__truediv__.deploy_file.return_value = mock_deploy_file()
+    mock.is_file.return_value = False
 
     storage = ArtifactoryStorage("http://www.testy.com", "/test")
     storage.artifactory_path = mock
-    storage.save("test", "test")
+    storage.save(regression.estimator, "test")
     f = joblib.load(file_path)
     assert isinstance(f, (BaseEstimator, Pipeline))
 

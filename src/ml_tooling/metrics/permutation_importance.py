@@ -110,6 +110,8 @@ def permutation_importance(
     baseline_score = scorer(estimator, X, y)
     scores = np.zeros((X.shape[1], n_repeats))
 
+    # We set max_nbytes to None, to avoid joblib creating a readonly memmap
+    # Current implementation modifies the copied dataframe, so it fails when the mmap is readonly
     scores = Parallel(n_jobs=n_jobs, max_nbytes=None)(
         delayed(_calculate_permutation_scores)(
             estimator, X, y, col_idx, random_state, n_repeats, scorer

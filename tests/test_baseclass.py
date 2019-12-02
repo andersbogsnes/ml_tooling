@@ -21,7 +21,7 @@ from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
-from ml_tooling.utils import MLToolingError
+from ml_tooling.utils import MLToolingError, DatasetError
 
 
 class TestBaseClass:
@@ -459,6 +459,9 @@ class TestTrainEstimator:
         model.train_estimator(data)
 
         assert np.all(np.isclose(model.estimator.average, np.array([2.5, 5.5])))
+
+        with pytest.raises(DatasetError, match="The dataset does not define a y value"):
+            data.create_train_test()
 
 
 class TestScoreEstimator:

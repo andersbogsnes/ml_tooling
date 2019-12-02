@@ -274,51 +274,6 @@ class TestBaseClass:
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)
 
-    def test_gridsearch_model_returns_as_expected(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-    def test_gridsearch_model_does_not_fail_when_run_twice(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(best_model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-        best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(best_model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-    def test_fit_gridpoint_returns_new_estimator(self, test_dataset: Dataset):
-        estimators = prepare_gridsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            assert estimator.get_params()["penalty"] == penalty
-            assert hasattr(estimator, "coef_") is False
-            assert isinstance(estimator, LogisticRegression)
-
     def test_log_context_manager_works_as_expected(self, regression: Model):
         assert regression.config.LOG is False
         assert "runs" == regression.config.RUN_DIR.name
@@ -346,22 +301,6 @@ class TestBaseClass:
 
             assert result.metrics.score == log_result["metrics"]["r2"]
             assert result.model.estimator_name == log_result["estimator_name"]
-
-    def test_log_context_manager_logs_when_gridsearching(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        model = Model(LinearRegression())
-        runs = tmp_path / "runs"
-        with model.log(str(runs)):
-            _, result = model.gridsearch(test_dataset, {"normalize": [True, False]})
-
-        for file in runs.rglob("LinearRegression_*"):
-            with file.open() as f:
-                log_result = yaml.safe_load(f)
-
-            model_results = [round(r.score, 4) for r in result]
-            assert round(log_result["metrics"]["r2"], 4) in model_results
-            assert result.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(
         self, tmp_path: pathlib.Path, test_dataset: Dataset
@@ -535,47 +474,6 @@ class TestBaseClass:
         model2 = Model.from_yaml(log.output_path)
         assert model2.estimator.get_params() == classifier.estimator.get_params()
 
-    def test_gridsearch_uses_default_metric(
-        self, classifier: Model, test_dataset: Dataset
-    ):
-        model, results = classifier.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
-        )
-
-        assert len(results) == 2
-        assert results[0].metrics.score >= results[1].metrics.score
-        assert results[0].metrics.name == "accuracy"
-
-        assert isinstance(model, Model)
-
-    def test_gridsearch_can_take_multiple_metrics(
-        self, classifier: Model, test_dataset: Dataset
-    ):
-        model, results = classifier.gridsearch(
-            test_dataset,
-            param_grid={"penalty": ["l1", "l2"]},
-            metrics=["accuracy", "roc_auc"],
-        )
-
-        assert len(results) == 2
-        assert results[0].metrics.score >= results[1].metrics.score
-
-        for result in results:
-            assert len(result.metrics) == 2
-            assert "accuracy" in result.metrics
-            assert "roc_auc" in result.metrics
-            assert result.metrics.name == "accuracy"
-            assert result.metrics.score == result.metrics[0].score
-
-    def test_gridsearch_can_log_with_context_manager(
-        self, feature_union_classifier, test_dataset: Dataset
-    ):
-        classifier = Model(feature_union_classifier)
-        with classifier.log("gridsearch_union_test"):
-            _, _ = classifier.gridsearch(
-                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-            )
-
 
 class TestModelSelection:
     def test_model_selection_works_with_default_metric(self, test_dataset: Dataset):
@@ -647,3 +545,104 @@ class TestModelSelection:
         )
 
         assert (model.coef_ == model2.estimator.coef_).all()
+
+
+class TestGridSearch:
+    def test_gridsearch_model_returns_as_expected(
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_gridsearch_model_does_not_fail_when_run_twice(
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        best_model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+        best_model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_prepare_gridsearch_estimators_has_different_parameters(self):
+        estimators = prepare_gridsearch_estimators(
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            assert estimator.get_params()["penalty"] == penalty
+            assert hasattr(estimator, "coef_") is False
+            assert isinstance(estimator, LogisticRegression)
+
+    def test_prepare_gridsearch_estimators_in_pipeline_has_different_parameters(self):
+        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
+
+        estimators = prepare_gridsearch_estimators(
+            pipe, params={"clf__penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            clf = estimator["clf"]
+            assert clf.get_params()["penalty"] == penalty
+            assert hasattr(clf, "coef_") is False
+            assert isinstance(clf, LogisticRegression)
+
+    def test_gridsearch_uses_default_metric(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_gridsearch_can_take_multiple_metrics(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset,
+            param_grid={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
+
+    def test_gridsearch_can_log_with_context_manager(
+        self, feature_union_classifier, test_dataset: Dataset
+    ):
+        classifier = Model(feature_union_classifier)
+        with classifier.log("gridsearch_union_test"):
+            _, _ = classifier.gridsearch(
+                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            )

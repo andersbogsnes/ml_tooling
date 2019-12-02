@@ -2,8 +2,8 @@
 - Bug fix for logging when feature unions (DFFeatureUnion) had tuples
 - Bug fix for calculating feature importance when passing large amounts of data
 - Bug fix when using default metric in `test_estimators`
+- Bug fix when gridsearching, only applying last change
 - Add nicer error message when passing incorrect dtypes to FillNA
-
 
 # v0.9.1
 - Hot fix python version to 3.7

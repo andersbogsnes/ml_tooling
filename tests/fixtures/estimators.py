@@ -91,16 +91,25 @@ def pipeline_forest_classifier() -> Pipeline:
 
 
 @pytest.fixture
-def estimator_pickle_path(test_dataset, tmp_path):
-    file_path = tmp_path / "tmp.pkl"
-    model = Model(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset)
-    joblib.dump(model.estimator, file_path)
-    return pathlib.Path(file_path)
+def estimator_pickle_path_factory(test_dataset, tmp_path):
+    def tmp_estimator_pickle_path(filename):
+        file_path = tmp_path / filename
+        model = Model(LogisticRegression(solver="liblinear"))
+        model.score_estimator(test_dataset)
+        joblib.dump(model.estimator, file_path)
+        return pathlib.Path(file_path)
+
+    return tmp_estimator_pickle_path
 
 
 @pytest.fixture
-def open_estimator_pickle(estimator_pickle_path: pathlib.Path, request):
-    f = estimator_pickle_path.open(mode="rb")
-    request.addfinalizer(f.close)
-    return f
+def open_estimator_pickle(estimator_pickle_path_factory: pathlib.Path, request):
+    def tmp_open_estimator_pickle(path=None):
+        if path is None:
+            f = estimator_pickle_path_factory("tmp.pkl").open(mode="rb")
+        else:
+            f = path.open(mode="rb")
+        request.addfinalizer(f.close)
+        return f
+
+    return tmp_open_estimator_pickle

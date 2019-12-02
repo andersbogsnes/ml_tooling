@@ -269,7 +269,7 @@ class TestBaseClass:
     def test_can_load_production_estimator(
         self, mock_path: MagicMock, open_estimator_pickle
     ):
-        mock_path.return_value.__enter__.return_value = open_estimator_pickle
+        mock_path.return_value.__enter__.return_value = open_estimator_pickle()
         model = Model.load_production_estimator("test")
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)

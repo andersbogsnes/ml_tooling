@@ -70,7 +70,7 @@ class ArtifactoryStorage(Storage):
             list of paths to files sorted by filename
         """
 
-        return sorted(self.artifactory_path.glob("*/*.pkl"))
+        return sorted(self.artifactory_path.glob("*.pkl"))
 
     def load(self, file_path: Pathlike) -> Estimator:
         """
@@ -95,8 +95,11 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
+        if ArtifactoryPath(file_path).is_file():
+            artifactory_path = file_path
+        else:
+            artifactory_path = self.artifactory_path / file_path
 
-        artifactory_path = self.artifactory_path / file_path
         with artifactory_path.open() as f:
             by = BytesIO()
             by.write(f.read())

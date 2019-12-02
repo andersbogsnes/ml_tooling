@@ -62,7 +62,10 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        estimator_path = self.dir_path / file_path
+        if Path(file_path).is_file():
+            estimator_path = file_path
+        else:
+            estimator_path = self.dir_path / file_path
         return joblib.load(estimator_path)
 
     def save(self, estimator: Estimator, filename: str, prod: bool = False) -> Path:

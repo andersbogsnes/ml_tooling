@@ -28,7 +28,7 @@ class TransformerError(MLToolingError):
     """Error which occurs during a transform"""
 
 
-class DataSetError(MLToolingError):
+class DatasetError(MLToolingError):
     """Error which occurs when using a DataSet"""
 
 

@@ -6,7 +6,7 @@
 - Add nicer error message when passing incorrect dtypes to FillNA
 - Storage .save method now only takes filename as parameter
 - Handles storage loading of paths outputted from the Storage .get_list method
-
+- Handles case when Dataset does not have a `y` value
 
 # v0.9.1
 - Hot fix python version to 3.7

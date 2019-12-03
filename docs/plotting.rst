@@ -7,17 +7,13 @@ Plotting
 Available Base plots
 --------------------
 
-First we setup a :code:`Dataset` like we have done in previous examples.
-We get a Result object when scoring the estimator by calling :`ml_tooling.Model.score_estimator`.
-
-Feature importance
-~~~~~~~~~~~~~~~~~~
-
-When a model is trained, it returns a :class:`~ml_tooling.result.Result` object.
-That object has number of visualization options depending on the type of model.
+First we define a :class:`~ml_tooling.data.Dataset` like we have done in previous examples.
+When we score the estimator by calling :meth:`~ml_tooling.Model.score_estimator`, we get a
+:class:`~ml_tooling.result.Result` back, which contains a number of handy plotting features.
 
 To use the visualizations, access them using the `.plot` accessor on the
 :class:`~ml_tooling.result.Result` object:
+
 
 .. code-block::
 
@@ -27,13 +23,18 @@ To use the visualizations, access them using the `.plot` accessor on the
 
     >>> result.plot.feature_importance()
 
+
+.. code-block:: python
+
+    >>> result.plot.residuals()
+
 .. plot::
 
     >>> result.plot.residuals()
 
 Any visualization listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
-the ml_tooling ModelData approach, you can instead do:
+the :class:`~ml_tooling.result.Result` class
 
 .. doctest:: python
 

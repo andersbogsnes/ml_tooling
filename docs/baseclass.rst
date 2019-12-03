@@ -5,20 +5,21 @@
 Model
 =====
 
-The Model baseclass contains all the neat functionality of ML Tooling.
+The :class:`Model` baseclass contains all the neat functionality of ML Tooling.
 
-In order to take advantage of this functionality, simply wrap a model that follows the Scikit-learn API using the Model class.
+In order to take advantage of this functionality, simply wrap a model that follows the `scikit-learn`_ API
+using the Model class.
 
-We will be using scikit-learn's built-in Boston houseprices dataset to demonstrate how to use ML Tooling.
+We will be using `scikit-learn's <scikit-learn>`_ built-in :func:`Boston <sklearn.datasets.load_boston>`
+houseprices dataset to demonstrate how to use ML Tooling.
 
 .. seealso::
-    :ref:`api` for a full overview of methods
+    Refer to :ref:`api` for a full overview of methods
 
 First we need to define how we want to load our data. This is done by defining a
 :class:`~ml_tooling.data.Dataset` class and creating the
 :meth:`~ml_tooling.data.Dataset.load_training_data`
-and :meth:`~ml_tooling.data.Dataset.load_prediction_data` methods. In this example, we use
-the Boston dataset from `sklearn.datasets`
+and :meth:`~ml_tooling.data.Dataset.load_prediction_data` methods.
 
 We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 :class:`Model` class and we are ready to begin!
@@ -64,8 +65,8 @@ Scoring your model
 ~~~~~~~~~~~~~~~~~~
 
 In order to evaluate the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
-This will train the estimator on the training split of our `bostondata` Dataset and evaluate it on the test split.
-It returns a :class:`~ml_tooling.result.Result` instance.
+This will train the estimator on the training split of our :data:`bostondata` Dataset and evaluate it on the test split.
+It returns an instance of :class:`~ml_tooling.result.Result` which we can then introspect further.
 
 .. doctest::
 
@@ -98,7 +99,11 @@ Training your model
 ~~~~~~~~~~~~~~~~~~~
 
 When the best model has been found use :meth:`~ml_tooling.baseclass.Model.train_estimator` to train the model
-on the full training set (not the training split). This should be the last step before saving the model for production.
+on the full training set (not the training split).
+
+.. note::
+
+    This should be the last step before saving the model for production.
 
 .. doctest::
 
@@ -118,16 +123,34 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
                0
     0  25.203866
 
+:meth:`~ml_tooling.baseclass.Model.make_prediction` also has a parameter :code:`proba` which will return the
+underlying probabilities if working on a classification problem
+
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-To find the best hyperparameters for an estimator you can use :meth:`~ml_tooling.baseclass.Model.gridsearch`, passing a dictionary of hyperparameters to try
+To find the best hyperparameters for an estimator you can use
+:meth:`~ml_tooling.baseclass.Model.gridsearch`, passing a dictionary of hyperparameters to try.
 
 .. doctest::
 
-    >>> linear.gridsearch(bostondata, { "normalize": [False, True] })
-    (<Model: LinearRegression>, ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>]))
+    >>> best_estimator, results = linear.gridsearch(bostondata, { "normalize": [False, True] })
+    >>> results
+    ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>])
 
+The input hyperparameters have a similar format to :class:`~sklearn.model_selection.GridSearchCV`, so if we are
+gridsearching using a :class:`~sklearn.pipeline.Pipeline`, we can pass hyperparameters using the same syntax.
+
+.. doctest::
+
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>>
+    >>> pipe = Pipeline([('scale', StandardScaler()), ('clf', LinearRegression())])
+    >>> pipe_model = Model(pipe)
+    >>> best_estimator, results = pipe_model.gridsearch(bostondata, { "clf__normalize": [False, True]})
+    >>> results
+    ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>])
 
 Using the logging capability of Model :meth:`~ml_tooling.Model.log` method,
 we can save each result to a yaml file.
@@ -135,8 +158,7 @@ we can save each result to a yaml file.
 .. doctest::
 
     >>> with linear.log("./bostondata_linear"):
-    ...     linear.gridsearch(bostondata, { "normalize": [False, True] })
-    (<Model: LinearRegression>, ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>]))
+    ...     best_estimator, results = linear.gridsearch(bostondata, { "normalize": [False, True] })
 
 .. testcleanup::
 
@@ -145,7 +167,7 @@ we can save each result to a yaml file.
 
 This will generate a yaml file for each
 
-.. code-block::
+.. code-block:: yaml
 
     created_time: 2019-10-31 17:32:08.233522
     estimator:
@@ -219,7 +241,8 @@ You have a trained estimator ready to be saved for use in production on your fil
     ...
     >>> model.save_estimator(storage, prod=True)
 
-now users of your model package can always find your estimator through :meth:`~ml_tooling.Model.load_production_estimator` using the module name.
+Now users of your model package can always find your estimator through
+:meth:`~ml_tooling.Model.load_production_estimator` using the module name.
 
 .. code-block::
 
@@ -236,7 +259,7 @@ To change the default configuration values, modify the :attr:`~Model.config` att
     >>> linear.config.RANDOM_STATE = 2
 
 .. seealso::
-    :ref:`config` for a list of available configuration options
+    Refer to :ref:`config` for a list of available configuration options
 
 
 
@@ -244,6 +267,7 @@ Logging
 -------
 
 We also have the ability to log our experiments using the :meth:`Model.log` context manager.
+The results will be saved in
 
 .. doctest::
 
@@ -254,7 +278,7 @@ We also have the ability to log our experiments using the :meth:`Model.log` cont
 .. testcleanup::
 
     import shutil
-    shutil.rmtree(linear.config.RUN_DIR.joinpath('test_dir'))
+    shutil.rmtree(linear.config.RUN_DIR)
 
 This will write a yaml file specifying attributes of the model, results, git-hash of the model
 and other pertinent information.
@@ -264,4 +288,6 @@ and other pertinent information.
     Check out :meth:`Model.log` for more info on what is logged
 
 
-Continue to :doc:`plotting`
+Continue to :doc:`storage`
+
+.. _scikit-learn: https://scikit-learn.org/stable/

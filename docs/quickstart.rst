@@ -10,7 +10,7 @@ You have to define two methods in your class:
 
 * :meth:`~ml_tooling.data.Dataset.load_training_data`
 
-How to load your training data - whether it's reading from an excel file or loading from a database.
+Defines how to your training data is loaded - whether it's reading from an excel file or loading from a database.
 This method should read in your data and return a DataFrame containing your features and a target
 - usually as a numpy array or a pandas Series.
 This method is called the first time ML Tooling needs to gather data and is only called once.
@@ -18,7 +18,7 @@ This method is called the first time ML Tooling needs to gather data and is only
 
 * :meth:`~ml_tooling.data.Dataset.load_prediction_data`
 
-How to load your prediction data. When predicting, you have to tell ML Tooling what data to load in.
+Defines how to load your prediction data. When predicting, you have to tell ML Tooling what data to load in.
 Usually this takes an argument to select features for a given customer or item.
 
 .. doctest::
@@ -70,8 +70,9 @@ We can plot the prediction errors:
 
     >>> result.plot.prediction_error()
 
-.. figure:: plots/prederror.png
-    :alt: Plot of prediction errors from Linear Regression
+.. plot::
+
+    >>> result.plot.prediction_error()
 
 
 .. testsetup::
@@ -80,12 +81,11 @@ We can plot the prediction errors:
     pathlib.Path('./estimator_dir').mkdir(exist_ok=True)
 
 We can save and load our model:
-.. doctest:: python
 
-    >>> estimator_dir = './estimator_dir'
-    >>>
+.. doctest::
+
     >>> from ml_tooling.storage import FileStorage
-    >>> storage = FileStorage(estimator_dir)
+    >>> storage = FileStorage('./estimator_dir')
     >>> file_path = regression.save_estimator(storage)
     >>> my_new_model = regression.load_estimator(storage, file_path.name)
     >>> my_new_model
@@ -98,7 +98,7 @@ We can save and load our model:
 
 We can try out many different models:
 
-.. code-block:: python
+.. doctest::
 
     >>> from sklearn.linear_model import Ridge, LassoLars
     >>> models_to_try = [LinearRegression(), Ridge(), LassoLars()]
@@ -106,9 +106,7 @@ We can try out many different models:
     ...                                                 models_to_try,
     ...                                                 metrics='neg_mean_squared_error')
     >>> all_results
-    <Result LinearRegression: {'neg_mean_squared_error': -22.1}>
-    <Result Ridge: {'neg_mean_squared_error': -22.48}>
-    <Result LassoLars: {'neg_mean_squared_error': -72.26}>
+    ResultGroup(results=[<Result LinearRegression: {'neg_mean_squared_error': -22.1}>, <Result Ridge: {'neg_mean_squared_error': -22.48}>, <Result LassoLars: {'neg_mean_squared_error': -72.26}>])
 
 We get the results in sorted order for each model and see that LinearRegression gives us the best result!
 

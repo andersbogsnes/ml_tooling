@@ -1,12 +1,14 @@
 .. _tutorial:
 
-
-We will be using the `Iris dataset <https://scikit-learn.org/stable/auto_examples/datasets/plot_iris_dataset.html>`_ for this tutorial.
-First we create the dataset we will be working with.
-
 Tutorial
 ==========
 
+We will be using the `Iris`_ dataset for this tutorial. First we create the dataset we will be working with, by
+declaring a class inheriting from Dataset which will define how we load our training and prediction data.
+Scikit-learn comes with handy :ref:`sklearn:datasets`, so we will be using their :func:`~sklearn.datasets.load_iris`
+data loader function
+
+.. _Iris: https://en.wikipedia.org/wiki/Iris_flower_data_set
 
 .. doctest::
 
@@ -31,7 +33,7 @@ Tutorial
     >>> data.create_train_test()
     <IrisData - Dataset>
 
-With our data object sorted lets move on to the model object.
+With our data object ready to go, lets move on to the model object.
 
 .. doctest::
 
@@ -43,30 +45,37 @@ With our data object sorted lets move on to the model object.
     >>> lr_clf.score_estimator(data, metrics='accuracy')
     <Result LogisticRegression: {'accuracy': 0.74}>
 
-We have a few more model we'd like to try out and see what performs best.
-We can include a random classifier to have a baseline metric score.
+We have a few more estimators we'd like to try out and see which one performs best.
+We can include a :class:`~sklearn.ensemble.RandomForestClassifier` and a :class:`~sklearn.dummy.DummyClassifier`
+to have a baseline metric score.
+
+In order to have a better idea of how the models perform, we can use cross-validation and benchmark the models against
+each other using different metrics. The best estimator is then picked using the best mean cross-validation score
+
+.. note::
+
+    Note that the results will be sorted based on the first metric passed
 
 .. doctest::
 
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> rf_clf = Model(RandomForestClassifier(n_estimators=10, random_state=42))
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb_clf = Model(GradientBoostingClassifier())
-
-
-We can test the estimators in tandem with cross validation like so:
-
-.. doctest::
-
-    >>> estimators = [lr_clf.estimator, rf_clf.estimator, gb_clf.estimator]
-    >>> best_model, results = Model.test_estimators(data, estimators, metrics='accuracy', cv=10)
+    >>> from sklearn.dummy import DummyClassifier
+    >>> estimators = [LogisticRegression(solver='lbfgs'),
+    ...               RandomForestClassifier(n_estimators=10, random_state=42),
+    ...               DummyClassifier(random_state=42)]
+    >>> best_model, results = Model.test_estimators(data, estimators, metrics=['accuracy', 'roc_auc'], cv=10)
     >>> results
-    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95}>, <Result GradientBoostingClassifier: {'accuracy': 0.93}>, <Result LogisticRegression: {'accuracy': 0.66}>])
+    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95, 'roc_auc': 0.98}>, <Result LogisticRegression: {'accuracy': 0.71, 'roc_auc': 0.79}>, <Result DummyClassifier: {'accuracy': 0.55, 'roc_auc': 0.52}>])
 
-
+From our results, the :class:`~sklearn.ensemble.RandomForestClassifier` looks the most promising, so we want to see if
+we can tune it a bit more. We can run a gridsearch over the hyperparameters using the :meth:`~Model.gridsearch` method.
+We also want to log the results, so we can examine each potential model in depth, so we use the :meth:`~Model.log`
+context manager, passing a log_directory where to save the files.
 
 .. doctest::
 
+    >>> # We could also use `best_model` here
+    >>> rf_clf = Model(RandomForestClassifier(n_estimators=10, random_state=42))
     >>> with rf_clf.log('./gridsearch'):
     ...     best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
     >>>
@@ -78,7 +87,8 @@ We can test the estimators in tandem with cross validation like so:
     import shutil
     shutil.rmtree(best_model.config.RUN_DIR.joinpath('gridsearch'))
 
-We do the gridsearch in a .log() context manager so we can inspect the gridsearched models, and recreate them later if we need to.
+As the results are ordered by highest mean accuracy, we can select the first result and plot some diagnostic plots using
+the `.plot` accessor.
 
 .. code-block::
 
@@ -112,6 +122,8 @@ We do the gridsearch in a .log() context manager so we can inspect the gridsearc
 
     import pathlib
     pathlib.Path('./estimators').mkdir(exist_ok=True)
+
+We finish up by saving our best model to a local file, so we can reload that model later
 
 .. doctest::
 

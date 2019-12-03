@@ -3,13 +3,23 @@ Installation
 
 .. highlight:: bash
 
-:Requirements: **Python 3.x >= 3.7**
+:Requirements: **Python >= 3.7**
 
-To install the latest released version of ml_tooling::
+To install the latest released version of ml_tooling:
+
+Using pip
+---------
+
+.. code-block::
 
   $ pip install ml_tooling
 
-  $ conda install -c conda-forge ml_tooling
+Using conda
+-----------
+
+.. code-block::
+
+    $ conda install -c conda-forge ml_tooling
 
 From Source
 -----------

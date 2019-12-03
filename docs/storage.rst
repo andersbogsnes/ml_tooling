@@ -3,11 +3,15 @@
 Storage
 =======
 
+ML Tooling provides different backends for storing trained models. Currently, we support local file storage, as well as
+Artifactory based storage.
+
 
 ArtifactoryStorage
 ------------------
 
-If you want to use Artifactory as a backend, first install the optional dependencies by running :code:`pip install ml_tooling['artifactory']`.
+If you want to use Artifactory as a backend, first install the optional dependencies by running
+:code:`pip install ml_tooling['artifactory']`.
 
 
 Saving and loading an estimator from Artifactory
@@ -18,7 +22,7 @@ Saving and loading an estimator from Artifactory
     >>> from ml_tooling.storage import ArtifactoryStorage
     >>> from ml_tooling import Model
     ...
-    >>> artifactory_url = "http://artifactory.com1/artifactory"
+    >>> artifactory_url = "http://artifactory.com/artifactory"
     >>> artifactory_repo = "advanced-analytics/dev/myfolder"
     >>>
     >>> storage = ArtifactoryStorage(artifactory_url, artifactory_repo)
@@ -70,4 +74,6 @@ Saving and loading an estimator from the file system
     >>> storage.save(model.estimator)
     PosixPath('estimators/my_new_folder/LinearRegression.pkl')
 
-See :class:`~ml_tooling.storage.FileStorage`
+See :class:`~ml_tooling.storage.FileStorage` for more information
+
+Continue to :doc:`plotting`

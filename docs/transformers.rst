@@ -3,14 +3,15 @@
 Transformers
 ============
 
-One great feature of scikit-learn is the concept of the :class:`~sklearn.pipeline.Pipeline`
-alongside `transformers`_
+One great feature of `scikit-learn`_ is the concept of the :class:`~sklearn.pipeline.Pipeline`
+alongside :ref:`transformers <sklearn:preprocessing>`
 
-.. _transformers: https://scikit-learn.org/stable/modules/preprocessing.html
+.. _scikit-learn: https://scikit-learn.org
+.. _pandas: https://pandas.pydata.org/
 
-By default, scikit-learn's transformers will convert a pandas :class:`~pandas.DataFrame` to numpy arrays -
+By default, scikit-learn's transformers will convert a `pandas`_ :class:`~pandas.DataFrame` to numpy arrays -
 losing valuable column information in the process. We have implemented a number of transformers
-that accept a pandas :class:`~pandas.DataFrame` and return a pandas :class:`~pandas.DataFrame`.
+that accept a `pandas`_ :class:`~pandas.DataFrame` and return a `pandas`_ :class:`~pandas.DataFrame`.
 
 Select
 ------
@@ -67,11 +68,11 @@ You can pass any value to replace NaNs with
 
 You can also use one of the built-in strategies.
 
-- 'mean'
-- 'median'
-- 'most_freq'
-- 'max'
-- 'min'
+- :code:`mean`
+- :code:`median`
+- :code:`most_freq`
+- :code:`max`
+- :code:`min`
 
 .. doctest::
 
@@ -86,7 +87,7 @@ You can also use one of the built-in strategies.
 ToCategorical
 -------------
 
-Performs one-hot encoding of categorical values through :class:`~pandas.Categorical`.
+Performs one-hot encoding of categorical values through :class:`pandas.Categorical`.
 All categorical values not found in training data will be set to 0
 
 Example

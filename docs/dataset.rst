@@ -8,7 +8,7 @@ Creating a SQLDataset from a table in a db
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`~ml_tooling.data.SQLDataset` should be used for creating datasets based on SQL database source.
-SQLDatasets must be provided with a :py:class:`sqlalchemy.engine.Connectable` or a valid connection string.
+SQLDatasets must be provided with a :class:`sqlalchemy.engine.Connectable` or a valid connection string.
 
 
 .. code-block::
@@ -39,7 +39,8 @@ FileDataset
 Creating a FileDataset from a csv file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When we create a FileDataset, we need to specify the location of our datafiles - this will be available in the :code:`self.file_path` attribute
+When we create a FileDataset, we need to specify the location of our datafiles -
+this will be available in the :code:`self.file_path` attribute
 A more elaborate example of using this dataset can be found at :file:`../notebooks/Titanic Demo.ipynb`.
 
 .. code-block::
@@ -59,4 +60,4 @@ A more elaborate example of using this dataset can be found at :file:`../noteboo
     >>> TitanicData("./data/raw")
     <TitanicData - FileDataset>
 
-When a Dataset is correctly defined, one can use supplementing methods defined in :class:`~ml_tooling.data.Dataset`
+When a Dataset is correctly defined, you can use all the methods defined in :class:`~ml_tooling.data.Dataset`

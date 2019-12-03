@@ -4,6 +4,7 @@
 - Bug fix when using default metric in `test_estimators`
 - Bug fix when gridsearching, only applying last change
 - Add nicer error message when passing incorrect dtypes to FillNA
+- Handles case when Dataset does not have a `y` value
 
 # v0.9.1
 - Hot fix python version to 3.7

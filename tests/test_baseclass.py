@@ -270,7 +270,7 @@ class TestBaseClass:
         serialized_model = regression.to_dict()
         expected = [
             {
-                "module": "sklearn.linear_model.base",
+                "module": "sklearn.linear_model._base",
                 "classname": "LinearRegression",
                 "params": {
                     "copy_X": True,
@@ -288,13 +288,13 @@ class TestBaseClass:
         expected = [
             {
                 "name": "scale",
-                "module": "sklearn.preprocessing.data",
+                "module": "sklearn.preprocessing._data",
                 "classname": "StandardScaler",
                 "params": {"copy": True, "with_mean": True, "with_std": True},
             },
             {
                 "name": "clf",
-                "module": "sklearn.linear_model.base",
+                "module": "sklearn.linear_model._base",
                 "classname": "LinearRegression",
                 "params": {
                     "copy_X": True,

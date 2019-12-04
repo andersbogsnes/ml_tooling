@@ -4,8 +4,6 @@
 #
 #    pip-compile dev-requirements.in
 #
---index-url http://artifactory-singlep.p001.alm.brand.dk/artifactory/api/pypi/pypi-virtual/simple
---trusted-host artifactory-singlep.p001.alm.brand.dk
 
 aspy.yaml==1.3.0          # via pre-commit
 atomicwrites==1.3.0       # via pytest

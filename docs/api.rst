@@ -11,9 +11,9 @@ Implements all the base functionality needed to create the wrapper
 .. autoclass:: ml_tooling.baseclass.Model
     :members:
 
-    .. automethod:: log(self, run_name)
-
 .. include:: dataset.inc.rst
+
+.. include:: storage.inc.rst
 
 .. include:: config.inc.rst
 

@@ -7,7 +7,9 @@ Table of Contents
    install.rst
    quickstart.rst
    tutorial.rst
+   dataset.rst
    baseclass.rst
+   storage.rst
    plotting.rst
    transformers.rst
 

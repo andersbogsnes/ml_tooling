@@ -15,3 +15,6 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
 
     def __init__(self, path: Pathlike):
         self.file_path = pathlib.Path(path)
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} - FileDataset>"

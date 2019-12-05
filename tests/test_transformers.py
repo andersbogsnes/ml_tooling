@@ -233,6 +233,29 @@ class TestFillNA(TransformerBase):
         result = model.score_estimator(test_dataset)
         assert isinstance(result, Result)
 
+    def test_fillna_raises_when_imputing_numerically_on_strings(self):
+        df = pd.DataFrame(
+            {
+                "id": [1, 2, 3, 4],
+                "status": ["OK", "Error", "OK", "Error"],
+                "sales": [2000, 3000, 4000, np.nan],
+            }
+        )
+        fill_na = FillNA(strategy="mean")
+        with pytest.raises(
+            TransformerError,
+            match="column/columns have invalid types for strategy = mean",
+        ):
+            fill_na.fit_transform(df)
+
+        df["new_col"] = ["One", "Two", "Three", "Four"]
+
+        with pytest.raises(
+            TransformerError,
+            match="column/columns have invalid types for strategy = mean",
+        ):
+            fill_na.fit_transform(df)
+
 
 class TestToCategorical(TransformerBase):
     def test_to_categorical_returns_correct_dataframe(self, categorical: pd.DataFrame):

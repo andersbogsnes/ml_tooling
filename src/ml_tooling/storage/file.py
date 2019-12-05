@@ -43,8 +43,8 @@ class FileStorage(Storage):
         Parameters
         ----------
 
-        file_path: str
-            filename of estimator pickle file
+        file_path: Pathlike
+            Path where to load the estimator file relative to FileStorage
 
         Example
         -------
@@ -60,10 +60,13 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        estimator_path = self.dir_path / file_path
+        if Path(file_path).is_file():
+            estimator_path = file_path
+        else:
+            estimator_path = self.dir_path / file_path
         return joblib.load(estimator_path)
 
-    def save(self, estimator: Estimator, filepath: str, prod: bool = False) -> Path:
+    def save(self, estimator: Estimator, filename: str, prod: bool = False) -> Path:
         """
         Save a joblib pickled estimator.
 
@@ -72,13 +75,13 @@ class FileStorage(Storage):
         estimator: obj
             The estimator object
 
-        filepath: str
-            Path where to save file - relative to FileStorage
+        filename: str
+            filename of estimator pickle file
 
         prod: bool
             Whether or not to save in "production mode" -
-            Production mode saves to /src/<projectname>/ regardless of what FileStorage
-            was instantiated with
+            Production mode saves to /src/<projectname>/ regardless
+            of what FileStorage was instantiated with
 
         Example
         -------
@@ -96,9 +99,9 @@ class FileStorage(Storage):
         """
 
         if prod:
-            file_path = find_src_dir() / filepath
+            file_path = find_src_dir() / filename
         else:
-            file_path = make_dir(self.dir_path) / filepath
+            file_path = make_dir(self.dir_path) / filename
 
         joblib.dump(estimator, file_path)
         return file_path

@@ -80,7 +80,7 @@ context manager, passing a log_directory where to save the files.
     ...     best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
     >>>
     >>> results
-    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>])
+    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.93}>])
 
 .. testcleanup::
 

@@ -6,6 +6,8 @@ import pandas as pd
 import pytest
 import yaml
 import datetime
+
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -19,7 +21,7 @@ from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
-from ml_tooling.utils import MLToolingError
+from ml_tooling.utils import MLToolingError, DatasetError
 
 
 class TestBaseClass:
@@ -35,26 +37,6 @@ class TestBaseClass:
 
         pipeline = Model(pipeline_linear)
         assert pipeline.is_pipeline is True
-
-    def test_can_use_default_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
-        result = model.score_estimator(test_dataset)
-
-        assert result.metrics.name == "accuracy"
-
-    def test_can_use_specified_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
-        result = model.score_estimator(test_dataset, metrics="roc_auc")
-
-        assert result.metrics.name == "roc_auc"
-
-    def test_can_use_multiple_metrics(self, test_dataset: Dataset):
-        model = Model(LogisticRegression())
-        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
-
-        assert len(result.metrics) == 2
-        assert "accuracy" in result.metrics
-        assert "roc_auc" in result.metrics
 
     def test_instantiate_model_with_non_estimator_pipeline_fails(self):
         example_pipe = Pipeline([("scale", DFStandardScaler)])
@@ -126,12 +108,6 @@ class TestBaseClass:
             start=expected_index, stop=expected_index + 1, step=1
         )
 
-    def test_score_estimator_fails_if_no_train_test_data_available(self, base_dataset):
-        model = Model(LinearRegression())
-
-        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(base_dataset())
-
     def test_default_metric_getter_works_as_expected_classifier(self):
         rf = Model(RandomForestClassifier(n_estimators=10))
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
@@ -180,6 +156,260 @@ class TestBaseClass:
         logreg.reset_config()
         linreg.reset_config()
 
+    def test_regression_model_can_be_saved(
+        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        classifier.score_estimator(test_dataset)
+        load_storage = FileStorage(tmp_path)
+
+        storage = FileStorage(tmp_path)
+        saved_model_path = classifier.save_estimator(storage)
+        assert saved_model_path.exists()
+        loaded_model = classifier.load_estimator(load_storage, saved_model_path)
+        assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
+
+    def test_regression_model_filename_is_generated_correctly(
+        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        storage = FileStorage(tmp_path)
+        saved_model_path = classifier.save_estimator(storage)
+        assert saved_model_path.exists()
+        assert datetime.datetime.strptime(
+            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
+        )
+
+    def test_save_model_saves_pipeline_correctly(
+        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        model.train_estimator(test_dataset)
+        saved_model_path = model.save_estimator(FileStorage(tmp_path))
+        assert saved_model_path.exists()
+
+    @patch("ml_tooling.logging.log_estimator.get_git_hash")
+    def test_save_estimator_saves_logging_dir_correctly(
+        self, mock_hash: MagicMock, classifier: Model, tmp_path: pathlib.Path
+    ):
+        mock_hash.return_value = "1234"
+
+        with classifier.log(tmp_path):
+            expected_file = classifier.save_estimator(FileStorage(tmp_path))
+
+        assert expected_file.exists()
+        assert (
+            "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
+        )
+        mock_hash.assert_called_once()
+
+    def test_save_estimator_with_prod_flag_saves_correctly(self, classifier: Model):
+        mock_storage = MagicMock()
+        classifier.save_estimator(mock_storage, prod=True)
+
+        mock_storage.save.assert_called_once_with(
+            classifier.estimator, "production_model.pkl", prod=True
+        )
+
+    @patch("ml_tooling.baseclass.import_path")
+    def test_can_load_production_estimator(
+        self, mock_path: MagicMock, open_estimator_pickle
+    ):
+        mock_path.return_value.__enter__.return_value = open_estimator_pickle()
+        model = Model.load_production_estimator("test")
+        assert isinstance(model, Model)
+        assert isinstance(model.estimator, BaseEstimator)
+
+    def test_log_context_manager_works_as_expected(self, regression: Model):
+        assert regression.config.LOG is False
+        assert "runs" == regression.config.RUN_DIR.name
+        with regression.log("test"):
+            assert regression.config.LOG is True
+            assert "test" == regression.config.RUN_DIR.name
+            assert "runs" == regression.config.RUN_DIR.parent.name
+
+        assert regression.config.LOG is False
+        assert "runs" == regression.config.RUN_DIR.name
+        assert "test" not in regression.config.RUN_DIR.parts
+
+    def test_log_context_manager_logs_when_scoring_model(
+        self, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        model = Model(LinearRegression())
+
+        runs = tmp_path / "runs"
+        with model.log(str(runs)):
+            result = model.score_estimator(test_dataset)
+
+        for file in runs.rglob("LinearRegression_*"):
+            with file.open() as f:
+                log_result = yaml.safe_load(f)
+
+            assert result.metrics.score == log_result["metrics"]["r2"]
+            assert result.model.estimator_name == log_result["estimator_name"]
+
+    def test_test_models_logs_when_given_dir(
+        self, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        test_models_log = tmp_path / "test_estimators"
+        Model.test_estimators(
+            test_dataset,
+            [RandomForestClassifier(n_estimators=10), DummyClassifier()],
+            log_dir=str(test_models_log),
+            metrics="accuracy",
+        )
+
+        for file in test_models_log.rglob("*.yaml"):
+            with file.open() as f:
+                result = yaml.safe_load(f)
+                model_name = result["model_name"]
+                assert model_name in {
+                    "IrisData_RandomForestClassifier",
+                    "IrisData_DummyClassifier",
+                }
+
+    def test_dump_serializes_correctly_without_pipeline(self, regression: Model):
+        serialized_model = regression.to_dict()
+        expected = [
+            {
+                "module": "sklearn.linear_model._base",
+                "classname": "LinearRegression",
+                "params": {
+                    "copy_X": True,
+                    "fit_intercept": True,
+                    "n_jobs": None,
+                    "normalize": False,
+                },
+            }
+        ]
+
+        assert serialized_model == expected
+
+    def test_dump_serializes_correctly_with_pipeline(self, pipeline_linear: Pipeline):
+        serialized_model = Model(pipeline_linear).to_dict()
+        expected = [
+            {
+                "name": "scale",
+                "module": "sklearn.preprocessing._data",
+                "classname": "StandardScaler",
+                "params": {"copy": True, "with_mean": True, "with_std": True},
+            },
+            {
+                "name": "clf",
+                "module": "sklearn.linear_model._base",
+                "classname": "LinearRegression",
+                "params": {
+                    "copy_X": True,
+                    "fit_intercept": True,
+                    "n_jobs": None,
+                    "normalize": False,
+                },
+            },
+        ]
+
+        assert serialized_model == expected
+
+    def test_to_dict_serializes_correctly_with_feature_union(
+        self, feature_union_classifier: DFFeatureUnion
+    ):
+        model = Model(feature_union_classifier)
+        result = model.to_dict()
+        assert len(result) == 2
+        union = result[0]
+        assert union["name"] == "features"
+        assert len(union["params"]) == 2
+        pipe1 = union["params"][0]
+        pipe2 = union["params"][1]
+
+        assert pipe1["name"] == "pipe1"
+        select1 = pipe1["params"][0]
+        scale1 = pipe1["params"][1]
+
+        assert select1["name"] == "select"
+        assert select1["classname"] == "Select"
+        assert select1["params"] == {
+            "columns": ["sepal length (cm)", "sepal width (cm)"]
+        }
+
+        assert scale1["name"] == "scale"
+        assert scale1["classname"] == "DFStandardScaler"
+        assert scale1["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+        assert pipe2["name"] == "pipe2"
+        select2 = pipe2["params"][0]
+        scale2 = pipe2["params"][1]
+
+        assert select2["name"] == "select"
+        assert select2["classname"] == "Select"
+        assert select2["params"] == {
+            "columns": ["petal length (cm)", "petal width (cm)"]
+        }
+
+        assert scale2["name"] == "scale"
+        assert scale2["classname"] == "DFStandardScaler"
+        assert scale2["params"] == {"copy": True, "with_mean": True, "with_std": True}
+
+    def test_from_yaml_serializes_correctly_with_feature_union(
+        self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
+    ):
+
+        model = Model(feature_union_classifier)
+        result = model.to_dict()
+
+        log = Log(
+            name="test", metrics=Metrics.from_list(["accuracy"]), estimator=result
+        )
+        log.save_log(tmp_path)
+
+        new_model = Model.from_yaml(log.output_path)
+
+        assert len(new_model.estimator.steps[0][1].transformer_list) == 2
+        new_steps = new_model.estimator.steps
+        old_steps = model.estimator.steps
+
+        assert new_steps[0][0] == old_steps[0][0]
+        assert isinstance(new_steps[0][1], type(old_steps[0][1]))
+
+        new_union = new_steps[0][1].transformer_list
+        old_union = old_steps[0][1].transformer_list
+
+        assert len(new_union) == len(old_union)
+
+        for new_transform, old_transform in zip(new_union, old_union):
+            assert new_transform[1].steps[0][0] == old_transform[1].steps[0][0]
+            assert (
+                new_transform[1].steps[0][1].get_params()
+                == old_transform[1].steps[0][1].get_params()
+            )
+
+    def test_can_load_serialized_model_from_pipeline(
+        self, pipeline_linear: Pipeline, tmp_path: pathlib.Path
+    ):
+        model = Model(pipeline_linear)
+        log = Log(
+            name="test",
+            estimator=model.to_dict(),
+            metrics=Metrics([Metric("accuracy", score=1.0)]),
+        )
+        log.save_log(tmp_path)
+        model2 = Model.from_yaml(log.output_path)
+
+        for model1, model2 in zip(model.estimator.steps, model2.estimator.steps):
+            assert model1[0] == model2[0]
+            assert model1[1].get_params() == model2[1].get_params()
+
+    def test_can_load_serialized_model_from_estimator(
+        self, classifier: Model, tmp_path: pathlib.Path
+    ):
+        log = Log(
+            name="test",
+            estimator=classifier.to_dict(),
+            metrics=Metrics([Metric("accuracy", score=1.0)]),
+        )
+        log.save_log(tmp_path)
+        model2 = Model.from_yaml(log.output_path)
+        assert model2.estimator.get_params() == classifier.estimator.get_params()
+
+
+class TestTrainEstimator:
     def test_train_model_sets_result_to_none(
         self, regression: Model, test_dataset: Dataset
     ):
@@ -196,6 +426,73 @@ class TestBaseClass:
 
         assert isinstance(model.result, Result)
 
+    def test_train_model_errors_correctly_when_not_scored(
+        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
+            with model.log(str(tmp_path)):
+                model.train_estimator(test_dataset)
+                model.save_estimator(FileStorage(tmp_path))
+
+    def test_can_score_estimator_with_no_y_value(self):
+        class DummyEstimator(BaseEstimator, RegressorMixin):
+            def __init__(self):
+                self.average = None
+
+            def fit(self, x, y=None):
+                self.average = np.mean(x, axis=1)
+                return self
+
+            def predict(self, x):
+                return self.average
+
+        class DummyData(Dataset):
+            def load_training_data(self):
+                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]]), None
+
+            def load_prediction_data(self, *args, **kwargs):
+                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]])
+
+        model = Model(DummyEstimator())
+        data = DummyData()
+        model.train_estimator(data)
+
+        assert np.all(np.isclose(model.estimator.average, np.array([2.5, 5.5])))
+
+        with pytest.raises(DatasetError, match="The dataset does not define a y value"):
+            data.create_train_test()
+
+
+class TestScoreEstimator:
+    def test_score_estimator_fails_if_no_train_test_data_available(self, base_dataset):
+        model = Model(LinearRegression())
+
+        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
+            model.score_estimator(base_dataset())
+
+    def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset, metrics="roc_auc")
+
+        assert result.metrics.name == "roc_auc"
+
+    def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset)
+
+        assert result.metrics.name == "accuracy"
+
+    def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
+
+        assert len(result.metrics) == 2
+        assert "accuracy" in result.metrics
+        assert "roc_auc" in result.metrics
+
+
+class TestModelSelection:
     def test_model_selection_works_as_expected(self, test_dataset: Dataset):
         models = [
             LogisticRegression(solver="liblinear"),
@@ -209,6 +506,32 @@ class TestBaseClass:
         assert results[0].metrics[0].score >= results[1].metrics[0].score
         for result in results:
             assert isinstance(result, Result)
+
+    def test_model_selection_works_with_default_metric(self, test_dataset: Dataset):
+        models = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=2),
+        ]
+        best_model, results = Model.test_estimators(test_dataset, models)
+
+        assert models[1] is best_model.estimator
+        assert 2 == len(results)
+        assert results[0].metrics[0].name == "accuracy"
+        assert results[1].metrics[0].name == "accuracy"
+
+    def test_model_selection_works_with_multiple_metrics(self, test_dataset: Dataset):
+        models = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=2),
+        ]
+        best_model, results = Model.test_estimators(
+            test_dataset, models, metrics=["accuracy", "roc_auc"]
+        )
+
+        assert models[1] is best_model.estimator
+        assert 2 == len(results)
+        assert 2 == len(results[0].metrics)
+        assert 2 == len(results[1].metrics)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(
         self, test_dataset: Dataset
@@ -254,51 +577,8 @@ class TestBaseClass:
 
         assert (model.coef_ == model2.estimator.coef_).all()
 
-    def test_regression_model_can_be_saved(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        classifier.score_estimator(test_dataset)
-        load_storage = FileStorage(tmp_path)
 
-        storage = FileStorage(tmp_path)
-        saved_model_path = classifier.save_estimator(storage)
-        assert saved_model_path.exists()
-        loaded_model = classifier.load_estimator(load_storage, saved_model_path)
-        assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
-
-    def test_regression_model_filename_is_generated_correctly(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        storage = FileStorage(tmp_path)
-        saved_model_path = classifier.save_estimator(storage)
-        assert saved_model_path.exists()
-        assert datetime.datetime.strptime(
-            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
-        )
-
-    def test_save_model_saves_pipeline_correctly(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        model.train_estimator(test_dataset)
-        saved_model_path = model.save_estimator(FileStorage(tmp_path))
-        assert saved_model_path.exists()
-
-    @patch("ml_tooling.logging.log_estimator.get_git_hash")
-    def test_save_model_saves_logging_dir_correctly(
-        self, mock_hash: MagicMock, classifier: Model, tmp_path: pathlib.Path
-    ):
-        mock_hash.return_value = "1234"
-
-        with classifier.log(tmp_path):
-            expected_file = classifier.save_estimator(FileStorage(tmp_path))
-
-        assert expected_file.exists()
-        assert (
-            "LogisticRegression" in [str(file) for file in tmp_path.rglob("*.yaml")][0]
-        )
-        mock_hash.assert_called_once()
-
+class TestGridSearch:
     def test_gridsearch_model_returns_as_expected(
         self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
@@ -334,7 +614,7 @@ class TestBaseClass:
         for result in results:
             assert isinstance(result, Result)
 
-    def test_fit_gridpoint_returns_new_estimator(self, test_dataset: Dataset):
+    def test_prepare_gridsearch_estimators_has_different_parameters(self):
         estimators = prepare_gridsearch_estimators(
             LogisticRegression(), params={"penalty": ["l2", "l1"]}
         )
@@ -344,207 +624,18 @@ class TestBaseClass:
             assert hasattr(estimator, "coef_") is False
             assert isinstance(estimator, LogisticRegression)
 
-    def test_log_context_manager_works_as_expected(self, regression: Model):
-        assert regression.config.LOG is False
-        assert "runs" == regression.config.RUN_DIR.name
-        with regression.log("test"):
-            assert regression.config.LOG is True
-            assert "test" == regression.config.RUN_DIR.name
-            assert "runs" == regression.config.RUN_DIR.parent.name
+    def test_prepare_gridsearch_estimators_in_pipeline_has_different_parameters(self):
+        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
 
-        assert regression.config.LOG is False
-        assert "runs" == regression.config.RUN_DIR.name
-        assert "test" not in regression.config.RUN_DIR.parts
-
-    def test_log_context_manager_logs_when_scoring_model(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        model = Model(LinearRegression())
-
-        runs = tmp_path / "runs"
-        with model.log(str(runs)):
-            result = model.score_estimator(test_dataset)
-
-        for file in runs.rglob("LinearRegression_*"):
-            with file.open() as f:
-                log_result = yaml.safe_load(f)
-
-            assert result.metrics.score == log_result["metrics"]["r2"]
-            assert result.model.estimator_name == log_result["estimator_name"]
-
-    def test_log_context_manager_logs_when_gridsearching(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        model = Model(LinearRegression())
-        runs = tmp_path / "runs"
-        with model.log(str(runs)):
-            _, result = model.gridsearch(test_dataset, {"normalize": [True, False]})
-
-        for file in runs.rglob("LinearRegression_*"):
-            with file.open() as f:
-                log_result = yaml.safe_load(f)
-
-            model_results = [round(r.score, 4) for r in result]
-            assert round(log_result["metrics"]["r2"], 4) in model_results
-            assert result.estimator_name == log_result["estimator_name"]
-
-    def test_test_models_logs_when_given_dir(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        test_models_log = tmp_path / "test_estimators"
-        Model.test_estimators(
-            test_dataset,
-            [RandomForestClassifier(n_estimators=10), DummyClassifier()],
-            log_dir=str(test_models_log),
-            metrics="accuracy",
+        estimators = prepare_gridsearch_estimators(
+            pipe, params={"clf__penalty": ["l2", "l1"]}
         )
 
-        for file in test_models_log.rglob("*.yaml"):
-            with file.open() as f:
-                result = yaml.safe_load(f)
-                model_name = result["model_name"]
-                assert model_name in {
-                    "IrisData_RandomForestClassifier",
-                    "IrisData_DummyClassifier",
-                }
-
-    def test_train_model_errors_correct_when_not_scored(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-
-        model = Model(pipeline_logistic)
-        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
-            with model.log(str(tmp_path)):
-                model.train_estimator(test_dataset)
-                model.save_estimator(FileStorage(tmp_path))
-
-    def test_dump_serializes_correctly_without_pipeline(self, regression: Model):
-        serialized_model = regression.to_dict()
-        expected = [
-            {
-                "module": "sklearn.linear_model.base",
-                "classname": "LinearRegression",
-                "params": {
-                    "copy_X": True,
-                    "fit_intercept": True,
-                    "n_jobs": None,
-                    "normalize": False,
-                },
-            }
-        ]
-
-        assert serialized_model == expected
-
-    def test_dump_serializes_correctly_with_pipeline(self, pipeline_linear: Pipeline):
-        serialized_model = Model(pipeline_linear).to_dict()
-        expected = [
-            {
-                "name": "scale",
-                "module": "sklearn.preprocessing.data",
-                "classname": "StandardScaler",
-                "params": {"copy": True, "with_mean": True, "with_std": True},
-            },
-            {
-                "name": "clf",
-                "module": "sklearn.linear_model.base",
-                "classname": "LinearRegression",
-                "params": {
-                    "copy_X": True,
-                    "fit_intercept": True,
-                    "n_jobs": None,
-                    "normalize": False,
-                },
-            },
-        ]
-
-        assert serialized_model == expected
-
-    def test_to_dict_serializes_correctly_with_feature_union(
-        self, feature_union_classifier: DFFeatureUnion
-    ):
-        model = Model(feature_union_classifier)
-        result = model.to_dict()
-        assert len(result) == 2
-        union = result[0]
-        assert union["name"] == "features"
-        assert len(union["params"]) == 2
-        pipe1 = union["params"][0]
-        pipe2 = union["params"][1]
-
-        assert pipe1[0]["name"] == "select"
-        assert pipe1[0]["params"] == {
-            "columns": ["sepal length (cm)", "sepal width (cm)"]
-        }
-        assert pipe1[1]["name"] == "scale"
-        assert pipe1[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
-
-        assert pipe2[0]["name"] == "select"
-        assert pipe2[0]["params"] == {
-            "columns": ["petal length (cm)", "petal width (cm)"]
-        }
-        assert pipe2[1]["name"] == "scale"
-        assert pipe2[1]["params"] == {"copy": True, "with_mean": True, "with_std": True}
-
-    def test_from_yaml_serializes_correctly_with_feature_union(
-        self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
-    ):
-
-        model = Model(feature_union_classifier)
-        result = model.to_dict()
-
-        log = Log(
-            name="test", metrics=Metrics.from_list(["accuracy"]), estimator=result
-        )
-        log.save_log(tmp_path)
-
-        new_model = Model.from_yaml(log.output_path)
-
-        assert len(new_model.estimator.steps[0][1].transformer_list) == 2
-        new_steps = new_model.estimator.steps
-        old_steps = model.estimator.steps
-
-        assert new_steps[0][0] == old_steps[0][0]
-        assert isinstance(new_steps[0][1], type(old_steps[0][1]))
-
-        new_union = new_steps[0][1].transformer_list
-        old_union = old_steps[0][1].transformer_list
-
-        assert len(new_union) == len(old_union)
-
-        for new_transform, old_transform in zip(new_union, old_union):
-            assert new_transform.steps[0][0] == old_transform.steps[0][0]
-            assert (
-                new_transform.steps[0][1].get_params()
-                == old_transform.steps[0][1].get_params()
-            )
-
-    def test_can_load_serialized_model_from_pipeline(
-        self, pipeline_linear: Pipeline, tmp_path: pathlib.Path
-    ):
-        model = Model(pipeline_linear)
-        log = Log(
-            name="test",
-            estimator=model.to_dict(),
-            metrics=Metrics([Metric("accuracy", score=1.0)]),
-        )
-        log.save_log(tmp_path)
-        model2 = Model.from_yaml(log.output_path)
-
-        for model1, model2 in zip(model.estimator.steps, model2.estimator.steps):
-            assert model1[0] == model2[0]
-            assert model1[1].get_params() == model2[1].get_params()
-
-    def test_can_load_serialized_model_from_estimator(
-        self, classifier: Model, tmp_path: pathlib.Path
-    ):
-        log = Log(
-            name="test",
-            estimator=classifier.to_dict(),
-            metrics=Metrics([Metric("accuracy", score=1.0)]),
-        )
-        log.save_log(tmp_path)
-        model2 = Model.from_yaml(log.output_path)
-        assert model2.estimator.get_params() == classifier.estimator.get_params()
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            clf = estimator["clf"]
+            assert clf.get_params()["penalty"] == penalty
+            assert hasattr(clf, "coef_") is False
+            assert isinstance(clf, LogisticRegression)
 
     def test_gridsearch_uses_default_metric(
         self, classifier: Model, test_dataset: Dataset
@@ -577,3 +668,12 @@ class TestBaseClass:
             assert "roc_auc" in result.metrics
             assert result.metrics.name == "accuracy"
             assert result.metrics.score == result.metrics[0].score
+
+    def test_gridsearch_can_log_with_context_manager(
+        self, feature_union_classifier, test_dataset: Dataset
+    ):
+        classifier = Model(feature_union_classifier)
+        with classifier.log("gridsearch_union_test"):
+            _, _ = classifier.gridsearch(
+                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            )

@@ -17,6 +17,8 @@ Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
 logger = logging.getLogger("ml_tooling")
 
+logger = logging.getLogger("ml_tooling")
+
 
 class MLToolingError(Exception):
     """Error which occurs when using ML Tooling"""
@@ -26,7 +28,7 @@ class TransformerError(MLToolingError):
     """Error which occurs during a transform"""
 
 
-class DataSetError(MLToolingError):
+class DatasetError(MLToolingError):
     """Error which occurs when using a DataSet"""
 
 
@@ -177,7 +179,7 @@ def is_pipeline(estimator: Estimator):
 
 
 def import_pipeline_step(
-    definition: dict
+    definition: dict,
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Hydrates a class based on a dictionary definition, importing the module
@@ -200,11 +202,15 @@ def import_pipeline_step(
 
     if definition["classname"] == "DFFeatureUnion":
         transformer_list = [
-            Pipeline([import_pipeline_step(step) for step in pipeline])
-            for pipeline in definition["params"]
+            import_pipeline_step(transformer) for transformer in definition["params"]
         ]
         class_ = getattr(module, definition["classname"])(transformer_list)
 
+    elif definition["classname"] == "Pipeline":
+        steps = [
+            import_pipeline_step(transformer) for transformer in definition["params"]
+        ]
+        class_ = getattr(module, definition["classname"])(steps=steps)
     else:
         class_ = getattr(module, definition["classname"])()
         class_ = class_.set_params(**definition["params"])
@@ -227,17 +233,43 @@ def serialize_pipeline(pipe: Pipeline) -> List[dict]:
     -------
     List of dicts
     """
-    return [
-        {
-            "name": step[0],
-            "module": step[1].__class__.__module__,
-            "classname": step[1].__class__.__name__,
-            "params": [serialize_pipeline(s) for s in step[1].transformer_list]
-            if hasattr(step[1], "transformer_list")
-            else step[1].get_params(),
-        }
-        for step in pipe.steps
-    ]
+
+    def extract_params(transformer):
+        """
+
+        :param element:
+            (`name`, `transformer`) tuple where `transfomer` has the
+            attribute `transformer_list`, `steps` or
+            have the method `get_params`.
+        :return:
+        """
+        if hasattr(transformer[1], "transformer_list"):
+            extract = [
+                serialize_pipeline(s)[0] for s in transformer[1].transformer_list
+            ]
+        elif hasattr(transformer[1], "steps"):
+            extract = [serialize_pipeline(s)[0] for s in transformer[1].steps]
+        else:
+            extract = transformer[1].get_params()
+        return extract
+
+    if isinstance(pipe, tuple):
+        transformer_list = [pipe]
+    else:
+        transformer_list = pipe.steps
+
+    return_list = []
+
+    for transformer in transformer_list:
+        name = transformer[0]
+        module = transformer[1].__class__.__module__
+        classname = transformer[1].__class__.__name__
+        params = extract_params(transformer)
+
+        return_list.append(
+            {"name": name, "module": module, "classname": classname, "params": params}
+        )
+    return return_list
 
 
 def make_dir(path: pathlib.Path) -> pathlib.Path:
@@ -261,3 +293,29 @@ def make_dir(path: pathlib.Path) -> pathlib.Path:
         path.mkdir(parents=True)
 
     return path
+
+
+def find_setup_file(path, level, max_level):
+    if level > max_level:
+        raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
+    if path.joinpath("setup.py").exists():
+        return path
+
+    return find_setup_file(path.parent, level + 1, max_level)
+
+
+def find_src_dir(path=None, max_level=2):
+    current_path = pathlib.Path.cwd() if path is None else path
+    setup_path = find_setup_file(current_path, 0, max_level)
+
+    output_folder = setup_path / "src"
+    if not output_folder.exists():
+        raise MLToolingError("Project must have a src folder!")
+    # Make sure there's an __init__ file in the project
+    for child in output_folder.glob("*"):
+        if child.joinpath("__init__.py").exists():
+            return child
+
+    raise MLToolingError(
+        f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
+    )

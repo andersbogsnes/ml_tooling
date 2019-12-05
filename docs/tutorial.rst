@@ -64,6 +64,11 @@ each other using different metrics. The best estimator is then picked using the 
     ...               RandomForestClassifier(n_estimators=10, random_state=42),
     ...               DummyClassifier(random_state=42)]
     >>> best_model, results = Model.test_estimators(data, estimators, metrics=['accuracy', 'roc_auc'], cv=10)
+
+We can see that the results are sorted and shows us a nice repr of each model's performance
+
+.. code-block:: python
+
     >>> results
     ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95, 'roc_auc': 0.98}>, <Result LogisticRegression: {'accuracy': 0.71, 'roc_auc': 0.79}>, <Result DummyClassifier: {'accuracy': 0.55, 'roc_auc': 0.52}>])
 

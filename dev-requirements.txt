@@ -28,8 +28,8 @@ pandas==0.25.3
 pluggy==0.13.0            # via pytest, tox
 pre-commit==1.20.0
 py==1.8.0                 # via pytest, tox
+pytest==5.3.1
 pyparsing==2.4.5
-pytest==5.1.2
 python-dateutil==2.8.1
 pytz==2019.3
 pyyaml==5.2

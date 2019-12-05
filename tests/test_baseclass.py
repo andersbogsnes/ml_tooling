@@ -7,7 +7,7 @@ import pytest
 import yaml
 import datetime
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -21,7 +21,7 @@ from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
-from ml_tooling.utils import MLToolingError
+from ml_tooling.utils import MLToolingError, DatasetError
 
 
 class TestBaseClass:
@@ -37,26 +37,6 @@ class TestBaseClass:
 
         pipeline = Model(pipeline_linear)
         assert pipeline.is_pipeline is True
-
-    def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset)
-
-        assert result.metrics.name == "accuracy"
-
-    def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
-        model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset, metrics="roc_auc")
-
-        assert result.metrics.name == "roc_auc"
-
-    def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
-        model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
-
-        assert len(result.metrics) == 2
-        assert "accuracy" in result.metrics
-        assert "roc_auc" in result.metrics
 
     def test_instantiate_model_with_non_estimator_pipeline_fails(self):
         example_pipe = Pipeline([("scale", DFStandardScaler)])
@@ -128,12 +108,6 @@ class TestBaseClass:
             start=expected_index, stop=expected_index + 1, step=1
         )
 
-    def test_score_estimator_fails_if_no_train_test_data_available(self, base_dataset):
-        model = Model(LinearRegression())
-
-        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(base_dataset())
-
     def test_default_metric_getter_works_as_expected_classifier(self):
         rf = Model(RandomForestClassifier(n_estimators=10))
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
@@ -181,36 +155,6 @@ class TestBaseClass:
         assert "neg_mean_squared_error" == linreg.default_metric
         logreg.reset_config()
         linreg.reset_config()
-
-    def test_train_model_sets_result_to_none(
-        self, regression: Model, test_dataset: Dataset
-    ):
-        assert regression.result is not None
-        regression.train_estimator(test_dataset)
-        assert regression.result is None
-
-    def test_train_model_followed_by_score_model_returns_correctly(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        model.train_estimator(test_dataset)
-        model.score_estimator(test_dataset)
-
-        assert isinstance(model.result, Result)
-
-    def test_model_selection_works_as_expected(self, test_dataset: Dataset):
-        models = [
-            LogisticRegression(solver="liblinear"),
-            RandomForestClassifier(n_estimators=10),
-        ]
-        best_model, results = Model.test_estimators(
-            test_dataset, models, metrics="accuracy"
-        )
-        assert models[1] is best_model.estimator
-        assert 2 == len(results)
-        assert results[0].metrics[0].score >= results[1].metrics[0].score
-        for result in results:
-            assert isinstance(result, Result)
 
     def test_regression_model_can_be_saved(
         self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
@@ -269,55 +213,10 @@ class TestBaseClass:
     def test_can_load_production_estimator(
         self, mock_path: MagicMock, open_estimator_pickle
     ):
-        mock_path.return_value.__enter__.return_value = open_estimator_pickle
+        mock_path.return_value.__enter__.return_value = open_estimator_pickle()
         model = Model.load_production_estimator("test")
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)
-
-    def test_gridsearch_model_returns_as_expected(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-    def test_gridsearch_model_does_not_fail_when_run_twice(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
-    ):
-        model = Model(pipeline_logistic)
-        best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(best_model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-        best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-        )
-        assert isinstance(best_model.estimator, Pipeline)
-        assert 2 == len(results)
-
-        for result in results:
-            assert isinstance(result, Result)
-
-    def test_fit_gridpoint_returns_new_estimator(self, test_dataset: Dataset):
-        estimators = prepare_gridsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            assert estimator.get_params()["penalty"] == penalty
-            assert hasattr(estimator, "coef_") is False
-            assert isinstance(estimator, LogisticRegression)
 
     def test_log_context_manager_works_as_expected(self, regression: Model):
         assert regression.config.LOG is False
@@ -347,22 +246,6 @@ class TestBaseClass:
             assert result.metrics.score == log_result["metrics"]["r2"]
             assert result.model.estimator_name == log_result["estimator_name"]
 
-    def test_log_context_manager_logs_when_gridsearching(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-        model = Model(LinearRegression())
-        runs = tmp_path / "runs"
-        with model.log(str(runs)):
-            _, result = model.gridsearch(test_dataset, {"normalize": [True, False]})
-
-        for file in runs.rglob("LinearRegression_*"):
-            with file.open() as f:
-                log_result = yaml.safe_load(f)
-
-            model_results = [round(r.score, 4) for r in result]
-            assert round(log_result["metrics"]["r2"], 4) in model_results
-            assert result.estimator_name == log_result["estimator_name"]
-
     def test_test_models_logs_when_given_dir(
         self, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
@@ -383,21 +266,11 @@ class TestBaseClass:
                     "IrisData_DummyClassifier",
                 }
 
-    def test_train_model_errors_correctly_when_not_scored(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
-    ):
-
-        model = Model(pipeline_logistic)
-        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
-            with model.log(str(tmp_path)):
-                model.train_estimator(test_dataset)
-                model.save_estimator(FileStorage(tmp_path))
-
     def test_dump_serializes_correctly_without_pipeline(self, regression: Model):
         serialized_model = regression.to_dict()
         expected = [
             {
-                "module": "sklearn.linear_model.base",
+                "module": "sklearn.linear_model._base",
                 "classname": "LinearRegression",
                 "params": {
                     "copy_X": True,
@@ -415,13 +288,13 @@ class TestBaseClass:
         expected = [
             {
                 "name": "scale",
-                "module": "sklearn.preprocessing.data",
+                "module": "sklearn.preprocessing._data",
                 "classname": "StandardScaler",
                 "params": {"copy": True, "with_mean": True, "with_std": True},
             },
             {
                 "name": "clf",
-                "module": "sklearn.linear_model.base",
+                "module": "sklearn.linear_model._base",
                 "classname": "LinearRegression",
                 "params": {
                     "copy_X": True,
@@ -535,49 +408,105 @@ class TestBaseClass:
         model2 = Model.from_yaml(log.output_path)
         assert model2.estimator.get_params() == classifier.estimator.get_params()
 
-    def test_gridsearch_uses_default_metric(
-        self, classifier: Model, test_dataset: Dataset
+
+class TestTrainEstimator:
+    def test_train_model_sets_result_to_none(
+        self, regression: Model, test_dataset: Dataset
     ):
-        model, results = classifier.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
-        )
+        assert regression.result is not None
+        regression.train_estimator(test_dataset)
+        assert regression.result is None
 
-        assert len(results) == 2
-        assert results[0].metrics.score >= results[1].metrics.score
-        assert results[0].metrics.name == "accuracy"
-
-        assert isinstance(model, Model)
-
-    def test_gridsearch_can_take_multiple_metrics(
-        self, classifier: Model, test_dataset: Dataset
+    def test_train_model_followed_by_score_model_returns_correctly(
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
     ):
-        model, results = classifier.gridsearch(
-            test_dataset,
-            param_grid={"penalty": ["l1", "l2"]},
-            metrics=["accuracy", "roc_auc"],
-        )
+        model = Model(pipeline_logistic)
+        model.train_estimator(test_dataset)
+        model.score_estimator(test_dataset)
 
-        assert len(results) == 2
-        assert results[0].metrics.score >= results[1].metrics.score
+        assert isinstance(model.result, Result)
 
-        for result in results:
-            assert len(result.metrics) == 2
-            assert "accuracy" in result.metrics
-            assert "roc_auc" in result.metrics
-            assert result.metrics.name == "accuracy"
-            assert result.metrics.score == result.metrics[0].score
-
-    def test_gridsearch_can_log_with_context_manager(
-        self, feature_union_classifier, test_dataset: Dataset
+    def test_train_model_errors_correctly_when_not_scored(
+        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
     ):
-        classifier = Model(feature_union_classifier)
-        with classifier.log("gridsearch_union_test"):
-            _, _ = classifier.gridsearch(
-                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
-            )
+        model = Model(pipeline_logistic)
+        with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
+            with model.log(str(tmp_path)):
+                model.train_estimator(test_dataset)
+                model.save_estimator(FileStorage(tmp_path))
+
+    def test_can_score_estimator_with_no_y_value(self):
+        class DummyEstimator(BaseEstimator, RegressorMixin):
+            def __init__(self):
+                self.average = None
+
+            def fit(self, x, y=None):
+                self.average = np.mean(x, axis=1)
+                return self
+
+            def predict(self, x):
+                return self.average
+
+        class DummyData(Dataset):
+            def load_training_data(self):
+                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]]), None
+
+            def load_prediction_data(self, *args, **kwargs):
+                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]])
+
+        model = Model(DummyEstimator())
+        data = DummyData()
+        model.train_estimator(data)
+
+        assert np.all(np.isclose(model.estimator.average, np.array([2.5, 5.5])))
+
+        with pytest.raises(DatasetError, match="The dataset does not define a y value"):
+            data.create_train_test()
+
+
+class TestScoreEstimator:
+    def test_score_estimator_fails_if_no_train_test_data_available(self, base_dataset):
+        model = Model(LinearRegression())
+
+        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
+            model.score_estimator(base_dataset())
+
+    def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset, metrics="roc_auc")
+
+        assert result.metrics.name == "roc_auc"
+
+    def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset)
+
+        assert result.metrics.name == "accuracy"
+
+    def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
+
+        assert len(result.metrics) == 2
+        assert "accuracy" in result.metrics
+        assert "roc_auc" in result.metrics
 
 
 class TestModelSelection:
+    def test_model_selection_works_as_expected(self, test_dataset: Dataset):
+        models = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=10),
+        ]
+        best_model, results = Model.test_estimators(
+            test_dataset, models, metrics="accuracy"
+        )
+        assert models[1] is best_model.estimator
+        assert 2 == len(results)
+        assert results[0].metrics[0].score >= results[1].metrics[0].score
+        for result in results:
+            assert isinstance(result, Result)
+
     def test_model_selection_works_with_default_metric(self, test_dataset: Dataset):
         models = [
             LogisticRegression(solver="liblinear"),
@@ -647,3 +576,104 @@ class TestModelSelection:
         )
 
         assert (model.coef_ == model2.estimator.coef_).all()
+
+
+class TestGridSearch:
+    def test_gridsearch_model_returns_as_expected(
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_gridsearch_model_does_not_fail_when_run_twice(
+        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+    ):
+        model = Model(pipeline_logistic)
+        best_model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+        best_model, results = model.gridsearch(
+            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_prepare_gridsearch_estimators_has_different_parameters(self):
+        estimators = prepare_gridsearch_estimators(
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            assert estimator.get_params()["penalty"] == penalty
+            assert hasattr(estimator, "coef_") is False
+            assert isinstance(estimator, LogisticRegression)
+
+    def test_prepare_gridsearch_estimators_in_pipeline_has_different_parameters(self):
+        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
+
+        estimators = prepare_gridsearch_estimators(
+            pipe, params={"clf__penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            clf = estimator["clf"]
+            assert clf.get_params()["penalty"] == penalty
+            assert hasattr(clf, "coef_") is False
+            assert isinstance(clf, LogisticRegression)
+
+    def test_gridsearch_uses_default_metric(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_gridsearch_can_take_multiple_metrics(
+        self, classifier: Model, test_dataset: Dataset
+    ):
+        model, results = classifier.gridsearch(
+            test_dataset,
+            param_grid={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
+
+    def test_gridsearch_can_log_with_context_manager(
+        self, feature_union_classifier, test_dataset: Dataset
+    ):
+        classifier = Model(feature_union_classifier)
+        with classifier.log("gridsearch_union_test"):
+            _, _ = classifier.gridsearch(
+                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            )

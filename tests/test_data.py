@@ -1,7 +1,7 @@
 import pytest
 
 from ml_tooling.data import SQLDataset, Dataset
-from ml_tooling.utils import DataSetError
+from ml_tooling.utils import DatasetError
 
 
 def test_repr_is_correct(test_dataset):
@@ -43,9 +43,9 @@ def test_sqldataset_can_be_instantiated_with_engine_string():
 
 
 def test_cant_modify_x_and_y(test_dataset):
-    with pytest.raises(DataSetError, match="Trying to modify x - x is immutable"):
+    with pytest.raises(DatasetError, match="Trying to modify x - x is immutable"):
         test_dataset.x = "testx"
-    with pytest.raises(DataSetError, match="Trying to modify y - y is immutable"):
+    with pytest.raises(DatasetError, match="Trying to modify y - y is immutable"):
         test_dataset.y = "testy"
 
 

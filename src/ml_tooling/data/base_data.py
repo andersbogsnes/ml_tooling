@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from ml_tooling.utils import DataType, DataSetError
+from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
 
 
@@ -46,6 +46,11 @@ class Dataset(metaclass=abc.ABCMeta):
         -------
         self
         """
+        if self.y is None:
+            raise DatasetError(
+                "The dataset does not define a y value"
+                " - cannot create a train-test split"
+            )
 
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
             self.x,
@@ -65,7 +70,7 @@ class Dataset(metaclass=abc.ABCMeta):
 
     @x.setter
     def x(self, data):
-        raise DataSetError("Trying to modify x - x is immutable")
+        raise DatasetError("Trying to modify x - x is immutable")
 
     @property
     def y(self):
@@ -75,7 +80,7 @@ class Dataset(metaclass=abc.ABCMeta):
 
     @y.setter
     def y(self, data):
-        raise DataSetError("Trying to modify y - y is immutable")
+        raise DatasetError("Trying to modify y - y is immutable")
 
     @property
     def has_validation_set(self):

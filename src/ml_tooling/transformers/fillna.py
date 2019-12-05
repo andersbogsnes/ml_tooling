@@ -27,7 +27,7 @@ class FillNA(BaseEstimator, TransformerMixin):
             "min": pd.DataFrame.min,
         }
 
-    def _validate_input(self):
+    def _validate_parameters(self):
 
         if self.value is None and self.strategy is None:
             raise TransformerError(
@@ -52,11 +52,19 @@ class FillNA(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
 
-        self._validate_input()
+        self._validate_parameters()
 
         if self.strategy:
             impute_values = self.func_map_[self.strategy](X)
-            self.value_map_ = {col: impute_values[col] for col in X.columns}
+            try:
+                self.value_map_ = {col: impute_values[col] for col in X.columns}
+            except KeyError:
+                missing_cols = set(X.columns) - set(impute_values.index)
+                message = (
+                    f"{', '.join(missing_cols)} column/columns "
+                    f"have invalid types for strategy = {self.strategy}"
+                )
+                raise TransformerError(message) from None
 
         else:
             self.value_map_ = {col: self.value for col in X.columns}

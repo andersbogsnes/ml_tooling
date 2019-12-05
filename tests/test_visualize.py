@@ -3,6 +3,7 @@ Test file for visualisations
 """
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
@@ -228,6 +229,37 @@ class TestFeatureImportancePlot:
         assert "Feature Importance - RandomForestClassifier" == ax.title._text
         assert 4 == len(ax.get_yticklabels())
         plt.close()
+
+    def test_feature_importance_doesnt_error_in_on_large_datasets(
+        self, test_dataset: Dataset
+    ):
+        """
+        When joblib.Parallel receives data that is larger than a given size, it will do a read-only
+        memmap on the data.
+
+        scikit-learn's permutation importance implementation modifies the object,
+        resulting in an error.
+
+        This test replicates the error by creating a large DataFrame
+        """
+
+        # Make a new dataset with lots of rows to trigger the joblib.Parallel error
+        class IrisData(Dataset):
+            def load_training_data(self):
+                data = load_iris()
+                return (
+                    pd.DataFrame(
+                        data=data.data.repeat(1000, axis=0), columns=data.feature_names
+                    ),
+                    data.target.repeat(1000),
+                )
+
+            def load_prediction_data(self):
+                pass
+
+        data = IrisData().create_train_test()
+        result = Model(RandomForestClassifier(n_estimators=2)).score_estimator(data)
+        assert result.plot.feature_importance()
 
 
 class TestLiftCurvePlot:

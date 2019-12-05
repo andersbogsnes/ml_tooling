@@ -22,7 +22,7 @@ from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DataSetError,
+    DatasetError,
     Estimator,
     is_pipeline,
     serialize_pipeline,
@@ -397,7 +397,7 @@ class Model:
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DataSetError("Must run create_train_test first!")
+            raise DatasetError("Must run create_train_test first!")
 
         self.estimator.fit(data.train_x, data.train_y)
 

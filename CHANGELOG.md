@@ -4,6 +4,8 @@
 - Bug fix when using default metric in `test_estimators`
 - Bug fix when gridsearching, only applying last change
 - Add nicer error message when passing incorrect dtypes to FillNA
+- Storage .save method now only takes filename as parameter
+- Handles storage loading of paths outputted from the Storage .get_list method
 - Handles case when Dataset does not have a `y` value
 
 # v0.9.1

@@ -55,7 +55,9 @@ def pipeline_linear() -> Pipeline:
 
 @pytest.fixture
 def pipeline_dummy_classifier() -> Pipeline:
-    pipe = Pipeline([("scale", DFStandardScaler()), ("clf", DummyClassifier(strategy="prior"))])
+    pipe = Pipeline(
+        [("scale", DFStandardScaler()), ("clf", DummyClassifier(strategy="prior"))]
+    )
     return pipe
 
 

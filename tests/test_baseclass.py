@@ -252,7 +252,10 @@ class TestBaseClass:
         test_models_log = tmp_path / "test_estimators"
         Model.test_estimators(
             test_dataset,
-            [RandomForestClassifier(n_estimators=10), DummyClassifier()],
+            [
+                RandomForestClassifier(n_estimators=10),
+                DummyClassifier(strategy="prior"),
+            ],
             log_dir=str(test_models_log),
             metrics="accuracy",
         )

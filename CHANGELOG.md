@@ -1,5 +1,4 @@
-# v0.9.2
-- Bug fix for logging when feature unions (DFFeatureUnion) had tuples
+# v0.9.3
 - Bug fix for calculating feature importance when passing large amounts of data
 - Bug fix when using default metric in `test_estimators`
 - Bug fix when gridsearching, only applying last change
@@ -7,6 +6,10 @@
 - Storage .save method now only takes filename as parameter
 - Handles storage loading of paths outputted from the Storage .get_list method
 - Handles case when Dataset does not have a `y` value
+- Added `plot_learning_curve` and corresponding `result.plot.learning_curve`
+
+# v0.9.2
+  - Bug fix for logging when feature unions (DFFeatureUnion) had tuples
 
 # v0.9.1
 - Hot fix python version to 3.7

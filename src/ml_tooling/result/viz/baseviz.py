@@ -115,7 +115,7 @@ class BaseVisualize:
         **kwargs,
     ) -> plt.Axes:
         """
-        Generates a :ref:`~sklearn.model_selection.learning_curve` plot,
+        Generates a :func:`~sklearn.model_selection.learning_curve` plot,
         used to determine model performance as a function of number of training examples.
 
         Illustrates whether or not number of training examples is the performance bottleneck.

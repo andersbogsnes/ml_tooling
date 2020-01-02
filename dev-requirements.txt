@@ -42,7 +42,7 @@ toml==0.10.0              # via pre-commit, tox
 virtualenv==16.7.9        # via pre-commit, tox
 urllib3==1.25.7           # via requests
 tox==3.14.3
-wcwidth==0.1.7            # via pytest
+wcwidth==0.1.8            # via pytest
 zipp==0.6.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:

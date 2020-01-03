@@ -31,7 +31,8 @@ class TestVisualize:
         assert isinstance(result.plot, ClassificationVisualize)
 
     @pytest.mark.parametrize(
-        "attr", ["residuals", "prediction_error", "feature_importance"]
+        "attr",
+        ["residuals", "prediction_error", "feature_importance", "learning_curve"],
     )
     def test_regression_visualize_has_all_plots(self, attr: str, regression: Model):
         result = regression.result.plot
@@ -47,6 +48,7 @@ class TestVisualize:
             "lift_curve",
             "feature_importance",
             "pr_curve",
+            "learning_curve",
         ],
     )
     def test_classifier_visualize_has_all_plots(self, attr: str, classifier: Model):
@@ -374,7 +376,7 @@ class TestPRCurve:
 
         precision, recall, _ = precision_recall_curve(y, y_proba)
 
-        assert "Precision-Recall - LogisticRegression" == ax.title._text
+        assert "Precision-Recall - LogisticRegression" == ax.title.get_text()
         assert "Precision" == ax.get_ylabel()
         assert "Recall" == ax.get_xlabel()
         assert np.all(recall == ax.lines[0].get_xdata())
@@ -395,6 +397,35 @@ class TestPRCurve:
 
         assert ax is plot_pr_curve(y, y_proba, ax=ax)
         plt.close()
+
+
+class TestLearningCurve:
+    def test_learning_curve_plots_can_be_given_an_ax(self, classifier: Model):
+        fig, ax = plt.subplots()
+        test_ax = classifier.result.plot.learning_curve(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_learning_curve_plots_have_correct_elements(self, classifier: Model):
+        test_ax = classifier.result.plot.learning_curve()
+        assert test_ax.title.get_text() == "Learning Curve - LogisticRegression"
+        assert test_ax.get_ylabel() == "Accuracy Score"
+        assert test_ax.get_xlabel() == "Number of Examples Used"
+        assert test_ax.get_legend().texts[0].get_text() == "Training Accuracy"
+        assert test_ax.get_legend().texts[1].get_text() == "Cross-validated Accuracy"
+        # We have 5 CV folds, so 4/5ths of the data will be used
+        assert (
+            test_ax.lines[0].get_xdata().max()
+            == (len(classifier.result.data.train_x) * 4) // 5
+        )
+
+    def test_learning_curve_can_use_different_scoring_parameters(
+        self, classifier: Model
+    ):
+        test_ax = classifier.result.plot.learning_curve(scoring="roc_auc")
+        assert test_ax.get_ylabel() == "Roc_Auc Score"
+        assert test_ax.get_legend().texts[0].get_text() == "Training Roc_Auc"
+        assert test_ax.get_legend().texts[1].get_text() == "Cross-validated Roc_Auc"
 
 
 class TestValidationCurve:

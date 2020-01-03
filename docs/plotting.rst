@@ -32,6 +32,14 @@ To use the visualizations, access them using the `.plot` accessor on the
 
     >>> result.plot.residuals()
 
+.. code-block:: python
+
+    >>> result.plot.learning_curve()
+
+.. plot::
+
+    >>> result.plot.learning_curve()
+
 Any visualization listed here also has a functional counterpart in :mod:`ml_tooling.plots`.
 E.g if you want to use the function for plotting a confusion matrix without using
 the :class:`~ml_tooling.result.Result` class
@@ -67,6 +75,11 @@ Available Base plots
 - :meth:`~RegressionVisualize.feature_importance`
     Uses random permutation to calculate feature importance by randomly permuting each column
     and measuring the difference in the model metric against the baseline.
+
+- :meth:`~RegressionVisualize.learning_curve`
+    Draws a learning curve, showing how number of training examples affects model performance.
+    Can also be used to diagnose overfitting and underfitting by examining training and validation
+    set performance
 
 - :meth:`~RegressionVisualize.validation_curve`
     Visualizes the impact of a given hyperparameter on the model metric by plotting a range

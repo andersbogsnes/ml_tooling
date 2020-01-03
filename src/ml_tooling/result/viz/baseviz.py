@@ -1,10 +1,15 @@
 from typing import Union, Sequence
 
+import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from ml_tooling.metrics.permutation_importance import permutation_importance
-from ml_tooling.plots import plot_feature_importance, plot_validation_curve
+from ml_tooling.plots import (
+    plot_feature_importance,
+    plot_learning_curve,
+    plot_validation_curve,
+)
 from ml_tooling.utils import _get_estimator_name
 from sklearn.base import is_classifier
 
@@ -105,6 +110,63 @@ class BaseVisualize:
                 **kwargs,
             )
 
+    def learning_curve(
+        self,
+        cv: int = 5,
+        scoring: str = "default",
+        n_jobs: int = None,
+        train_sizes: Sequence[float] = np.linspace(0.1, 1.0, 5),
+        ax: Axes = None,
+        **kwargs,
+    ) -> plt.Axes:
+        """
+        Generates a :func:`~sklearn.model_selection.learning_curve` plot,
+        used to determine model performance as a function of number of training examples.
+
+        Illustrates whether or not number of training examples is the performance bottleneck.
+        Also used to diagnose underfitting or overfitting,
+        by seeing how the training set and validation set performance differ.
+
+        Parameters
+        ----------
+        cv: int
+            Number of CV iterations to run
+        scoring: str
+            Metric to use in scoring - must be a scikit-learn compatible
+            :ref:`scoring method<sklearn:scoring_parameter>`
+        n_jobs: int
+            Number of jobs to use in parallelizing the estimator fitting and scoring
+        train_sizes: Sequence of floats
+            Percentage intervals of data to use when training
+        ax: plt.Axes
+            The plot will be drawn on the passed ax - otherwise a new figure and ax will be created.
+        kwargs: dict
+            Passed along to matplotlib line plots
+
+        Returns
+        -------
+        plt.Axes
+        """
+
+        title = f"Learning Curve - {self._estimator_name}"
+        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
+
+        with plt.style.context(self._config.STYLE_SHEET):
+            ax = plot_learning_curve(
+                estimator=self._estimator,
+                x=self._data.train_x,
+                y=self._data.train_y,
+                cv=cv,
+                scoring=scoring,
+                n_jobs=n_jobs,
+                train_sizes=train_sizes,
+                title=title,
+                ax=ax,
+                **kwargs,
+            )
+
+        return ax
+
     def validation_curve(
         self,
         param_name: str,
@@ -151,13 +213,14 @@ class BaseVisualize:
 
         Returns
         -------
+        plt.Axes
 
         """
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Validation Curve - {self._estimator_name}"
 
         with plt.style.context(self._config.STYLE_SHEET):
-            return plot_validation_curve(
+            ax = plot_validation_curve(
                 self._estimator,
                 x=self._data.train_x,
                 y=self._data.train_y,
@@ -170,3 +233,4 @@ class BaseVisualize:
                 title=title,
                 **kwargs,
             )
+        return ax

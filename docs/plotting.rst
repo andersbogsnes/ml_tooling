@@ -68,6 +68,10 @@ Available Base plots
     Uses random permutation to calculate feature importance by randomly permuting each column
     and measuring the difference in the model metric against the baseline.
 
+- :meth:`~RegressionVisualize.validation_curve`
+    Visualizes the impact of a given hyperparameter on the model metric by plotting a range
+    of different hyperparameter values
+
 Available Classifier plots
 --------------------------
 - :meth:`~ClassificationVisualize.roc_curve`

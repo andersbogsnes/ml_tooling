@@ -17,8 +17,6 @@ Estimator = Union[BaseEstimator, Pipeline]
 Pathlike = Union[str, pathlib.Path]
 logger = logging.getLogger("ml_tooling")
 
-logger = logging.getLogger("ml_tooling")
-
 
 class MLToolingError(Exception):
     """Error which occurs when using ML Tooling"""

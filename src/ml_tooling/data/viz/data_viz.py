@@ -26,10 +26,10 @@ class DataVisualize:
 
         Parameters
         ----------
+
         method: str
             Which method to use when calculating
             correlation. Supports one of 'pearson', 'spearman', 'kendall'.
-
 
         ax: plt.Axes
             Matplotlib axes to draw the graph on. Creates a new one by default

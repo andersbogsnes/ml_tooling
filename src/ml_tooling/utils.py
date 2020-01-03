@@ -333,8 +333,10 @@ def _find_src_dir(path: pathlib.Path = None, max_level: int = 2) -> pathlib.Path
 
     Parameters
     ----------
+
     path: pathlib.Path
         Path to begin the search - defaults to current working directory
+
     max_level: int
         How many levels of the file hierarchy to search.
         Too high risks finding unrelated projects,

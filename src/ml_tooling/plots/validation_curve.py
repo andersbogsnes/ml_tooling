@@ -7,11 +7,11 @@ from matplotlib.axes import Axes
 from sklearn.base import is_classifier
 from sklearn.model_selection import validation_curve
 
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, Estimator
 
 
 def plot_validation_curve(
-    estimator,
+    estimator: Estimator,
     x: pd.DataFrame,
     y: DataType,
     param_name: str,

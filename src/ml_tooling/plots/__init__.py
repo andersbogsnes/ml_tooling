@@ -7,6 +7,7 @@ from .residuals import plot_residuals
 from .roc_auc import plot_roc_auc
 from .precision_recall_curve import plot_pr_curve
 from .learning_curve import plot_learning_curve
+from .validation_curve import plot_validation_curve
 
 __all__ = [
     "plot_confusion_matrix",
@@ -18,4 +19,5 @@ __all__ = [
     "plot_roc_auc",
     "plot_pr_curve",
     "plot_learning_curve",
+    "plot_validation_curve",
 ]

@@ -5,8 +5,9 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from ml_tooling.metrics.permutation_importance import permutation_importance
-from ml_tooling.plots import plot_feature_importance, plot_learning_curve
+from ml_tooling.plots import plot_feature_importance, plot_learning_curve, plot_validation_curve
 from ml_tooling.utils import _get_estimator_name
+from sklearn.base import is_classifier
 
 
 class BaseVisualize:
@@ -36,7 +37,7 @@ class BaseVisualize:
 
         return (
             self._config.CLASSIFIER_METRIC
-            if self._estimator._estimator_type == "classifier"
+            if is_classifier(self._estimator)
             else self._config.REGRESSION_METRIC
         )
 
@@ -46,9 +47,9 @@ class BaseVisualize:
         values: bool = True,
         top_n: Union[int, float] = None,
         bottom_n: Union[int, float] = None,
-        n_jobs=None,
+        n_jobs: int = None,
         **kwargs,
-    ) -> plt.Axes:
+    ) -> Axes:
         """
         Visualizes feature importance of the estimator through permutation.
 
@@ -142,6 +143,7 @@ class BaseVisualize:
         -------
         plt.Axes
         """
+        
         title = f"Learning Curve - {self._estimator_name}"
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
 
@@ -159,4 +161,72 @@ class BaseVisualize:
                 **kwargs,
             )
 
+        return ax
+      
+    def validation_curve(
+        self,
+        param_name: str,
+        param_range: Sequence,
+        n_jobs: int = None,
+        cv: int = 5,
+        scoring: str = "default",
+        ax: Axes = None,
+        **kwargs,
+    ) -> Axes:
+        """
+        Generates a :func:`~sklearn.model_selection.validation_curve` plot,
+        graphing the impact of changing a hyperparameter on the scoring metric.
+
+        This lets us examine how a hyperparameter affects
+        over/underfitting by examining train/test performance
+        with different values of the hyperparameter.
+
+        Parameters
+        ----------
+        param_name: str
+            Name of hyperparameter to plot
+
+        param_range: Sequence
+            The individual values to plot for `param_name`
+
+        n_jobs: int
+            Number of jobs to use in parallelizing the estimator fitting and scoring
+
+        cv: int
+            Number of CV iterations to run. Uses a :class:`~sklearn.model_selection.StratifiedKFold`
+            if`estimator` is a classifier - otherwise a :class:`~sklearn.model_selection.KFold`
+            is used.
+
+        scoring: str
+            Metric to use in scoring - must be a scikit-learn compatible
+            :ref:`scoring method<sklearn:scoring_parameter>`
+
+        ax: plt.Axes
+            The plot will be drawn on the passed ax - otherwise a new figure and ax will be created.
+        
+        kwargs: dict
+            Passed along to matplotlib line plots
+        
+        Returns
+        -------
+        plt.Axes
+
+        """
+        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
+        title = f"Validation Curve - {self._estimator_name}"
+
+        with plt.style.context(self._config.STYLE_SHEET):
+            ax = plot_validation_curve(
+                self._estimator,
+                x=self._data.train_x,
+                y=self._data.train_y,
+                param_name=param_name,
+                param_range=param_range,
+                cv=cv,
+                scoring=scoring,
+                n_jobs=n_jobs,
+                ax=ax,
+                title=title,
+                **kwargs,
+            )
         return ax

@@ -81,6 +81,10 @@ Available Base plots
     Can also be used to diagnose overfitting and underfitting by examining training and validation
     set performance
 
+- :meth:`~RegressionVisualize.validation_curve`
+    Visualizes the impact of a given hyperparameter on the model metric by plotting a range
+    of different hyperparameter values
+
 Available Classifier plots
 --------------------------
 - :meth:`~ClassificationVisualize.roc_curve`

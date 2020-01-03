@@ -4,7 +4,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from ml_tooling.metrics.permutation_importance import permutation_importance
 from ml_tooling.plots import (
     plot_feature_importance,
     plot_learning_curve,
@@ -48,10 +47,13 @@ class BaseVisualize:
     def feature_importance(
         self,
         n_repeats: int = 5,
-        values: bool = True,
+        scoring: str = "default",
         top_n: Union[int, float] = None,
         bottom_n: Union[int, float] = None,
+        add_label: bool = True,
         n_jobs: int = None,
+        random_state: int = None,
+        ax: Axes = None,
         **kwargs,
     ) -> Axes:
         """
@@ -62,8 +64,9 @@ class BaseVisualize:
         n_repeats : int
             Number of times to permute a feature
 
-        values : bool
-            Toggles value labels on end of each bar
+        scoring: str
+            Metric to use in scoring - must be a scikit-learn compatible
+            :ref:`scoring method<sklearn:scoring_parameter>`
 
         top_n: int, float
             If top_n is an integer, return top_n features.
@@ -73,12 +76,21 @@ class BaseVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
+        add_label : bool
+            Toggles value labels on end of each bar
+
         n_jobs: int
             Overwrites N_JOBS from settings. Useful if data is to big to fit
             in memory multiple times.
 
+        random_state: int
+            Random state to be used when permuting features,
+
+        ax: Axes
+            Draws graph on passed ax - otherwise creates new ax
+
         kwargs: dict
-            Passed to matplotlib
+            Passed to plt.barh
 
         Returns
         -------
@@ -86,27 +98,23 @@ class BaseVisualize:
         """
 
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
-        title = f"Feature Importance - {self._estimator_name}"
-        result = permutation_importance(
-            estimator=self._estimator,
-            X=self._data.x,
-            y=self._data.y,
-            scoring=self.default_metric,
-            n_repeats=n_repeats,
-            random_state=self._config.RANDOM_STATE,
-            n_jobs=n_jobs,
-        )
-        labels = self._data.train_x.columns
+        scoring = self.default_metric if scoring == "default" else scoring
+        title = f"Feature Importances ({scoring.title()}) - {self._estimator_name}"
 
         with plt.style.context(self._config.STYLE_SHEET):
             return plot_feature_importance(
-                result.importances_mean,
-                labels,
-                values=values,
-                title=title,
-                x_label="Permuted Feature Importance Relative to Baseline",
+                estimator=self._estimator,
+                x=self._data.x,
+                y=self._data.y,
+                scoring=scoring,
+                n_repeats=n_repeats,
+                n_jobs=n_jobs,
+                random_state=random_state,
+                ax=ax,
                 top_n=top_n,
                 bottom_n=bottom_n,
+                add_label=add_label,
+                title=title,
                 **kwargs,
             )
 

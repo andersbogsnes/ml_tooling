@@ -20,7 +20,7 @@ def plot_validation_curve(
     scoring: str = "default",
     n_jobs: int = -1,
     ax: Axes = None,
-    title: str = None,
+    title: str = "",
     **kwargs,
 ) -> Axes:
     """

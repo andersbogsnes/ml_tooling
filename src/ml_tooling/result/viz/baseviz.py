@@ -5,7 +5,11 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
 from ml_tooling.metrics.permutation_importance import permutation_importance
-from ml_tooling.plots import plot_feature_importance, plot_learning_curve, plot_validation_curve
+from ml_tooling.plots import (
+    plot_feature_importance,
+    plot_learning_curve,
+    plot_validation_curve,
+)
 from ml_tooling.utils import _get_estimator_name
 from sklearn.base import is_classifier
 
@@ -143,7 +147,7 @@ class BaseVisualize:
         -------
         plt.Axes
         """
-        
+
         title = f"Learning Curve - {self._estimator_name}"
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
 
@@ -162,7 +166,7 @@ class BaseVisualize:
             )
 
         return ax
-      
+
     def validation_curve(
         self,
         param_name: str,
@@ -203,10 +207,10 @@ class BaseVisualize:
 
         ax: plt.Axes
             The plot will be drawn on the passed ax - otherwise a new figure and ax will be created.
-        
+
         kwargs: dict
             Passed along to matplotlib line plots
-        
+
         Returns
         -------
         plt.Axes

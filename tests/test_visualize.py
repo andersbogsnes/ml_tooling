@@ -39,7 +39,7 @@ class TestVisualize:
         plotter = getattr(result, attr)()
         assert isinstance(plotter, Axes)
         plt.close()
-stable/auto_examples/ensemble/plot_partial_dependence.html#sphx-glr-auto-examples-ensemble-plot-partial-dependence-py
+
     @pytest.mark.parametrize(
         "attr",
         [
@@ -398,6 +398,7 @@ class TestPRCurve:
         assert ax is plot_pr_curve(y, y_proba, ax=ax)
         plt.close()
 
+
 class TestLearningCurve:
     def test_learning_curve_plots_can_be_given_an_ax(self, classifier: Model):
         fig, ax = plt.subplots()
@@ -425,6 +426,7 @@ class TestLearningCurve:
         assert test_ax.get_ylabel() == "Roc_Auc Score"
         assert test_ax.get_legend().texts[0].get_text() == "Training Roc_Auc"
         assert test_ax.get_legend().texts[1].get_text() == "Cross-validated Roc_Auc"
+
 
 class TestValidationCurve:
     def test_validation_curve_plots_can_be_given_an_ax(self, classifier: Model):

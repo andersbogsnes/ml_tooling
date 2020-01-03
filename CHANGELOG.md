@@ -8,6 +8,7 @@
 - Handles case when Dataset does not have a `y` value
 - Added `plot_learning_curve` and corresponding `result.plot.learning_curve`
 - Added `plot_validation_curve` and corresponding `result.plot.validation_curve`
+- Replaced `permutation_importance` with scikit-learn's implementation
 
 
 # v0.9.2

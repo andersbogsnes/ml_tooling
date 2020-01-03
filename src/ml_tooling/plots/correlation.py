@@ -14,6 +14,7 @@ def plot_target_correlation(
     ax: plt.Axes = None,
     top_n: Union[int, float] = None,
     bottom_n: Union[int, float] = None,
+    title: str = "Feature-Target Correlation",
 ) -> plt.Axes:
     """
     Plot the correlation between each feature
@@ -45,12 +46,14 @@ def plot_target_correlation(
         If bottom_n is an integer, return bottom_n features.
         If bottom_n is a float between (0, 1), return bottom_n percent features
 
+    title: str
+        Title of graph
 
     Returns
     -------
     plt.Axes
     """
-    correlation = target_correlation(features, target, method=method, ascending=True)
+    correlation = target_correlation(features, target, method=method)
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -59,7 +62,7 @@ def plot_target_correlation(
         correlation.values,
         correlation.index,
         add_label=True,
-        title="Feature to Target Correlation",
+        title=title,
         x_label=f"{method.title()} Correlation",
         y_label="Feature Labels",
         ax=ax,

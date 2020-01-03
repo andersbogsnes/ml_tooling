@@ -84,8 +84,8 @@ def get_git_hash() -> str:
     try:
         label = (
             subprocess.check_output(["git", "rev-parse", "HEAD"])
-                .strip()
-                .decode("ascii")
+            .strip()
+            .decode("ascii")
         )
     except (OSError, FileNotFoundError):
         warnings.warn("Error using git - is `git` installed?")
@@ -178,7 +178,7 @@ def is_pipeline(estimator: Estimator):
 
 
 def _import_pipeline_step(
-        definition: dict,
+    definition: dict,
 ) -> Union[Tuple[str, BaseEstimator], BaseEstimator]:
     """
     Hydrates a class based on a dictionary definition, importing the module
@@ -232,9 +232,7 @@ def _extract_params(transformer: Tuple[str, Any]) -> Union[List[dict], dict]:
 
     """
     if hasattr(transformer[1], "transformer_list"):
-        extract = [
-            serialize_pipeline(s)[0] for s in transformer[1].transformer_list
-        ]
+        extract = [serialize_pipeline(s)[0] for s in transformer[1].transformer_list]
     elif hasattr(transformer[1], "steps"):
         extract = [serialize_pipeline(s)[0] for s in transformer[1].steps]
     else:
@@ -329,16 +327,18 @@ def _find_setup_file(path: pathlib.Path, level: int, max_level: int) -> pathlib.
 
 def _find_src_dir(path: pathlib.Path = None, max_level: int = 2) -> pathlib.Path:
     """
-    Returns the path to the src dir - recursively searches up the file hierarchy until it finds a src dir
-    and then traverses that to find the module as defined by having an __init__.py file in the root
+    Returns the path to the src dir - recursively searches up the file hierarchy
+    until it finds a src dir and then traverses that to find the module
+    as defined by having an __init__.py file in the root
 
     Parameters
     ----------
     path: pathlib.Path
         Path to begin the search - defaults to current working directory
     max_level: int
-        How many levels of the file hierarchy to search. Too high risks finding unrelated projects, too low
-        risks not navigating high enough to reach top src folder.
+        How many levels of the file hierarchy to search.
+        Too high risks finding unrelated projects,
+        too low risks not navigating high enough to reach top src folder.
 
     Returns
     -------

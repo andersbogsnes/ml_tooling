@@ -43,5 +43,5 @@ def target_correlation(
     return corr[sorted_idx]
 
 
-def multi_collinearity(features: pd.DataFrame, method="pearson"):
+def multi_collinearity(features: pd.DataFrame, method: str = "pearson") -> pd.DataFrame:
     return features.corr(method=method)

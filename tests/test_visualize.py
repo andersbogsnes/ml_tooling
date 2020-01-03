@@ -116,8 +116,8 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.feature_importance(random_state=42)
 
-        expected = {"0.04", "0.08", "-0.03", "0.02"}
-        assert {text._text for text in ax.texts} == expected
+        expected = {"0.01", "0.10", "0.08", "-0.03"}
+        assert {text.get_text() for text in ax.texts} == expected
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -148,7 +148,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(top_n=2, random_state=42)
         assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.04", "0.08"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "0.08"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -166,7 +166,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(top_n=0.2, random_state=42)
         assert len(ax.texts) == 1
-        assert {text.get_text() for text in ax.texts} == {"0.08"}
+        assert {text.get_text() for text in ax.texts} == {"0.10"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -184,7 +184,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=2, random_state=42)
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.02", "-0.03"}
+        assert {text.get_text() for text in ax.texts} == {"0.01", "-0.03"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -202,7 +202,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=0.2, random_state=42)
         assert len(ax.texts) == 1
-        assert {text.get_text() for text in ax.texts} == {"0.02"}
+        assert {text.get_text() for text in ax.texts} == {"0.01"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -222,7 +222,7 @@ class TestFeatureImportancePlot:
             top_n=1, bottom_n=1, random_state=42
         )
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.08", "0.02"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "0.01"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -241,7 +241,7 @@ class TestFeatureImportancePlot:
             top_n=1, bottom_n=0.2, random_state=42
         )
         assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.08", "0.02"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "0.01"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -260,7 +260,7 @@ class TestFeatureImportancePlot:
             top_n=0.2, bottom_n=1, random_state=42
         )
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.02", "0.08"}
+        assert {text.get_text() for text in ax.texts} == {"0.01", "0.10"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()

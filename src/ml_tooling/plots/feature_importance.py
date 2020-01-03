@@ -3,7 +3,7 @@ from typing import Union
 import pandas as pd
 from matplotlib.axes import Axes
 
-from ml_tooling.metrics.permutation_importance import permutation_importance
+from sklearn.inspection import permutation_importance
 from ml_tooling.plots.utils import _plot_barh
 from ml_tooling.utils import DataType
 from sklearn.base import is_classifier

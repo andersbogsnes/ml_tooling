@@ -1,92 +1,55 @@
 from typing import Union
 
-import numpy as np
-from matplotlib import pyplot as plt
+import pandas as pd
 from matplotlib.axes import Axes
 
-from ml_tooling.metrics.utils import _is_percent, _sort_values
-from ml_tooling.plots.utils import _generate_text_labels
+from ml_tooling.metrics.permutation_importance import permutation_importance
+from ml_tooling.plots.utils import _plot_barh
 from ml_tooling.utils import DataType
+from sklearn.base import is_classifier
 
 
 def plot_feature_importance(
-    importance: DataType,
-    labels: DataType,
-    values: bool = None,
-    title: str = None,
-    x_label: str = None,
+    estimator,
+    x: pd.DataFrame,
+    y: DataType,
+    scoring="default",
+    n_repeats: int = 5,
+    n_jobs: int = -1,
+    random_state: int = None,
     ax: Axes = None,
-    top_n: Union[int, float] = None,
     bottom_n: Union[int, float] = None,
+    top_n: Union[int, float] = None,
+    add_label: bool = True,
+    title: str = "",
+    **kwargs,
 ) -> Axes:
-    """
-    Plot a horizontal bar chart of labelled feature importance
+    if scoring == "default":
+        scoring = "accuracy" if is_classifier(estimator) else "r2"
 
-    :param importance:
-        Importance measure - typically feature importance or coefficient
-
-    :param labels:
-        Name of feature
-
-    :param title:
-        Plot title
-
-    :param x_label:
-        Plot x-axis label
-
-    :param values:
-        Add value labels to end of each bar
-
-    :param ax:
-        Pass your own ax
-
-    :param top_n:
-        If top_n is an integer, return top_n features
-        If top_n is a float between 0 and 1, return top_n percent of features
-
-    :param bottom_n:
-        If bottom_n is an integer, return bottom_n features
-        If bottom_n is a float between 0 and 1, return bottom_n percent of features
-
-
-    :return:
-        matplotlib.Axes
-    """
-
-    if ax is None:
-        fig, ax = plt.subplots()
-
-    title = f"Feature Importance" if title is None else title
-
-    if top_n:
-        if _is_percent(top_n):
-            title = f"{title} - Top {top_n:.0%}"
-        else:
-            title = f"{title} - Top {top_n}"
-
-    if bottom_n:
-        if _is_percent(bottom_n):
-            title = f"{title} - Bottom {bottom_n:.0%}"
-        else:
-            title = f"{title} - Bottom {bottom_n}"
-
-    labels, importance = _sort_values(
-        labels, importance, abs_sort=True, top_n=top_n, bottom_n=bottom_n
+    importances = permutation_importance(
+        estimator,
+        x,
+        y,
+        scoring=scoring,
+        n_repeats=n_repeats,
+        n_jobs=n_jobs,
+        random_state=random_state,
     )
-    labels, importance = labels[::-1], importance[::-1]
-    ax.barh(labels, np.abs(importance))
-    ax.set_title(title)
-    ax.set_ylabel("Features")
-    x_label = "Importance" if x_label is None else x_label
-    ax.set_xlabel(x_label)
-    if values:
-        for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
-            ax.annotate(
-                f"{importance[i]:.2f}",
-                (x, y),
-                xytext=(5, 0),
-                textcoords="offset points",
-                va="center",
-            )
 
+    feature_importance = importances.importances_mean
+    labels = x.columns
+    plot_title = title if title else f"Feature Importances ({scoring.title()})"
+    ax = _plot_barh(
+        feature_importance,
+        labels,
+        add_label=add_label,
+        title=plot_title,
+        x_label=f"Permuted Feature Importance ({scoring.title()}) Relative to Baseline",
+        y_label="Feature Labels",
+        ax=ax,
+        top_n=top_n,
+        bottom_n=bottom_n,
+        **kwargs,
+    )
     return ax

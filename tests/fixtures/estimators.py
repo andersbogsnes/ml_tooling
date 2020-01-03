@@ -1,6 +1,10 @@
+from typing import Callable, Optional
+
 import pytest
 import joblib
 import pathlib
+
+from _pytest.fixtures import FixtureRequest
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -93,8 +97,10 @@ def pipeline_forest_classifier() -> Pipeline:
 
 
 @pytest.fixture
-def estimator_pickle_path_factory(test_dataset, tmp_path):
-    def tmp_estimator_pickle_path(filename):
+def estimator_pickle_path_factory(
+    test_dataset: Dataset, tmp_path: pathlib.Path
+) -> Callable[[str], pathlib.Path]:
+    def tmp_estimator_pickle_path(filename: str) -> pathlib.Path:
         file_path = tmp_path / filename
         model = Model(LogisticRegression(solver="liblinear"))
         model.score_estimator(test_dataset)
@@ -105,8 +111,11 @@ def estimator_pickle_path_factory(test_dataset, tmp_path):
 
 
 @pytest.fixture
-def open_estimator_pickle(estimator_pickle_path_factory: pathlib.Path, request):
-    def tmp_open_estimator_pickle(path=None):
+def open_estimator_pickle(
+    estimator_pickle_path_factory: Callable[[str], pathlib.Path],
+    request: FixtureRequest,
+):
+    def tmp_open_estimator_pickle(path: Optional[pathlib.Path] = None):
         if path is None:
             f = estimator_pickle_path_factory("tmp.pkl").open(mode="rb")
         else:

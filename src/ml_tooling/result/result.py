@@ -1,9 +1,15 @@
+from typing import Union
+
 import attr
 
 from ml_tooling.data import Dataset
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.metrics import Metrics
-from ml_tooling.result.viz import create_plotter, BaseVisualize
+from ml_tooling.result.viz import (
+    create_plotter,
+    ClassificationVisualize,
+    RegressionVisualize,
+)
 
 
 @attr.s(repr=False)
@@ -16,7 +22,9 @@ class Result:
     model = attr.ib(eq=False)
     metrics: Metrics = attr.ib()
     data: Dataset = attr.ib(eq=False)
-    plot: BaseVisualize = attr.ib(eq=False, repr=False)
+    plot: Union[ClassificationVisualize, RegressionVisualize] = attr.ib(
+        eq=False, repr=False
+    )
 
     @classmethod
     def from_model(

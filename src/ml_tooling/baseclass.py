@@ -253,7 +253,7 @@ class Model:
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-        x = data.load_prediction_data(*args, **kwargs)
+        x = data._load_prediction_data(*args, **kwargs)
         try:
             if proba:
                 data = self.estimator.predict_proba(x)

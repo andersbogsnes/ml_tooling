@@ -21,6 +21,7 @@ class Dataset(metaclass=abc.ABCMeta):
     test_y: Optional[DataType] = None
     train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
+    cached_data: Optional[pd.DataFrame] = None
     plot: DataVisualize = None
 
     def create_train_test(
@@ -68,7 +69,7 @@ class Dataset(metaclass=abc.ABCMeta):
     @property
     def x(self):
         if self._x is None:
-            self._x, self._y = indexable(*self.load_training_data())
+            self._x, self._y = indexable(*self._load_training_data())
             self.plot = DataVisualize(self)
         return self._x
 
@@ -79,7 +80,7 @@ class Dataset(metaclass=abc.ABCMeta):
     @property
     def y(self):
         if self._y is None:
-            self._x, self._y = indexable(*self.load_training_data())
+            self._x, self._y = indexable(*self._load_training_data())
             self.plot = DataVisualize(self)
         return self._y
 
@@ -102,8 +103,16 @@ class Dataset(metaclass=abc.ABCMeta):
     def class_name(self):
         return self.__class__.__name__
 
+    def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+        return self.load_training_data(*args, **kwargs)
+
+    def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+        pred_data = self.load_prediction_data(*args, **kwargs)
+        self.cached_data = pred_data
+        return pred_data
+
     @abc.abstractmethod
-    def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         """Abstract method to be implemented by user.
         Defines data to be used at training time where X is a dataframe and y is a numpy array
 

@@ -21,4 +21,4 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
             raise ValueError(f"Invalid connection")
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} - SQLDataset>"
+        return f"<{self.__class__.__name__} - SQLDataset {self.engine}>"

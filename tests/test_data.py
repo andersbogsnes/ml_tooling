@@ -25,7 +25,7 @@ def test_sqldataset_y_attribute_access_works_correctly(test_sqldata):
 
 def test_sqldataset_repr_prints_correctly(test_sqldata):
     repr = str(test_sqldata)
-    assert repr == "<BostonData - SQLDataset>"
+    assert repr == "<BostonData - SQLDataset Engine(sqlite:///:memory:)>"
 
 
 def test_sqldataset_can_be_instantiated_with_engine_string():

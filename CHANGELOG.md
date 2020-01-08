@@ -1,4 +1,4 @@
-# v0.9.3
+# v0.10.0
 - Bug fix for calculating feature importance when passing large amounts of data
 - Bug fix when using default metric in `test_estimators`
 - Bug fix when gridsearching, only applying last change

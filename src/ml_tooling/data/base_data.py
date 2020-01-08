@@ -5,11 +5,13 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
+from ml_tooling.data.viz import DataVisualize
 
 
 class Dataset(metaclass=abc.ABCMeta):
     """
-    Baseclass for creating Datasets. Subclass Dataset and provide a :meth:`load_training_data`
+    Baseclass for creating Datasets.
+    Subclass Dataset and provide a :meth:`load_training_data`
     and :meth:`load_prediction_data` method
     """
 
@@ -20,6 +22,7 @@ class Dataset(metaclass=abc.ABCMeta):
     train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
     cached_data: Optional[pd.DataFrame] = None
+    plot: DataVisualize = None
 
     def create_train_test(
         self,
@@ -67,6 +70,7 @@ class Dataset(metaclass=abc.ABCMeta):
     def x(self):
         if self._x is None:
             self._x, self._y = indexable(*self._load_training_data())
+            self.plot = DataVisualize(self)
         return self._x
 
     @x.setter
@@ -77,6 +81,7 @@ class Dataset(metaclass=abc.ABCMeta):
     def y(self):
         if self._y is None:
             self._x, self._y = indexable(*self._load_training_data())
+            self.plot = DataVisualize(self)
         return self._y
 
     @y.setter

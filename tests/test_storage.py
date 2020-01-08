@@ -99,7 +99,7 @@ class TestFileStorage:
         with pytest.raises(TypeError):
             Storage()
 
-    @patch("ml_tooling.storage.file.find_src_dir")
+    @patch("ml_tooling.storage.file._find_src_dir")
     def test_store_prod_flag_overrules_init_(
         self, mock_dir: MagicMock, tmp_path: pathlib.Path, classifier: Model
     ):

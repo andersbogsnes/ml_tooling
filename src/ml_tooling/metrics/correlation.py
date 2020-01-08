@@ -5,13 +5,11 @@ from ml_tooling.utils import DataType
 
 
 def target_correlation(
-    features: pd.DataFrame,
-    target: DataType,
-    method: str = "pearson",
-    ascending: bool = False,
+    features: pd.DataFrame, target: DataType, method: str = "pearson"
 ) -> pd.Series:
     """
     Calculate target_correlation between features and target and returns a sorted pd.Series
+
     Parameters
     ----------
     features: pd.DataFrame
@@ -20,8 +18,6 @@ def target_correlation(
         Target variable
     method: str
         Which correlation to use. One of 'pearson', 'spearman', 'kendall'
-    ascending: bool
-        Whether or not to sort correlations in ascending order
 
     Returns
     -------
@@ -34,14 +30,5 @@ def target_correlation(
         target = pd.Series(target)
 
     corr = features.corrwith(target, method=method)
-
-    if ascending:
-        sorted_idx = np.argsort(corr.abs())
-    else:
-        sorted_idx = np.argsort(corr.abs())[::-1]
-
+    sorted_idx = np.argsort(corr.abs())
     return corr[sorted_idx]
-
-
-def multi_collinearity(features: pd.DataFrame, method="pearson"):
-    return features.corr(method=method)

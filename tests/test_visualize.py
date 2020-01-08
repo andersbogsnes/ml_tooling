@@ -555,3 +555,62 @@ class TestValidationCurve:
         assert test_ax.get_ylabel() == "Roc_Auc Score"
         assert test_ax.get_legend().texts[0].get_text() == "Training Roc_Auc"
         assert test_ax.get_legend().texts[1].get_text() == "Test Roc_Auc"
+
+
+class TestTargetCorrelation:
+    def test_target_correlation_works_as_expected(self, test_dataset: Dataset):
+        ax = test_dataset.plot.target_correlation()
+
+        assert [text.get_text() for text in ax.texts] == [
+            "0.01",
+            "0.02",
+            "0.12",
+            "-0.48",
+        ]
+        assert ax.title.get_text() == "Feature-Target Correlation"
+        assert ax.get_xlabel() == "Spearman Correlation"
+        assert ax.get_ylabel() == "Feature Labels"
+
+    def test_target_correlation_works_with_different_methods(
+        self, test_dataset: Dataset
+    ):
+        ax = test_dataset.plot.target_correlation(method="pearson")
+
+        assert [text.get_text() for text in ax.texts] == [
+            "0.08",
+            "0.12",
+            "0.20",
+            "-0.47",
+        ]
+        assert ax.title.get_text() == "Feature-Target Correlation"
+        assert ax.get_xlabel() == "Pearson Correlation"
+        assert ax.get_ylabel() == "Feature Labels"
+
+    def test_target_correlation_works_with_top_n(self, test_dataset: Dataset):
+        ax = test_dataset.plot.target_correlation(top_n=2)
+        assert [text.get_text() for text in ax.texts] == ["0.12", "-0.48"]
+        assert ax.title.get_text() == "Feature-Target Correlation - Top 2"
+        assert ax.get_xlabel() == "Spearman Correlation"
+        assert ax.get_ylabel() == "Feature Labels"
+
+    def test_target_correlation_works_with_bottom_n(self, test_dataset: Dataset):
+        ax = test_dataset.plot.target_correlation(bottom_n=2)
+        assert [text.get_text() for text in ax.texts] == ["0.01", "0.02"]
+        assert ax.title.get_text() == "Feature-Target Correlation - Bottom 2"
+        assert ax.get_xlabel() == "Spearman Correlation"
+        assert ax.get_ylabel() == "Feature Labels"
+
+    def test_target_correlation_works_with_bottom_n_and_top_n(
+        self, test_dataset: Dataset
+    ):
+        ax = test_dataset.plot.target_correlation(bottom_n=1, top_n=1)
+        assert [text.get_text() for text in ax.texts] == ["0.01", "-0.48"]
+        assert ax.title.get_text() == "Feature-Target Correlation - Top 1 - Bottom 1"
+        assert ax.get_xlabel() == "Spearman Correlation"
+        assert ax.get_ylabel() == "Feature Labels"
+
+    def test_target_correlation_plots_can_be_given_an_ax(self, test_dataset: Dataset):
+        fig, ax = plt.subplots()
+        test_ax = test_dataset.plot.target_correlation(ax=ax)
+        assert ax == test_ax
+        plt.close()

@@ -1,5 +1,5 @@
 from ml_tooling.storage.base import Storage
-from ml_tooling.utils import MLToolingError, find_src_dir
+from ml_tooling.utils import MLToolingError, _find_src_dir
 
 import joblib
 from typing import List, Any
@@ -99,7 +99,7 @@ class FileStorage(Storage):
         """
 
         if prod:
-            file_path = find_src_dir() / filename
+            file_path = _find_src_dir() / filename
         else:
             file_path = make_dir(self.dir_path) / filename
 

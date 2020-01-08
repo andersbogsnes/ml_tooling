@@ -5,12 +5,12 @@ from matplotlib.axes import Axes
 
 from sklearn.inspection import permutation_importance
 from ml_tooling.plots.utils import _plot_barh
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, Estimator
 from sklearn.base import is_classifier
 
 
 def plot_feature_importance(
-    estimator,
+    estimator: Estimator,
     x: pd.DataFrame,
     y: DataType,
     scoring="default",

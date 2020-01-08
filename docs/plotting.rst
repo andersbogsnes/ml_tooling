@@ -111,4 +111,32 @@ Available Regression Plots
     Visualizes residuals of a regression model. Shows the distribution of noise that couldn't be
     fitted.
 
+Data Plotting
+=============
+.. currentmodule:: ml_tooling.data.viz
+
+:class:`~ml_tooling.data.Dataset` also define plotting methods under the `.plot` accessor.
+
+These plots are intended to help perform exploratory data analysis to inform the choices of
+preprocessing and models
+
+These plot methods are used the same way as the result plots
+
+.. code-block::
+
+    >>> bostondata.plot.target_correlation()
+
+.. plot::
+
+    >>> bostondata.plot.target_correlation()
+
+
+Available Data Plots
+--------------------
+
+- :meth:`~DataVisualize.target_correlation`:
+    Visualizes the correlations between each feature and the target variable.
+    The size of the correlation can indicate important features, but can also
+    hint at data leakage if the correlation is too strong.
+
 Continue to :doc:`transformers`

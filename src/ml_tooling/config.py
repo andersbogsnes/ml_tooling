@@ -38,7 +38,7 @@ class DefaultConfig:
 
 class ConfigGetter:
     """
-    Give each class that inherits from ModelData an individual config attribute
+    Give each class that inherits from Model an individual config attribute
     without relying on the user to overriding the config when they define their class.
     """
 

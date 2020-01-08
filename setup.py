@@ -10,7 +10,7 @@ NAME = "ml_tooling"
 PACKAGES = find_packages(where="src")
 INSTALL_REQUIRES = [
     "pandas",
-    "scikit-learn",
+    "scikit-learn>=0.22.1",
     "matplotlib",
     "pyyaml",
     "joblib",
@@ -24,7 +24,6 @@ PROJECT_URLS = {
     "Source Code": "https://github.com/andersbogsnes/ml_tooling",
 }
 CLASSIFIERS = [
-    "Programming Language :: Python :: 3.6",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: Implementation :: CPython",
     "Intended Audience :: Developers",

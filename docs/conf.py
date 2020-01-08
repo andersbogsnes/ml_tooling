@@ -42,6 +42,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 intersphinx_mapping = {
@@ -84,13 +85,13 @@ autodoc_typehints = "none"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-html_theme_options = {"logo": "ML_logo.png"}
+html_logo = "_static/ML_logo.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -184,3 +185,25 @@ epub_title = project
 epub_exclude_files = ["search.html"]
 
 # -- Extension configuration -------------------------------------------------
+
+plot_pre_code = """
+from ml_tooling.data import Dataset
+from sklearn.datasets import load_boston
+import pandas as pd
+class BostonData(Dataset):
+    def load_training_data(self):
+        data = load_boston()
+        return pd.DataFrame(data.data, columns=data.feature_names), data.target
+        # Define where to get prediction time data - returning a DataFrame
+    def load_prediction_data(self, idx):
+        data = load_boston()
+        x = pd.DataFrame(data.data, labels=data.feature_names)
+        return x.loc[idx] # Return given observation
+bostondata = BostonData()
+# Remember to setup a train test split!
+bostondata.create_train_test()
+from ml_tooling import Model
+from sklearn.linear_model import LinearRegression
+linear = Model(LinearRegression())
+result = linear.score_estimator(bostondata)
+"""

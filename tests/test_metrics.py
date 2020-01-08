@@ -273,6 +273,11 @@ class TestCorrelation:
         corr = target_correlation(x_values, y_values)
         assert corr.at["col1"] == 1.0
 
+        # Also works with Series
+        y_values = pd.Series(y_values)
+        corr = target_correlation(x_values, y_values)
+        assert corr.at["col1"] == 1.0
+
     def test_anscombes_quartet_gives_expected_result(self):
         x_values = pd.DataFrame(
             {

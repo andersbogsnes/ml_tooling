@@ -1,6 +1,10 @@
+from typing import Callable, Optional
+
 import pytest
 import joblib
 import pathlib
+
+from _pytest.fixtures import FixtureRequest
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -12,29 +16,29 @@ from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
 
 
 @pytest.fixture()
-def regression(base: type, test_dataset: Dataset) -> Model:
-    model: Model = base(LinearRegression())
+def regression(test_dataset: Dataset) -> Model:
+    model: Model = Model(LinearRegression())
     model.score_estimator(test_dataset)
     return model
 
 
 @pytest.fixture()
-def regression_cv(base: type, test_dataset: Dataset) -> Model:
-    model: Model = base(LinearRegression())
+def regression_cv(test_dataset: Dataset) -> Model:
+    model: Model = Model(LinearRegression())
     model.score_estimator(test_dataset, cv=2)
     return model
 
 
 @pytest.fixture()
-def classifier(base: type, test_dataset: Dataset) -> Model:
-    model: Model = base(LogisticRegression(solver="liblinear"))
+def classifier(test_dataset: Dataset) -> Model:
+    model: Model = Model(LogisticRegression(solver="liblinear"))
     model.score_estimator(test_dataset)
     return model
 
 
 @pytest.fixture()
-def classifier_cv(base: type, test_dataset: Dataset) -> Model:
-    model: Model = base(LogisticRegression(solver="liblinear"))
+def classifier_cv(test_dataset: Dataset) -> Model:
+    model: Model = Model(LogisticRegression(solver="liblinear"))
     model.score_estimator(test_dataset, cv=2)
     return model
 
@@ -55,7 +59,9 @@ def pipeline_linear() -> Pipeline:
 
 @pytest.fixture
 def pipeline_dummy_classifier() -> Pipeline:
-    pipe = Pipeline([("scale", DFStandardScaler()), ("clf", DummyClassifier())])
+    pipe = Pipeline(
+        [("scale", DFStandardScaler()), ("clf", DummyClassifier(strategy="prior"))]
+    )
     return pipe
 
 
@@ -91,16 +97,30 @@ def pipeline_forest_classifier() -> Pipeline:
 
 
 @pytest.fixture
-def estimator_pickle_path(test_dataset, tmp_path):
-    file_path = tmp_path / "tmp.pkl"
-    model = Model(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset)
-    joblib.dump(model.estimator, file_path)
-    return pathlib.Path(file_path)
+def estimator_pickle_path_factory(
+    test_dataset: Dataset, tmp_path: pathlib.Path
+) -> Callable[[str], pathlib.Path]:
+    def tmp_estimator_pickle_path(filename: str) -> pathlib.Path:
+        file_path = tmp_path / filename
+        model = Model(LogisticRegression(solver="liblinear"))
+        model.score_estimator(test_dataset)
+        joblib.dump(model.estimator, file_path)
+        return pathlib.Path(file_path)
+
+    return tmp_estimator_pickle_path
 
 
 @pytest.fixture
-def open_estimator_pickle(estimator_pickle_path: pathlib.Path, request):
-    f = estimator_pickle_path.open(mode="rb")
-    request.addfinalizer(f.close)
-    return f
+def open_estimator_pickle(
+    estimator_pickle_path_factory: Callable[[str], pathlib.Path],
+    request: FixtureRequest,
+):
+    def tmp_open_estimator_pickle(path: Optional[pathlib.Path] = None):
+        if path is None:
+            f = estimator_pickle_path_factory("tmp.pkl").open(mode="rb")
+        else:
+            f = path.open(mode="rb")
+        request.addfinalizer(f.close)
+        return f
+
+    return tmp_open_estimator_pickle

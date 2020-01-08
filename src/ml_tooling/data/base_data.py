@@ -3,13 +3,15 @@ from typing import Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from ml_tooling.utils import DataType, DataSetError
+from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
+from ml_tooling.data.viz import DataVisualize
 
 
 class Dataset(metaclass=abc.ABCMeta):
     """
-    Baseclass for creating Datasets. Subclass Dataset and provide a :meth:`load_training_data`
+    Baseclass for creating Datasets.
+    Subclass Dataset and provide a :meth:`load_training_data`
     and :meth:`load_prediction_data` method
     """
 
@@ -19,6 +21,8 @@ class Dataset(metaclass=abc.ABCMeta):
     test_y: Optional[DataType] = None
     train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
+    cached_data: Optional[pd.DataFrame] = None
+    plot: DataVisualize = None
 
     def create_train_test(
         self,
@@ -46,6 +50,11 @@ class Dataset(metaclass=abc.ABCMeta):
         -------
         self
         """
+        if self.y is None:
+            raise DatasetError(
+                "The dataset does not define a y value"
+                " - cannot create a train-test split"
+            )
 
         self.train_x, self.test_x, self.train_y, self.test_y = train_test_split(
             self.x,
@@ -60,22 +69,24 @@ class Dataset(metaclass=abc.ABCMeta):
     @property
     def x(self):
         if self._x is None:
-            self._x, self._y = indexable(*self.load_training_data())
+            self._x, self._y = indexable(*self._load_training_data())
+            self.plot = DataVisualize(self)
         return self._x
 
     @x.setter
     def x(self, data):
-        raise DataSetError("Trying to modify x - x is immutable")
+        raise DatasetError("Trying to modify x - x is immutable")
 
     @property
     def y(self):
         if self._y is None:
-            self._x, self._y = indexable(*self.load_training_data())
+            self._x, self._y = indexable(*self._load_training_data())
+            self.plot = DataVisualize(self)
         return self._y
 
     @y.setter
     def y(self, data):
-        raise DataSetError("Trying to modify y - y is immutable")
+        raise DatasetError("Trying to modify y - y is immutable")
 
     @property
     def has_validation_set(self):
@@ -92,8 +103,16 @@ class Dataset(metaclass=abc.ABCMeta):
     def class_name(self):
         return self.__class__.__name__
 
+    def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+        return self.load_training_data(*args, **kwargs)
+
+    def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+        pred_data = self.load_prediction_data(*args, **kwargs)
+        self.cached_data = pred_data
+        return pred_data
+
     @abc.abstractmethod
-    def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         """Abstract method to be implemented by user.
         Defines data to be used at training time where X is a dataframe and y is a numpy array
 

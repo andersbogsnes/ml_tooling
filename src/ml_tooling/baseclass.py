@@ -22,7 +22,7 @@ from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DataSetError,
+    DatasetError,
     Estimator,
     is_pipeline,
     serialize_pipeline,
@@ -100,8 +100,8 @@ class Model:
 
         Example
         -------
-            with FileStorage('path/to/estimators_dir') as storage:
-                estimator_list = Model.list_estimators(storage)
+            storage = FileStorage('path/to/estimators_dir')
+            estimator_list = Model.list_estimators(storage)
 
         Returns
         -------
@@ -253,7 +253,7 @@ class Model:
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-        x = data.load_prediction_data(*args, **kwargs)
+        x = data._load_prediction_data(*args, **kwargs)
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
@@ -312,7 +312,7 @@ class Model:
         List of Result objects
         """
 
-        results = train_estimators(estimators, data, metrics, cv)
+        results = _train_estimators(estimators, data, metrics, cv)
 
         if log_dir:
             results.log(pathlib.Path(log_dir))
@@ -397,7 +397,7 @@ class Model:
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DataSetError("Must run create_train_test first!")
+            raise DatasetError("Must run create_train_test first!")
 
         self.estimator.fit(data.train_x, data.train_y)
 
@@ -466,7 +466,7 @@ class Model:
             estimator=self.estimator, params=param_grid
         )
 
-        self.result = train_estimators(
+        self.result = _train_estimators(
             list(estimators), data=data, metrics=metrics, cv=cv
         )
 
@@ -529,14 +529,33 @@ class Model:
         return f"<Model: {self.estimator_name}>"
 
 
-def train_estimators(
+def _train_estimators(
     estimators: Sequence[Estimator],
     data: Dataset,
     metrics: Union[str, List[str]],
     cv: Any,
 ) -> ResultGroup:
-    if isinstance(metrics, str):
-        metrics = [metrics]
+    """
+    Sequentially train a series of models and create a ResultGroup of the results
+
+    Parameters
+    ----------
+    estimators: Sequence[Estimator]
+        A sequence of estimators to compare
+    data: DataSet
+        Dataset object containing the training data
+    metrics: Union[str, List[str]]
+        Which metric to use to score the estimators
+    cv: Any
+        If an int is passed, perform that many CV splits. Alternatively, pass a sklearn CV object
+        to use that for CV.
+        If False, do not perform cross-validation
+
+    Returns
+    -------
+    ResultGroup
+        The results of the scoring
+    """
 
     results = []
     for i, estimator in enumerate(estimators, start=1):

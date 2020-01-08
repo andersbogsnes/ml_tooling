@@ -58,6 +58,37 @@ class TestFileStorage:
         for filename in filenames_list:
             assert filename.exists()
 
+    def test_can_get_list_of_paths_and_load_from_output(
+        self, estimator_pickle_path_factory, tmp_path
+    ):
+        paths = [
+            estimator_pickle_path_factory(
+                "LogisticRegression_2019-10-15_10:42:10.709197.pkl"
+            ),
+            estimator_pickle_path_factory(
+                "LogisticRegression_2019-10-15_10:32:41.780990.pkl"
+            ),
+            estimator_pickle_path_factory(
+                "LogisticRegression_2019-10-15_10:34:34.226695.pkl"
+            ),
+            estimator_pickle_path_factory(
+                "LogisticRegression_2019-10-15_10:51:50.760746.pkl"
+            ),
+            estimator_pickle_path_factory(
+                "LogisticRegression_2019-10-15_10:34:21.849358.pkl"
+            ),
+        ]
+
+        storage = FileStorage(tmp_path)
+
+        estimators = storage.get_list()
+
+        first_estimator = storage.load(estimators[0])
+
+        assert isinstance(first_estimator, (BaseEstimator, Pipeline))
+        assert estimators[0] == paths[1]
+        assert estimators[-1] == paths[3]
+
     def test_raise_when_non_dir(self, classifier: Model, tmp_path: pathlib.Path):
         with pytest.raises(
             MLToolingError, match="dir_path is /not/a/dir.file which is not a directory"
@@ -68,7 +99,7 @@ class TestFileStorage:
         with pytest.raises(TypeError):
             Storage()
 
-    @patch("ml_tooling.storage.file.find_src_dir")
+    @patch("ml_tooling.storage.file._find_src_dir")
     def test_store_prod_flag_overrules_init_(
         self, mock_dir: MagicMock, tmp_path: pathlib.Path, classifier: Model
     ):

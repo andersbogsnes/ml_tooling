@@ -1,5 +1,5 @@
 from ml_tooling.storage.base import Storage
-from ml_tooling.utils import MLToolingError, find_src_dir
+from ml_tooling.utils import MLToolingError, _find_src_dir
 
 import joblib
 from typing import List, Any
@@ -22,9 +22,7 @@ class FileStorage(Storage):
 
     def get_list(self) -> List[Path]:
         """
-        Finds a list of estimator filenames in the FileStorage directory,
-        if the path given is to a file, the directory in which the file resides
-        is used to find the list.
+        Finds a list of estimator file paths in the FileStorage directory.
 
         Example
         -------
@@ -45,8 +43,8 @@ class FileStorage(Storage):
         Parameters
         ----------
 
-        file_path: str
-            filename of estimator pickle file
+        file_path: Pathlike
+            Path where to load the estimator file relative to FileStorage
 
         Example
         -------
@@ -62,10 +60,13 @@ class FileStorage(Storage):
         Object
             The object loaded from disk
         """
-        estimator_path = self.dir_path / file_path
+        if Path(file_path).is_file():
+            estimator_path = file_path
+        else:
+            estimator_path = self.dir_path / file_path
         return joblib.load(estimator_path)
 
-    def save(self, estimator: Estimator, filepath: str, prod: bool = False) -> Path:
+    def save(self, estimator: Estimator, filename: str, prod: bool = False) -> Path:
         """
         Save a joblib pickled estimator.
 
@@ -74,13 +75,13 @@ class FileStorage(Storage):
         estimator: obj
             The estimator object
 
-        filepath: str
-            Path where to save file - relative to FileStorage
+        filename: str
+            filename of estimator pickle file
 
         prod: bool
             Whether or not to save in "production mode" -
-            Production mode saves to /src/<projectname>/ regardless of what FileStorage
-            was instantiated with
+            Production mode saves to /src/<projectname>/ regardless
+            of what FileStorage was instantiated with
 
         Example
         -------
@@ -98,9 +99,9 @@ class FileStorage(Storage):
         """
 
         if prod:
-            file_path = find_src_dir() / filepath
+            file_path = _find_src_dir() / filename
         else:
-            file_path = make_dir(self.dir_path) / filepath
+            file_path = make_dir(self.dir_path) / filename
 
         joblib.dump(estimator, file_path)
         return file_path

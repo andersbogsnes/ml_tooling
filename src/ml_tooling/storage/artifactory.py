@@ -1,7 +1,7 @@
 from io import BytesIO
 
 from ml_tooling.storage import Storage
-from ml_tooling.utils import Estimator, MLToolingError, Pathlike
+from ml_tooling.utils import Estimator, MLToolingError, Pathlike, make_dir
 
 import joblib
 from tempfile import TemporaryDirectory
@@ -33,7 +33,7 @@ class ArtifactoryStorage(Storage):
     -------
     Instantiate this class with a url and path to the repo like so:
 
-        storage = ArtifactoryStorage('http://artifactory.com','/path/to/artifact')
+        storage = ArtifactoryStorage('http://artifactory.com','path/to/artifact')
     """
 
     def __init__(
@@ -55,9 +55,7 @@ class ArtifactoryStorage(Storage):
 
     def get_list(self) -> List["ArtifactoryPath"]:
         """
-        Finds a list of estimator filenames in the ArtifactoryStorage repo,
-        if the path given is for a file, the directory in which the file resides
-        is used to find the list.
+        Finds a list of estimator artifact paths in the ArtifactoryStorage repo.
 
         Example
         -------
@@ -70,16 +68,16 @@ class ArtifactoryStorage(Storage):
             list of paths to files sorted by filename
         """
 
-        return sorted(self.artifactory_path.glob("*/*.pkl"))
+        return sorted(self.artifactory_path.glob("*.pkl"))
 
-    def load(self, filename: Pathlike) -> Estimator:
+    def load(self, file_path: Pathlike) -> Estimator:
         """
         Loads a pickled estimator from given filepath and returns the estimator
 
         Parameters
         ----------
-        filename: Pathlike
-            Path to estimator pickle file
+        file_path: Pathlike
+            Path to load the estimator relative to ArtifactoryStorage
 
         Example
         -------
@@ -95,8 +93,11 @@ class ArtifactoryStorage(Storage):
         Object
             estimator unpickled object
         """
+        if ArtifactoryPath(file_path).is_file():
+            artifactory_path = file_path
+        else:
+            artifactory_path = self.artifactory_path / file_path
 
-        artifactory_path = self.artifactory_path / filename
         with artifactory_path.open() as f:
             by = BytesIO()
             by.write(f.read())
@@ -104,7 +105,7 @@ class ArtifactoryStorage(Storage):
             return joblib.load(by)
 
     def save(
-        self, estimator: Estimator, file_path: Pathlike, prod: bool = False
+        self, estimator: Estimator, filename: str, prod: bool = False
     ) -> "ArtifactoryPath":
         """
         Save a pickled estimator to artifactory.
@@ -113,8 +114,8 @@ class ArtifactoryStorage(Storage):
         ----------
         estimator: Estimator
             The estimator object
-        file_path: str
-            Filepath for the saved estimator relative to ArtifactoryStorage
+        filename: str
+            filename of estimator pickle file
         prod: bool
             Production variable, set to True if saving a production-ready estimator
 
@@ -123,11 +124,7 @@ class ArtifactoryStorage(Storage):
         To save your trained estimator:
 
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
-            artifactory_path = storage.save(estimator)
-
-        For production ready models set the prod parameter to True
-
-            artifactory_path = storage.save(estimator, prod=True)
+            artifactory_path = storage.save(estimator, 'estimator.pkl')
 
         We now have saved an estimator to a pickle file.
 
@@ -143,12 +140,10 @@ class ArtifactoryStorage(Storage):
                 "Use FileStorage instead"
             )
 
-        artifactory_path = self.artifactory_path / file_path
-
-        artifactory_path.mkdir(parents=True, exist_ok=True)
+        artifactory_path = make_dir(self.artifactory_path) / filename
 
         with TemporaryDirectory() as tmpdir:
-            file_path = Path(tmpdir).joinpath(file_path)
+            file_path = Path(tmpdir).joinpath(filename)
             joblib.dump(estimator, file_path)
             artifactory_path.deploy_file(file_path)
         return artifactory_path

@@ -8,6 +8,7 @@ Welcome to ML Tooling!
 
 .. figure:: _static/ML_logo.png
    :width: 600
+   :figwidth: 100%
    :alt: Logo for ML Tooling
    :align: left
 

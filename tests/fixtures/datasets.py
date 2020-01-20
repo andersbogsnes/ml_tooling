@@ -40,8 +40,32 @@ def test_df():
 
 
 @pytest.fixture
+def test_table():
+    meta = sa.MetaData()
+    return sa.Table(
+        "boston",
+        meta,
+        sa.Column("CRIM", sa.Float),
+        sa.Column("ZN", sa.Float),
+        sa.Column("INDUS", sa.Float),
+        sa.Column("CHAS", sa.Float),
+        sa.Column("NOX", sa.Float),
+        sa.Column("RM", sa.Float),
+        sa.Column("AGE", sa.Float),
+        sa.Column("DIS", sa.Float),
+        sa.Column("RAD", sa.Float),
+        sa.Column("TAX", sa.Float),
+        sa.Column("PTRATIO", sa.Float),
+        sa.Column("B", sa.Float),
+        sa.Column("LSTAT", sa.Float),
+    )
+
+
+@pytest.fixture
 def test_engine():
-    return sa.create_engine("sqlite:///:memory:")
+    engine = sa.create_engine("sqlite:///:memory:")
+    engine.dialect.has_schema = lambda *args: True
+    return engine
 
 
 @pytest.fixture
@@ -51,19 +75,24 @@ def test_db(test_df, test_engine):
 
 
 @pytest.fixture
-def test_sqldata(test_db):
+def test_sqldata_class():
     class BostonData(SQLDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
-            sql = "SELECT * FROM boston"
-            df = pd.read_sql(sql, self.engine, index_col="index")
+            sql = f"SELECT * FROM boston"
+            df = pd.read_sql(sql, self.engine)
             return df.drop(columns="MEDV"), df.MEDV
 
         def load_prediction_data(self, *args, **kwargs) -> DataType:
-            sql = "SELECT * FROM boston"
-            df = pd.read_sql(sql, self.engine, index_col="index")
+            sql = f"SELECT * FROM boston"
+            df = pd.read_sql(sql, self.engine)
             return df.iloc[0]
 
-    return BostonData(test_db)
+    return BostonData
+
+
+@pytest.fixture
+def test_sqldata(test_sqldata_class, test_db):
+    return test_sqldata_class(test_db, "")
 
 
 @pytest.fixture

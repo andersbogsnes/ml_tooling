@@ -1,9 +1,8 @@
 import pytest
-import sqlalchemy
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import DBAPIError
 
-from ml_tooling.data import SQLDataset, Dataset
+from ml_tooling.data import Dataset
 from ml_tooling.utils import DatasetError
 
 

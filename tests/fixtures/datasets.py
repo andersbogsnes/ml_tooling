@@ -78,12 +78,12 @@ def test_db(test_df, test_engine):
 def test_sqldata_class():
     class BostonData(SQLDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
-            sql = f"SELECT * FROM boston"
+            sql = "SELECT * FROM boston"
             df = pd.read_sql(sql, self.engine)
             return df.drop(columns="MEDV"), df.MEDV
 
         def load_prediction_data(self, *args, **kwargs) -> DataType:
-            sql = f"SELECT * FROM boston"
+            sql = "SELECT * FROM boston"
             df = pd.read_sql(sql, self.engine)
             return df.iloc[0]
 

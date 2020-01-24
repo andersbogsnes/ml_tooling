@@ -47,7 +47,7 @@ def test_sqldataset_errors_when_schema_is_defined_on_instantiation(
         DatasetError,
         match="cannot have a defined schema - remove the schema declaration",
     ):
-        assert test_sqldata_class(test_db, "schema")
+        test_sqldata_class(test_db, "schema")
 
 
 def test_cant_modify_x_and_y(test_dataset):
@@ -131,7 +131,7 @@ def test_insert_data_throws_error_on_exec_failure(
 
     with pytest.raises(DBAPIError):
         test_sqldata._insert_data(MagicMock())
-        trans_mock.rollback.assert_called()
+    trans_mock.rollback.assert_called()
 
 
 @patch("sqlalchemy.schema.CreateSchema")

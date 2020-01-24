@@ -101,7 +101,8 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
         Returns
         -------
-        TableLoader
+        SQLDataset
+            The target dataset to copy to
         """
         logger.info("Copying data...")
         logger.debug(
@@ -109,6 +110,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         )
         data = self._dump_data()
         target._insert_data(data)
+        return target
 
     def __repr__(self):
         return f"<{self.__class__.__name__} - SQLDataset {self.engine}>"

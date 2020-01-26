@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import DBAPIError
@@ -159,8 +160,13 @@ class TestFileDataset:
 
         assert target.file_path.exists()
 
-    def test_dump_data_works_as_expected(self):
-        pass
+    def test_dump_data_works_as_expected(
+        self, boston_filedataset, boston_csv, boston_df
+    ):
+        dataset = boston_filedataset(boston_csv)
+
+        result = dataset._dump_data()
+        pd.testing.assert_frame_equal(result, boston_df)
 
     def test_can_instantiate_filedataset(self, boston_filedataset, boston_csv):
         data = boston_filedataset(boston_csv)

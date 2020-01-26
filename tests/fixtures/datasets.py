@@ -148,7 +148,7 @@ def iris_sqldataset():
 @pytest.fixture
 def boston_csv(tmp_path: pathlib.Path, boston_df):
     output_path = tmp_path / "test.csv"
-    boston_df.to_csv(output_path)
+    boston_df.to_csv(output_path, index=False)
     return output_path
 
 

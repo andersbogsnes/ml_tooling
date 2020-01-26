@@ -466,11 +466,11 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_fails_if_no_train_test_data_available(self, IrisDataset):
+    def test_score_estimator_fails_if_no_train_test_data_available(self, iris_dataset):
         model = Model(LinearRegression())
 
         with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(IrisDataset)
+            model.score_estimator(iris_dataset)
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))

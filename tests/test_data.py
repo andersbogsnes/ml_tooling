@@ -78,6 +78,13 @@ class TestSqlDataset:
         ):
             boston_sqldataset(test_engine, "schema")
 
+    def test_sqldataset_can_load_training_data(
+        self, boston_sqldataset, loaded_boston_db, boston_df
+    ):
+        dataset = boston_sqldataset(loaded_boston_db, None)
+        x, y = dataset._load_training_data()
+        pd.testing.assert_frame_equal(x.assign(MEDV=y), boston_df)
+
     def test_sqldataset_can_copy_to_another_sqldataset(
         self, boston_sqldataset, loaded_boston_db
     ):

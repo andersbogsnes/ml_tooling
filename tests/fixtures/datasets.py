@@ -72,7 +72,7 @@ def test_engine():
 
 @pytest.fixture
 def loaded_boston_db(boston_df, test_engine):
-    boston_df.to_sql("boston", test_engine)
+    boston_df.to_sql("boston", test_engine, index=False)
     return test_engine
 
 

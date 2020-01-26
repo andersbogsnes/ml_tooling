@@ -43,7 +43,7 @@ virtualenv==16.7.9        # via pre-commit, tox
 urllib3==1.25.8           # via requests
 tox==3.14.3
 wcwidth==0.1.8            # via pytest
-zipp==2.0.1               # via importlib-metadata
+zipp==2.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools==42.0.2        # via kiwisolver

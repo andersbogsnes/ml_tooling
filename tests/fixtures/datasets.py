@@ -13,7 +13,7 @@ from ml_tooling.utils import DataType
 
 
 @pytest.fixture
-def base_dataset():
+def IrisDataset():
     class IrisData(Dataset):
         def load_prediction_data(self, idx):
             data = load_iris()
@@ -28,11 +28,11 @@ def base_dataset():
             x = pd.DataFrame(data.data, columns=data.feature_names)
             return x, y
 
-    return IrisData
+    return IrisData()
 
 
 @pytest.fixture
-def test_df():
+def boston_df():
     boston_data = load_boston()
     return pd.DataFrame(
         data=boston_data.data, columns=boston_data.feature_names
@@ -45,13 +45,13 @@ def test_engine():
 
 
 @pytest.fixture
-def test_db(test_df, test_engine):
-    test_df.to_sql("boston", test_engine)
+def test_db(boston_df, test_engine):
+    boston_df.to_sql("boston", test_engine)
     return test_engine
 
 
 @pytest.fixture
-def test_sqldata(test_db):
+def boston_sqldataset(test_db):
     class BostonData(SQLDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[DataType, DataType]:
             sql = "SELECT * FROM boston"
@@ -66,12 +66,24 @@ def test_sqldata(test_db):
     return BostonData(test_db)
 
 
+@pytest.fixture()
+def boston_filedataset(boston_csv):
+    class BostonFileDataset(FileDataset):
+        def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+            df = pd.read_csv(self.file_path)
+            return df.drop(columns=["target"]), df.target
+
+        def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+            pass
+
+    return BostonFileDataset(boston_csv)
+
+
 @pytest.fixture
-def test_csv(tmp_path: pathlib.Path):
+def boston_csv(tmp_path: pathlib.Path):
     output_path = tmp_path / "test.csv"
-    data = load_iris()
-    y = np.where(data.target == 1, 1, 0)  # default roc_auc doesn't support multiclass
-    df = pd.DataFrame(data.data, columns=data.feature_names).assign(target=y)
+    data = load_boston()
+    df = pd.DataFrame(data.data, columns=data.feature_names).assign(target=data.target)
     df.to_csv(output_path)
     return output_path
 
@@ -90,5 +102,5 @@ def test_filedata():
 
 
 @pytest.fixture()
-def test_dataset(base_dataset):
-    return base_dataset().create_train_test()
+def train_iris_dataset(IrisDataset):
+    return IrisDataset.create_train_test()

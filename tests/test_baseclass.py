@@ -53,22 +53,20 @@ class TestBaseClass:
         ):
             Model({})
 
-    def test_make_prediction_errors_when_model_is_not_fitted(
-        self, test_dataset: Dataset
-    ):
+    def test_make_prediction_errors_when_model_is_not_fitted(self, train_iris_dataset):
         with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
             model = Model(LinearRegression())
-            model.make_prediction(test_dataset, 5)
+            model.make_prediction(train_iris_dataset, 5)
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
-        self, test_dataset: Dataset
+        self, train_iris_dataset
     ):
         with pytest.raises(
             MLToolingError, match="LinearRegression does not have a `predict_proba`"
         ):
             model = Model(LinearRegression())
-            model.train_estimator(test_dataset)
-            model.make_prediction(test_dataset, 5, proba=True)
+            model.train_estimator(train_iris_dataset)
+            model.make_prediction(train_iris_dataset, 5, proba=True)
 
     @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
     def test_make_prediction_returns_prediction_if_proba_is_false(
@@ -76,10 +74,10 @@ class TestBaseClass:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        test_dataset: Dataset,
+        train_iris_dataset,
     ):
         results = classifier.make_prediction(
-            test_dataset, 5, proba=False, use_index=use_index
+            train_iris_dataset, 5, proba=False, use_index=use_index
         )
         assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
@@ -95,10 +93,10 @@ class TestBaseClass:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        test_dataset: Dataset,
+        train_iris_dataset,
     ):
         results = classifier.make_prediction(
-            test_dataset, 5, proba=True, use_index=use_index
+            train_iris_dataset, 5, proba=True, use_index=use_index
         )
         assert isinstance(results, pd.DataFrame)
         assert 2 == results.ndim
@@ -157,9 +155,9 @@ class TestBaseClass:
         linreg.reset_config()
 
     def test_regression_model_can_be_saved(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, classifier: Model, tmp_path: pathlib.Path, train_iris_dataset
     ):
-        classifier.score_estimator(test_dataset)
+        classifier.score_estimator(train_iris_dataset)
         load_storage = FileStorage(tmp_path)
 
         storage = FileStorage(tmp_path)
@@ -169,7 +167,7 @@ class TestBaseClass:
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_regression_model_filename_is_generated_correctly(
-        self, classifier: Model, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, classifier: Model, tmp_path: pathlib.Path, train_iris_dataset
     ):
         storage = FileStorage(tmp_path)
         saved_model_path = classifier.save_estimator(storage)
@@ -179,10 +177,10 @@ class TestBaseClass:
         )
 
     def test_save_model_saves_pipeline_correctly(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        model.train_estimator(test_dataset)
+        model.train_estimator(train_iris_dataset)
         saved_model_path = model.save_estimator(FileStorage(tmp_path))
         assert saved_model_path.exists()
 
@@ -231,13 +229,13 @@ class TestBaseClass:
         assert "test" not in regression.config.RUN_DIR.parts
 
     def test_log_context_manager_logs_when_scoring_model(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, tmp_path: pathlib.Path, train_iris_dataset
     ):
         model = Model(LinearRegression())
 
         runs = tmp_path / "runs"
         with model.log(str(runs)):
-            result = model.score_estimator(test_dataset)
+            result = model.score_estimator(train_iris_dataset)
 
         for file in runs.rglob("LinearRegression_*"):
             with file.open() as f:
@@ -247,11 +245,11 @@ class TestBaseClass:
             assert result.model.estimator_name == log_result["estimator_name"]
 
     def test_test_models_logs_when_given_dir(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, tmp_path: pathlib.Path, train_iris_dataset
     ):
         test_models_log = tmp_path / "test_estimators"
         Model.test_estimators(
-            test_dataset,
+            train_iris_dataset,
             [
                 RandomForestClassifier(n_estimators=10),
                 DummyClassifier(strategy="prior"),
@@ -414,28 +412,28 @@ class TestBaseClass:
 
 class TestTrainEstimator:
     def test_train_model_sets_result_to_none(
-        self, regression: Model, test_dataset: Dataset
+        self, regression: Model, train_iris_dataset
     ):
         assert regression.result is not None
-        regression.train_estimator(test_dataset)
+        regression.train_estimator(train_iris_dataset)
         assert regression.result is None
 
     def test_train_model_followed_by_score_model_returns_correctly(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        model.train_estimator(test_dataset)
-        model.score_estimator(test_dataset)
+        model.train_estimator(train_iris_dataset)
+        model.score_estimator(train_iris_dataset)
 
         assert isinstance(model.result, Result)
 
     def test_train_model_errors_correctly_when_not_scored(
-        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, tmp_path: pathlib.Path, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
         with pytest.raises(MLToolingError, match="You haven't scored the estimator"):
             with model.log(str(tmp_path)):
-                model.train_estimator(test_dataset)
+                model.train_estimator(train_iris_dataset)
                 model.save_estimator(FileStorage(tmp_path))
 
     def test_can_score_estimator_with_no_y_value(self):
@@ -468,27 +466,29 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_fails_if_no_train_test_data_available(self, base_dataset):
+    def test_score_estimator_fails_if_no_train_test_data_available(self, IrisDataset):
         model = Model(LinearRegression())
 
         with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(base_dataset())
+            model.score_estimator(IrisDataset)
 
-    def test_can_score_estimator_with_specified_metric(self, test_dataset: Dataset):
+    def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset, metrics="roc_auc")
+        result = model.score_estimator(train_iris_dataset, metrics="roc_auc")
 
         assert result.metrics.name == "roc_auc"
 
-    def test_can_score_estimator_with_default_metric(self, test_dataset: Dataset):
+    def test_can_score_estimator_with_default_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
 
         assert result.metrics.name == "accuracy"
 
-    def test_can_score_estimator_with_multiple_metrics(self, test_dataset: Dataset):
+    def test_can_score_estimator_with_multiple_metrics(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(test_dataset, metrics=["accuracy", "roc_auc"])
+        result = model.score_estimator(
+            train_iris_dataset, metrics=["accuracy", "roc_auc"]
+        )
 
         assert len(result.metrics) == 2
         assert "accuracy" in result.metrics
@@ -496,13 +496,13 @@ class TestScoreEstimator:
 
 
 class TestModelSelection:
-    def test_model_selection_works_as_expected(self, test_dataset: Dataset):
+    def test_model_selection_works_as_expected(self, train_iris_dataset):
         models = [
             LogisticRegression(solver="liblinear"),
             RandomForestClassifier(n_estimators=10),
         ]
         best_model, results = Model.test_estimators(
-            test_dataset, models, metrics="accuracy"
+            train_iris_dataset, models, metrics="accuracy"
         )
         assert models[1] is best_model.estimator
         assert 2 == len(results)
@@ -510,25 +510,25 @@ class TestModelSelection:
         for result in results:
             assert isinstance(result, Result)
 
-    def test_model_selection_works_with_default_metric(self, test_dataset: Dataset):
+    def test_model_selection_works_with_default_metric(self, train_iris_dataset):
         models = [
             LogisticRegression(solver="liblinear"),
             RandomForestClassifier(n_estimators=2),
         ]
-        best_model, results = Model.test_estimators(test_dataset, models)
+        best_model, results = Model.test_estimators(train_iris_dataset, models)
 
         assert models[1] is best_model.estimator
         assert 2 == len(results)
         assert results[0].metrics[0].name == "accuracy"
         assert results[1].metrics[0].name == "accuracy"
 
-    def test_model_selection_works_with_multiple_metrics(self, test_dataset: Dataset):
+    def test_model_selection_works_with_multiple_metrics(self, train_iris_dataset):
         models = [
             LogisticRegression(solver="liblinear"),
             RandomForestClassifier(n_estimators=2),
         ]
         best_model, results = Model.test_estimators(
-            test_dataset, models, metrics=["accuracy", "roc_auc"]
+            train_iris_dataset, models, metrics=["accuracy", "roc_auc"]
         )
 
         assert models[1] is best_model.estimator
@@ -537,14 +537,14 @@ class TestModelSelection:
         assert 2 == len(results[1].metrics)
 
     def test_model_selection_with_nonstandard_metric_works_as_expected(
-        self, test_dataset: Dataset
+        self, train_iris_dataset
     ):
         estimators = [
             LogisticRegression(solver="liblinear"),
             RandomForestClassifier(n_estimators=10),
         ]
         best_estimator, results = Model.test_estimators(
-            test_dataset, estimators, metrics="roc_auc"
+            train_iris_dataset, estimators, metrics="roc_auc"
         )
         for result in results:
             assert "roc_auc" in result.metrics
@@ -553,11 +553,11 @@ class TestModelSelection:
         self,
         pipeline_logistic: Pipeline,
         pipeline_dummy_classifier: Pipeline,
-        test_dataset: Dataset,
+        train_iris_dataset,
     ):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
         best_estimator, results = Model.test_estimators(
-            test_dataset, estimators, "accuracy"
+            train_iris_dataset, estimators, "accuracy"
         )
 
         for result in results:
@@ -568,14 +568,14 @@ class TestModelSelection:
 
         assert best_estimator.estimator == estimators[0]
 
-    def test_model_selection_refits_final_model(self, test_dataset):
+    def test_model_selection_refits_final_model(self, train_iris_dataset):
         estimators = [LogisticRegression(solver="liblinear")]
 
         model = LogisticRegression(solver="liblinear").fit(
-            test_dataset.train_x, test_dataset.train_y
+            train_iris_dataset.train_x, train_iris_dataset.train_y
         )
         model2, results2 = Model.test_estimators(
-            test_dataset, estimators, cv=2, refit=True, metrics="accuracy"
+            train_iris_dataset, estimators, cv=2, refit=True, metrics="accuracy"
         )
 
         assert (model.coef_ == model2.estimator.coef_).all()
@@ -583,11 +583,11 @@ class TestModelSelection:
 
 class TestGridSearch:
     def test_gridsearch_model_returns_as_expected(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
         model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
@@ -596,11 +596,11 @@ class TestGridSearch:
             assert isinstance(result, Result)
 
     def test_gridsearch_model_does_not_fail_when_run_twice(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -609,7 +609,7 @@ class TestGridSearch:
             assert isinstance(result, Result)
 
         best_model, results = model.gridsearch(
-            test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -641,10 +641,10 @@ class TestGridSearch:
             assert isinstance(clf, LogisticRegression)
 
     def test_gridsearch_uses_default_metric(
-        self, classifier: Model, test_dataset: Dataset
+        self, classifier: Model, train_iris_dataset
     ):
         model, results = classifier.gridsearch(
-            test_dataset, param_grid={"penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"penalty": ["l1", "l2"]}
         )
 
         assert len(results) == 2
@@ -654,10 +654,10 @@ class TestGridSearch:
         assert isinstance(model, Model)
 
     def test_gridsearch_can_take_multiple_metrics(
-        self, classifier: Model, test_dataset: Dataset
+        self, classifier: Model, train_iris_dataset
     ):
         model, results = classifier.gridsearch(
-            test_dataset,
+            train_iris_dataset,
             param_grid={"penalty": ["l1", "l2"]},
             metrics=["accuracy", "roc_auc"],
         )
@@ -673,10 +673,10 @@ class TestGridSearch:
             assert result.metrics.score == result.metrics[0].score
 
     def test_gridsearch_can_log_with_context_manager(
-        self, feature_union_classifier, test_dataset: Dataset
+        self, feature_union_classifier, train_iris_dataset
     ):
         classifier = Model(feature_union_classifier)
         with classifier.log("gridsearch_union_test"):
             _, _ = classifier.gridsearch(
-                test_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+                train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
             )

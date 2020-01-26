@@ -136,5 +136,16 @@ class Dataset(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    def _dump_data(self) -> pd.DataFrame:
+        raise NotImplementedError
+
+    def _load_data(self, data):
+        raise NotImplementedError
+
+    def copy_to(self, target: "Dataset"):
+        data = self._dump_data()
+        target._load_data(data)
+        return target
+
     def __repr__(self):
         return f"<{self.__class__.__name__} - Dataset>"

@@ -25,7 +25,10 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
         return getattr(pd, f"read_{self.extension}")(self.file_path, **kwargs)
 
     def _load_data(self, data, **kwargs):
-        return getattr(pd, f"to_{self.extension}")(data, **kwargs)
+        index = kwargs.pop("index", False)
+        return getattr(data, f"to_{self.extension}")(
+            self.file_path, index=index, **kwargs
+        )
 
     def __repr__(self):
         return f"<{self.__class__.__name__} - FileDataset>"

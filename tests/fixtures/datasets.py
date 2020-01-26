@@ -105,15 +105,16 @@ def boston_sqldataset():
             sa.Column("LSTAT", sa.Float),
         )
 
-        def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+        def load_training_data(
+            self, conn, *args, **kwargs
+        ) -> Tuple[pd.DataFrame, DataType]:
             sql = "SELECT * FROM boston"
-            df = pd.read_sql(sql, self.engine)
+            df = pd.read_sql(sql, conn)
             return df.drop(columns="MEDV"), df.MEDV
 
-        def load_prediction_data(self, idx) -> DataType:
-            sql = "SELECT * FROM boston WHERE row_number() = ?"
-            df = pd.read_sql(sql, self.engine, params=[idx])
-            return df
+        def load_prediction_data(self, conn, idx) -> DataType:
+            sql = "SELECT * FROM boston"
+            return pd.read_sql(sql, conn).loc[[idx]]
 
     return BostonSQLData
 
@@ -132,14 +133,14 @@ def iris_sqldataset():
             sa.Column("petal width (cm)", sa.Float),
         )
 
-        def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+        def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
             sql = "SELECT * FROM iris"
             df = pd.read_sql(sql, self.engine)
             return df.drop(columns="target"), df.target
 
-        def load_prediction_data(self, idx) -> pd.DataFrame:
-            sql = "SELECT * FROM iris WHERE ROW_NUMBER() = ?"
-            return pd.read_sql(sql, self.engine, params=[idx])
+        def load_prediction_data(self, conn, idx) -> pd.DataFrame:
+            sql = "SELECT * FROM iris"
+            return pd.read_sql(sql, self.engine).loc[[idx]]
 
     return IrisSQLData
 

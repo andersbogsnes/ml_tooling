@@ -188,3 +188,8 @@ class TestFileDataset:
     ):
         dataset = boston_filedataset(filename)
         assert dataset.extension == extension
+
+    def test_filedataset_errors_if_given_folder(self, boston_filedataset, tmp_path):
+        assert tmp_path.suffix == ""
+        with pytest.raises(DatasetError, match="must point to a file"):
+            boston_filedataset(tmp_path)

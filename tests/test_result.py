@@ -5,7 +5,6 @@ import yaml
 from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
-from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result, ResultGroup
@@ -53,32 +52,32 @@ class TestResult:
         assert result.model.estimator_name == "LogisticRegression"
 
     def test_pipeline_regression_returns_correct_result(
-        self, pipeline_linear: Pipeline, test_dataset: Dataset
+        self, pipeline_linear: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_linear)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LinearRegression"
         assert isinstance(result.model.estimator, Pipeline)
 
     def test_pipeline_logistic_returns_correct_result(
-        self, pipeline_logistic: Pipeline, test_dataset: Dataset
+        self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
         assert result.model.estimator_name == "LogisticRegression"
         assert isinstance(result.model.estimator, Pipeline)
 
     def test_result_log_model_returns_correctly(
-        self, tmp_path: pathlib.Path, classifier: Model, test_dataset: Dataset
+        self, tmp_path: pathlib.Path, classifier: Model, train_iris_dataset
     ):
         runs = tmp_path / "runs"
         result = Result(
             classifier,
-            data=test_dataset,
+            data=train_iris_dataset,
             metrics=Metrics([Metric(score=0.7, name="accuracy")]),
-            plot=create_plotter(classifier, test_dataset),
+            plot=create_plotter(classifier, train_iris_dataset),
         )
         log = Log.from_result(result)
         log.save_log(runs)
@@ -92,13 +91,13 @@ class TestResult:
 
 class TestResultGroup:
     def test_result_group_proxies_correctly(
-        self, test_dataset: Dataset, classifier: Model, classifier_cv: Model
+        self, train_iris_dataset, classifier: Model, classifier_cv: Model
     ):
         result1 = Result.from_model(
-            classifier, test_dataset, metrics=Metrics([Metric("accuracy")])
+            classifier, train_iris_dataset, metrics=Metrics([Metric("accuracy")])
         )
         result2 = Result.from_model(
-            classifier_cv, test_dataset, metrics=Metrics([Metric("accuracy")])
+            classifier_cv, train_iris_dataset, metrics=Metrics([Metric("accuracy")])
         )
 
         group = ResultGroup([result1, result2])
@@ -106,14 +105,18 @@ class TestResultGroup:
         assert result_name == "LogisticRegression"
 
     def test_result_group_implements_indexing_properly(
-        self, test_dataset: Dataset, classifier: Model
+        self, train_iris_dataset, classifier: Model
     ):
         result1 = Result.from_model(
-            model=classifier, data=test_dataset, metrics=Metrics.from_list(["accuracy"])
+            model=classifier,
+            data=train_iris_dataset,
+            metrics=Metrics.from_list(["accuracy"]),
         )
 
         result2 = Result.from_model(
-            model=classifier, data=test_dataset, metrics=Metrics.from_list(["accuracy"])
+            model=classifier,
+            data=train_iris_dataset,
+            metrics=Metrics.from_list(["accuracy"]),
         )
 
         group = ResultGroup([result1, result2])
@@ -122,14 +125,18 @@ class TestResultGroup:
         assert first.metrics.score == 0.7368421052631579
 
     def test_result_group_logs_all_results(
-        self, tmp_path: pathlib.Path, test_dataset: Dataset, classifier: Model
+        self, tmp_path: pathlib.Path, train_iris_dataset, classifier: Model
     ):
         runs = tmp_path / "runs"
         result1 = Result.from_model(
-            model=classifier, data=test_dataset, metrics=Metrics.from_list(["accuracy"])
+            model=classifier,
+            data=train_iris_dataset,
+            metrics=Metrics.from_list(["accuracy"]),
         )
         result2 = Result.from_model(
-            model=classifier, data=test_dataset, metrics=Metrics.from_list(["accuracy"])
+            model=classifier,
+            data=train_iris_dataset,
+            metrics=Metrics.from_list(["accuracy"]),
         )
 
         group = ResultGroup([result1, result2])

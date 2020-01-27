@@ -273,7 +273,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_correctly_in_pipeline(
-        self, categorical: Model, test_dataset: Dataset
+        self, categorical: Model, train_iris_dataset
     ):
         pipe = Pipeline(
             [
@@ -283,7 +283,7 @@ class TestFeatureImportancePlot:
         )
 
         model = Model(pipe)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         ax = result.plot.feature_importance()
 
         assert (
@@ -293,7 +293,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_doesnt_error_in_on_large_datasets(
-        self, test_dataset: Dataset
+        self, train_iris_dataset
     ):
         """
         When joblib.Parallel receives data that is larger than a given size, it will do a read-only
@@ -443,11 +443,9 @@ class TestRocCurve:
         assert np.all(tpr == ax.lines[0].get_ydata())
         plt.close()
 
-    def test_roc_curve_fails_correctly_without_predict_proba(
-        self, test_dataset: Dataset
-    ):
+    def test_roc_curve_fails_correctly_without_predict_proba(self, train_iris_dataset):
         svc = Model(SVC(gamma="scale"))
-        result = svc.score_estimator(test_dataset)
+        result = svc.score_estimator(train_iris_dataset)
         with pytest.raises(VizError):
             result.plot.roc_curve()
 
@@ -473,9 +471,9 @@ class TestPRCurve:
         assert np.all(precision == ax.lines[0].get_ydata())
         plt.close()
 
-    def test_pr_curve_fails_correctly_without_predict_proba(self, test_dataset: Model):
+    def test_pr_curve_fails_correctly_without_predict_proba(self, train_iris_dataset):
         svc = Model(SVC(gamma="scale"))
-        result = svc.score_estimator(test_dataset)
+        result = svc.score_estimator(train_iris_dataset)
         with pytest.raises(VizError):
             result.plot.pr_curve()
         plt.close()
@@ -558,8 +556,8 @@ class TestValidationCurve:
 
 
 class TestTargetCorrelation:
-    def test_target_correlation_works_as_expected(self, test_dataset: Dataset):
-        ax = test_dataset.plot.target_correlation()
+    def test_target_correlation_works_as_expected(self, train_iris_dataset):
+        ax = train_iris_dataset.plot.target_correlation()
 
         assert [text.get_text() for text in ax.texts] == [
             "0.01",
@@ -571,10 +569,8 @@ class TestTargetCorrelation:
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
-    def test_target_correlation_works_with_different_methods(
-        self, test_dataset: Dataset
-    ):
-        ax = test_dataset.plot.target_correlation(method="pearson")
+    def test_target_correlation_works_with_different_methods(self, train_iris_dataset):
+        ax = train_iris_dataset.plot.target_correlation(method="pearson")
 
         assert [text.get_text() for text in ax.texts] == [
             "0.08",
@@ -586,31 +582,29 @@ class TestTargetCorrelation:
         assert ax.get_xlabel() == "Pearson Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
-    def test_target_correlation_works_with_top_n(self, test_dataset: Dataset):
-        ax = test_dataset.plot.target_correlation(top_n=2)
+    def test_target_correlation_works_with_top_n(self, train_iris_dataset):
+        ax = train_iris_dataset.plot.target_correlation(top_n=2)
         assert [text.get_text() for text in ax.texts] == ["0.12", "-0.48"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
-    def test_target_correlation_works_with_bottom_n(self, test_dataset: Dataset):
-        ax = test_dataset.plot.target_correlation(bottom_n=2)
+    def test_target_correlation_works_with_bottom_n(self, train_iris_dataset):
+        ax = train_iris_dataset.plot.target_correlation(bottom_n=2)
         assert [text.get_text() for text in ax.texts] == ["0.01", "0.02"]
         assert ax.title.get_text() == "Feature-Target Correlation - Bottom 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
-    def test_target_correlation_works_with_bottom_n_and_top_n(
-        self, test_dataset: Dataset
-    ):
-        ax = test_dataset.plot.target_correlation(bottom_n=1, top_n=1)
+    def test_target_correlation_works_with_bottom_n_and_top_n(self, train_iris_dataset):
+        ax = train_iris_dataset.plot.target_correlation(bottom_n=1, top_n=1)
         assert [text.get_text() for text in ax.texts] == ["0.01", "-0.48"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 1 - Bottom 1"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
-    def test_target_correlation_plots_can_be_given_an_ax(self, test_dataset: Dataset):
+    def test_target_correlation_plots_can_be_given_an_ax(self, train_iris_dataset):
         fig, ax = plt.subplots()
-        test_ax = test_dataset.plot.target_correlation(ax=ax)
+        test_ax = train_iris_dataset.plot.target_correlation(ax=ax)
         assert ax == test_ax
         plt.close()

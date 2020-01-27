@@ -8,7 +8,6 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
 from ml_tooling import Model
-from ml_tooling.data import Dataset
 from ml_tooling.result import Result
 from ml_tooling.utils import TransformerError
 from ml_tooling.transformers import (
@@ -79,15 +78,15 @@ class TestDFSelector(TransformerBase):
         ):
             select.fit_transform(categorical)
 
-    def test_df_selector_works_cross_validated(self, test_dataset: Dataset):
+    def test_df_selector_works_cross_validated(self, train_iris_dataset):
         model = self.create_model(Select("sepal length (cm)"))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_df_selector_works_gridsearch(self, test_dataset):
+    def test_df_selector_works_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Select("sepal length (cm)"))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -222,15 +221,15 @@ class TestFillNA(TransformerBase):
 
         pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
-    def test_fillna_works_cross_validated(self, test_dataset: Dataset):
+    def test_fillna_works_cross_validated(self, train_iris_dataset):
         model = self.create_model(FillNA(0))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_fillna_works_gridsearch(self, test_dataset: Dataset):
+    def test_fillna_works_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(FillNA(0))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
     def test_fillna_raises_when_imputing_numerically_on_strings(self):
@@ -297,15 +296,15 @@ class TestToCategorical(TransformerBase):
         assert 0 == result.isna().sum().sum()
         assert set(expected_cols) == set(result.columns)
 
-    def test_to_categorical_works_in_cv(self, test_dataset: Dataset):
+    def test_to_categorical_works_in_cv(self, train_iris_dataset):
         model = self.create_model(ToCategorical())
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_to_categorical_works_gridsearch(self, test_dataset: Dataset):
+    def test_to_categorical_works_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(ToCategorical())
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -333,15 +332,15 @@ class TestBinner(TransformerBase):
         assert len(new_data) == len(result)
         assert len(new_data) == result.isna().sum().sum()
 
-    def test_binner_can_be_used_cv(self, test_dataset: Dataset):
+    def test_binner_can_be_used_cv(self, train_iris_dataset):
         model = self.create_model(Binner(3))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_binner_works_gridsearch(self, test_dataset: Dataset):
+    def test_binner_works_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Binner(3))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -372,15 +371,15 @@ class TestRenamer(TransformerBase):
         with pytest.raises(TransformerError):
             renamer.fit_transform(numerical)
 
-    def test_renamer_works_in_cv(self, test_dataset: Dataset):
+    def test_renamer_works_in_cv(self, train_iris_dataset):
         model = self.create_model(Renamer(["1", "2", "3", "4"]))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_renamer_works_gridsearch(self, test_dataset: Dataset):
+    def test_renamer_works_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Renamer(["1", "2", "3", "4"]))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -597,15 +596,15 @@ class TestStandardScaler(TransformerBase):
 
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
-    def test_standard_scaler_works_in_cv(self, test_dataset: Dataset):
+    def test_standard_scaler_works_in_cv(self, train_iris_dataset):
         model = self.create_model(DFStandardScaler())
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_standard_scaler_works_in_gridsearch(self, test_dataset: Dataset):
+    def test_standard_scaler_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(DFStandardScaler())
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -645,15 +644,15 @@ class TestDFRowFunc(TransformerBase):
         result = dfrowfunc.fit_transform(numerical_na)
         pd.testing.assert_frame_equal(result, expected)
 
-    def test_dfrowfunc_cross_validates_correctly(self, test_dataset: Dataset):
+    def test_dfrowfunc_cross_validates_correctly(self, train_iris_dataset):
         model = self.create_model(DFRowFunc(strategy="mean"))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_dfrowfunc_works_in_gridsearch(self, test_dataset: Dataset):
+    def test_dfrowfunc_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(DFRowFunc(strategy="mean"))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -713,15 +712,15 @@ class TestFuncTransformer(TransformerBase):
         for col in result.columns:
             assert result[col].str.isupper().all()
 
-    def test_func_transformer_can_be_validated(self, test_dataset: Dataset):
+    def test_func_transformer_can_be_validated(self, train_iris_dataset):
         model = self.create_model(FuncTransformer(np.sum))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_func_transformer_works_in_gridsearch(self, test_dataset: Dataset):
+    def test_func_transformer_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(FuncTransformer(np.mean))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
@@ -746,13 +745,13 @@ class TestBinarize(TransformerBase):
 
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
-    def test_binarize_can_be_used_cv(self, test_dataset: Dataset):
+    def test_binarize_can_be_used_cv(self, train_iris_dataset):
         model = self.create_model(Binarize(value="a1"))
-        result = model.score_estimator(test_dataset, cv=2)
+        result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_binarize_works_in_gridsearch(self, test_dataset: Dataset):
+    def test_binarize_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Binarize(value=2))
         model = Model(grid)
-        result = model.score_estimator(test_dataset)
+        result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)

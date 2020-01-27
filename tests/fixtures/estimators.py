@@ -11,35 +11,34 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from ml_tooling import Model
-from ml_tooling.data import Dataset
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
 
 
 @pytest.fixture()
-def regression(test_dataset: Dataset) -> Model:
+def regression(train_iris_dataset) -> Model:
     model: Model = Model(LinearRegression())
-    model.score_estimator(test_dataset)
+    model.score_estimator(train_iris_dataset)
     return model
 
 
 @pytest.fixture()
-def regression_cv(test_dataset: Dataset) -> Model:
+def regression_cv(train_iris_dataset) -> Model:
     model: Model = Model(LinearRegression())
-    model.score_estimator(test_dataset, cv=2)
+    model.score_estimator(train_iris_dataset, cv=2)
     return model
 
 
 @pytest.fixture()
-def classifier(test_dataset: Dataset) -> Model:
+def classifier(train_iris_dataset) -> Model:
     model: Model = Model(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset)
+    model.score_estimator(train_iris_dataset)
     return model
 
 
 @pytest.fixture()
-def classifier_cv(test_dataset: Dataset) -> Model:
+def classifier_cv(train_iris_dataset) -> Model:
     model: Model = Model(LogisticRegression(solver="liblinear"))
-    model.score_estimator(test_dataset, cv=2)
+    model.score_estimator(train_iris_dataset, cv=2)
     return model
 
 
@@ -98,12 +97,12 @@ def pipeline_forest_classifier() -> Pipeline:
 
 @pytest.fixture
 def estimator_pickle_path_factory(
-    test_dataset: Dataset, tmp_path: pathlib.Path
+    train_iris_dataset, tmp_path: pathlib.Path
 ) -> Callable[[str], pathlib.Path]:
     def tmp_estimator_pickle_path(filename: str) -> pathlib.Path:
         file_path = tmp_path / filename
         model = Model(LogisticRegression(solver="liblinear"))
-        model.score_estimator(test_dataset)
+        model.score_estimator(train_iris_dataset)
         joblib.dump(model.estimator, file_path)
         return pathlib.Path(file_path)
 

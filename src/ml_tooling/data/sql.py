@@ -47,13 +47,23 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         finally:
             conn.close()
 
+    @abc.abstractmethod
+    def load_training_data(
+        self, conn, *args, **kwargs
+    ) -> Tuple[pd.DataFrame, DataType]:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def load_prediction_data(self, conn, *args, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError
+
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         with self.create_connection() as conn:
-            return self.load_training_data(conn)
+            return self.load_training_data(conn, *args, **kwargs)
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:
-            return self.load_prediction_data(conn)
+            return self.load_prediction_data(conn, *args, **kwargs)
 
     def _dump_data(self):
         logger.info(f"Dumping data from {self.table}")
@@ -61,7 +71,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         stmt = sa.select([self.table])
         try:
             with self.create_connection() as conn:
-                data = conn.execute(stmt).fetchall()
+                data = pd.read_sql(stmt, conn)
         except DBAPIError:
             logger.exception("Data dump failed")
             raise
@@ -75,14 +85,14 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         self.table.drop(bind=conn, checkfirst=True)
         self.table.create(bind=conn)
 
-    def _insert_data(self, data):
+    def _load_data(self, data):
         logger.info(f"Inserting data into {self.table.name}")
         with self.create_connection() as conn:
             trans = conn.begin()
             try:
                 self._setup_table(conn)
                 insert = self.table.insert()
-                conn.execute(insert, data)
+                conn.execute(insert, data.to_dict(orient="records"))
                 trans.commit()
             except DBAPIError:
                 logger.exception("Insert data failed")
@@ -109,7 +119,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
             f"Copying data from {self.engine}/{self.table.name} into " f"{target}"
         )
         data = self._dump_data()
-        target._insert_data(data)
+        target._load_data(data)
         return target
 
     def __repr__(self):

@@ -10,6 +10,9 @@ Creating a SQLDataset from a table in a db
 :class:`~ml_tooling.data.SQLDataset` should be used for creating datasets based on SQL database source.
 SQLDatasets must be provided with a :class:`sqlalchemy.engine.Connectable` or a valid connection string.
 
+When writing the :meth:`~ml_tooling.data.SQLDataset.load_training_data`
+and :meth:`~ml_tooling.data.SQLDataset.load_prediction_data`, they must accept a connection in their arguments - this
+will be provided at runtime by the SQLDataset.
 
 .. code-block::
 
@@ -21,11 +24,11 @@ SQLDatasets must be provided with a :class:`sqlalchemy.engine.Connectable` or a 
     ...
     ...     table = "TableName"
     ...
-    ...     def load_training_data(self):
-    ...         return pd.read_sql(table, self.engine)
+    ...     def load_training_data(self, conn):
+    ...         return pd.read_sql(table, conn)
     ...
-    ...     def load_prediction_data(self, idx):
-    ...         return pd.read_sql(table, self.engine).loc[idx]
+    ...     def load_prediction_data(self, conn, idx):
+    ...         return pd.read_sql(table, conn).loc[idx]
     >>>
     >>> engine = create_engine("postgresql://username:password@localhost/test")
     >>>
@@ -50,14 +53,37 @@ A more elaborate example of using this dataset can be found at :file:`../noteboo
     >>>
     >>> class TitanicData(FileDataset):
     ...     def load_training_data(self):
-    ...         data = pd.read_csv(self.file_path / "train.csv")
+    ...         data = pd.read_csv(self.file_path)
     ...         return data.drop('Survived', axis=1), data.Survived
     ...
     ...     def load_prediction_data(self):
-    ...         data = pd.read_csv(self.file_path / "test.csv")
+    ...         data = pd.read_csv(self.file_path)
     ...         return data
     >>>
-    >>> TitanicData("./data/raw")
+    >>> TitanicData("./titanic.csv")
     <TitanicData - FileDataset>
 
 When a Dataset is correctly defined, you can use all the methods defined in :class:`~ml_tooling.data.Dataset`
+
+Copying Datasets
+----------------
+
+If you have two datasets defined, you can copy data from one into the other. For example, if you have defined
+a SQLDataset and want to copy it into a file:
+
+.. code-block::
+
+    >>> source_data = TitanicSQLData("postgresql://localhost:5432", schema="prod")
+    >>> target_data = TitanicFileData("./titanic.csv")
+    >>> source_data.copy_to(target_data)
+
+This will read the data from the SQL database and write it to a csv file named ``titanic.csv``
+
+A common usecase for this is to move data from a central datastore into a local datastore, keeping two
+database tables in sync.
+
+.. code-block::
+
+    >>> source_data = TitanicSQLData("postgresql://my-prod-database", schema="prod")
+    >>> target_data = TitanicSQLData("postgresql://my-api-database", schema="public")
+    >>> source_data.copy_to(target_data)

@@ -16,14 +16,46 @@ logger = logging.getLogger("ml_tooling")
 
 class SQLDataset(Dataset, metaclass=abc.ABCMeta):
     """
-    Baseclass for creating SQL based Datasets. Subclass SQLDataset and provide a
+    An Abstract Base Class for use in creating SQL Datasets.
+    This class is intended to be subclassed and must provide a
     :meth:`load_training_data` and :meth:`load_prediction_data` method.
-    SQLDataset takes a SQLAlchemy connection object or string URI to create the engine
+
+    These methods must accept a `conn` argument which is an instance of a SQLAlchemy connection.
+    This connection will be passed to the method by the SQLDataset at runtime.
+
+    Attributes
+    ----------
+    table: sa.Table
+        SQLAlchemy table definition to use when loading the dataset. Is the table that will be
+        copied when using `.copy_to` and should be the canonical definition of the feature set.
+        Do not define a schema - that is set at runtime
+
+
+    Methods
+    -------
+    load_prediction_data(idx, conn)
+        Used to load prediction data for a given idx - returns features
+
+    load_training_data(conn)
+        Used to load the full training dataset - returns features and targets
+
     """
 
     table: Optional[sa.Table] = None
 
     def __init__(self, conn: Connectable, schema: str, **kwargs):
+        """
+        Instantiates a dataset with the necessary arguments to connect to the database.
+
+        Parameters
+        ----------
+        conn: Connectable
+            Either a valid DB_URL string or an engine to connect to the database
+        schema: str
+            A string naming the schema to use - allows for swapping schemas at runtime
+        kwargs: dict
+            Kwargs are passed to `create_engine` if conn is a string
+        """
         if isinstance(conn, Connectable):
             self.engine = conn
         elif isinstance(conn, str):
@@ -38,7 +70,18 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         self.schema = schema
 
     @contextmanager
-    def create_connection(self):
+    def create_connection(self) -> sa.engine.Connection:
+        """
+        Instantiates a connection to be used in reading and writing to the database.
+
+        Ensures that connections are closed properly and dynamically inserts the schema
+        into the database connection
+
+        Returns
+        -------
+        sa.engine.Connection
+            An open connection to the database, with a dynamically defined schema
+        """
         conn = self.engine.connect().execution_options(
             schema_translate_map={None: self.schema}
         )
@@ -59,13 +102,21 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         with self.create_connection() as conn:
-            return self.load_training_data(conn, *args, **kwargs)
+            return self.load_training_data(*args, conn=conn, **kwargs)
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:
-            return self.load_prediction_data(conn, *args, **kwargs)
+            return self.load_prediction_data(*args, conn=conn, **kwargs)
 
-    def _dump_data(self):
+    def _dump_data(self) -> pd.DataFrame:
+        """
+        Reads the underlying SQL table and returns a DataFrame
+
+        Returns
+        -------
+        pd.DataFrame
+
+        """
         logger.info(f"Dumping data from {self.table}")
         logger.debug(f"Dumping data from {self.engine}/{self.table.name}")
         stmt = sa.select([self.table])
@@ -80,12 +131,28 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         return data
 
     def _setup_table(self, conn: sa.engine.Connection):
+        """
+        Sets up a clean table with all necessary schemas created
+
+        Parameters
+        ----------
+        conn: sa.engine.Connection
+            Connection to the database
+        """
         if not self.engine.dialect.has_schema(self.engine, self.schema):
             self.engine.execute(sa.schema.CreateSchema(self.schema))
         self.table.drop(bind=conn, checkfirst=True)
         self.table.create(bind=conn)
 
-    def _load_data(self, data):
+    def _load_data(self, data: pd.DataFrame):
+        """
+        Writes input data to the underlying SQL Table
+
+        Parameters
+        ----------
+        data: pd.DataFrame
+            Input data to write to file
+        """
         logger.info(f"Inserting data into {self.table.name}")
         with self.create_connection() as conn:
             trans = conn.begin()

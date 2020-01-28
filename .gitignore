@@ -68,3 +68,6 @@ env.bak/
 venv.bak/
 runs/
 .python-version
+
+# vscode
+.vscode/

@@ -1,3 +1,7 @@
+# v0.10.1
+- Added `.copy_to` functionality to SQLDataset and FileDataset,
+allowing copying between datasets
+
 # v0.10.0
 - Bug fix for calculating feature importance when passing large amounts of data
 - Bug fix when using default metric in `test_estimators`

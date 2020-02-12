@@ -1,3 +1,8 @@
+# v0.10.2
+- Fixed type inferences from data to sql in _load_data
+- Added idx arg to load_prediction_data abstract method in SQLDataset
+- Added caching of loaded data in SQLDataset
+
 # v0.10.1
 - Added `.copy_to` functionality to SQLDataset and FileDataset,
 allowing copying between datasets

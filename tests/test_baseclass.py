@@ -58,6 +58,30 @@ class TestBaseClass:
             model = Model(LinearRegression())
             model.make_prediction(train_iris_dataset, 5)
 
+    def test_make_prediction_with_regression_sqldataset_works_as_expected(
+        self, boston_sqldataset, loaded_boston_db
+    ):
+        dataset = boston_sqldataset(loaded_boston_db, schema=None)
+        dataset.create_train_test()
+        model = Model(LinearRegression())
+        model.train_estimator(dataset)
+
+        result = model.make_prediction(dataset, 0)
+
+        assert result.shape == (1, 1)
+
+    def test_make_prediction_with_classification_sqldataset_works_as_expected(
+        self, iris_sqldataset, loaded_iris_db
+    ):
+        dataset = iris_sqldataset(loaded_iris_db, schema=None)
+        dataset.create_train_test()
+        model = Model(LogisticRegression(solver="lbfgs"))
+        model.train_estimator(dataset)
+
+        result = model.make_prediction(dataset, 0, proba=True)
+
+        assert result.shape == (1, 2)
+
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
         self, train_iris_dataset
     ):

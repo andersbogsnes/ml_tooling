@@ -103,6 +103,7 @@ def boston_sqldataset():
             sa.Column("PTRATIO", sa.Float),
             sa.Column("B", sa.Float),
             sa.Column("LSTAT", sa.Float),
+            sa.Column("MEDV", sa.Float),
         )
 
         def load_training_data(
@@ -112,9 +113,9 @@ def boston_sqldataset():
             df = pd.read_sql(sql, conn)
             return df.drop(columns="MEDV"), df.MEDV
 
-        def load_prediction_data(self, conn, idx) -> DataType:
+        def load_prediction_data(self, idx, conn) -> DataType:
             sql = "SELECT * FROM boston"
-            return pd.read_sql(sql, conn).loc[[idx]]
+            return pd.read_sql(sql, conn).loc[[idx]].drop(columns="MEDV")
 
     return BostonSQLData
 
@@ -133,14 +134,16 @@ def iris_sqldataset():
             sa.Column("petal width (cm)", sa.Float),
         )
 
-        def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
+        def load_training_data(
+            self, conn, *args, **kwargs
+        ) -> Tuple[pd.DataFrame, DataType]:
             sql = "SELECT * FROM iris"
             df = pd.read_sql(sql, self.engine)
             return df.drop(columns="target"), df.target
 
-        def load_prediction_data(self, conn, idx) -> pd.DataFrame:
+        def load_prediction_data(self, idx, conn) -> pd.DataFrame:
             sql = "SELECT * FROM iris"
-            return pd.read_sql(sql, self.engine).loc[[idx]]
+            return pd.read_sql(sql, self.engine).loc[[idx]].drop(columns="target")
 
     return IrisSQLData
 

@@ -85,6 +85,16 @@ class TestSqlDataset:
         x, y = dataset._load_training_data()
         pd.testing.assert_frame_equal(x.assign(MEDV=y), boston_df)
 
+    def test_sqldataset_can_load_prediction_data(
+        self, boston_sqldataset, boston_df, loaded_boston_db
+    ):
+        dataset = boston_sqldataset(loaded_boston_db, schema=None)
+        result = dataset.load_prediction_data(0, conn=loaded_boston_db)
+
+        expected = boston_df.iloc[[0], :].drop(columns="MEDV")
+
+        pd.testing.assert_frame_equal(result, expected)
+
     def test_sqldataset_can_copy_to_another_sqldataset(
         self, boston_sqldataset, loaded_boston_db
     ):
@@ -123,17 +133,18 @@ class TestSqlDataset:
         self, boston_sqldataset, test_engine
     ):
         dataset = boston_sqldataset(test_engine, None)
-        create_conn_mock = MagicMock()
-        failing_conn_mock = MagicMock()
-        failing_conn_mock.execute.side_effect = DBAPIError("test", "test", "test")
         trans_mock = MagicMock()
-        failing_conn_mock.begin.return_value = trans_mock
+        conn_mock = MagicMock()
+        conn_mock.begin.return_value = trans_mock
 
-        create_conn_mock.return_value.__enter__.return_value = failing_conn_mock
-
+        create_conn_mock = MagicMock()
+        create_conn_mock.return_value.__enter__.return_value = conn_mock
         dataset.create_connection = create_conn_mock
+
         with pytest.raises(DBAPIError):
-            dataset._load_data(MagicMock())
+            data_mock = MagicMock()
+            data_mock.to_sql.side_effect = DBAPIError("test", "test", "test")
+            dataset._load_data(data_mock)
         trans_mock.rollback.assert_called()
 
     @patch("sqlalchemy.schema.CreateSchema")

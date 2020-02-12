@@ -97,7 +97,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load_prediction_data(self, conn, *args, **kwargs) -> pd.DataFrame:
+    def load_prediction_data(self, idx, conn, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
@@ -106,7 +106,9 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:
-            return self.load_prediction_data(*args, conn=conn, **kwargs)
+            pred_data = self.load_prediction_data(*args, conn=conn, **kwargs)
+            self.cached_data = pred_data
+            return pred_data
 
     def _dump_data(self) -> pd.DataFrame:
         """
@@ -158,8 +160,13 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
             trans = conn.begin()
             try:
                 self._setup_table(conn)
-                insert = self.table.insert()
-                conn.execute(insert, data.to_dict(orient="records"))
+                data.to_sql(
+                    self.table.name,
+                    conn,
+                    schema=self.schema,
+                    if_exists="append",
+                    index=False,
+                )
                 trans.commit()
             except DBAPIError:
                 logger.exception("Insert data failed")

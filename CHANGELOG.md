@@ -2,6 +2,7 @@
 - Fixed typehints in Dataset
 - Dataset.create_train_test now takes a boolean `stratify` parameter.
 - Added default local filestorage when using `save_estimator`
+- Dataset now verifies that `load_training_data` and `load_prediction_data` do not return empty
 
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data

@@ -1,3 +1,7 @@
+# v0.10.3
+- Fixed typehints in Dataset
+- Dataset.create_train_test now takes a boolean `stratify` parameter.
+
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data
 - Added idx arg to load_prediction_data abstract method in SQLDataset

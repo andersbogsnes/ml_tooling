@@ -481,7 +481,7 @@ class TestTrainEstimator:
                 self.average = None
 
             def fit(self, x, y=None):
-                self.average = np.mean(x, axis=1)
+                self.average = np.mean(x, axis=0)
                 return self
 
             def predict(self, x):
@@ -489,10 +489,10 @@ class TestTrainEstimator:
 
         class DummyData(Dataset):
             def load_training_data(self):
-                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]]), None
+                return pd.DataFrame({"col1": [1, 2, 3, 4], "col2": [4, 5, 6, 7]}), None
 
             def load_prediction_data(self, *args, **kwargs):
-                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]])
+                return pd.DataFrame({"col1": [1, 2, 3, 4], "col2": [4, 5, 6, 7]})
 
         model = Model(DummyEstimator())
         data = DummyData()

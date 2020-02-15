@@ -3,7 +3,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.exc import DBAPIError
 
-from ml_tooling.data import Dataset
+from ml_tooling.data import Dataset, SQLDataset, FileDataset
 from ml_tooling.utils import DatasetError
 
 
@@ -38,6 +38,19 @@ class TestDataset:
         assert dataset.has_validation_set is False
         dataset.create_train_test(stratify=True)
         assert dataset.has_validation_set is True
+
+    def test_dataset_that_returns_empty_training_data_errors_correctly(self):
+        class FailingDataset(Dataset):
+            def load_training_data(self, *args, **kwargs):
+                return pd.DataFrame(), None
+
+            def load_prediction_data(self, *args, **kwargs):
+                pass
+
+        with pytest.raises(
+            DatasetError, match="Empty dataset returned by load_training_data"
+        ):
+            FailingDataset().create_train_test()
 
     def test_cannot_instantiate_an_abstract_baseclass(self):
         with pytest.raises(TypeError):
@@ -129,6 +142,19 @@ class TestSqlDataset:
             boston_sqldataset(test_engine, "")._dump_data()
         read_sql.assert_called_once()
 
+    def test_dataset_that_returns_empty_training_data_errors_correctly(self):
+        class FailingDataset(SQLDataset):
+            def load_training_data(self, *args, **kwargs):
+                return pd.DataFrame(), pd.Series()
+
+            def load_prediction_data(self, *args, **kwargs):
+                pass
+
+        with pytest.raises(
+            DatasetError, match="Empty dataset returned by load_training_data"
+        ):
+            FailingDataset("sqlite:///", schema=None).create_train_test()
+
     def test_load_data_throws_error_on_exec_failure(
         self, boston_sqldataset, test_engine
     ):
@@ -204,3 +230,21 @@ class TestFileDataset:
         assert tmp_path.suffix == ""
         with pytest.raises(DatasetError, match="must point to a file"):
             boston_filedataset(tmp_path)
+
+    def test_filedataset_that_returns_empty_training_data_raises_exception(
+        self, tmp_path
+    ):
+        class FailingDataset(FileDataset):
+            def load_training_data(self, *args, **kwargs):
+                return pd.DataFrame(), pd.Series()
+
+            def load_prediction_data(self, *args, **kwargs):
+                pass
+
+        test_file = tmp_path / "test.csv"
+        test_file.write_text("hello")
+
+        with pytest.raises(
+            DatasetError, match="Empty dataset returned by load_training_data"
+        ):
+            FailingDataset(test_file).create_train_test()

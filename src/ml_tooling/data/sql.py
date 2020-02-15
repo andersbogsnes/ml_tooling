@@ -10,7 +10,6 @@ from contextlib import contextmanager
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType, DatasetError
 
-
 logger = logging.getLogger("ml_tooling")
 
 
@@ -102,7 +101,10 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         with self.create_connection() as conn:
-            return self.load_training_data(*args, conn=conn, **kwargs)
+            x, y = self.load_training_data(*args, conn=conn, **kwargs)
+            if x.empty:
+                raise DatasetError("Empty dataset returned by load_training_data")
+            return x, y
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:

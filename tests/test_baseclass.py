@@ -713,9 +713,10 @@ class TestGridSearch:
             assert result.metrics.score == result.metrics[0].score
 
     def test_gridsearch_can_log_with_context_manager(
-        self, feature_union_classifier, train_iris_dataset
+        self, feature_union_classifier, train_iris_dataset, tmp_path
     ):
         classifier = Model(feature_union_classifier)
+        classifier.config.RUN_DIR = tmp_path
         with classifier.log("gridsearch_union_test"):
             _, _ = classifier.gridsearch(
                 train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}

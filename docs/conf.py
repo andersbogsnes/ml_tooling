@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
     "matplotlib.sphinxext.plot_directive",
+    "sphinx_rtd_theme",
 ]
 
 intersphinx_mapping = {

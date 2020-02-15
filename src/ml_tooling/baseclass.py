@@ -1,24 +1,20 @@
-from importlib.resources import path as import_path
-import pathlib
 import datetime
+import pathlib
 from contextlib import contextmanager
+from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
 import joblib
 import pandas as pd
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
-
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
-from ml_tooling.result import ResultType
-from ml_tooling.storage.base import Storage
 from ml_tooling.logging.logger import create_logger
+from ml_tooling.metrics.metric import Metrics
+from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
-from ml_tooling.metrics.metric import Metrics
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
+from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
@@ -30,6 +26,9 @@ from ml_tooling.utils import (
     make_pipeline_from_definition,
     read_yaml,
 )
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
 
 logger = create_logger("ml_tooling")
 
@@ -142,7 +141,7 @@ class Model:
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, storage: Storage, prod=False) -> pathlib.Path:
+    def save_estimator(self, storage: Storage = None, prod=False) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
 
@@ -170,6 +169,9 @@ class Model:
         pathlib.Path
             The path to where the estimator file was saved
         """
+        if storage is None:
+            storage = self.config.default_storage
+
         if prod:
             file_name = "production_model.pkl"
         else:

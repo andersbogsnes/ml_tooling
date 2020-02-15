@@ -1,3 +1,6 @@
+# v0.10.3
+- Added default local filestorage when using `save_estimator`
+
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data
 - Added idx arg to load_prediction_data abstract method in SQLDataset

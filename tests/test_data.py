@@ -1,10 +1,12 @@
+import pathlib
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, patch
-from sqlalchemy.exc import DBAPIError
-
-from ml_tooling.data import Dataset, SQLDataset, FileDataset
+from ml_tooling import Model
+from ml_tooling.data import Dataset
 from ml_tooling.utils import DatasetError
+from sqlalchemy.exc import DBAPIError
 
 
 class TestDataset:
@@ -48,9 +50,23 @@ class TestDataset:
                 pass
 
         with pytest.raises(
-            DatasetError, match="Empty dataset returned by load_training_data"
+            DatasetError, match="An empty dataset was returned by load_training_data"
         ):
-            FailingDataset().create_train_test()
+            FailingDataset()._load_training_data()
+
+    def test_dataset_raises_when_load_prediction_data_returns_empty(self, classifier):
+        class FailingDataset(Dataset):
+            def load_training_data(self, *args, **kwargs):
+                pass
+
+            def load_prediction_data(self, *args, **kwargs):
+                return pd.DataFrame()
+
+        data = FailingDataset()
+        with pytest.raises(
+            DatasetError, match="An empty dataset was returned by load_prediction_data"
+        ):
+            classifier.make_prediction(data, 0)
 
     def test_cannot_instantiate_an_abstract_baseclass(self):
         with pytest.raises(TypeError):
@@ -142,18 +158,30 @@ class TestSqlDataset:
             boston_sqldataset(test_engine, "")._dump_data()
         read_sql.assert_called_once()
 
-    def test_dataset_that_returns_empty_training_data_errors_correctly(self):
-        class FailingDataset(SQLDataset):
+    def test_sql_dataset_raises_exception_when_load_training_data_returns_empty(
+        self, boston_sqldataset
+    ):
+        class FailingDataset(boston_sqldataset):
             def load_training_data(self, *args, **kwargs):
                 return pd.DataFrame(), pd.Series()
 
-            def load_prediction_data(self, *args, **kwargs):
-                pass
-
         with pytest.raises(
-            DatasetError, match="Empty dataset returned by load_training_data"
+            DatasetError, match="An empty dataset was returned by load_training_data"
         ):
             FailingDataset("sqlite:///", schema=None).create_train_test()
+
+    def test_sql_dataset_raises_exception_when_load_prediction_data_returns_empty(
+        self, boston_sqldataset, regression
+    ):
+        class FailingDataset(boston_sqldataset):
+            def load_prediction_data(self, *args, **kwargs):
+                return pd.DataFrame()
+
+        data = FailingDataset("sqlite:///", schema=None)
+        with pytest.raises(
+            DatasetError, match="An empty dataset was returned by load_prediction_data"
+        ):
+            regression.make_prediction(data, 0)
 
     def test_load_data_throws_error_on_exec_failure(
         self, boston_sqldataset, test_engine
@@ -232,19 +260,27 @@ class TestFileDataset:
             boston_filedataset(tmp_path)
 
     def test_filedataset_that_returns_empty_training_data_raises_exception(
-        self, tmp_path
+        self, boston_csv, boston_filedataset
     ):
-        class FailingDataset(FileDataset):
+        class FailingDataset(boston_filedataset):
             def load_training_data(self, *args, **kwargs):
                 return pd.DataFrame(), pd.Series()
 
-            def load_prediction_data(self, *args, **kwargs):
-                pass
+        with pytest.raises(
+            DatasetError, match="An empty dataset was returned by load_training_data"
+        ):
+            FailingDataset(boston_csv).create_train_test()
 
-        test_file = tmp_path / "test.csv"
-        test_file.write_text("hello")
+    def test_filedataset_raises_exception_when_load_prediction_data_is_empty(
+        self, regression: Model, boston_filedataset, boston_csv: pathlib.Path
+    ):
+        class FailingDataset(boston_filedataset):
+            def load_prediction_data(self, *args, **kwargs):
+                return pd.DataFrame()
+
+        data = FailingDataset(boston_csv).create_train_test()
 
         with pytest.raises(
-            DatasetError, match="Empty dataset returned by load_training_data"
+            DatasetError, match="An empty dataset was returned by load_prediction_data"
         ):
-            FailingDataset(test_file).create_train_test()
+            regression.make_prediction(data, 0)

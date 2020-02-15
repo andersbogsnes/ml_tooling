@@ -101,16 +101,11 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         with self.create_connection() as conn:
-            x, y = self.load_training_data(*args, conn=conn, **kwargs)
-            if x.empty:
-                raise DatasetError("Empty dataset returned by load_training_data")
-            return x, y
+            return super()._load_training_data(*args, conn=conn, **kwargs)
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:
-            pred_data = self.load_prediction_data(*args, conn=conn, **kwargs)
-            self.cached_data = pred_data
-            return pred_data
+            return super()._load_prediction_data(*args, conn=conn, **kwargs)
 
     def _dump_data(self) -> pd.DataFrame:
         """

@@ -1,5 +1,7 @@
 import pathlib
 
+from ml_tooling.storage import FileStorage
+
 BASE_PATH = pathlib.Path(__file__).parent
 CWD = pathlib.Path.cwd()
 
@@ -24,6 +26,10 @@ class DefaultConfig:
         self.RUN_DIR = RUN_DIR
         self.ESTIMATOR_DIR = ESTIMATOR_DIR
         self.LOG = False
+
+    @property
+    def default_storage(self):
+        return FileStorage(self.ESTIMATOR_DIR)
 
     def __repr__(self):
         attrs = "\n".join(

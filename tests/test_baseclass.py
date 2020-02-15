@@ -231,6 +231,21 @@ class TestBaseClass:
             classifier.estimator, "production_model.pkl", prod=True
         )
 
+    def test_save_estimator_uses_default_storage_if_no_storage_is_passed(
+        self, tmp_path: pathlib.Path, classifier: Model
+    ):
+        classifier.config.ESTIMATOR_DIR = tmp_path
+        classifier.save_estimator()
+
+        models = classifier.config.default_storage.get_list()
+        assert len(models) == 1
+        new_classifier = Model.load_estimator(
+            classifier.config.default_storage, models[0]
+        )
+        assert (
+            classifier.estimator.get_params() == new_classifier.estimator.get_params()
+        )
+
     @patch("ml_tooling.baseclass.import_path")
     def test_can_load_production_estimator(
         self, mock_path: MagicMock, open_estimator_pickle
@@ -698,9 +713,10 @@ class TestGridSearch:
             assert result.metrics.score == result.metrics[0].score
 
     def test_gridsearch_can_log_with_context_manager(
-        self, feature_union_classifier, train_iris_dataset
+        self, feature_union_classifier, train_iris_dataset, tmp_path
     ):
         classifier = Model(feature_union_classifier)
+        classifier.config.RUN_DIR = tmp_path
         with classifier.log("gridsearch_union_test"):
             _, _ = classifier.gridsearch(
                 train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}

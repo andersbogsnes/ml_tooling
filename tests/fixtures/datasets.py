@@ -43,7 +43,7 @@ def iris_dataset(iris_df):
 
 @pytest.fixture()
 def train_iris_dataset(iris_dataset):
-    return iris_dataset().create_train_test()
+    return iris_dataset().create_train_test(stratify=True)
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def boston_dataset(boston_df):
 
 @pytest.fixture()
 def train_boston_dataset(boston_dataset):
-    return boston_dataset().create_train_test()
+    return boston_dataset().create_train_test(stratify=False)
 
 
 @pytest.fixture

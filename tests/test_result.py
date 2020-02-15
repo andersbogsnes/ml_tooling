@@ -120,9 +120,9 @@ class TestResultGroup:
         )
 
         group = ResultGroup([result1, result2])
-        first = group[0]
 
-        assert first.metrics.score == 0.7368421052631579
+        assert group[0].metrics.score == result1.metrics.score
+        assert group[1].metrics.score == result2.metrics.score
 
     def test_result_group_logs_all_results(
         self, tmp_path: pathlib.Path, train_iris_dataset, classifier: Model

@@ -1,4 +1,6 @@
 # v0.10.3
+- Fixed typehints in Dataset
+- Dataset.create_train_test now takes a boolean `stratify` parameter.
 - Added default local filestorage when using `save_estimator`
 
 # v0.10.2

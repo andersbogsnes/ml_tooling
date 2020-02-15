@@ -62,7 +62,7 @@ class TestBaseClass:
         self, boston_sqldataset, loaded_boston_db
     ):
         dataset = boston_sqldataset(loaded_boston_db, schema=None)
-        dataset.create_train_test()
+        dataset.create_train_test(stratify=False)
         model = Model(LinearRegression())
         model.train_estimator(dataset)
 

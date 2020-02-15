@@ -20,7 +20,6 @@ def random():
 
 @pytest.fixture(name="base")
 def _base():
-    # noinspection PyAbstractClass
     class IrisModel(Model):
         @classmethod
         def clean_model(cls):

@@ -4,7 +4,7 @@ import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.engine import Connectable
 from sqlalchemy.exc import DBAPIError
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from contextlib import contextmanager
 
 from ml_tooling.data.base_data import Dataset
@@ -43,7 +43,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     table: Optional[sa.Table] = None
 
-    def __init__(self, conn: Connectable, schema: str, **kwargs):
+    def __init__(self, conn: Union[str, Connectable], schema: str, **kwargs):
         """
         Instantiates a dataset with the necessary arguments to connect to the database.
 

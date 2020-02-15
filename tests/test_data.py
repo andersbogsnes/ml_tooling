@@ -36,7 +36,7 @@ class TestDataset:
     def test_dataset_has_validation_set_errors_correctly(self, iris_dataset):
         dataset = iris_dataset()
         assert dataset.has_validation_set is False
-        dataset.create_train_test()
+        dataset.create_train_test(stratify=True)
         assert dataset.has_validation_set is True
 
     def test_cannot_instantiate_an_abstract_baseclass(self):

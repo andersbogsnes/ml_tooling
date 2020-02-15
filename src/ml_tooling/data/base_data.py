@@ -26,7 +26,7 @@ class Dataset(metaclass=abc.ABCMeta):
 
     def create_train_test(
         self,
-        stratify: Optional[DataType] = None,
+        stratify: bool = False,
         shuffle: bool = True,
         test_size: float = 0.25,
         seed: int = 42,

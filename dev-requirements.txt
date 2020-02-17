@@ -41,7 +41,7 @@ tox==3.14.5
 urllib3==1.25.8           # via requests
 virtualenv==20.0.4        # via pre-commit, tox
 wcwidth==0.1.8            # via pytest
-zipp==2.2.0               # via importlib-metadata
+zipp==3.0.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools==45.1.0        # via kiwisolver

@@ -69,6 +69,7 @@ class TestBaseClass:
         result = model.make_prediction(dataset, 0)
 
         assert result.shape == (1, 1)
+        assert result.columns.tolist() == ["Prediction"]
 
     def test_make_prediction_with_classification_sqldataset_works_as_expected(
         self, iris_sqldataset, loaded_iris_db
@@ -81,6 +82,7 @@ class TestBaseClass:
         result = model.make_prediction(dataset, 0, proba=True)
 
         assert result.shape == (1, 2)
+        assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
         self, train_iris_dataset

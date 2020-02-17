@@ -259,13 +259,14 @@ class Model:
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
+                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
             else:
                 data = self.estimator.predict(x)
-
+                columns = ["Prediction"]
             if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index)
+                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
             else:
-                prediction = pd.DataFrame(data=data)
+                prediction = pd.DataFrame(data=data, columns=columns)
 
             return prediction
 

@@ -4,6 +4,7 @@
 - Added default local filestorage when using `save_estimator`
 - The dataframe returned by `.make_prediction`now labels the columns in a more
 human friendly manner
+- Dataset now verifies that `load_training_data` and `load_prediction_data` do not return empty
 
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data

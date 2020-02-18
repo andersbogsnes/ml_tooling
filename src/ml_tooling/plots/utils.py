@@ -1,6 +1,7 @@
 from typing import Union, Optional
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
 from matplotlib.axes import Axes, np
 from ml_tooling.metrics.utils import _is_percent, _sort_values
 from ml_tooling.utils import DataType
@@ -47,6 +48,7 @@ def _plot_barh(
     ax: Optional[Axes] = None,
     top_n: Union[int, float] = None,
     bottom_n: Union[int, float] = None,
+    is_percent=False,
     **kwargs,
 ) -> Axes:
     """
@@ -80,6 +82,9 @@ def _plot_barh(
         If bottom_n is an integer, return bottom_n features
         If bottom_n is a float between 0 and 1, return bottom_n percent of features
 
+    is_percent: bool
+        Indicates that the x-value is a percentage between 0 and 1. Formats the plot accordingly
+
 
     Returns
     -------
@@ -87,7 +92,7 @@ def _plot_barh(
     """
 
     if ax is None:
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(constrained_layout=True)
 
     if top_n:
         title = (
@@ -118,12 +123,17 @@ def _plot_barh(
 
     if add_label:
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
+
             ax.annotate(
-                f"{values[i]:.2f}",
+                f"{values[i]:.1%}" if is_percent else f"{values[i]:.2f}",
                 (x, y),
                 xytext=(5, 0),
                 textcoords="offset points",
                 va="center",
             )
 
+    if is_percent:
+        formatter = PercentFormatter(xmax=1)
+        ax.xaxis.set_major_formatter(formatter)
+    ax.margins(x=0.15)
     return ax

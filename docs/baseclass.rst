@@ -119,8 +119,8 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
 
     >>> customer_id = 42
     >>> linear.make_prediction(bostondata, customer_id)
-               0
-    0  25.203866
+       Prediction
+    0   25.203866
 
 :meth:`~ml_tooling.baseclass.Model.make_prediction` also has a parameter :code:`proba` which will return the
 underlying probabilities if working on a classification problem

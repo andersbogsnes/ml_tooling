@@ -69,6 +69,7 @@ class TestBaseClass:
         result = model.make_prediction(dataset, 0)
 
         assert result.shape == (1, 1)
+        assert result.columns.tolist() == ["Prediction"]
 
     def test_make_prediction_with_classification_sqldataset_works_as_expected(
         self, iris_sqldataset, loaded_iris_db
@@ -81,6 +82,7 @@ class TestBaseClass:
         result = model.make_prediction(dataset, 0, proba=True)
 
         assert result.shape == (1, 2)
+        assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
         self, train_iris_dataset
@@ -481,7 +483,7 @@ class TestTrainEstimator:
                 self.average = None
 
             def fit(self, x, y=None):
-                self.average = np.mean(x, axis=1)
+                self.average = np.mean(x, axis=0)
                 return self
 
             def predict(self, x):
@@ -489,10 +491,10 @@ class TestTrainEstimator:
 
         class DummyData(Dataset):
             def load_training_data(self):
-                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]]), None
+                return pd.DataFrame({"col1": [1, 2, 3, 4], "col2": [4, 5, 6, 7]}), None
 
             def load_prediction_data(self, *args, **kwargs):
-                return np.array([[1, 2, 3, 4], [4, 5, 6, 7]])
+                return pd.DataFrame({"col1": [1, 2, 3, 4], "col2": [4, 5, 6, 7]})
 
         model = Model(DummyEstimator())
         data = DummyData()

@@ -105,10 +105,16 @@ class Dataset(metaclass=abc.ABCMeta):
         return self.__class__.__name__
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
-        return self.load_training_data(*args, **kwargs)
+        x, y = self.load_training_data(*args, **kwargs)
+        if x.empty:
+            raise DatasetError("An empty dataset was returned by load_training_data")
+
+        return x, y
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         pred_data = self.load_prediction_data(*args, **kwargs)
+        if pred_data.empty:
+            raise DatasetError("An empty dataset was returned by load_prediction_data")
         self.cached_data = pred_data
         return pred_data
 

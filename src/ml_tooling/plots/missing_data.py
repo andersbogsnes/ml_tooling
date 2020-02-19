@@ -40,15 +40,15 @@ def plot_missing_data(
     if ax is None:
         fig, ax = plt.subplots()
 
-    missing_data = df.isna().sum().sort_values().divide(len(df))
+    missing_data = df.isna().sum().sort_values().divide(len(df)).loc[lambda x: x > 0]
 
     return _plot_barh(
         values=missing_data.values,
         label_names=missing_data.index,
         add_label=True,
         title=f"Misssing data per column",
-        x_label="Feature",
-        y_label="Percent Missing Data",
+        y_label="Feature",
+        x_label="Percent Missing Data",
         ax=ax,
         top_n=top_n,
         bottom_n=bottom_n,

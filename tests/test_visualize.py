@@ -608,3 +608,45 @@ class TestTargetCorrelation:
         test_ax = train_iris_dataset.plot.target_correlation(ax=ax)
         assert ax == test_ax
         plt.close()
+
+
+class TestMissingDataViz:
+    @pytest.fixture()
+    def missing_data(self, train_boston_dataset):
+        train_boston_dataset.x.iloc[:10, 0] = np.nan
+        return train_boston_dataset
+
+    @pytest.fixture()
+    def ax(self, missing_data):
+        return missing_data.plot.missing_data()
+
+    def test_missing_data_text_labels_are_correct(self, ax):
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+
+    def test_ylabel_is_correct(self, ax):
+        assert ax.get_ylabel() == "Feature"
+
+    def test_xlabel_is_correct(self, ax):
+        assert ax.get_xlabel() == "Percent Missing Data"
+
+    def test_xticklabels_are_correct(self, ax):
+        # Must trigger rendering before labels are accessible
+        ax.figure.canvas.draw()
+        assert [text.get_text() for text in ax.get_xticklabels()] == [
+            "0.00%",
+            "0.50%",
+            "1.00%",
+            "1.50%",
+            "2.00%",
+            "2.50%",
+        ]
+
+    def test_missing_data_plots_can_be_given_an_ax(self, missing_data):
+        fig, ax = plt.subplots()
+        test_ax = missing_data.plot.missing_data(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_can_call_missing_data_with_no_missing_values(self, train_boston_dataset):
+        ax = train_boston_dataset.plot.missing_data()
+        assert ax.patches == []

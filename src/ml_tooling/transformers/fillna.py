@@ -7,17 +7,30 @@ from ml_tooling.utils import TransformerError
 
 
 class FillNA(BaseEstimator, TransformerMixin):
-    """
-    Fills NA values with given value or strategy. Either a value or a strategy has to be supplied.
-    """
-
     def __init__(
-        self, value: Optional[Union[str, int]] = None, strategy: Optional[str] = None
+        self,
+        value: Optional[Union[str, int]] = None,
+        strategy: Optional[str] = None,
+        indicate_nan: bool = False,
     ):
+        """
+        Fills NA values with given value or strategy. Either a value or a strategy
+        has to be supplied.
+
+        Parameters
+        ----------
+        value: str or int
+            A specific value to replace NaNs with.
+        strategy: str
+            A named strategy to replace NaNs with.
+            One of 'mean', 'median', 'most_freq', 'max', 'min'
+        indicate_nan
+        """
 
         self.value = value
         self.strategy = strategy
-        self.value_map_: Optional[dict] = None
+        self.value_map_ = {}
+        self.indicate_nan = indicate_nan
 
         self.func_map_ = {
             "mean": pd.DataFrame.mean,
@@ -41,7 +54,6 @@ class FillNA(BaseEstimator, TransformerMixin):
                 f"Please select either a value or a strategy."
             )
 
-    # noinspection PyUnresolvedReferences
     def _col_is_categorical_and_is_missing_category(
         self, col: str, X: pd.DataFrame
     ) -> bool:
@@ -77,6 +89,9 @@ class FillNA(BaseEstimator, TransformerMixin):
         for col in x_.columns:
             if self._col_is_categorical_and_is_missing_category(col, x_):
                 x_[col].cat.add_categories(self.value_map_[col], inplace=True)
+            if self.indicate_nan and x_[col].isna().sum() > 0:
+                is_nan_col_name = f"{col}_is_nan"
+                x_[is_nan_col_name] = x_[col].isna().astype(int)
 
         result = x_.fillna(value=self.value_map_)
         return result

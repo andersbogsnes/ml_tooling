@@ -255,6 +255,14 @@ class TestFillNA(TransformerBase):
         ):
             fill_na.fit_transform(df)
 
+    def test_fillna_adds_is_na_column_when_imputing(self):
+        df = pd.DataFrame({"id": [1, 2, 3, 4], "sales": [2000, 3000, 4000, np.nan]})
+        fill_na = FillNA(strategy="mean", indicate_nan=True)
+        expected_cols = ["id", "sales", "sales_is_nan"]
+        result = fill_na.fit_transform(df)
+        assert result.columns.tolist() == expected_cols
+        assert np, all(result["sales_isna"] == [0, 0, 0, 1])
+
 
 class TestToCategorical(TransformerBase):
     def test_to_categorical_returns_correct_dataframe(self, categorical: pd.DataFrame):

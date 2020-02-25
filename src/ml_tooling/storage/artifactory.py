@@ -89,7 +89,7 @@ class ArtifactoryStorage(Storage):
         We now have a trained estimator loaded.
 
         Returns
-        -------
+        -------pass
         Object
             estimator unpickled object
         """

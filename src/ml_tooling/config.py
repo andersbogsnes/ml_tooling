@@ -1,13 +1,28 @@
 import pathlib
-
+import configparser
 from ml_tooling.storage import FileStorage
 
-BASE_PATH = pathlib.Path(__file__).parent
-CWD = pathlib.Path.cwd()
+PACKAGE_PATH = pathlib.Path(__file__).parent
+MPL_STYLESHEET = str(PACKAGE_PATH.joinpath("almbrand.mplstyle"))
 
-MPL_STYLESHEET = str(BASE_PATH.joinpath("almbrand.mplstyle"))
-RUN_DIR = CWD.joinpath("runs")
-ESTIMATOR_DIR = CWD.joinpath("models")
+config_search_path = [
+    pathlib.Path().cwd().parent.joinpath("ml_tooling.ini"),
+    pathlib.Path().cwd().joinpath("ml_tooling.ini"),
+]
+
+parser = configparser.ConfigParser(
+    defaults={
+        "verbosity": 0,
+        "classifier_metric": "accuracy",
+        "regression_metric": "r2",
+        "cross_validation": "10",
+        "n_jobs": -1,
+        "random_state": 42,
+        "run_dir": "runs",
+        "estimator_dir": "models",
+    },
+    default_section="ml_tooling",
+)
 
 
 class DefaultConfig:
@@ -16,16 +31,26 @@ class DefaultConfig:
     """
 
     def __init__(self):
-        self.VERBOSITY = 0
-        self.CLASSIFIER_METRIC = "accuracy"
-        self.REGRESSION_METRIC = "r2"
-        self.CROSS_VALIDATION = 10
-        self.STYLE_SHEET = MPL_STYLESHEET
-        self.N_JOBS = -1
-        self.RANDOM_STATE = 42
-        self.RUN_DIR = RUN_DIR
-        self.ESTIMATOR_DIR = ESTIMATOR_DIR
+        parser.read(config_search_path)
+        config = parser["ml_tooling"]
+
+        self.VERBOSITY = config.getint("verbosity")
+        self.CLASSIFIER_METRIC = config["classifier_metric"]
+        self.REGRESSION_METRIC = config["regression_metric"]
+        self.CROSS_VALIDATION = config.getint("cross_validation")
+        self.N_JOBS = config.getint("n_jobs")
+        self.RANDOM_STATE = config.getint("random_state")
+        self.RUN_DIR = self.config_file.parent / config["run_dir"]
+        self.ESTIMATOR_DIR = self.config_file.parent / config["estimator_dir"]
         self.LOG = False
+        self.STYLE_SHEET = MPL_STYLESHEET
+
+    @property
+    def config_file(self):
+        for path in config_search_path:
+            if path.exists():
+                return path
+            return pathlib.Path.cwd()
 
     @property
     def default_storage(self):

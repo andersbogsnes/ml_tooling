@@ -1,15 +1,13 @@
+import pytest
+
 from ml_tooling import Model
 from ml_tooling.config import DefaultConfig
-from sklearn.linear_model import LinearRegression
 
 
 class TestConfig:
-    def test_config_is_set_globally(self, pipeline_dummy_classifier, pipeline_linear):
+    @pytest.fixture()
+    def test_model(self):
         class TestModel(Model):
-            @classmethod
-            def setup_estimator(cls):
-                pass
-
             def get_prediction_data(self, *args):
                 pass
 
@@ -17,36 +15,27 @@ class TestConfig:
                 pass
 
         TestModel.reset_config()
+        return TestModel
 
-        assert TestModel.config.N_JOBS == -1
-
-        model = TestModel(pipeline_dummy_classifier)
+    def test_instance_of_model_inherits_top_level(
+        self, test_model, pipeline_dummy_classifier
+    ):
+        model = test_model(pipeline_dummy_classifier)
         assert model.config.N_JOBS == -1
 
-        TestModel.config.N_JOBS = 1
-        assert TestModel.config.N_JOBS == 1
+    def test_changing_model_config_changes_instance_config(
+        self, test_model, pipeline_dummy_classifier
+    ):
+        model = test_model(pipeline_dummy_classifier)
+        test_model.config.N_JOBS = 1
         assert model.config.N_JOBS == 1
 
-        new_model = TestModel(pipeline_dummy_classifier)
-        assert new_model.config.N_JOBS == 1
-
-    def test_can_change_config(self):
-        class SomeModel(Model):
-            @classmethod
-            def setup_estimator(cls):
-                pass
-
-            def get_training_data(self):
-                pass
-
-            def get_prediction_data(self, *args):
-                pass
-
-        SomeModel.reset_config()
-        test_model = SomeModel(LinearRegression())
-        assert 10 == test_model.config.CROSS_VALIDATION
-        test_model.config.CROSS_VALIDATION = 2
-        assert test_model.config.CROSS_VALIDATION == 2
+    def test_changing_model_config_before_instantiating_model_changes_instance_config(
+        self, test_model, pipeline_dummy_classifier
+    ):
+        test_model.config.N_JOBS = 1
+        model = test_model(pipeline_dummy_classifier)
+        assert model.config.N_JOBS == 1
 
     def test_config_repr_works(self):
         config = DefaultConfig()
@@ -92,3 +81,6 @@ class TestConfig:
         result = base.config.default_storage
 
         assert result.dir_path == tmp_path
+
+    def test_using_config_file_changes_config(self, tmp_path):
+        pass

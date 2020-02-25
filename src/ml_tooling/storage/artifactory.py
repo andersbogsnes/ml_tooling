@@ -33,7 +33,10 @@ class ArtifactoryStorage(Storage):
     -------
     Instantiate this class with a url and path to the repo like so:
 
+    .. code-block::
+
         storage = ArtifactoryStorage('http://artifactory.com','path/to/artifact')
+
     """
 
     def __init__(
@@ -81,7 +84,9 @@ class ArtifactoryStorage(Storage):
 
         Example
         -------
-        We can load a saved pickled estimator from disk directly from Artifactory:
+        We can load a saved pickled estimator from disk directly from Artifactory
+
+        .. code-block::
 
             storage = ArtifactoryStorage('http://artifactory.com', 'path/to/repo')
             my_estimator = storage.load('estimatorfile')
@@ -89,7 +94,8 @@ class ArtifactoryStorage(Storage):
         We now have a trained estimator loaded.
 
         Returns
-        -------pass
+        -------
+
         Object
             estimator unpickled object
         """

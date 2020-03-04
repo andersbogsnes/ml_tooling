@@ -1,7 +1,8 @@
 import pytest
 
 from ml_tooling import Model
-from ml_tooling.config import DefaultConfig
+from ml_tooling.config import DefaultConfig, ConfigLoader
+import configparser
 
 
 class TestConfig:
@@ -38,7 +39,8 @@ class TestConfig:
         assert model.config.N_JOBS == 1
 
     def test_config_repr_works(self):
-        config = DefaultConfig()
+        loader = ConfigLoader()
+        config = DefaultConfig.from_configloader(loader)
         for key in [
             "VERBOSITY",
             "CLASSIFIER_METRIC",
@@ -83,4 +85,6 @@ class TestConfig:
         assert result.dir_path == tmp_path
 
     def test_using_config_file_changes_config(self, tmp_path):
-        pass
+        parser = configparser.ConfigParser()
+        parser["ml_tooling"] = {"classifier_metric": "average_precision"}
+        tmp_path

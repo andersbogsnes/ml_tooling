@@ -6,7 +6,7 @@ from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
 import joblib
 import pandas as pd
-from ml_tooling.config import DefaultConfig, ConfigGetter
+from ml_tooling.config import DefaultConfig, ConfigGetter, ConfigLoader
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.metrics.metric import Metrics
@@ -524,7 +524,8 @@ class Model:
         """
         Reset configuration to default
         """
-        cls._config = DefaultConfig()
+        loader = ConfigLoader()
+        cls._config = DefaultConfig.from_configloader(loader)
 
         return cls
 

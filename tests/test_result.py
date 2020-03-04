@@ -8,7 +8,6 @@ from ml_tooling import Model
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result, ResultGroup
-from ml_tooling.result.viz import create_plotter
 
 
 class TestResult:
@@ -77,7 +76,6 @@ class TestResult:
             classifier,
             data=train_iris_dataset,
             metrics=Metrics([Metric(score=0.7, name="accuracy")]),
-            plot=create_plotter(classifier, train_iris_dataset),
         )
         log = Log.from_result(result)
         log.save_log(runs)
@@ -160,20 +158,17 @@ class TestResultGroup:
             classifier,
             metrics=Metrics.from_dict({"accuracy": 0.9, "roc_auc": 0.1}),
             data=None,
-            plot=None,
         )
         result2 = Result(
             classifier,
             metrics=Metrics.from_dict({"accuracy": 0.5, "roc_auc": 0.5}),
             data=None,
-            plot=None,
         )
 
         result3 = Result(
             classifier,
             metrics=Metrics.from_dict({"accuracy": 0.1, "roc_auc": 0.9}),
             data=None,
-            plot=None,
         )
         results = ResultGroup([result1, result2, result3])
 

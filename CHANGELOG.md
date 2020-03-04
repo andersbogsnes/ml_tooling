@@ -7,6 +7,7 @@ human friendly manner
 - Dataset now verifies that `load_training_data` and `load_prediction_data` do not return empty
 - Added a missing data visualization to `Dataset.plot`
 - FillNA now accepts a `is_nan`flag which adds a flag indicating that a value was missing
+- `Model.make_prediction` now accepts a `use_cache`flag to score everything in cached `.x`
 
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data

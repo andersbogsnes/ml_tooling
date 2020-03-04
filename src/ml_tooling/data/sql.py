@@ -107,7 +107,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         with self.create_connection() as conn:
             return super()._load_prediction_data(*args, conn=conn, **kwargs)
 
-    def _dump_data(self) -> pd.DataFrame:
+    def _dump_data(self, use_cache=False) -> pd.DataFrame:
         """
         Reads the underlying SQL table and returns a DataFrame
 
@@ -116,6 +116,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         pd.DataFrame
 
         """
+
         logger.info(f"Dumping data from {self.table}")
         logger.debug(f"Dumping data from {self.engine}/{self.table.name}")
         stmt = sa.select([self.table])

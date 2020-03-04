@@ -53,85 +53,6 @@ class TestBaseClass:
         ):
             Model({})
 
-    def test_make_prediction_errors_when_model_is_not_fitted(self, train_iris_dataset):
-        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
-            model = Model(LinearRegression())
-            model.make_prediction(train_iris_dataset, 5)
-
-    def test_make_prediction_with_regression_sqldataset_works_as_expected(
-        self, boston_sqldataset, loaded_boston_db
-    ):
-        dataset = boston_sqldataset(loaded_boston_db, schema=None)
-        dataset.create_train_test(stratify=False)
-        model = Model(LinearRegression())
-        model.train_estimator(dataset)
-
-        result = model.make_prediction(dataset, 0)
-
-        assert result.shape == (1, 1)
-        assert result.columns.tolist() == ["Prediction"]
-
-    def test_make_prediction_with_classification_sqldataset_works_as_expected(
-        self, iris_sqldataset, loaded_iris_db
-    ):
-        dataset = iris_sqldataset(loaded_iris_db, schema=None)
-        dataset.create_train_test()
-        model = Model(LogisticRegression(solver="lbfgs"))
-        model.train_estimator(dataset)
-
-        result = model.make_prediction(dataset, 0, proba=True)
-
-        assert result.shape == (1, 2)
-        assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
-
-    def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
-        self, train_iris_dataset
-    ):
-        with pytest.raises(
-            MLToolingError, match="LinearRegression does not have a `predict_proba`"
-        ):
-            model = Model(LinearRegression())
-            model.train_estimator(train_iris_dataset)
-            model.make_prediction(train_iris_dataset, 5, proba=True)
-
-    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
-    def test_make_prediction_returns_prediction_if_proba_is_false(
-        self,
-        classifier: Model,
-        use_index: bool,
-        expected_index: int,
-        train_iris_dataset,
-    ):
-        results = classifier.make_prediction(
-            train_iris_dataset, 5, proba=False, use_index=use_index
-        )
-        assert isinstance(results, pd.DataFrame)
-        assert 2 == results.ndim
-        assert np.all((results == 1) | (results == 0))
-        assert np.all(np.sum(results, axis=1) == 0)
-        assert results.index == pd.RangeIndex(
-            start=expected_index, stop=expected_index + 1, step=1
-        )
-
-    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
-    def test_make_prediction_returns_proba_if_proba_is_true(
-        self,
-        classifier: Model,
-        use_index: bool,
-        expected_index: int,
-        train_iris_dataset,
-    ):
-        results = classifier.make_prediction(
-            train_iris_dataset, 5, proba=True, use_index=use_index
-        )
-        assert isinstance(results, pd.DataFrame)
-        assert 2 == results.ndim
-        assert np.all((results <= 1) & (results >= 0))
-        assert np.all(np.sum(results, axis=1) == 1)
-        assert results.index == pd.RangeIndex(
-            start=expected_index, stop=expected_index + 1, step=1
-        )
-
     def test_default_metric_getter_works_as_expected_classifier(self):
         rf = Model(RandomForestClassifier(n_estimators=10))
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
@@ -723,3 +644,92 @@ class TestGridSearch:
             _, _ = classifier.gridsearch(
                 train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
             )
+
+
+class TestMakePrediction:
+    def test_make_prediction_errors_when_model_is_not_fitted(self, train_iris_dataset):
+        model = Model(LinearRegression())
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
+            model.make_prediction(train_iris_dataset, 5)
+
+    def test_make_prediction_with_regression_sqldataset_works_as_expected(
+        self, boston_sqldataset, loaded_boston_db
+    ):
+        dataset = boston_sqldataset(loaded_boston_db, schema=None)
+        dataset.create_train_test(stratify=False)
+        model = Model(LinearRegression())
+        model.train_estimator(dataset)
+
+        result = model.make_prediction(dataset, 0)
+
+        assert result.shape == (1, 1)
+        assert result.columns.tolist() == ["Prediction"]
+
+    def test_make_prediction_with_classification_sqldataset_works_as_expected(
+        self, iris_sqldataset, loaded_iris_db
+    ):
+        dataset = iris_sqldataset(loaded_iris_db, schema=None)
+        dataset.create_train_test()
+        model = Model(LogisticRegression(solver="lbfgs"))
+        model.train_estimator(dataset)
+
+        result = model.make_prediction(dataset, 0, proba=True)
+
+        assert result.shape == (1, 2)
+        assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
+
+    def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
+        self, train_iris_dataset
+    ):
+        with pytest.raises(
+            MLToolingError, match="LinearRegression does not have a `predict_proba`"
+        ):
+            model = Model(LinearRegression())
+            model.train_estimator(train_iris_dataset)
+            model.make_prediction(train_iris_dataset, 5, proba=True)
+
+    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
+    def test_make_prediction_returns_prediction_if_proba_is_false(
+        self,
+        classifier: Model,
+        use_index: bool,
+        expected_index: int,
+        train_iris_dataset,
+    ):
+        results = classifier.make_prediction(
+            train_iris_dataset, 5, proba=False, use_index=use_index
+        )
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
+        assert results.index == pd.RangeIndex(
+            start=expected_index, stop=expected_index + 1, step=1
+        )
+
+    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
+    def test_make_prediction_returns_proba_if_proba_is_true(
+        self,
+        classifier: Model,
+        use_index: bool,
+        expected_index: int,
+        train_iris_dataset,
+    ):
+        results = classifier.make_prediction(
+            train_iris_dataset, 5, proba=True, use_index=use_index
+        )
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results <= 1) & (results >= 0))
+        assert np.all(np.sum(results, axis=1) == 1)
+        assert results.index == pd.RangeIndex(
+            start=expected_index, stop=expected_index + 1, step=1
+        )
+
+    def test_make_prediction_uses_cache_if_set(self, classifier, iris_df):
+        mock_dataset = MagicMock(spec=Dataset)
+        mock_dataset.x = iris_df.head(5).drop(columns="target")
+
+        result = classifier.make_prediction(mock_dataset, use_cache=True)
+        assert len(result) == 5
+        mock_dataset._load_prediction_data.assert_not_called()

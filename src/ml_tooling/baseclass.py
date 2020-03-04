@@ -227,6 +227,7 @@ class Model:
         *args,
         proba: bool = False,
         use_index: bool = False,
+        use_cache: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -246,6 +247,10 @@ class Model:
         use_index: bool
             Whether the index from the prediction data should be used for the result.
 
+        use_cache: bool
+            Whether or not to use the cached data in dataset to make predictions.
+            Useful for seeing probability distributions of the model
+
         Returns
         -------
         pd.DataFrame
@@ -255,7 +260,9 @@ class Model:
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-        x = data._load_prediction_data(*args, **kwargs)
+
+        x = data.x if use_cache else data._load_prediction_data(*args, **kwargs)
+
         try:
             if proba:
                 data = self.estimator.predict_proba(x)

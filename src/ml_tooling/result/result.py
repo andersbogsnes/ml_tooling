@@ -1,15 +1,9 @@
-from typing import Union
-
 import attr
 
 from ml_tooling.data import Dataset
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.metrics import Metrics
-from ml_tooling.result.viz import (
-    create_plotter,
-    ClassificationVisualize,
-    RegressionVisualize,
-)
+from ml_tooling.result.viz import ClassificationVisualize, RegressionVisualize
 
 
 @attr.s(repr=False)
@@ -17,14 +11,31 @@ class Result:
     """
     Contains the result of a given training run.
     Contains plotting methods, as well as being comparable with other results
+
+    Parameters
+    ----------
+
+    model: Model
+        Model used to generate the result
+
+    metrics: Metrics
+        Metrics used to score the model
+
+    data: Dataset
+        Dataset used to generate the result
     """
 
     model = attr.ib(eq=False)
     metrics: Metrics = attr.ib()
     data: Dataset = attr.ib(eq=False)
-    plot: Union[ClassificationVisualize, RegressionVisualize] = attr.ib(
-        eq=False, repr=False
-    )
+
+    @property
+    def plot(self):
+        if self.model.is_classifier:
+            return ClassificationVisualize(
+                self.model.estimator, self.data, self.model.config
+            )
+        return RegressionVisualize(self.model.estimator, self.data, self.model.config)
 
     @classmethod
     def from_model(
@@ -44,9 +55,7 @@ class Result:
                 estimator=model.estimator, x=data.test_x, y=data.test_y
             )
 
-        return cls(
-            metrics=metrics, model=model, plot=create_plotter(model, data), data=data
-        )
+        return cls(metrics=metrics, model=model, data=data)
 
     def log(self, saved_estimator_path=None, savedir=None) -> Log:
         log = Log.from_result(result=self, estimator_path=saved_estimator_path)

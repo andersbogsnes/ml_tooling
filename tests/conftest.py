@@ -4,7 +4,7 @@ import random as rand
 
 import numpy as np
 import pytest
-from ml_tooling.config import DefaultConfig
+from ml_tooling.config import DefaultConfig, ConfigLoader
 from ml_tooling import Model
 
 logging.disable(logging.CRITICAL)
@@ -23,7 +23,8 @@ def _base():
     class IrisModel(Model):
         @classmethod
         def clean_model(cls):
-            cls.config = DefaultConfig()
+            loader = ConfigLoader()
+            cls.config = DefaultConfig.from_configloader(loader)
             cls.config.CROSS_VALIDATION = 2
             cls.config.N_JOBS = 2
             return cls

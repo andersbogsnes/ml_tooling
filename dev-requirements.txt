@@ -24,7 +24,7 @@ numpy==1.18.1
 packaging==20.3           # via pytest, tox
 pandas==1.0.1
 pluggy==0.13.1            # via pytest, tox
-pre-commit==2.1.1
+pre-commit==2.2.0
 py==1.8.1                 # via pytest, tox
 pyparsing==2.4.6
 pytest==5.4.0

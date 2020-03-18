@@ -81,6 +81,19 @@ class TestConfusionMatrixPlot:
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
 
+    def test_confusion_matrix_plots_have_correct_data_with_threshold(
+        self, classifier: Model
+    ):
+        ax = classifier.result.plot.confusion_matrix(threshold=0.70)
+
+        assert "Confusion Matrix - LogisticRegression - Normalized" == ax.title._text
+        result = [text._text for text in ax.texts]
+        assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
+        assert {"0.34", "0.66", "0.00"} == set(result)
+        assert "True Label" == ax.get_ylabel()
+        assert "Predicted Label" == ax.get_xlabel()
+        plt.close()
+
     def test_confusion_matrix_plots_have_correct_data_when_not_normalized(
         self, classifier: Model
     ):

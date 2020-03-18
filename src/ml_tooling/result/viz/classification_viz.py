@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 
 from ml_tooling.plots import (
@@ -15,7 +16,9 @@ class ClassificationVisualize(BaseVisualize):
     Visualization class for Classification models
     """
 
-    def confusion_matrix(self, normalized: bool = True, **kwargs) -> plt.Axes:
+    def confusion_matrix(
+        self, normalized: bool = True, threshold: float = None, **kwargs
+    ) -> plt.Axes:
         """
         Visualize a confusion matrix for a classification estimator
         Any kwargs are passed onto matplotlib
@@ -33,7 +36,15 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Confusion Matrix - {self._estimator_name}"
-            y_pred = self._estimator.predict(self._data.test_x)
+            if threshold is None:
+                y_pred = self._estimator.predict(self._data.test_x)
+            else:
+                y_prob = self._estimator.predict_proba(self._data.test_x)
+                y_above_thres = np.amax(y_prob, axis=1) > threshold
+                y_max_pred_idx = np.argmax(y_prob, axis=1)
+                y_pred = np.zeros(len(y_prob)).astype(int)
+                y_pred[y_above_thres] = y_max_pred_idx[y_above_thres]
+                y_pred = self._estimator.classes_[y_pred]
             return plot_confusion_matrix(
                 self._data.test_y, y_pred, normalized, title, **kwargs
             )

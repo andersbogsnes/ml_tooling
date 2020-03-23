@@ -36,6 +36,8 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
         - min
         - max
         - mean
+
+    If a callable is used, it must return a pd.Series
     """
 
     _func_map = {"sum": np.sum, "min": np.min, "max": np.max, "mean": np.mean}

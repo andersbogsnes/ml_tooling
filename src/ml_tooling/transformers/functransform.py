@@ -66,7 +66,7 @@ class DFRowFunc(BaseEstimator, TransformerMixin):
 
     def transform(self, X: pd.DataFrame) -> pd.DataFrame:
         x_ = X.copy()
-        if self._func_map.get(self.strategy):
+        if self.strategy in self._func_map:
             x_ = self._func_map.get(self.strategy)(x_, axis=1).to_frame()
         else:
             x_ = x_.apply(self.func, axis=1).to_frame()

@@ -30,6 +30,8 @@ from sklearn.base import is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv
 
+from skopt import BayesSearchCV
+
 logger = create_logger("ml_tooling")
 
 
@@ -487,6 +489,72 @@ class Model:
             logger.info(f"Saved run info at {result_file}")
 
         return self.result[0].model, self.result
+
+    def bayesian_optim(
+        self,
+        data: Dataset,
+        param_grid: dict,
+        metric: str,
+        iterations: int = 5,
+        cv: int = 3,
+    ) -> Tuple["Model", pd.DataFrame]:
+        """
+        Runs a cross-validated gridsearch using bayesian optimization
+        on the estimator with the passed in parameter grid.
+
+        Parameters
+        ----------
+        data: Dataset
+            An instance of a DataSet object
+
+        param_grid: dict
+            Parameters to use for grid search
+
+        metric: str
+            Metrics to use for scoring.
+
+        iterations: int
+            Amount of models to be trained in the search
+
+        cv: int
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
+
+        Returns
+        -------
+        best_estimator: Model
+            Best estimator as found by the search
+
+        search_results: DataFrame
+            Dataframe containing metrics, ranks and params for all trained models
+        """
+
+        def _search_status(_):
+            """
+            Informs about the progress of the conducted search
+            """
+            if len(_.x_iters) % 10 == 0:
+                logger.info(f"{len(_.x_iters)} models have been evaluated.")
+
+        opt = BayesSearchCV(
+            estimator=self.estimator,
+            search_spaces=param_grid,
+            scoring=metric,
+            n_iter=iterations,
+            cv=cv,
+            random_state=1337,
+        )
+
+        logger.debug(f"Cross-validating with {cv}-fold cv using {metric}")
+        logger.debug(f"Bayes-searching using {param_grid}")
+        logger.info("Starting search...")
+
+        output = opt.fit(data.train_x, data.train_y, callback=_search_status)
+
+        result = self.score_estimator(data, metrics=[metric], cv=cv)
+
+        model = result.model
+
+        return model, pd.DataFrame(data=output.cv_results_)
 
     @contextmanager
     def log(self, run_directory: str):

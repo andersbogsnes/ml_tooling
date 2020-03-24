@@ -17,7 +17,7 @@ class ClassificationVisualize(BaseVisualize):
     """
 
     def confusion_matrix(
-        self, normalized: bool = True, threshold: float = None, **kwargs
+        self, normalized: bool = True, threshold: float = 0.5, **kwargs
     ) -> plt.Axes:
         """
         Visualize a confusion matrix for a classification estimator
@@ -28,6 +28,8 @@ class ClassificationVisualize(BaseVisualize):
 
         normalized: bool
             Whether or not to normalize annotated class counts
+        threshold: float
+            Threshold to use for classification - defaults to 0.5
 
         Returns
         -------
@@ -36,15 +38,13 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Confusion Matrix - {self._estimator_name}"
-            if threshold is None:
-                y_pred = self._estimator.predict(self._data.test_x)
-            else:
-                y_prob = self._estimator.predict_proba(self._data.test_x)
-                y_above_thres = np.amax(y_prob, axis=1) > threshold
-                y_max_pred_idx = np.argmax(y_prob, axis=1)
-                y_pred = np.zeros(len(y_prob)).astype(int)
-                y_pred[y_above_thres] = y_max_pred_idx[y_above_thres]
-                y_pred = self._estimator.classes_[y_pred]
+            y_prob = self._estimator.predict_proba(self._data.test_x)
+            y_pred = np.where(
+                (y_prob > threshold) & (y_prob == y_prob.max(axis=1, keepdims=True)),
+                1,
+                0,
+            )
+            y_pred = self._estimator.classes_[np.argmax(y_pred, axis=1)]
             return plot_confusion_matrix(
                 self._data.test_y, y_pred, normalized, title, **kwargs
             )

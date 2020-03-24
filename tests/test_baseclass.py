@@ -726,6 +726,25 @@ class TestMakePrediction:
             start=expected_index, stop=expected_index + 1, step=1
         )
 
+    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
+    def test_make_prediction_returns_prediction_if_threshold_is_specified(
+        self,
+        classifier: Model,
+        use_index: bool,
+        expected_index: int,
+        train_iris_dataset,
+    ):
+        results = classifier.make_prediction(
+            train_iris_dataset, 5, threshold=0.6, use_index=use_index
+        )
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
+        assert results.index == pd.RangeIndex(
+            start=expected_index, stop=expected_index + 1, step=1
+        )
+
     def test_make_prediction_uses_cache_if_set(self, classifier, iris_df):
         mock_dataset = MagicMock(spec=Dataset)
         mock_dataset.x = iris_df.head(5).drop(columns="target")

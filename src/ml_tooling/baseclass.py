@@ -1,11 +1,15 @@
 import datetime
 import pathlib
+import joblib
+import pandas as pd
+import numpy as np
 from contextlib import contextmanager
 from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
 
-import joblib
-import pandas as pd
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
@@ -26,9 +30,6 @@ from ml_tooling.utils import (
     make_pipeline_from_definition,
     read_yaml,
 )
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
 
 logger = create_logger("ml_tooling")
 
@@ -226,6 +227,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
+        threshold: float = None,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -266,10 +268,21 @@ class Model:
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
-                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
+                columns = [
+                    f"Probability Class {col}" for col in self.estimator.classes_
+                ]
             else:
                 data = self.estimator.predict(x)
                 columns = ["Prediction"]
+            if threshold is not None:
+                y_prob = data if proba else self.estimator.predict_proba(x)
+                y_pred = np.where(
+                    (y_prob > threshold)
+                    & (y_prob == y_prob.max(axis=1, keepdims=True)),
+                    1,
+                    0,
+                )
+                data = self.estimator.classes_[np.argmax(y_pred, axis=1)]
             if use_index:
                 prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
             else:

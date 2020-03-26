@@ -362,3 +362,25 @@ def _find_src_dir(path: pathlib.Path = None, max_level: int = 2) -> pathlib.Path
     raise MLToolingError(
         f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
     )
+
+
+def _classify(x: pd.DataFrame, estimator: BaseEstimator, threshold: float = 0.5):
+    """
+    Make a binary classification of prediction probabilities with the given threshold
+
+    Parameters
+    ----------
+    x
+    estimator
+    threshold
+
+    Returns
+    -------
+    np.array
+        Array of predictions
+    """
+    y_prob = estimator.predict_proba(x)
+    y_pred = np.where(
+        (y_prob > threshold) & (y_prob == y_prob.max(axis=1, keepdims=True)), 1, 0
+    )
+    return estimator.classes_[np.argmax(y_pred, axis=1)]

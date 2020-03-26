@@ -2,7 +2,6 @@ import datetime
 import pathlib
 import joblib
 import pandas as pd
-import numpy as np
 from contextlib import contextmanager
 from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
@@ -29,6 +28,7 @@ from ml_tooling.utils import (
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
+    _classify,
 )
 
 logger = create_logger("ml_tooling")
@@ -227,7 +227,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
-        threshold: float = None,
+        threshold: float = 0.5,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -272,17 +272,12 @@ class Model:
                     f"Probability Class {col}" for col in self.estimator.classes_
                 ]
             else:
-                data = self.estimator.predict(x)
-                columns = ["Prediction"]
-            if threshold is not None:
-                y_prob = data if proba else self.estimator.predict_proba(x)
-                y_pred = np.where(
-                    (y_prob > threshold)
-                    & (y_prob == y_prob.max(axis=1, keepdims=True)),
-                    1,
-                    0,
+                data = (
+                    _classify(x, self.estimator, threshold=threshold)
+                    if is_classifier(self.estimator)
+                    else self.estimator.predict(x)
                 )
-                data = self.estimator.classes_[np.argmax(y_pred, axis=1)]
+                columns = ["Prediction"]
             if use_index:
                 prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
             else:

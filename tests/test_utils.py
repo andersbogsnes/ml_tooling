@@ -1,7 +1,7 @@
 import pathlib
 import subprocess
 from unittest.mock import patch
-
+import numpy as np
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
@@ -17,6 +17,7 @@ from ml_tooling.utils import (
     make_dir,
     _find_src_dir,
     _find_setup_file,
+    _classify,
 )
 
 
@@ -176,3 +177,15 @@ class TestFindSrcDir:
             f"Is there an __init__.py file in your module?",
         ):
             _find_src_dir(output_folder)
+
+    def test_classify_with_threshold_works_on_classification_output(
+        self, classifier, train_iris_dataset
+    ):
+        data = train_iris_dataset.load_prediction_data(0)
+
+        pred = _classify(data, classifier.estimator)
+        assert pred == np.array([0])
+
+        pred = _classify(data, classifier.estimator, threshold=0.20)
+        # this should be true since the true proba exceeds the threshold?
+        assert pred == np.array([1])

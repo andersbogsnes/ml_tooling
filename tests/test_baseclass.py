@@ -679,7 +679,7 @@ class TestMakePrediction:
         assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
-        self, train_iris_dataset
+        self, train_iris_dataset: Dataset
     ):
         with pytest.raises(
             MLToolingError, match="LinearRegression does not have a `predict_proba`"
@@ -694,7 +694,7 @@ class TestMakePrediction:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        train_iris_dataset,
+        train_iris_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             train_iris_dataset, 5, proba=False, use_index=use_index
@@ -713,7 +713,7 @@ class TestMakePrediction:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        train_iris_dataset,
+        train_iris_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             train_iris_dataset, 5, proba=True, use_index=use_index
@@ -732,7 +732,7 @@ class TestMakePrediction:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        train_iris_dataset,
+        train_iris_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             train_iris_dataset, 5, threshold=0.6, use_index=use_index

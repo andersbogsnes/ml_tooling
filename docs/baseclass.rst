@@ -197,18 +197,21 @@ search of the parameter space with a randomized search.
 .. doctest::
 
     >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from scipy.stats import loguniform
     >>> rand_forest = Model(RandomForestRegressor())
     >>>
     >>> search_space = {
-    ...     "max_depth": [1, 5],
-    ...     "min_samples_split": [2, 4]
+    ...     "max_depth": [1, 3],
+    ...     "min_weight_fraction_leaf": loguniform(1e-4, 1e0),
     ... }
     >>> best_estimator, results = rand_forest.randomsearch(bostondata, search_space, n_iter=2)
-    >>> results
+    >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 
-Here we specify the number of iterations `n_iter=2` just for demonstration purposes. When a list is given in the search space,
-a linear distribution is used by default, but you may also pass other `distributions <https://docs.scipy.org/doc/scipy/reference/stats.html#continuous-distributions>`_
+Here we specify the number of iterations `n_iter=2` just for demonstration purposes,
+n_iter is the number of points in the parameter samples that are tried out from the `sampler <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.ParameterSampler.html>`_.
+When a list is given in the search space, a linear distribution is used by default, but you may also
+pass other `distributions <https://docs.scipy.org/doc/scipy/reference/stats.html#continuous-distributions>`_
 
 Storage
 ~~~~~~~

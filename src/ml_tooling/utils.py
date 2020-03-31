@@ -382,10 +382,10 @@ def _classify(x: pd.DataFrame, estimator: Estimator, threshold: float = 0.5):
     np.array
         Array of class predictions
     """
-    y_prob = estimator.predict_proba(x)
-    y_pred = np.where(
-        (y_prob > threshold) & (y_prob == y_prob.max(axis=1, keepdims=True)), 1, 0
-    )
-    # if both are above the threshold we set the true class
-    y_pred[np.all((y_prob > threshold), axis=1)] = estimator.classes_[[0, 1]]
-    return estimator.classes_[np.argmax(y_pred, axis=1)]
+    if len(estimator.classes_) == 2:
+        y_pred = estimator.predict_proba(x)
+        return (y_pred[:, 1] > threshold).astype(np.int32)
+    else:
+        raise MLToolingError(
+            "Classification with threshold only works for binary classifiers"
+        )

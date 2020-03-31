@@ -121,6 +121,16 @@ def test_classify_with_threshold_works_on_classification_output(
     assert pred == np.array([1])
 
 
+def test_classify_with_threshold_raises_error_on_non_binary_estimators(
+    classifier, train_iris_dataset
+):
+    classifier.estimator.classes_ = [0, 1, 2]
+    data = train_iris_dataset.load_prediction_data(0)
+
+    with pytest.raises(MLToolingError):
+        _classify(data, classifier.estimator)
+
+
 class TestGridsearchParams:
     def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
         file_path = tmp_path / "test.txt"

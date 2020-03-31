@@ -1,4 +1,3 @@
-import numpy as np
 from matplotlib import pyplot as plt
 
 from ml_tooling.plots import (
@@ -7,7 +6,7 @@ from ml_tooling.plots import (
     plot_lift_curve,
     plot_pr_curve,
 )
-from ml_tooling.utils import VizError
+from ml_tooling.utils import VizError, _classify
 from ml_tooling.result.viz import BaseVisualize
 
 
@@ -38,13 +37,7 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Confusion Matrix - {self._estimator_name}"
-            y_prob = self._estimator.predict_proba(self._data.test_x)
-            y_pred = np.where(
-                (y_prob > threshold) & (y_prob == y_prob.max(axis=1, keepdims=True)),
-                1,
-                0,
-            )
-            y_pred = self._estimator.classes_[np.argmax(y_pred, axis=1)]
+            y_pred = _classify(self._data.test_x, self._estimator, threshold=threshold)
             return plot_confusion_matrix(
                 self._data.test_y, y_pred, normalized, title, **kwargs
             )

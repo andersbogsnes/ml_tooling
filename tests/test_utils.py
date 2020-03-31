@@ -109,6 +109,18 @@ def test_validate_estimator_should_raise_on_invalid_input():
         _validate_estimator(make_pipeline(StandardScaler()))
 
 
+def test_classify_with_threshold_works_on_classification_output(
+    classifier, train_iris_dataset
+):
+    data = train_iris_dataset.load_prediction_data(0)
+
+    pred = _classify(data, classifier.estimator)
+    assert pred == np.array([0])
+
+    pred = _classify(data, classifier.estimator, threshold=0.1)
+    assert pred == np.array([1])
+
+
 class TestGridsearchParams:
     def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
         file_path = tmp_path / "test.txt"
@@ -177,15 +189,3 @@ class TestFindSrcDir:
             f"Is there an __init__.py file in your module?",
         ):
             _find_src_dir(output_folder)
-
-    def test_classify_with_threshold_works_on_classification_output(
-        self, classifier, train_iris_dataset
-    ):
-        data = train_iris_dataset.load_prediction_data(0)
-
-        pred = _classify(data, classifier.estimator)
-        assert pred == np.array([0])
-
-        pred = _classify(data, classifier.estimator, threshold=0.20)
-        # this should be true since the true proba exceeds the threshold?
-        assert pred == np.array([1])

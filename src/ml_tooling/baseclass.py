@@ -274,7 +274,7 @@ class Model:
             else:
                 data = (
                     _classify(x, self.estimator, threshold=threshold)
-                    if is_classifier(self.estimator)
+                    if self.is_classifier
                     else self.estimator.predict(x)
                 )
                 columns = ["Prediction"]

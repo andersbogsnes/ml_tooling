@@ -536,7 +536,6 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
         n_iter: int = 10,
-        random_state: int = 1337,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated randomsearch on the estimator with a randomized
@@ -576,7 +575,7 @@ class Model:
             estimator=self.estimator,
             params=param_distributions,
             n_iter=n_iter,
-            random_state=random_state,
+            random_state=self.config.RANDOM_STATE,
         )
 
         logger.debug(f"Randomsearching using {param_distributions}")

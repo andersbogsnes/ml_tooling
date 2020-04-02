@@ -654,10 +654,10 @@ class TestBayesianSearch:
         model, results = model.bayesian_search(
             data=train_iris_dataset,
             param_distribution={"clf__penalty": ["l1", "l2"]},
-            n_iter=2,
+            n_iter=12,
         )
         assert isinstance(model.estimator, Pipeline)
-        assert 2 == len(results)
+        assert 12 == len(results)
 
         assert isinstance(results, pd.DataFrame)
 

@@ -586,6 +586,8 @@ class Model:
 
         model = result.model
 
+        logger.info("Done!")
+
         return (
             model,
             (

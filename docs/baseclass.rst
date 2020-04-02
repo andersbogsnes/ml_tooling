@@ -213,6 +213,38 @@ n_iter is the number of points in the parameter samples that are tried out from 
 When a list is given in the search space, a linear distribution is used by default, but you may also
 pass other `distributions <https://docs.scipy.org/doc/scipy/reference/stats.html#continuous-distributions>`_
 
+
+Performing a bayesian search
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+search of the parameter space with a randomized search.
+Similar to the interface of the above mentioned gridsearch and random search, you can use bayesian search as a third
+alternative for finding and tuning hyperparamters.
+
+.. doctest::
+
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from skopt.space import Real, Categorical, Integer
+    >>> rand_forest = Model(RandomForestRegressor())
+    >>>
+    >>> search_space = {
+    ...     "max_depth": Integer(1, 3),
+    ...     "min_weight_fraction_leaf": Real(0, 0.5),
+    ...     "criterion": Categorical(["mse", "mae"])
+    ... }
+    >>> best_estimator, results = rand_forest.bayesian_search(bostondata, search_space, n_iter=2)
+
+Again, we specify the number of iterations `n_iter=2` just for demonstration purposes.
+
+Unlike with gridsearch and randomsearch the returned results is not a ResultGroup but rather a DataFrame
+containing information about the conducted search.
+
+The search_space can be defined as shown in the above example, using the three different space types Real, Categorical
+and Integer og by passing lists. If lists are used, each hyperparameter will be treated as categorical.
+For more about spaces please see
+`scikit-optimize <https://scikit-optimize.github.io/stable/modules/generated/skopt.Space.html#skopt.Space>`_
+
+
 Storage
 ~~~~~~~
 

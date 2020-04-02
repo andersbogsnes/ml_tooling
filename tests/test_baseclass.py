@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
 import pytest
 import yaml
 import datetime
@@ -12,6 +13,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
+from sklearn.utils.fixes import loguniform
 
 from ml_tooling.storage import FileStorage
 from ml_tooling import Model
@@ -20,6 +22,7 @@ from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
+from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
 
@@ -643,6 +646,126 @@ class TestGridSearch:
         with classifier.log("gridsearch_union_test"):
             _, _ = classifier.gridsearch(
                 train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            )
+
+
+class TestRandomSearch:
+    def test_randomsearch_model_returns_as_expected(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        model, results = model.randomsearch(
+            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_randomsearch_model_does_not_fail_when_run_twice(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        best_model, results = model.randomsearch(
+            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+        best_model, results = model.randomsearch(
+            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_prepare_randomsearch_estimators_has_different_parameters(self):
+        estimators = prepare_randomsearch_estimators(
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            assert estimator.get_params()["penalty"] == penalty
+            assert hasattr(estimator, "coef_") is False
+            assert isinstance(estimator, LogisticRegression)
+
+    def test_prepare_randomsearch_estimators_in_pipeline_has_different_parameters(self):
+        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
+
+        estimators = prepare_randomsearch_estimators(
+            pipe, params={"clf__penalty": ["l2", "l1"]}
+        )
+
+        for estimator, penalty in zip(estimators, ["l2", "l1"]):
+            clf = estimator["clf"]
+            assert clf.get_params()["penalty"] == penalty
+            assert hasattr(clf, "coef_") is False
+            assert isinstance(clf, LogisticRegression)
+
+    def test_randomsearch_uses_default_metric(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.randomsearch(
+            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_randomsearch_can_take_dist_objs(
+        self, classifier: Model, train_iris_dataset
+    ):
+        param_dist = {
+            "penalty": ["l1", "l2"],
+            "l1_ratio": stats.uniform(0, 1),
+            "C": loguniform(1e-4, 1e0),
+        }
+        model, results = classifier.randomsearch(
+            train_iris_dataset, param_distributions=param_dist, n_iter=2
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_randomsearch_can_take_multiple_metrics(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.randomsearch(
+            train_iris_dataset,
+            param_distributions={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
+
+    def test_randomsearch_can_log_with_context_manager(
+        self, feature_union_classifier, train_iris_dataset, tmp_path
+    ):
+        classifier = Model(feature_union_classifier)
+        classifier.config.RUN_DIR = tmp_path
+        with classifier.log("randomsearch_union_test"):
+            _, _ = classifier.randomsearch(
+                train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
             )
 
 

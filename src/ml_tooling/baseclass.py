@@ -493,28 +493,28 @@ class Model:
     def bayesian_optim(
         self,
         data: Dataset,
-        param_grid: dict,
+        param_distribution: dict,
         search_metric: str,
-        iterations: int = 5,
+        n_iter: int = 5,
         cv: int = 3,
         evaluation_metrics: Union[str, List[str]] = "default",
     ) -> Tuple["Model", pd.DataFrame]:
         """
         Runs a cross-validated gridsearch using bayesian optimization
-        on the estimator with the passed in parameter grid.
+        on the estimator with the passed in parameter distribution.
 
         Parameters
         ----------
         data: Dataset
             An instance of a DataSet object
 
-        param_grid: dict
+        param_distribution: dict
             Parameters to use for grid search
 
         metric: str
             Metrics to use for scoring estimators during the bayesian search.
 
-        iterations: int
+        n_iter: int
             Amount of models to be trained in the search
 
         cv: int
@@ -535,21 +535,28 @@ class Model:
         Examples
         --------
 
-        There are two ways you can define the param_grid.
+        There are two ways you can define the param_distribution.
         Either using explicit value, or using skopt.spaces.
 
         Using explicit values:
-        >>> param_grid = {"max_depth": [1, 2, 3, 4, 5, 6], "min_samples_leaf": [1, 2, 3]}
+        >>> param_distribution = {"max_depth": [1, 2, 3, 4, 5, 6], "min_samples_leaf": [1, 2, 3]}
 
         Using skopt.spaces:
         >>> from skopt.spaces import Real, Categorical, Integer
-        >>> param_grid = {"max_depth": Integer(1, 6), "min_samples_leaf": Integer(1, 3)}
+        >>> param_distribution = {"max_depth": Integer(1, 6), "min_samples_leaf": Integer(1, 3)}
 
         The skopt.spaces defines a parameter space for the search to operate in.
         The explicit method will only search in the defined values.
         Currently, skopt.spaces support Real, Categorical and Integer.
 
         """
+
+        if isinstance(evaluation_metrics, str):
+            evaluation_metrics = (
+                self.default_metric
+                if evaluation_metrics == "default"
+                else evaluation_metrics
+            )
 
         def _search_status(_):
             """
@@ -560,15 +567,15 @@ class Model:
 
         opt = BayesSearchCV(
             estimator=self.estimator,
-            search_spaces=param_grid,
+            search_spaces=param_distribution,
             scoring=search_metric,
-            n_iter=iterations,
+            n_iter=n_iter,
             cv=cv,
             random_state=1337,
         )
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {search_metric}")
-        logger.debug(f"Bayes-searching using {param_grid}")
+        logger.debug(f"Bayes-searching using {param_distribution}")
         logger.info("Starting search...")
 
         output = opt.fit(data.train_x, data.train_y, callback=_search_status)

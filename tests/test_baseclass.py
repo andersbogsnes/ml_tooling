@@ -631,7 +631,9 @@ class TestGridSearch:
         for result in results:
             assert len(result.metrics) == 2
             assert "accuracy" in result.metrics
-            assert "roc_auc" in result.metricsdefault_met.metrics[0].score
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
 
     def test_gridsearch_can_log_with_context_manager(
         self, feature_union_classifier, train_iris_dataset, tmp_path

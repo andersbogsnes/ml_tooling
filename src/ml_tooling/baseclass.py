@@ -494,7 +494,7 @@ class Model:
         self,
         data: Dataset,
         param_distribution: dict,
-        search_metric: str,
+        search_metric: Optional[str] = None,
         n_iter: int = 5,
         cv: int = 3,
         evaluation_metrics: Union[str, List[str]] = "default",
@@ -511,7 +511,7 @@ class Model:
         param_distribution: dict
             Parameters to use for grid search
 
-        metric: str
+        search_metric: str
             Metrics to use for scoring estimators during the bayesian search.
 
         n_iter: int

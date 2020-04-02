@@ -490,7 +490,7 @@ class Model:
 
         return self.result[0].model, self.result
 
-    def bayesian_optim(
+    def bayesian_search(
         self,
         data: Dataset,
         param_distribution: dict,

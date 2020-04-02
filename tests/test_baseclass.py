@@ -644,12 +644,12 @@ class TestGridSearch:
             )
 
 
-class TestBayesianOptim:
-    def test_bayesian_optim_model_returns_as_expected(
+class TestBayesianSearch:
+    def test_bayesian_search_model_returns_as_expected(
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        model, results = model.bayesian_optim(
+        model, results = model.bayesian_search(
             data=train_iris_dataset,
             param_distribution={"clf__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -659,11 +659,11 @@ class TestBayesianOptim:
 
         assert isinstance(results, pd.DataFrame)
 
-    def test_bayesian_optim_model_does_not_fail_when_run_twice(
+    def test_bayesian_search_model_does_not_fail_when_run_twice(
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        best_model, results = model.bayesian_optim(
+        best_model, results = model.bayesian_search(
             data=train_iris_dataset,
             param_distribution={"clf__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -673,7 +673,7 @@ class TestBayesianOptim:
 
         assert isinstance(results, pd.DataFrame)
 
-        best_model, results = model.bayesian_optim(
+        best_model, results = model.bayesian_search(
             data=train_iris_dataset,
             param_distribution={"clf__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -683,10 +683,10 @@ class TestBayesianOptim:
 
         assert isinstance(results, pd.DataFrame)
 
-    def test_bayesian_optim_uses_default_metric(
+    def test_bayesian_search_uses_default_metric(
         self, classifier: Model, train_iris_dataset
     ):
-        model, results = classifier.bayesian_optim(
+        model, results = classifier.bayesian_search(
             train_iris_dataset, param_distribution={"penalty": ["l1", "l2"]}, n_iter=2
         )
 
@@ -695,10 +695,10 @@ class TestBayesianOptim:
 
         assert isinstance(model, Model)
 
-    def test_bayesian_optim_can_take_multiple_metrics(
+    def test_bayesian_search_can_take_multiple_metrics(
         self, classifier: Model, train_iris_dataset
     ):
-        model, results = classifier.bayesian_optim(
+        model, results = classifier.bayesian_search(
             train_iris_dataset,
             param_distribution={"penalty": ["l1", "l2"]},
             evaluation_metrics=["accuracy", "roc_auc"],
@@ -709,13 +709,13 @@ class TestBayesianOptim:
         assert "accuracy" in model.result.metrics
         assert "roc_auc" in model.result.metrics
 
-    def test_bayesian_optim_can_log_with_context_manager(
+    def test_bayesian_search_can_log_with_context_manager(
         self, feature_union_classifier, train_iris_dataset, tmp_path
     ):
         classifier = Model(feature_union_classifier)
         classifier.config.RUN_DIR = tmp_path
-        with classifier.log("bayesian_optim_union_test"):
-            _, _ = classifier.bayesian_optim(
+        with classifier.log("bayesian_search_union_test"):
+            _, _ = classifier.bayesian_search(
                 train_iris_dataset,
                 param_distribution={"clf__penalty": ["l1", "l2"]},
                 n_iter=2,

@@ -3,14 +3,11 @@
 Datasets
 --------
 
-.. autoclass:: ml_tooling.data.FileDataset
-    :members:
-
-.. autoclass:: ml_tooling.data.SQLDataset
+.. automodule:: ml_tooling.data
     :members:
 
 Dataset Plotting Methods
 ------------------------
 
-.. autoclass:: ml_tooling.plotting.viz.DataVisualize
+.. autoclass:: ml_tooling.plots.viz.DataVisualize
     :members:

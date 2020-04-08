@@ -11,13 +11,13 @@ Result class to work with results from scoring a model
 Classification Result Visualizations
 ------------------------------------
 
-.. autoclass:: ml_tooling.plotting.viz.ClassificationVisualize
+.. autoclass:: ml_tooling.plots.viz.ClassificationVisualize
     :members:
     :inherited-members:
 
 Regression Result Visualizations
 --------------------------------
 
-.. autoclass:: ml_tooling.plotting.viz.RegressionVisualize
+.. autoclass:: ml_tooling.plots.viz.RegressionVisualize
     :members:
     :inherited-members:

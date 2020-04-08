@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 
 from ml_tooling.plots import plot_residuals, plot_prediction_error
-from ml_tooling.result.viz.baseviz import BaseVisualize
+from ml_tooling.plots.viz.baseviz import BaseVisualize
 
 
 class RegressionVisualize(BaseVisualize):

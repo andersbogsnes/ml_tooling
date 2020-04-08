@@ -1,7 +1,7 @@
 import pathlib
 from typing import List
 
-from ml_tooling.result.result import Result
+from ml_tooling.result import Result
 import attr
 
 

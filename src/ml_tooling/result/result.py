@@ -3,7 +3,7 @@ import attr
 from ml_tooling.data import Dataset
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.metrics import Metrics
-from ml_tooling.result.viz import ClassificationVisualize, RegressionVisualize
+from ml_tooling.plots.viz import ClassificationVisualize, RegressionVisualize
 
 
 @attr.s(repr=False)

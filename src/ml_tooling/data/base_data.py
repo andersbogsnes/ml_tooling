@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
-from ml_tooling.data.viz import DataVisualize
+from ml_tooling.plots.viz import DataVisualize
 
 
 class Dataset(metaclass=abc.ABCMeta):

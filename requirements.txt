@@ -13,7 +13,7 @@ numpy==1.18.3             # via matplotlib, pandas, scikit-learn, scipy
 pandas==1.0.3
 pyparsing==2.4.7          # via matplotlib
 python-dateutil==2.8.1    # via matplotlib, pandas
-pytz==2019.3              # via pandas
+pytz==2020.1              # via pandas
 pyyaml==5.3.1
 scikit-learn==0.22.2.post1
 scipy==1.4.1              # via scikit-learn

@@ -52,7 +52,7 @@ class TestBaseClass:
     def test_instantiate_model_with_other_object_fails(self):
         with pytest.raises(
             MLToolingError,
-            match=f"Expected a Pipeline or Estimator - got <class 'dict'>",
+            match="Expected a Pipeline or Estimator - got <class 'dict'>",
         ):
             Model({})
 

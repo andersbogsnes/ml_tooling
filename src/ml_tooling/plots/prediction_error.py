@@ -30,7 +30,7 @@ def plot_prediction_error(
     if ax is None:
         fig, ax = plt.subplots()
 
-    title = f"Prediction Error" if title is None else title
+    title = "Prediction Error" if title is None else title
 
     r2 = r2_score(y_true, y_pred)
 

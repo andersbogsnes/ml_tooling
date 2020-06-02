@@ -60,11 +60,11 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         elif isinstance(conn, str):
             self.engine = sa.create_engine(conn, **kwargs)
         else:
-            raise ValueError(f"Invalid connection")
+            raise ValueError("Invalid connection")
         if self.table is not None and self.table.schema is not None:
             raise DatasetError(
                 f"{self.table.schema.name} cannot have a defined schema - "
-                f"remove the schema declaration"
+                "remove the schema declaration"
             )
         self.schema = schema
 

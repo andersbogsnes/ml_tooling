@@ -10,7 +10,7 @@ certifi==2020.4.5.1       # via requests
 cfgv==3.1.0               # via pre-commit
 chardet==3.0.4            # via requests
 cycler==0.10.0
-dohq-artifactory==0.7.345
+dohq-artifactory==0.7.377
 filelock==3.0.12          # via tox
 identify==1.4.15          # via pre-commit
 idna==2.9                 # via requests

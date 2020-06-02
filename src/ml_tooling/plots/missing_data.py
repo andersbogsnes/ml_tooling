@@ -46,7 +46,7 @@ def plot_missing_data(
         values=missing_data.values,
         label_names=missing_data.index,
         add_label=True,
-        title=f"Misssing data per column",
+        title="Misssing data per column",
         y_label="Feature",
         x_label="Percent Missing Data",
         ax=ax,

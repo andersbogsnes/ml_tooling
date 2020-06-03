@@ -280,8 +280,8 @@ class Model:
 
         except NotFittedError:
             message = (
-                f"You haven't fitted the estimator. Call `.train_estimator` "
-                f"or `.score_estimator` first"
+                "You haven't fitted the estimator. Call `.train_estimator` "
+                "or `.score_estimator` first"
             )
             raise MLToolingError(message) from None
 

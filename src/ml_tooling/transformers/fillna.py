@@ -44,14 +44,14 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         if self.value is None and self.strategy is None:
             raise TransformerError(
-                f"Both value and strategy are set to None."
-                f"Please select either a value or a strategy."
+                "Both value and strategy are set to None."
+                "Please select either a value or a strategy."
             )
 
         if self.value is not None and self.strategy is not None:
             raise TransformerError(
-                f"Both a value and a strategy have been selected."
-                f"Please select either a value or a strategy."
+                "Both a value and a strategy have been selected."
+                "Please select either a value or a strategy."
             )
 
     def _col_is_categorical_and_is_missing_category(

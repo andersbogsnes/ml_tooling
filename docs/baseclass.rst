@@ -93,7 +93,7 @@ with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
     ...     [LinearRegression(), RandomForestRegressor(n_estimators=10, random_state=1337)],
     ...     metrics='r2')
     >>> results
-    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.82}>, <Result LinearRegression: {'r2': 0.68}>])
+    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result LinearRegression: {'r2': 0.68}>])
 
 Training your model
 ~~~~~~~~~~~~~~~~~~~

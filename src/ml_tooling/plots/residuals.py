@@ -26,7 +26,7 @@ def plot_residuals(
     :return:
         matplotlib.Axes
     """
-    title = f"Residual Plot" if title is None else title
+    title = "Residual Plot" if title is None else title
 
     residuals = y_pred - y_true
     r2 = r2_score(y_true, y_pred)

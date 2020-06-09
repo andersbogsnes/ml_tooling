@@ -8,6 +8,7 @@ human friendly manner
 - Added a missing data visualization to `Dataset.plot`
 - FillNA now accepts a `is_nan`flag which adds a flag indicating that a value was missing
 - `Model.make_prediction` now accepts a `use_cache`flag to score everything in cached `.x`
+- Added Tranformer `RareFeatureEncoder`
 
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data

@@ -23,6 +23,7 @@ from ml_tooling.transformers import (
     DFFeatureUnion,
     DFRowFunc,
     Binarize,
+    RareFeatureEncoder,
 )
 
 
@@ -760,6 +761,121 @@ class TestBinarize(TransformerBase):
 
     def test_binarize_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Binarize(value=2))
+        model = Model(grid)
+        result = model.score_estimator(train_iris_dataset)
+        assert isinstance(result, Result)
+
+
+class TestRareFeatureEncoder(TransformerBase):
+    def test_rare_feature_encoder_returns_correctly_series(self):
+        threshold = 2
+        fill_rare = "Rare"
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+
+        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
+        rare.fit(data)
+
+        new_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "b", "b", 3]})
+        result = rare.transform(new_data)
+
+        test_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "Rare", "Rare", 3]})
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(new_data) == len(result)
+        assert test_data.equals(result)
+
+    def test_rare_feature_encoder_returns_correctly_dataframe(self):
+        threshold = 2
+        fill_rare = 99
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+
+        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 2]})
+        rare.fit(data)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [1, 1, 1, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+
+        test_data = pd.DataFrame(
+            {
+                "categorical": [99, 99, 99, "a", 99, 99, 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert len(new_data) == len(result)
+        assert test_data.equals(result)
+
+    def test_rare_feature_encoder_handle_nan(self):
+        threshold = 2
+        fill_rare = "Rare"
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+
+        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", np.nan]})
+        rare.fit(data)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [1, 1, 1, "a", "b", "b", np.nan],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+
+        test_data = pd.DataFrame(
+            {
+                "categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", np.nan],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert new_data.shape == result.shape
+        assert test_data.equals(result)
+
+    def test_rare_feature_encoder_use_procent(self):
+        threshold = 0.2
+        fill_rare = "Rare"
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+
+        data = pd.DataFrame({"categorical": [1, "a", "a", 2, 2, "b", np.nan]})
+        rare.fit(data)
+
+        new_data = pd.DataFrame(
+            {"categorical": [1, "a", "b", "b", np.nan], "numerical": [1, 2, 3, 4, 5]}
+        )
+        result = rare.transform(new_data)
+
+        test_data = pd.DataFrame(
+            {
+                "categorical": ["Rare", "a", "Rare", "Rare", np.nan],
+                "numerical": [1, 2, 3, 4, 5],
+            }
+        )
+
+        assert isinstance(result, pd.DataFrame)
+        assert test_data.shape == result.shape
+        assert test_data.equals(result)
+
+    def test_rare_feature_encoder_can_be_used_cv(self, train_iris_dataset):
+        threshold = 0.2
+        fill_rare = "Rare"
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+
+        model = self.create_model(rare)
+        result = model.score_estimator(train_iris_dataset, cv=2)
+        assert isinstance(result, Result)
+
+    def test_rare_feature_encoder_works_gridsearch(self, train_iris_dataset):
+        threshold = 0.2
+        fill_rare = "Rare"
+        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+        grid = self.create_gridsearch(rare)
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)

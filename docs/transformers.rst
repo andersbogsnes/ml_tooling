@@ -373,10 +373,10 @@ Example
 
     >>> rare = RareFeatureEncoder(threshold=2, fill_rare="Rare")
     >>> rare.fit_transform(df)
-        categorical_a	numerical	categorical_b
-    0	         Rare	     Rare	         Rare
-    1	            a	        2                   a
-    2	            a	        2            	    a
-    3	         Rare           3                Rare
-    4	         Rare           3           	    b
-    5	          NaN	        3           	    b
+        categorical_a	categorical_b	categorical_c
+    0	         Rare	         Rare	         Rare
+    1	            a	            2               a
+    2	            a	            2               a
+    3	         Rare               3            Rare
+    4	         Rare               3               b
+    5	          NaN	            3               b

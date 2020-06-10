@@ -23,7 +23,7 @@ class RareFeatureEncoder(BaseEstimator, TransformerMixin):
                 frequencies = X[col].value_counts()
 
             condition = frequencies < self.threshold
-            mask_obs = frequencies[condition].index
+            mask_obs = frequencies[frequencies < self.threhold].index
             self.mask_dict[col] = dict.fromkeys(mask_obs, self.fill_rare)
         return self
 

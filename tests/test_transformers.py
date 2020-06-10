@@ -767,10 +767,18 @@ class TestBinarize(TransformerBase):
 
 
 class TestRareFeatureEncoder(TransformerBase):
-    def test_rare_feature_encoder_returns_correctly_when_given_one_column_dataframe(
-        self, rare, categorical_string_and_int
+    @pytest.fixture
+    def rare(self) -> Model:
+        return RareFeatureEncoder(threshold=2, fill_rare="Rare")
+
+    @pytest.fixture
+    def categorical_int_and_string(self) -> pd.DataFrame:
+        return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
+
+    def test_rare_feature_encoder_that_transformed_data_and_input_data_same_shape(
+        self, rare, categorical_int_and_string: pd.DataFrame
     ):
-        rare.fit(categorical_string_and_int)
+        rare.fit(categorical_int_and_string)
 
         new_data = pd.DataFrame(
             {
@@ -782,10 +790,10 @@ class TestRareFeatureEncoder(TransformerBase):
         assert new_data.shape == result.shape
 
     def test_rare_feature_encoder_returns_correctly_dataframe(
-        self, rare, categorical_string_and_int
+        self, rare, categorical_int_and_string: pd.DataFrame
     ):
 
-        rare.fit(categorical_string_and_int)
+        rare.fit(categorical_int_and_string)
 
         new_data = pd.DataFrame(
             {
@@ -824,11 +832,11 @@ class TestRareFeatureEncoder(TransformerBase):
         pd.testing.assert_frame_equal(expected, result)
 
     def test_rare_feature_encoder_correctly_counts_rare_when_given_percent_threshold(
-        self, categorical_string_and_int
+        self, categorical_int_and_string: pd.DataFrame
     ):
         rare = RareFeatureEncoder(threshold=0.2, fill_rare=99)
 
-        rare.fit(categorical_string_and_int)
+        rare.fit(categorical_int_and_string)
 
         new_data = pd.DataFrame({"categorical": [1, "a", "b", "b", 2]})
 

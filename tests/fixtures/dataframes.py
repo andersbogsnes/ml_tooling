@@ -10,11 +10,6 @@ def categorical():
     )
 
 
-@pytest.fixture
-def categorical_string_and_int():
-    return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
-
-
 @pytest.fixture()
 def categorical_na(categorical):
     categorical.loc[1, "category_a"] = np.nan

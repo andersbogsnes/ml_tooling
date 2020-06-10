@@ -10,7 +10,7 @@ class RareFeatureEncoder(BaseEstimator, TransformerMixin):
     Column names need to be the same.
     """
 
-    def __init__(self, threshold=0.2, fill_rare="Rare"):
+    def __init__(self, threshold: Union[int, float] = 0.2, fill_rare: Any = "Rare"):
         self.threshold = threshold
         self.fill_rare = fill_rare
         self.mask_dict = {}

@@ -84,7 +84,7 @@ This method trains each estimator on the train split and evaluates the performan
 :class:`~ml_tooling.baseclass.Model` instance with the best-performing estimator
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
 
-.. doctest::
+.. code-block:: python
 
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor

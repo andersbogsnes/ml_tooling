@@ -767,30 +767,10 @@ class TestBinarize(TransformerBase):
 
 
 class TestRareFeatureEncoder(TransformerBase):
-    def test_rare_feature_encoder_returns_correctly_series(self):
-        threshold = 2
-        fill_rare = "Rare"
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
-
-        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
-        rare.fit(data)
-
-        new_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "b", "b", 3]})
-        result = rare.transform(new_data)
-
-        test_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "Rare", "Rare", 3]})
-
-        assert isinstance(result, pd.DataFrame)
-        assert len(new_data) == len(result)
-        assert test_data.equals(result)
-
-    def test_rare_feature_encoder_returns_correctly_dataframe(self):
-        threshold = 2
-        fill_rare = 99
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
-
-        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 2]})
-        rare.fit(data)
+    def test_rare_feature_encoder_returns_correctly_when_given_one_column_dataframe(
+        self, rare, categorical_string_and_int
+    ):
+        rare.fit(categorical_string_and_int)
 
         new_data = pd.DataFrame(
             {
@@ -799,82 +779,75 @@ class TestRareFeatureEncoder(TransformerBase):
             }
         )
         result = rare.transform(new_data)
-
-        test_data = pd.DataFrame(
-            {
-                "categorical": [99, 99, 99, "a", 99, 99, 3],
-                "numerical": [1, 2, 3, 4, 5, 6, 7],
-            }
-        )
-
-        assert isinstance(result, pd.DataFrame)
-        assert len(new_data) == len(result)
-        assert test_data.equals(result)
-
-    def test_rare_feature_encoder_handle_nan(self):
-        threshold = 2
-        fill_rare = "Rare"
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
-
-        data = pd.DataFrame({"categorical": [1, "a", "a", 2, "b", np.nan]})
-        rare.fit(data)
-
-        new_data = pd.DataFrame(
-            {
-                "categorical": [1, 1, 1, "a", "b", "b", np.nan],
-                "numerical": [1, 2, 3, 4, 5, 6, 7],
-            }
-        )
-        result = rare.transform(new_data)
-
-        test_data = pd.DataFrame(
-            {
-                "categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", np.nan],
-                "numerical": [1, 2, 3, 4, 5, 6, 7],
-            }
-        )
-
-        assert isinstance(result, pd.DataFrame)
         assert new_data.shape == result.shape
-        assert test_data.equals(result)
 
-    def test_rare_feature_encoder_use_procent(self):
-        threshold = 0.2
-        fill_rare = "Rare"
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+    def test_rare_feature_encoder_returns_correctly_dataframe(
+        self, rare, categorical_string_and_int
+    ):
 
-        data = pd.DataFrame({"categorical": [1, "a", "a", 2, 2, "b", np.nan]})
-        rare.fit(data)
+        rare.fit(categorical_string_and_int)
 
         new_data = pd.DataFrame(
-            {"categorical": [1, "a", "b", "b", np.nan], "numerical": [1, 2, 3, 4, 5]}
+            {
+                "categorical": [2, 2, 2, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
         )
         result = rare.transform(new_data)
 
-        test_data = pd.DataFrame(
+        expected = pd.DataFrame(
             {
-                "categorical": ["Rare", "a", "Rare", "Rare", np.nan],
-                "numerical": [1, 2, 3, 4, 5],
+                "categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
             }
         )
 
-        assert isinstance(result, pd.DataFrame)
-        assert test_data.shape == result.shape
-        assert test_data.equals(result)
+        pd.testing.assert_frame_equal(expected, result)
 
-    def test_rare_feature_encoder_can_be_used_cv(self, train_iris_dataset: pd.DataFrame):
-        threshold = 0.2
-        fill_rare = "Rare"
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+    def test_rare_feature_encoder_doesnt_count_nans(self, rare):
 
+        data = pd.DataFrame(
+            {
+                "categorical": [1, "a", "a", 2, "b", np.nan],
+                "numerical": [1, 2, 2, 3, 3, 3],
+            }
+        )
+        rare.fit(data)
+
+        new_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "b", "b", np.nan]})
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame(
+            {"categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", np.nan]}
+        )
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_correctly_counts_rare_when_given_percent_threshold(
+        self, categorical_string_and_int
+    ):
+        rare = RareFeatureEncoder(threshold=0.2, fill_rare=99)
+
+        rare.fit(categorical_string_and_int)
+
+        new_data = pd.DataFrame({"categorical": [1, "a", "b", "b", 2]})
+
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame({"categorical": [1, "a", 99, 99, 99]})
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_can_be_used_cv(
+        self, train_iris_dataset: pd.DataFrame, rare
+    ):
         model = self.create_model(rare)
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
-    def test_rare_feature_encoder_works_gridsearch(self, train_iris_dataset):
-        threshold = 0.2
-        fill_rare = "Rare"
-        rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)
+    def test_rare_feature_encoder_works_gridsearch(
+        self, train_iris_dataset: pd.DataFrame, rare
+    ):
         grid = self.create_gridsearch(rare)
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)

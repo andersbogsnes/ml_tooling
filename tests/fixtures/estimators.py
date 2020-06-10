@@ -11,7 +11,12 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from ml_tooling import Model
-from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion, Select
+from ml_tooling.transformers import (
+    DFStandardScaler,
+    DFFeatureUnion,
+    Select,
+    RareFeatureEncoder,
+)
 
 
 @pytest.fixture()
@@ -123,3 +128,8 @@ def open_estimator_pickle(
         return f
 
     return tmp_open_estimator_pickle
+
+
+@pytest.fixture()
+def rare() -> Model:
+    return RareFeatureEncoder(threshold=2, fill_rare="Rare")

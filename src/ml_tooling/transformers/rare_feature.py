@@ -1,13 +1,12 @@
 import pandas as pd
+from typing import Any, Union
+from ml_tooling.metrics.utils import _is_percent
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class RareFeatureEncoder(BaseEstimator, TransformerMixin):
     """
-    Replace values which occurs below the chosen threshold.
-    The threshold can be a procent or int value.
-    The values are replaced with the chosen fill value.
-    Column names need to be the same.
+    Replaces categories with a value, if they occur less than a threshold.
     """
 
     def __init__(self, threshold: Union[int, float] = 0.2, fill_rare: Any = "Rare"):
@@ -17,13 +16,10 @@ class RareFeatureEncoder(BaseEstimator, TransformerMixin):
 
     def fit(self, X: pd.DataFrame, y=None):
         for col in X.columns:
-            if self.threshold < 1:
-                frequencies = X[col].value_counts(normalize=True)
-            else:
-                frequencies = X[col].value_counts()
+            normalize = _is_percent(self.threshold)
+            frequencies = X[col].value_counts(normalize=normalize)
 
-            condition = frequencies < self.threshold
-            mask_obs = frequencies[frequencies < self.threhold].index
+            mask_obs = frequencies[frequencies < self.threshold].index
             self.mask_dict[col] = dict.fromkeys(mask_obs, self.fill_rare)
         return self
 

@@ -862,7 +862,7 @@ class TestRareFeatureEncoder(TransformerBase):
         assert test_data.shape == result.shape
         assert test_data.equals(result)
 
-    def test_rare_feature_encoder_can_be_used_cv(self, train_iris_dataset):
+    def test_rare_feature_encoder_can_be_used_cv(self, train_iris_dataset: pd.DataFrame):
         threshold = 0.2
         fill_rare = "Rare"
         rare = RareFeatureEncoder(threshold=threshold, fill_rare=fill_rare)

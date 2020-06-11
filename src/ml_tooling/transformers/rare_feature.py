@@ -13,11 +13,13 @@ class RareFeatureEncoder(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         threshold: int, float
-            Threshold of a categorie minimum occurrence.
-            Threshold = float: Percent.
-            Threshold = Int: Number.
+            Sets the threshold for when a value is considered rare.
+            Any value which occurs less than the threshold will be replaced
+            with fill_rare. If threshold is a float, it will be considered
+            a percentage and if it is an int, threshold will be considered the
+            minimum number of observations.
         fill_rare: Any
-            Value to use to fill categorie.
+            Fill value to use when replacing rare categories.
         """
         self.threshold = threshold
         self.fill_rare = fill_rare

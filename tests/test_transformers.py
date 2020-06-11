@@ -768,7 +768,7 @@ class TestBinarize(TransformerBase):
 
 class TestRareFeatureEncoder(TransformerBase):
     @pytest.fixture
-    def rare(self) -> Model:
+    def rare(self) -> RareFeatureEncoder:
         return RareFeatureEncoder(threshold=2, fill_rare="Rare")
 
     @pytest.fixture
@@ -776,7 +776,7 @@ class TestRareFeatureEncoder(TransformerBase):
         return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
 
     def test_rare_feature_encoder_that_transformed_data_and_input_data_same_shape(
-        self, rare, categorical_int_and_string: pd.DataFrame
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
     ):
         rare.fit(categorical_int_and_string)
 
@@ -790,7 +790,7 @@ class TestRareFeatureEncoder(TransformerBase):
         assert new_data.shape == result.shape
 
     def test_rare_feature_encoder_returns_correctly_dataframe(
-        self, rare, categorical_int_and_string: pd.DataFrame
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
     ):
 
         rare.fit(categorical_int_and_string)
@@ -812,7 +812,7 @@ class TestRareFeatureEncoder(TransformerBase):
 
         pd.testing.assert_frame_equal(expected, result)
 
-    def test_rare_feature_encoder_doesnt_count_nans(self, rare):
+    def test_rare_feature_encoder_doesnt_count_nans(self, rare: RareFeatureEncoder):
 
         data = pd.DataFrame(
             {
@@ -847,14 +847,14 @@ class TestRareFeatureEncoder(TransformerBase):
         pd.testing.assert_frame_equal(expected, result)
 
     def test_rare_feature_encoder_can_be_used_cv(
-        self, train_iris_dataset: pd.DataFrame, rare
+        self, train_iris_dataset: pd.DataFrame, rare: RareFeatureEncoder
     ):
         model = self.create_model(rare)
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_rare_feature_encoder_works_gridsearch(
-        self, train_iris_dataset: pd.DataFrame, rare
+        self, train_iris_dataset: pd.DataFrame, rare: RareFeatureEncoder
     ):
         grid = self.create_gridsearch(rare)
         model = Model(grid)

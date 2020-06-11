@@ -84,6 +84,19 @@ You can also use one of the built-in strategies.
     2   3  4000.0
     3   4  3000.0
 
+In addition, FillNa will indicate if a value in a column was missing if you set `indicate_nan=True`.
+This creates a new column of 1 and 0 indicating missing values
+
+.. doctest::
+
+    >>> fill_na = FillNA(strategy='mean', indicate_nan=True)
+    >>> fill_na.fit_transform(df)
+       id   sales  sales_is_nan
+    0   1  2000.0             0
+    1   2  3000.0             0
+    2   3  4000.0             0
+    3   4  3000.0             1
+
 ToCategorical
 -------------
 
@@ -335,3 +348,35 @@ Example
     1         0         1
     2         1         0
     3         0         0
+
+
+RareFeatureEncoder
+------------------
+Replaces categories with a value, if they occur less than a threshold. - Using :meth:`pandas.Series.value_counts()`.
+The fill value can be any value and the threshold can be either a percent or int value.
+
+The column names needs to be identical when using Train & Test dataset
+
+The Transformer does not count NaN.
+
+Example
+#######
+
+.. doctest::
+
+    >>> from ml_tooling.transformers import RareFeatureEncoder
+    >>> df = pd.DataFrame({
+    ...         "categorical_a": [1, "a", "a", 2, "b", np.nan],
+    ...         "categorical_b": [1, 2, 2, 3, 3, 3],
+    ...         "categorical_c": [1, "a", "a", 2, "b", "b"],
+    ... })
+
+    >>> rare = RareFeatureEncoder(threshold=2, fill_rare="Rare")
+    >>> rare.fit_transform(df)
+      categorical_a categorical_b categorical_c
+    0          Rare          Rare          Rare
+    1             a             2             a
+    2             a             2             a
+    3          Rare             3          Rare
+    4          Rare             3             b
+    5           NaN             3             b

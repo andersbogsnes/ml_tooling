@@ -22,7 +22,7 @@ from ml_tooling.plots import (
     plot_feature_importance,
 )
 from ml_tooling.utils import VizError
-from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import ToCategorical
 
 
@@ -76,7 +76,7 @@ class TestConfusionMatrixPlot:
         assert "Confusion Matrix - LogisticRegression - Normalized" == ax.title._text
         result = [text._text for text in ax.texts]
         assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
-        assert {"0.63", "0.18", "0.11", "0.08"} == set(result)
+        assert {"0.61", "0.32", "0.03", "0.05"} == set(result)
         assert "True Label" == ax.get_ylabel()
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
@@ -88,7 +88,7 @@ class TestConfusionMatrixPlot:
 
         assert "Confusion Matrix - LogisticRegression" == ax.title._text
         result = {text._text for text in ax.texts}
-        assert {"24", "7", "4", "3"} == result
+        assert {"23", "12", "1", "2"} == result
         assert "True Label" == ax.get_ylabel()
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
@@ -116,7 +116,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_data(self, classifier: Model):
         ax = classifier.result.plot.feature_importance(random_state=42)
 
-        expected = {"0.01", "0.10", "0.08", "-0.03"}
+        expected = {"0.04", "0.06", "0.10", "-0.03"}
         assert {text.get_text() for text in ax.texts} == expected
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -148,7 +148,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(top_n=2, random_state=42)
         assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.10", "0.08"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "0.06"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -184,7 +184,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=2, random_state=42)
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.01", "-0.03"}
+        assert {text.get_text() for text in ax.texts} == {"0.04", "-0.03"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -202,7 +202,7 @@ class TestFeatureImportancePlot:
     ):
         ax = classifier.result.plot.feature_importance(bottom_n=0.2, random_state=42)
         assert len(ax.texts) == 1
-        assert {text.get_text() for text in ax.texts} == {"0.01"}
+        assert {text.get_text() for text in ax.texts} == {"-0.03"}
 
         assert ax.get_ylabel() == "Feature Labels"
         assert (
@@ -222,7 +222,7 @@ class TestFeatureImportancePlot:
             top_n=1, bottom_n=1, random_state=42
         )
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.10", "0.01"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -241,7 +241,7 @@ class TestFeatureImportancePlot:
             top_n=1, bottom_n=0.2, random_state=42
         )
         assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.10", "0.01"}
+        assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -260,7 +260,7 @@ class TestFeatureImportancePlot:
             top_n=0.2, bottom_n=1, random_state=42
         )
         assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.01", "0.10"}
+        assert {text.get_text() for text in ax.texts} == {"-0.03", "0.10"}
         assert ax.get_ylabel() == "Feature Labels"
         assert (
             ax.get_xlabel()
@@ -368,7 +368,7 @@ class TestLiftCurvePlot:
         assert "Lift" == ax.get_ylabel()
         assert "% of Data" == ax.get_xlabel()
         assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
-        assert pytest.approx(60.291, rel=0.0001) == np.sum(ax.lines[0].get_ydata())
+        assert pytest.approx(49.849, rel=0.0001) == np.sum(ax.lines[0].get_ydata())
         plt.close()
 
     def test_lift_chart_fails_correctly_with_2d_proba(self):
@@ -608,3 +608,45 @@ class TestTargetCorrelation:
         test_ax = train_iris_dataset.plot.target_correlation(ax=ax)
         assert ax == test_ax
         plt.close()
+
+
+class TestMissingDataViz:
+    @pytest.fixture()
+    def missing_data(self, train_boston_dataset):
+        train_boston_dataset.x.iloc[:10, 0] = np.nan
+        return train_boston_dataset
+
+    @pytest.fixture()
+    def ax(self, missing_data):
+        return missing_data.plot.missing_data()
+
+    def test_missing_data_text_labels_are_correct(self, ax):
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+
+    def test_ylabel_is_correct(self, ax):
+        assert ax.get_ylabel() == "Feature"
+
+    def test_xlabel_is_correct(self, ax):
+        assert ax.get_xlabel() == "Percent Missing Data"
+
+    def test_xticklabels_are_correct(self, ax):
+        # Must trigger rendering before labels are accessible
+        ax.figure.canvas.draw()
+        assert [text.get_text() for text in ax.get_xticklabels()] == [
+            "0.00%",
+            "0.50%",
+            "1.00%",
+            "1.50%",
+            "2.00%",
+            "2.50%",
+        ]
+
+    def test_missing_data_plots_can_be_given_an_ax(self, missing_data):
+        fig, ax = plt.subplots()
+        test_ax = missing_data.plot.missing_data(ax=ax)
+        assert ax == test_ax
+        plt.close()
+
+    def test_can_call_missing_data_with_no_missing_values(self, train_boston_dataset):
+        ax = train_boston_dataset.plot.missing_data()
+        assert ax.patches == []

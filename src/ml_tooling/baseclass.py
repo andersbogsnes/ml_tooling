@@ -1,24 +1,21 @@
-from importlib.resources import path as import_path
-import pathlib
 import datetime
+import pathlib
 from contextlib import contextmanager
+from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 
 import joblib
 import pandas as pd
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
-
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
-from ml_tooling.result import ResultType
-from ml_tooling.storage.base import Storage
 from ml_tooling.logging.logger import create_logger
+from ml_tooling.metrics.metric import Metrics
+from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
-from ml_tooling.metrics.metric import Metrics
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
+from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
+from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
@@ -30,6 +27,9 @@ from ml_tooling.utils import (
     make_pipeline_from_definition,
     read_yaml,
 )
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
 
 logger = create_logger("ml_tooling")
 
@@ -142,7 +142,7 @@ class Model:
         logger.info(f"Loaded {instance.estimator_name}")
         return instance
 
-    def save_estimator(self, storage: Storage, prod=False) -> pathlib.Path:
+    def save_estimator(self, storage: Storage = None, prod=False) -> pathlib.Path:
         """
         Saves the estimator as a binary file.
 
@@ -170,6 +170,9 @@ class Model:
         pathlib.Path
             The path to where the estimator file was saved
         """
+        if storage is None:
+            storage = self.config.default_storage
+
         if prod:
             file_name = "production_model.pkl"
         else:
@@ -225,6 +228,7 @@ class Model:
         *args,
         proba: bool = False,
         use_index: bool = False,
+        use_cache: bool = False,
         **kwargs,
     ) -> pd.DataFrame:
         """
@@ -244,6 +248,10 @@ class Model:
         use_index: bool
             Whether the index from the prediction data should be used for the result.
 
+        use_cache: bool
+            Whether or not to use the cached data in dataset to make predictions.
+            Useful for seeing probability distributions of the model
+
         Returns
         -------
         pd.DataFrame
@@ -253,24 +261,27 @@ class Model:
             raise MLToolingError(
                 f"{self.estimator_name} does not have a `predict_proba` method"
             )
-        x = data._load_prediction_data(*args, **kwargs)
+
+        x = data.x if use_cache else data._load_prediction_data(*args, **kwargs)
+
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
+                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
             else:
                 data = self.estimator.predict(x)
-
+                columns = ["Prediction"]
             if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index)
+                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
             else:
-                prediction = pd.DataFrame(data=data)
+                prediction = pd.DataFrame(data=data, columns=columns)
 
             return prediction
 
         except NotFittedError:
             message = (
-                f"You haven't fitted the estimator. Call `.train_estimator` "
-                f"or `.score_estimator` first"
+                "You haven't fitted the estimator. Call `.train_estimator` "
+                "or `.score_estimator` first"
             )
             raise MLToolingError(message) from None
 
@@ -418,6 +429,64 @@ class Model:
             logger.info(f"Saved run info at {log.output_path}")
         return self.result
 
+    def _cross_validated_search(
+        self,
+        data: Dataset,
+        params: dict,
+        estimators: Iterable[Estimator],
+        metrics: Union[str, List[str]] = "default",
+        cv: Optional[int] = None,
+    ) -> Tuple["Model", ResultGroup]:
+        """
+        Runs a cross-validated search on the given estimators.
+
+        Parameters
+        ----------
+        data: Dataset
+            An instance of a DataSet object
+
+        params: dict
+            Parameters to use for search
+
+        estimators: Iterable[Estimator]
+            estimators to cross validate
+
+        metrics: str, list of str
+            Metrics to use for scoring. "default" sets metric equal to
+            :attr:`self.default_metric`. First metric is used to sort results.
+
+        cv: int, optional
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
+
+        Returns
+        -------
+        best_estimator: Model
+            Best estimator as found by the gridsearch
+
+        result_group: ResultGroup
+            ResultGroup object containing each individual score
+        """
+        if isinstance(metrics, str):
+            metrics = self.default_metric if metrics == "default" else metrics
+
+        cv = self.config.CROSS_VALIDATION if cv is None else cv
+        cv = check_cv(cv, data.train_y, self.is_classifier)
+
+        logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
+        logger.info("Starting search...")
+
+        self.result = _train_estimators(
+            list(estimators), data=data, metrics=metrics, cv=cv
+        )
+
+        logger.info("Done!")
+
+        if self.config.LOG:
+            result_file = self.result.log(self.config.RUN_DIR)
+            logger.info(f"Saved run info at {result_file}")
+
+        return self.result[0].model, self.result
+
     def gridsearch(
         self,
         data: Dataset,
@@ -452,31 +521,68 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        if isinstance(metrics, str):
-            metrics = self.default_metric if metrics == "default" else metrics
-
-        cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, data.train_y, self.is_classifier)
-
-        logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
-        logger.debug(f"Gridsearching using {param_grid}")
-        logger.info("Starting gridsearch...")
-
         estimators: Iterable[Estimator] = prepare_gridsearch_estimators(
             estimator=self.estimator, params=param_grid
         )
 
-        self.result = _train_estimators(
-            list(estimators), data=data, metrics=metrics, cv=cv
+        logger.debug(f"Gridsearching using {param_grid}")
+
+        return self._cross_validated_search(data, param_grid, estimators, metrics, cv)
+
+    def randomsearch(
+        self,
+        data: Dataset,
+        param_distributions: dict,
+        metrics: Union[str, List[str]] = "default",
+        cv: Optional[int] = None,
+        n_iter: int = 10,
+    ) -> Tuple["Model", ResultGroup]:
+        """
+        Runs a cross-validated randomsearch on the estimator with a randomized
+        sampling of the passed parameter distributions
+
+        Parameters
+        ----------
+        data: Dataset
+            An instance of a DataSet object
+
+        param_distributions: dict
+            Parameter distributions to use for randomizing search
+
+        metrics: str, list of str
+            Metrics to use for scoring. "default" sets metric equal to
+            :attr:`self.default_metric`. First metric is used to sort results.
+
+        cv: int, optional
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
+
+        n_iter:
+            Number of parameter settings that are sampled.
+
+        random_state:
+            Pseudo random number generator state used for random uniform sampling.
+
+        Returns
+        -------
+        best_estimator: Model
+            Best estimator as found by the randomsearch
+
+        result_group: ResultGroup
+            ResultGroup object containing each individual score
+        """
+
+        estimators: Iterable[Estimator] = prepare_randomsearch_estimators(
+            estimator=self.estimator,
+            params=param_distributions,
+            n_iter=n_iter,
+            random_state=self.config.RANDOM_STATE,
         )
 
-        logger.info("Done!")
+        logger.debug(f"Randomsearching using {param_distributions}")
 
-        if self.config.LOG:
-            result_file = self.result.log(self.config.RUN_DIR)
-            logger.info(f"Saved run info at {result_file}")
-
-        return self.result[0].model, self.result
+        return self._cross_validated_search(
+            data, param_distributions, estimators, metrics, cv
+        )
 
     @contextmanager
     def log(self, run_directory: str):

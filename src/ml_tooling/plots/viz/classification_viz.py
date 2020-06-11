@@ -7,7 +7,7 @@ from ml_tooling.plots import (
     plot_pr_curve,
 )
 from ml_tooling.utils import VizError
-from ml_tooling.result.viz import BaseVisualize
+from ml_tooling.plots.viz.baseviz import BaseVisualize
 
 
 class ClassificationVisualize(BaseVisualize):

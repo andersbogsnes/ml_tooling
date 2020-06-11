@@ -23,6 +23,7 @@ from ml_tooling.transformers import (
     DFFeatureUnion,
     DFRowFunc,
     Binarize,
+    RareFeatureEncoder,
 )
 
 
@@ -254,6 +255,14 @@ class TestFillNA(TransformerBase):
             match="column/columns have invalid types for strategy = mean",
         ):
             fill_na.fit_transform(df)
+
+    def test_fillna_adds_is_na_column_when_imputing(self):
+        df = pd.DataFrame({"id": [1, 2, 3, 4], "sales": [2000, 3000, 4000, np.nan]})
+        fill_na = FillNA(strategy="mean", indicate_nan=True)
+        expected_cols = ["id", "sales", "sales_is_nan"]
+        result = fill_na.fit_transform(df)
+        assert result.columns.tolist() == expected_cols
+        assert np, all(result["sales_isna"] == [0, 0, 0, 1])
 
 
 class TestToCategorical(TransformerBase):
@@ -752,6 +761,102 @@ class TestBinarize(TransformerBase):
 
     def test_binarize_works_in_gridsearch(self, train_iris_dataset):
         grid = self.create_gridsearch(Binarize(value=2))
+        model = Model(grid)
+        result = model.score_estimator(train_iris_dataset)
+        assert isinstance(result, Result)
+
+
+class TestRareFeatureEncoder(TransformerBase):
+    @pytest.fixture
+    def rare(self) -> RareFeatureEncoder:
+        return RareFeatureEncoder(threshold=2, fill_rare="Rare")
+
+    @pytest.fixture
+    def categorical_int_and_string(self) -> pd.DataFrame:
+        return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
+
+    def test_rare_feature_encoder_that_transformed_data_and_input_data_same_shape(
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
+    ):
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [1, 1, 1, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+        assert new_data.shape == result.shape
+
+    def test_rare_feature_encoder_returns_correctly_dataframe(
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
+    ):
+
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [2, 2, 2, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame(
+            {
+                "categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_doesnt_count_nans(self, rare: RareFeatureEncoder):
+
+        data = pd.DataFrame(
+            {
+                "categorical": [1, "a", "a", 2, "b", np.nan],
+                "numerical": [1, 2, 2, 3, 3, 3],
+            }
+        )
+        rare.fit(data)
+
+        new_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "b", "b", np.nan]})
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame(
+            {"categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", np.nan]}
+        )
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_correctly_counts_rare_when_given_percent_threshold(
+        self, categorical_int_and_string: pd.DataFrame
+    ):
+        rare = RareFeatureEncoder(threshold=0.2, fill_rare=99)
+
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame({"categorical": [1, "a", "b", "b", 2]})
+
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame({"categorical": [1, "a", 99, 99, 99]})
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_can_be_used_cv(
+        self, train_iris_dataset: pd.DataFrame, rare: RareFeatureEncoder
+    ):
+        model = self.create_model(rare)
+        result = model.score_estimator(train_iris_dataset, cv=2)
+        assert isinstance(result, Result)
+
+    def test_rare_feature_encoder_works_gridsearch(
+        self, train_iris_dataset: pd.DataFrame, rare: RareFeatureEncoder
+    ):
+        grid = self.create_gridsearch(rare)
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)

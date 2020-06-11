@@ -4,12 +4,11 @@ import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.engine import Connectable
 from sqlalchemy.exc import DBAPIError
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 from contextlib import contextmanager
 
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType, DatasetError
-
 
 logger = logging.getLogger("ml_tooling")
 
@@ -43,7 +42,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     table: Optional[sa.Table] = None
 
-    def __init__(self, conn: Connectable, schema: str, **kwargs):
+    def __init__(self, conn: Union[str, Connectable], schema: str, **kwargs):
         """
         Instantiates a dataset with the necessary arguments to connect to the database.
 
@@ -61,11 +60,11 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         elif isinstance(conn, str):
             self.engine = sa.create_engine(conn, **kwargs)
         else:
-            raise ValueError(f"Invalid connection")
+            raise ValueError("Invalid connection")
         if self.table is not None and self.table.schema is not None:
             raise DatasetError(
                 f"{self.table.schema.name} cannot have a defined schema - "
-                f"remove the schema declaration"
+                "remove the schema declaration"
             )
         self.schema = schema
 
@@ -102,15 +101,13 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         with self.create_connection() as conn:
-            return self.load_training_data(*args, conn=conn, **kwargs)
+            return super()._load_training_data(*args, conn=conn, **kwargs)
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         with self.create_connection() as conn:
-            pred_data = self.load_prediction_data(*args, conn=conn, **kwargs)
-            self.cached_data = pred_data
-            return pred_data
+            return super()._load_prediction_data(*args, conn=conn, **kwargs)
 
-    def _dump_data(self) -> pd.DataFrame:
+    def _dump_data(self, use_cache=False) -> pd.DataFrame:
         """
         Reads the underlying SQL table and returns a DataFrame
 
@@ -119,6 +116,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         pd.DataFrame
 
         """
+
         logger.info(f"Dumping data from {self.table}")
         logger.debug(f"Dumping data from {self.engine}/{self.table.name}")
         stmt = sa.select([self.table])

@@ -1,7 +1,6 @@
-from sklearn.linear_model import LinearRegression
-
 from ml_tooling import Model
 from ml_tooling.config import DefaultConfig
+from sklearn.linear_model import LinearRegression
 
 
 class TestConfig:
@@ -87,3 +86,9 @@ class TestConfig:
         log.config.CLASSIFIER_METRIC = "fowlkes_mallows_score"
         assert rf.config.CLASSIFIER_METRIC == "accuracy"
         assert log.config.CLASSIFIER_METRIC == "fowlkes_mallows_score"
+
+    def test_config_default_storage_points_to_cwd(self, base, tmp_path):
+        base.config.ESTIMATOR_DIR = tmp_path
+        result = base.config.default_storage
+
+        assert result.dir_path == tmp_path

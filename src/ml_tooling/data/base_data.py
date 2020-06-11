@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
-from ml_tooling.data.viz import DataVisualize
+from ml_tooling.plots.viz import DataVisualize
 
 
 class Dataset(metaclass=abc.ABCMeta):
@@ -22,11 +22,14 @@ class Dataset(metaclass=abc.ABCMeta):
     train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
     cached_data: Optional[pd.DataFrame] = None
-    plot: DataVisualize = None
+
+    @property
+    def plot(self):
+        return DataVisualize(self)
 
     def create_train_test(
         self,
-        stratify: Optional[DataType] = None,
+        stratify: bool = False,
         shuffle: bool = True,
         test_size: float = 0.25,
         seed: int = 42,
@@ -70,7 +73,6 @@ class Dataset(metaclass=abc.ABCMeta):
     def x(self):
         if self._x is None:
             self._x, self._y = indexable(*self._load_training_data())
-            self.plot = DataVisualize(self)
         return self._x
 
     @x.setter
@@ -81,7 +83,6 @@ class Dataset(metaclass=abc.ABCMeta):
     def y(self):
         if self._y is None:
             self._x, self._y = indexable(*self._load_training_data())
-            self.plot = DataVisualize(self)
         return self._y
 
     @y.setter
@@ -104,10 +105,16 @@ class Dataset(metaclass=abc.ABCMeta):
         return self.__class__.__name__
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
-        return self.load_training_data(*args, **kwargs)
+        x, y = self.load_training_data(*args, **kwargs)
+        if x.empty:
+            raise DatasetError("An empty dataset was returned by load_training_data")
+
+        return x, y
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         pred_data = self.load_prediction_data(*args, **kwargs)
+        if pred_data.empty:
+            raise DatasetError("An empty dataset was returned by load_prediction_data")
         self.cached_data = pred_data
         return pred_data
 

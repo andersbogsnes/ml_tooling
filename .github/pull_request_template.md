@@ -1,4 +1,4 @@
-- [ ] closes issue XXX
+- [ ] close issue XXX
 - [ ] Tests added
 - [ ] Passes flake8
 - [ ] Updated CHANGELOG

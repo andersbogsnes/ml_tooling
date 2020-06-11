@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.todo",
     "matplotlib.sphinxext.plot_directive",
+    "sphinx_rtd_theme",
 ]
 
 intersphinx_mapping = {
@@ -78,6 +79,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
 autodoc_typehints = "none"
+autodoc_warningiserror = False
 
 
 # -- Options for HTML output -------------------------------------------------

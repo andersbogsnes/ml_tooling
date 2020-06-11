@@ -1,3 +1,15 @@
+# v0.10.3
+- Fixed typehints in Dataset
+- Dataset.create_train_test now takes a boolean `stratify` parameter.
+- Added default local filestorage when using `save_estimator`
+- The dataframe returned by `.make_prediction`now labels the columns in a more
+human friendly manner
+- Dataset now verifies that `load_training_data` and `load_prediction_data` do not return empty
+- Added a missing data visualization to `Dataset.plot`
+- FillNA now accepts a `is_nan`flag which adds a flag indicating that a value was missing
+- `Model.make_prediction` now accepts a `use_cache`flag to score everything in cached `.x`
+- Added a new Transformer:  `RareFeatureEncoder`
+
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data
 - Added idx arg to load_prediction_data abstract method in SQLDataset

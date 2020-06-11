@@ -139,4 +139,8 @@ Available Data Plots
     The size of the correlation can indicate important features, but can also
     hint at data leakage if the correlation is too strong.
 
+- :meth:`~DataVisualize.missing_data`:
+    Visualizes percentage of missing data for each column in the dataset. If no columns have missing data, will
+    simply show an empty plot.
+
 Continue to :doc:`transformers`

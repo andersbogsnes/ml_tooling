@@ -17,7 +17,7 @@ idna==2.9                 # via requests
 importlib-metadata==1.6.1  # via pluggy, pre-commit, pytest, tox
 joblib==0.15.1
 kiwisolver==1.2.0
-matplotlib==3.2.1
+matplotlib==3.2.2
 more-itertools==8.4.0     # via pytest
 nodeenv==1.4.0            # via pre-commit
 numpy==1.18.5

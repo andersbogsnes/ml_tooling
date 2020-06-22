@@ -20,7 +20,7 @@ kiwisolver==1.2.0
 matplotlib==3.2.2
 more-itertools==8.4.0     # via pytest
 nodeenv==1.4.0            # via pre-commit
-numpy==1.18.5
+numpy==1.19.0
 packaging==20.4           # via pytest, tox
 pandas==1.0.5
 pluggy==0.13.1            # via pytest, tox

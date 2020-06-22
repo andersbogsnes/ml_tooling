@@ -3,10 +3,12 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+from sqlalchemy.exc import DBAPIError
+
 from ml_tooling import Model
 from ml_tooling.data import Dataset
+from ml_tooling.data.demo_dataset import load_demo_dataset
 from ml_tooling.utils import DatasetError
-from sqlalchemy.exc import DBAPIError
 
 
 class TestDataset:
@@ -284,3 +286,64 @@ class TestFileDataset:
             DatasetError, match="An empty dataset was returned by load_prediction_data"
         ):
             regression.make_prediction(data, 0)
+
+
+class TestDemoDatasetModule:
+    @pytest.fixture
+    def load_dataset_iris(self) -> Dataset:
+        return load_demo_dataset("iris")
+
+    def test_repr_is_correct_load(self, load_dataset_iris: Dataset):
+        result = str(load_dataset_iris)
+        assert result == "<DemoData - Dataset>"
+
+    def test_dataset_x_attribute_access_works_correctly(
+        self, load_dataset_iris: Dataset
+    ):
+        assert load_dataset_iris._x is None
+        features = load_dataset_iris.x
+        assert load_dataset_iris._x is not None
+        assert len(features) == 150
+
+    def test_dataset_raises_error_if_return_X_y_is_true(self):
+        with pytest.raises(DatasetError, match="return_X_y should be False"):
+            load_demo_dataset("iris", return_X_y=True)
+
+    def test_dataset_y_attribute_access_works_correctly(
+        self, load_dataset_iris: Dataset
+    ):
+        assert load_dataset_iris._y is None
+        features = load_dataset_iris.y
+        assert load_dataset_iris._y is not None
+        assert len(features) == 150
+
+    def test_dataset_from_fetchopenml_works(self):
+        dataset = load_demo_dataset("openml", name="miceprotein")
+        assert len(dataset.x) == 1080
+
+    def test_dataset_x_from_fetchopenml_with_paramteres_works(self):
+        dataset = load_demo_dataset(
+            "openml", name="blood-transfusion-service-center", target_column="V1"
+        )
+        features_x = dataset.x
+        assert features_x.shape == (748, 4)
+
+    def test_dataset_y_from_fetchopenml_with_two_target_columns_works(self):
+        dataset = load_demo_dataset(
+            "openml",
+            name="blood-transfusion-service-center",
+            target_column=["V1", "V2"],
+        )
+        features_y = dataset.y
+        assert features_y.shape == (748, 2)
+
+    def test_cant_modify_x_and_y(self, load_dataset_iris: Dataset):
+        with pytest.raises(DatasetError, match="Trying to modify x - x is immutable"):
+            load_dataset_iris.x = "testx"
+        with pytest.raises(DatasetError, match="Trying to modify y - y is immutable"):
+            load_dataset_iris.y = "testy"
+
+    def test_dataset_has_validation_set_errors_correctly(self, load_dataset_iris):
+        assert load_dataset_iris.has_validation_set is False
+        load_dataset_iris.create_train_test(stratify=True)
+        assert load_dataset_iris.has_validation_set is True

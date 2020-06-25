@@ -7,6 +7,11 @@ from ml_tooling.utils import TransformerError
 
 
 class FillNA(BaseEstimator, TransformerMixin):
+    """
+    Fills NA values with given value or strategy. Either a value or a strategy
+    has to be supplied.
+    """
+
     def __init__(
         self,
         value: Optional[Union[str, int]] = None,
@@ -14,17 +19,17 @@ class FillNA(BaseEstimator, TransformerMixin):
         indicate_nan: bool = False,
     ):
         """
-        Fills NA values with given value or strategy. Either a value or a strategy
-        has to be supplied.
 
         Parameters
         ----------
-        value: str or int
+        value: str, int
             A specific value to replace NaNs with.
         strategy: str
             A named strategy to replace NaNs with.
             One of 'mean', 'median', 'most_freq', 'max', 'min'
-        indicate_nan
+        indicate_nan: bool
+            If True, a new column is added which indicates if a value in a column was missing.
+
         """
 
         self.value = value

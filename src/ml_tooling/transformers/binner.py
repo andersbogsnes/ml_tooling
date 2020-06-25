@@ -11,6 +11,23 @@ class Binner(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, bins: Union[int, list] = 5, labels: list = None):
+        """
+
+        Parameters
+        ----------
+        bins: int, list
+            The criteria to bin by.
+            An int value defines the number of equal-width bins in the range of x. The range of
+            x is extended by .1% on each side to include the minimum and maximum values of x.
+            A list defines the bin edges allowing for non-uniform width. No extension of
+            the range of x is done.
+
+
+        labels: list
+            Specifies the labels for the returned bins. Must be the same length as the
+            resulting bins.
+
+        """
         self.bins = bins
         self.labels = labels
 

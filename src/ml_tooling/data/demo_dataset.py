@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import pandas as pd
 from sklearn.datasets import (
     load_boston,
@@ -11,6 +13,7 @@ from sklearn.datasets import (
 )
 
 from ml_tooling.data.base_data import Dataset
+from ml_tooling.utils import DataType
 
 
 def load_demo_dataset(dataset_name: str, **kwargs):
@@ -51,14 +54,14 @@ def load_demo_dataset(dataset_name: str, **kwargs):
     selected_data = dataset_mapping[dataset_name](**kwargs)
 
     class DemoData(Dataset):
-        def load_training_data(self):
+        def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
             return (
                 pd.DataFrame(selected_data.data, columns=selected_data.feature_names),
                 selected_data.target,
             )
 
-        def load_prediction_data(self, idx):
+        def load_prediction_data(self, idx) -> pd.DataFrame:
             x = pd.DataFrame(selected_data.data, columns=selected_data.feature_names)
-            return x.loc[idx]
+            return x.loc[[idx]]
 
     return DemoData()

@@ -349,9 +349,11 @@ class TestDemoDatasetModule:
         assert load_dataset_iris.has_validation_set is True
 
     def test_load_prediction_data_works_as_expected(self):
-        dataset = load_demo_dataset("breast_cancer")
-        dataset.create_train_test()
-        model = Model(LogisticRegression(solver="liblinear"))
-        result = model.score_estimator(dataset, metrics="roc_auc")
+        dataset = load_demo_dataset("iris")
+        dataset.create_train_test(stratify=True)
+        model = Model(LogisticRegression())
+        model.train_estimator(dataset)
+        result = model.make_prediction(dataset, 5)
 
-        assert result.metrics.name == "roc_auc"
+        expected = pd.DataFrame({"Prediction": [0]})
+        pd.testing.assert_frame_equal(result, expected)

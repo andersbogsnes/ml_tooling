@@ -11,12 +11,11 @@ from sklearn.datasets import (
 )
 
 from ml_tooling.data.base_data import Dataset
-from ml_tooling.utils import DatasetError
 
 
 def load_demo_dataset(dataset_name: str, **kwargs):
     """
-    The function calls either the load and fetch function from
+    The function calls either the load_ or fetch_ function from
     :class:`sklearn.datasets`. Then a data class is created which is inheriting from
     ML Tooling dataclas Dataset.
     The options in kwargs can be read in :class:`sklearn.datasets`
@@ -37,8 +36,6 @@ def load_demo_dataset(dataset_name: str, **kwargs):
         A data class inheriting from ML Tooling dataclas Dataset
 
     """
-    if kwargs.get("return_X_y"):
-        raise DatasetError("return_X_y should be False")
 
     dataset_mapping = {
         "iris": load_iris,

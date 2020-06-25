@@ -10,6 +10,8 @@ from ml_tooling.data import Dataset
 from ml_tooling.data.demo_dataset import load_demo_dataset
 from ml_tooling.utils import DatasetError
 
+from sklearn.linear_model import LogisticRegression
+
 
 class TestDataset:
     def test_repr_is_correct(self, iris_dataset):
@@ -305,10 +307,6 @@ class TestDemoDatasetModule:
         assert load_dataset_iris._x is not None
         assert len(features) == 150
 
-    def test_dataset_raises_error_if_return_X_y_is_true(self):
-        with pytest.raises(DatasetError, match="return_X_y should be False"):
-            load_demo_dataset("iris", return_X_y=True)
-
     def test_dataset_y_attribute_access_works_correctly(
         self, load_dataset_iris: Dataset
     ):
@@ -343,7 +341,17 @@ class TestDemoDatasetModule:
         with pytest.raises(DatasetError, match="Trying to modify y - y is immutable"):
             load_dataset_iris.y = "testy"
 
-    def test_dataset_has_validation_set_errors_correctly(self, load_dataset_iris):
+    def test_dataset_has_validation_set_errors_correctly(
+        self, load_dataset_iris: Dataset
+    ):
         assert load_dataset_iris.has_validation_set is False
         load_dataset_iris.create_train_test(stratify=True)
         assert load_dataset_iris.has_validation_set is True
+
+    def test_load_prediction_data_works_as_expected(self):
+        dataset = load_demo_dataset("breast_cancer")
+        dataset.create_train_test()
+        model = Model(LogisticRegression(solver="liblinear"))
+        result = model.score_estimator(dataset, metrics="roc_auc")
+
+        assert result.metrics.name == "roc_auc"

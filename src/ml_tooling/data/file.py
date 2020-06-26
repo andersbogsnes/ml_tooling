@@ -50,12 +50,12 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def load_training_data(
-        self, conn, *args, **kwargs
+        self, *args, **kwargs
     ) -> Tuple[pd.DataFrame, DataType]:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load_prediction_data(self, conn, *args, **kwargs) -> pd.DataFrame:
+    def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError
 
     def _dump_data(self, **kwargs) -> pd.DataFrame:

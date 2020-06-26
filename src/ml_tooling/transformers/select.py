@@ -17,7 +17,7 @@ class Select(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         columns: List[str], str, None
-            Specify which columns should be selected.
+            Specify which columns are selected.
         """
         self.columns = columns
 

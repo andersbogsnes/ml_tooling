@@ -16,7 +16,7 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         copy: bool
-            If True, then the
+            If True, a copy of the dataframe is made.
         with_mean: bool
             If True, center the data before scaling.
         with_std: bool

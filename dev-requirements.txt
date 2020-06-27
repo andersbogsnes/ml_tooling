@@ -14,7 +14,7 @@ dohq-artifactory==0.7.379
 filelock==3.0.12          # via tox
 identify==1.4.20          # via pre-commit
 idna==2.9                 # via requests
-importlib-metadata==1.6.1  # via pluggy, pre-commit, pytest, tox
+importlib-metadata==1.7.0  # via pluggy, pre-commit, pytest, tox
 joblib==0.15.1
 kiwisolver==1.2.0
 matplotlib==3.2.2

@@ -13,7 +13,6 @@ class Select(BaseEstimator, TransformerMixin):
 
     def __init__(self, columns: Optional[Union[List[str], str]] = None):
         """
-
         Parameters
         ----------
         columns: List[str], str, None

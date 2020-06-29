@@ -19,8 +19,8 @@ class Binner(BaseEstimator, TransformerMixin):
             The criteria to bin by.
             An int value defines the number of equal-width bins in the range of x. The range of
             x is extended by .1% on each side to include the minimum and maximum values of x.
-            If a list is passed, defines the bin edges allowing for non-uniform width and no extension of
-            the range of x is done.
+            If a list is passed, defines the bin edges allowing for non-uniform width and no 
+            extension of the range of x is done.
 
 
         labels: list

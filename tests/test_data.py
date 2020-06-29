@@ -349,5 +349,5 @@ class TestDemoDatasetModule:
         model.train_estimator(dataset)
         result = model.make_prediction(dataset, 5)
 
-        expected = pd.DataFrame({"Prediction": [0]}).astype("int32")
-        pd.testing.assert_frame_equal(result, expected)
+        expected = pd.DataFrame({"Prediction": [0]})
+        pd.testing.assert_frame_equal(result, expected, check_dtype=False)

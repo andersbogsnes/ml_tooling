@@ -19,7 +19,7 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
         with_mean: bool
             If True, center the data before scaling.
         with_std: bool
-            If True, scale the data to unit standard deviation).
+            If True, scale the data to unit standard deviation.
         """
         self.with_mean = with_mean
         self.with_std = with_std

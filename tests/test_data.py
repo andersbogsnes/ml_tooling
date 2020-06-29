@@ -1,14 +1,17 @@
 import pathlib
+from typing import Tuple
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import numpy as np
 import pytest
+from sklearn.datasets import load_iris
 from sqlalchemy.exc import DBAPIError
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.data.demo_dataset import load_demo_dataset
-from ml_tooling.utils import DatasetError
+from ml_tooling.utils import DatasetError, DataType
 
 from sklearn.linear_model import LogisticRegression
 
@@ -295,25 +298,29 @@ class TestDemoDatasetModule:
     def load_dataset_iris(self) -> Dataset:
         return load_demo_dataset("iris")
 
+    @pytest.fixture
+    def iris_df(self):
+        iris_data = load_iris()
+        return (
+            pd.DataFrame(data=iris_data.data, columns=iris_data.feature_names),
+            iris_data.target,
+        )
+
     def test_repr_is_correct_load(self, load_dataset_iris: Dataset):
         result = str(load_dataset_iris)
         assert result == "<DemoData - Dataset>"
 
-    def test_dataset_x_attribute_access_works_correctly(
-        self, load_dataset_iris: Dataset
+    def test_dataset_return_correct_x_attribute(
+        self, load_dataset_iris: Dataset, iris_df: Tuple[pd.DataFrame, DataType]
     ):
-        assert load_dataset_iris._x is None
-        features = load_dataset_iris.x
-        assert load_dataset_iris._x is not None
-        assert len(features) == 150
+        x_expected, y_expected = iris_df
+        pd.testing.assert_frame_equal(load_dataset_iris.x, x_expected)
 
-    def test_dataset_y_attribute_access_works_correctly(
-        self, load_dataset_iris: Dataset
+    def test_dataset_return_correct_y_attribute(
+        self, load_dataset_iris: Dataset, iris_df: Tuple[pd.DataFrame, DataType]
     ):
-        assert load_dataset_iris._y is None
-        features = load_dataset_iris.y
-        assert load_dataset_iris._y is not None
-        assert len(features) == 150
+        x_expected, y_expected = iris_df
+        np.array_equal(load_dataset_iris.y, y_expected)
 
     def test_dataset_from_fetchopenml_works(self):
         dataset = load_demo_dataset("openml", name="miceprotein")
@@ -335,19 +342,6 @@ class TestDemoDatasetModule:
         features_y = dataset.y
         assert features_y.shape == (748, 2)
 
-    def test_cant_modify_x_and_y(self, load_dataset_iris: Dataset):
-        with pytest.raises(DatasetError, match="Trying to modify x - x is immutable"):
-            load_dataset_iris.x = "testx"
-        with pytest.raises(DatasetError, match="Trying to modify y - y is immutable"):
-            load_dataset_iris.y = "testy"
-
-    def test_dataset_has_validation_set_errors_correctly(
-        self, load_dataset_iris: Dataset
-    ):
-        assert load_dataset_iris.has_validation_set is False
-        load_dataset_iris.create_train_test(stratify=True)
-        assert load_dataset_iris.has_validation_set is True
-
     def test_load_prediction_data_works_as_expected(self):
         dataset = load_demo_dataset("iris")
         dataset.create_train_test(stratify=True)
@@ -355,5 +349,5 @@ class TestDemoDatasetModule:
         model.train_estimator(dataset)
         result = model.make_prediction(dataset, 5)
 
-        expected = pd.DataFrame({"Prediction": [0]})
+        expected = pd.DataFrame({"Prediction": [0]}).astype("int32")
         pd.testing.assert_frame_equal(result, expected)

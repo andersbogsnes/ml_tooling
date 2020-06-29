@@ -9,7 +9,7 @@ from ml_tooling.utils import TransformerError
 class FillNA(BaseEstimator, TransformerMixin):
     """
     Fills NA values with given value or strategy. Either a value or a strategy
-    has to be supplied.
+    must be passed.
     """
 
     def __init__(

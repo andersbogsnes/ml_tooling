@@ -11,7 +11,7 @@ class Select(BaseEstimator, TransformerMixin):
     Selects columns from DataFrame
     """
 
-    def __init__(self, columns: Union[List[str], str] = None):
+    def __init__(self, columns: Union[List[str], str]):
         """
         Parameters
         ----------

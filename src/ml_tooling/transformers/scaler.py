@@ -12,7 +12,6 @@ class DFStandardScaler(BaseEstimator, TransformerMixin):
         self, copy: bool = True, with_mean: bool = True, with_std: bool = True
     ):
         """
-
         Parameters
         ----------
         copy: bool

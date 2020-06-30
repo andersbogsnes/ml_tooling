@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from ml_tooling import Model
 from ml_tooling.result import Result
@@ -25,6 +26,11 @@ from ml_tooling.transformers import (
     Binarize,
     RareFeatureEncoder,
 )
+
+
+@parametrize_with_checks([Binner(), Select()])
+def test_sklearn_compatible_estimator(estimator, check):
+    check(estimator)
 
 
 class TransformerBase:

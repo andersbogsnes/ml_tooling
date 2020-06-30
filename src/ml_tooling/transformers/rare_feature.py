@@ -5,10 +5,13 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 class RareFeatureEncoder(BaseEstimator, TransformerMixin):
+    """
+    Replaces categories with a specified value, if they occur less often than
+    the provided threshold.
+    """
+
     def __init__(self, threshold: Union[int, float] = 0.2, fill_rare: Any = "Rare"):
         """
-        Replaces categories with a specified value, if they occur less often than
-        the provided threshold.
 
         Parameters
         ----------

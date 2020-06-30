@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import numpy as np
 import pytest
+
 from sklearn.datasets import load_iris
 from sqlalchemy.exc import DBAPIError
 

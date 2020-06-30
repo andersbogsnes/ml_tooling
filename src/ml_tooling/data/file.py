@@ -1,11 +1,11 @@
 import abc
 import logging
+import pathlib
 from typing import Tuple
 
 import pandas as pd
-from ml_tooling.data.base_data import Dataset
-import pathlib
 
+from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import Pathlike, DatasetError, DataType
 
 logger = logging.getLogger("ml_tooling")
@@ -49,9 +49,7 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
         self.extension = self.file_path.suffix[1:]
 
     @abc.abstractmethod
-    def load_training_data(
-        self, *args, **kwargs
-    ) -> Tuple[pd.DataFrame, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
         raise NotImplementedError
 
     @abc.abstractmethod

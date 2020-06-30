@@ -1,3 +1,6 @@
+# v0.10.4
+- Added `load_demo_dataset` function
+
 # v0.10.3
 - Fixed typehints in Dataset
 - Dataset.create_train_test now takes a boolean `stratify` parameter.

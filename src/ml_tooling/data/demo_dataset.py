@@ -18,25 +18,33 @@ from ml_tooling.utils import DataType
 
 def load_demo_dataset(dataset_name: str, **kwargs):
     """
-    The function calls either the load_ or fetch_ function from
-    :class:`sklearn.datasets`. Then a data class is created which is inheriting from
-    ML Tooling dataclas Dataset.
-    The options in kwargs can be read in :class:`sklearn.datasets`
+    Create a :class:`~ml_tooling.data.base_data.Dataset` implementing the demo
+    datasets from :module:`sklearn.datasets`
 
     Parameters
     ----------
 
     dataset_name: str
-        dataset_name defines which dataset should be selected. When 'openml' is selected
-        either parameter name or data_id needs to be specified. Possible dataset_name: 'iris',
-        'boston', 'diabetes', 'digits', 'linnerud', 'wine', 'breast_cancer', 'openml'
+        Name of the dataset to use. If 'openml' is passed either parameter name or
+        data_id needs to be specified.
+
+        One of:
+            - iris
+            - boston
+            - diabetes
+            - digits
+            - linnerud
+            - wine
+            - breast_cancer
+            - openml
 
     **kwargs:
+        Kwargs are passed on to the scikit-learn dataset function
 
     Returns
     -------
     Dataset
-        A data class inheriting from ML Tooling dataclas Dataset
+        An instance of :class:`~ml_tooling.data.Dataset`
 
     """
 

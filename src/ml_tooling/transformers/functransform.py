@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,15 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, func: Callable[..., pd.DataFrame], **kwargs):
+        """
+
+        Parameters
+        ----------
+        func: Callable[..., pd.DataFrame]
+            Define the function which should be applied on each column.
+        kwargs:
+            Specific for the selected func.
+        """
         self.func = func
         self.kwargs = kwargs
 
@@ -27,22 +36,30 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
 
 
 class DFRowFunc(BaseEstimator, TransformerMixin):
-    """Row-wise operation on Pandas DataFrame. Strategy can either be one of
-    the predefined or a callable. If some elements in the row are NaN these
-    elements are ignored for the built-in strategies.
-    Valid strategies are:
-
-        - sum
-        - min
-        - max
-        - mean
-
-    If a callable is used, it must return a pd.Series
+    """
+    Row-wise operation on Pandas DataFrame.
     """
 
     _func_map = {"sum": np.sum, "min": np.min, "max": np.max, "mean": np.mean}
 
-    def __init__(self, strategy=None):
+    def __init__(self, strategy: Union[Callable[..., pd.DataFrame], str] = None):
+        """
+
+        Parameters
+        ----------
+        strategy: Callable[..., pd.DataFrame], str
+            Strategy can either be one of
+            the predefined or a callable. If some elements in the row are NaN these
+            elements are ignored for the built-in strategies.
+            Valid strategies are:
+
+                - sum
+                - min
+                - max
+                - mean
+
+            If a callable is used, it must return a pd.Series
+        """
         self.strategy = strategy
         self.func = None
 

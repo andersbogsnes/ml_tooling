@@ -48,6 +48,7 @@ class Model:
     @property
     def is_classifier(self) -> bool:
         return is_classifier(self.estimator)
+        return is_classifier(self.estimator)
 
     @property
     def is_regressor(self) -> bool:
@@ -408,7 +409,7 @@ class Model:
 
         if not data.has_validation_set:
             data.create_train_test(
-                stratify=data.y if self.is_classifier else None,
+                stratify=True if self.is_classifier else False,
                 seed=self.config.RANDOM_STATE,
             )
 

@@ -431,12 +431,24 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_if_no_train_test_data_available(self, iris_dataset):
+    def test_score_estimator_if_no_train_test_data_available(
+        self, boston_dataset, train_boston_dataset
+    ):
         model = Model(LinearRegression())
+        data = boston_dataset()
+
+        test = train_boston_dataset
+        result = model.score_estimator(test)
+
+        assert model.score_estimator(data) == result
+
+    def test_score_estimator_if_no_train_test_data_available_classification(
+        self, iris_dataset, train_iris_dataset
+    ):
+        model = Model(LogisticRegression())
         data = iris_dataset()
 
-        test = iris_dataset()
-        test.create_train_test()
+        test = train_iris_dataset
         result = model.score_estimator(test)
 
         assert model.score_estimator(data) == result

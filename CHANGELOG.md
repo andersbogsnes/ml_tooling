@@ -1,5 +1,6 @@
 # v0.10.4
 - Added `load_demo_dataset` function
+- If the dataset has no train set `score_estimor` will now run `create_train_test` with default configurations
 
 # v0.10.3
 - Fixed typehints in Dataset

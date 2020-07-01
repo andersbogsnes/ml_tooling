@@ -48,7 +48,6 @@ class Model:
     @property
     def is_classifier(self) -> bool:
         return is_classifier(self.estimator)
-        return is_classifier(self.estimator)
 
     @property
     def is_regressor(self) -> bool:

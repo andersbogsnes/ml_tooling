@@ -19,7 +19,6 @@ from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DatasetError,
     Estimator,
     is_pipeline,
     serialize_pipeline,
@@ -408,7 +407,10 @@ class Model:
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DatasetError("Must run create_train_test first!")
+            data.create_train_test(
+                stratify=data.y if self.is_classifier else None,
+                seed=self.config.RANDOM_STATE,
+            )
 
         self.estimator.fit(data.train_x, data.train_y)
 

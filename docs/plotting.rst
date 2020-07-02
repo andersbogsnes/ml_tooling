@@ -7,7 +7,7 @@ Plotting
 Available Base plots
 --------------------
 
-First we define a :class:`~ml_tooling.data.Dataset` like we have done in previous examples.
+First we define a :class:`~ml_tooling.data.Dataset` like we have done in Quickstart and Tutorial.
 When we score the estimator by calling :meth:`~ml_tooling.Model.score_estimator`, we get a
 :class:`~ml_tooling.result.Result` back, which contains a number of handy plotting features.
 

@@ -453,6 +453,19 @@ class TestScoreEstimator:
 
         assert model.score_estimator(data) == result
 
+    def test_score_estimator_if_no_train_test_data_available_changed_config(
+        self, iris_dataset, train_iris_dataset
+    ):
+        model = Model(LogisticRegression())
+        model.config.RANDOM_STATE = 1
+        data = iris_dataset()
+
+        test = iris_dataset()
+        test.create_train_test(seed=1)
+        result = model.score_estimator(test)
+
+        assert model.score_estimator(data) == result
+
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))
         result = model.score_estimator(train_iris_dataset, metrics="roc_auc")

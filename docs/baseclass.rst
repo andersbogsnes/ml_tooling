@@ -66,6 +66,7 @@ Scoring your model
 
 In order to evaluate the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
 This will train the estimator on the training split of our :data:`bostondata` Dataset and evaluate it on the test split.
+If no training split has been created from the data the method will create one using the default configuration values.
 It returns an instance of :class:`~ml_tooling.result.Result` which we can then introspect further.
 
 .. doctest::

@@ -375,6 +375,8 @@ class Model:
         pass number of folds to cv. If cross-validation is used, `score_estimator` only
         cross-validates on training data and doesn't use the validation data.
 
+        If the dataset does not have a train set, it will create one using the default config.
+
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
 
         Parameters

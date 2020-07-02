@@ -431,7 +431,7 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_if_no_train_test_data_available(
+    def test_score_estimator_creates_train_test_data(
         self, boston_dataset, train_boston_dataset
     ):
         model = Model(LinearRegression())
@@ -442,7 +442,7 @@ class TestScoreEstimator:
 
         assert model.score_estimator(data) == result
 
-    def test_score_estimator_if_no_train_test_data_available_classification(
+    def test_score_estimator_creates_train_test_data_classification(
         self, iris_dataset, train_iris_dataset
     ):
         model = Model(LogisticRegression())
@@ -453,15 +453,31 @@ class TestScoreEstimator:
 
         assert model.score_estimator(data) == result
 
-    def test_score_estimator_if_no_train_test_data_available_changed_config(
-        self, iris_dataset, train_iris_dataset
+    def test_score_estimator_creates_train_test_data_with_changed_config(
+        self, boston_dataset
+    ):
+        model = Model(LinearRegression())
+        model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.5
+        model.config.SHUFFLE = False
+        data = boston_dataset()
+
+        test = boston_dataset()
+        test.create_train_test(stratify=False, shuffle=False, seed=1, test_size=0.5)
+        result = model.score_estimator(test)
+
+        assert model.score_estimator(data) == result
+
+    def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
+        self, iris_dataset
     ):
         model = Model(LogisticRegression())
         model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.50
         data = iris_dataset()
 
         test = iris_dataset()
-        test.create_train_test(seed=1)
+        test.create_train_test(stratify=True, seed=1, test_size=0.50)
         result = model.score_estimator(test)
 
         assert model.score_estimator(data) == result

@@ -410,7 +410,9 @@ class Model:
 
         if not data.has_validation_set:
             data.create_train_test(
-                stratify=True if self.is_classifier else False,
+                stratify=self.is_classifier,
+                shuffle=self.config.SHUFFLE,
+                test_size=self.config.TEST_SIZE,
                 seed=self.config.RANDOM_STATE,
             )
 

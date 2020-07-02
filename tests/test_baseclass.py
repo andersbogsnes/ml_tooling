@@ -467,10 +467,12 @@ class TestScoreEstimator:
         result = model.score_estimator(test)
 
         assert model.score_estimator(data) == result
+        model.reset_config()
 
     def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
         self, iris_dataset
     ):
+
         model = Model(LogisticRegression())
         model.config.RANDOM_STATE = 1
         model.config.TEST_SIZE = 0.50
@@ -481,6 +483,7 @@ class TestScoreEstimator:
         result = model.score_estimator(test)
 
         assert model.score_estimator(data) == result
+        model.reset_config()
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))

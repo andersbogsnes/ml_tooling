@@ -436,22 +436,28 @@ class TestScoreEstimator:
     ):
         model = Model(LinearRegression())
         data = boston_dataset()
+        model.score_estimator(data)
 
         test = train_boston_dataset
-        result = model.score_estimator(test)
 
-        assert model.score_estimator(data) == result
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
 
     def test_score_estimator_creates_train_test_data_classification(
         self, iris_dataset, train_iris_dataset
     ):
         model = Model(LogisticRegression())
         data = iris_dataset()
+        model.score_estimator(data)
 
         test = train_iris_dataset
-        result = model.score_estimator(test)
 
-        assert model.score_estimator(data) == result
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
 
     def test_score_estimator_creates_train_test_data_with_changed_config(
         self, boston_dataset
@@ -461,12 +467,15 @@ class TestScoreEstimator:
         model.config.TEST_SIZE = 0.5
         model.config.SHUFFLE = False
         data = boston_dataset()
+        model.score_estimator(data)
 
         test = boston_dataset()
         test.create_train_test(stratify=False, shuffle=False, seed=1, test_size=0.5)
-        result = model.score_estimator(test)
 
-        assert model.score_estimator(data) == result
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
         model.reset_config()
 
     def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
@@ -477,12 +486,15 @@ class TestScoreEstimator:
         model.config.RANDOM_STATE = 1
         model.config.TEST_SIZE = 0.50
         data = iris_dataset()
+        model.score_estimator(data)
 
         test = iris_dataset()
         test.create_train_test(stratify=True, seed=1, test_size=0.50)
-        result = model.score_estimator(test)
 
-        assert model.score_estimator(data) == result
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
         model.reset_config()
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):

@@ -321,7 +321,7 @@ class TestDemoDatasetModule:
         self, load_dataset_iris: Dataset, iris_df: Tuple[pd.DataFrame, DataType]
     ):
         x_expected, y_expected = iris_df
-        np.array_equal(load_dataset_iris.y, y_expected)
+        assert np.array_equal(load_dataset_iris.y, y_expected)
 
     def test_dataset_from_fetchopenml_works(self):
         dataset = load_demo_dataset("openml", name="miceprotein")

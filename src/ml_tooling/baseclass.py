@@ -19,7 +19,6 @@ from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DatasetError,
     Estimator,
     is_pipeline,
     serialize_pipeline,
@@ -376,6 +375,8 @@ class Model:
         pass number of folds to cv. If cross-validation is used, `score_estimator` only
         cross-validates on training data and doesn't use the validation data.
 
+        If the dataset does not have a train set, it will create one using the default config.
+
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
 
         Parameters
@@ -408,7 +409,12 @@ class Model:
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DatasetError("Must run create_train_test first!")
+            data.create_train_test(
+                stratify=self.is_classifier,
+                shuffle=self.config.SHUFFLE,
+                test_size=self.config.TEST_SIZE,
+                seed=self.config.RANDOM_STATE,
+            )
 
         self.estimator.fit(data.train_x, data.train_y)
 

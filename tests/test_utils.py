@@ -128,7 +128,7 @@ def test_classify_with_threshold_raises_error_on_non_binary_estimators(
     data = train_iris_dataset.load_prediction_data(0)
 
     with pytest.raises(MLToolingError):
-        _classify(data, classifier.estimator)
+        _classify(data, classifier.estimator, threshold=0.3)
 
 
 class TestGridsearchParams:

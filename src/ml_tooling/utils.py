@@ -364,7 +364,9 @@ def _find_src_dir(path: pathlib.Path = None, max_level: int = 2) -> pathlib.Path
     )
 
 
-def _classify(x: pd.DataFrame, estimator: Estimator, threshold: float = 0.5):
+def _classify(
+    x: pd.DataFrame, estimator: Estimator, threshold: float = None
+) -> np.ndarray:
     """
     Make a binary classification of prediction probabilities with the given threshold
 
@@ -372,16 +374,21 @@ def _classify(x: pd.DataFrame, estimator: Estimator, threshold: float = 0.5):
     ----------
     x: pd.DataFrame
         The data to use for classification
+
     estimator: Estimator
         The estimator to use for making the prediction
+
     threshold: float
         Threshold of classification
 
     Returns
     -------
-    np.array
+    np.ndarray
         Array of class predictions
     """
+    if threshold is None:
+        return estimator.predict(x)
+
     if len(estimator.classes_) == 2:
         y_pred = estimator.predict_proba(x)
         return (y_pred[:, 1] > threshold).astype(np.int32)

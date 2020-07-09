@@ -228,7 +228,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
-        threshold: float = 0.5,
+        threshold: float = None,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -246,6 +246,9 @@ class Model:
         proba: bool
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
+
+        threshold: float
+            Threshold to use for predicting a binary class
 
         use_index: bool
             Whether the index from the prediction data should be used for the result.
@@ -273,18 +276,12 @@ class Model:
                     f"Probability Class {col}" for col in self.estimator.classes_
                 ]
             else:
-                data = (
-                    _classify(x, self.estimator, threshold=threshold)
-                    if self.is_classifier
-                    else self.estimator.predict(x)
-                )
+                data = _classify(x, self.estimator, threshold=threshold)
                 columns = ["Prediction"]
-            if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
-            else:
-                prediction = pd.DataFrame(data=data, columns=columns)
 
-            return prediction
+            return pd.DataFrame(
+                data=data, index=x.index if use_index else None, columns=columns
+            )
 
         except NotFittedError:
             message = (

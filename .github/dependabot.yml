@@ -6,3 +6,4 @@ updates:
       interval: "daily"
     labels:
       - "update"
+    target-branch: "develop"

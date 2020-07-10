@@ -1,11 +1,14 @@
 import datetime
 import pathlib
+import joblib
+import pandas as pd
 from contextlib import contextmanager
 from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
 
-import joblib
-import pandas as pd
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
@@ -25,10 +28,8 @@ from ml_tooling.utils import (
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
+    _classify,
 )
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
 
 logger = create_logger("ml_tooling")
 
@@ -226,6 +227,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
+        threshold: float = None,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -243,6 +245,9 @@ class Model:
         proba: bool
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
+
+        threshold: float
+            Threshold to use for predicting a binary class
 
         use_index: bool
             Whether the index from the prediction data should be used for the result.
@@ -266,16 +271,16 @@ class Model:
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
-                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
+                columns = [
+                    f"Probability Class {col}" for col in self.estimator.classes_
+                ]
             else:
-                data = self.estimator.predict(x)
+                data = _classify(x, self.estimator, threshold=threshold)
                 columns = ["Prediction"]
-            if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
-            else:
-                prediction = pd.DataFrame(data=data, columns=columns)
 
-            return prediction
+            return pd.DataFrame(
+                data=data, index=x.index if use_index else None, columns=columns
+            )
 
         except NotFittedError:
             message = (

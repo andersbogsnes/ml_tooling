@@ -1,6 +1,7 @@
-# v0.10.4
+# v0.11.0
 - Added `load_demo_dataset` function
 - If the dataset has no train set `score_estimator` will now run `create_train_test` with default configurations
+- `Model.make_prediction` now takes a threshold argument when making a binary classification
 
 # v0.10.3
 - Fixed typehints in Dataset

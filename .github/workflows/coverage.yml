@@ -1,18 +1,16 @@
-name: Tests
+name: Coverage
 on: push
 jobs:
-  test:
+  coverage:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.7', '3.8']
-    name: Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.8
       - uses: dschep/install-poetry-action@v1.3
       - uses: pre-commit/action@v2.0.0
       - run: pip install tox==3.15.2
-      - run: tox -e py,optional-artifactory,docs
+      - run: tox -e py,optional-artifactory,coverage-report
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1

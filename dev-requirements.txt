@@ -9,6 +9,7 @@ attrs==19.3.0             # via -r requirements.txt, pytest
 certifi==2020.6.20        # via requests
 cfgv==3.1.0               # via pre-commit
 chardet==3.0.4            # via requests
+coverage==5.2             # via pytest-cov
 cycler==0.10.0            # via -r requirements.txt, matplotlib
 distlib==0.3.1            # via virtualenv
 dohq-artifactory==0.7.379  # via -r dev-requirements.in
@@ -28,7 +29,8 @@ pre-commit==2.6.0         # via -r dev-requirements.in
 py==1.9.0                 # via pytest, tox
 pyjwt==1.7.1              # via dohq-artifactory
 pyparsing==2.4.7          # via -r requirements.txt, matplotlib, packaging
-pytest==5.4.3             # via -r dev-requirements.in
+pytest-cov==2.10.0        # via -r dev-requirements.in
+pytest==5.4.3             # via -r dev-requirements.in, pytest-cov
 python-dateutil==2.8.1    # via -r requirements.txt, dohq-artifactory, matplotlib, pandas
 pytz==2020.1              # via -r requirements.txt, pandas
 pyyaml==5.3.1             # via -r requirements.txt, pre-commit

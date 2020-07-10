@@ -1,0 +1,16 @@
+name: Release
+on:
+  release:
+    types:
+      - published
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - uses: dschep/install-poetry-action@v1.3
+      - run: poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+      - run: poetry publish --build

@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v2.0.1
         with:
           python-version: 3.8
       - uses: dschep/install-poetry-action@v1.3

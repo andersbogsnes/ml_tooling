@@ -22,7 +22,7 @@ from ml_tooling.plots import (
     plot_feature_importance,
 )
 from ml_tooling.utils import VizError
-from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import ToCategorical
 
 

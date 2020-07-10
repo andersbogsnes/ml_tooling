@@ -10,41 +10,24 @@ The :class:`Model` baseclass contains all the neat functionality of ML Tooling.
 In order to take advantage of this functionality, simply wrap a model that follows the `scikit-learn`_ API
 using the Model class.
 
-We will be using `scikit-learn's <scikit-learn>`_ built-in :func:`Boston <sklearn.datasets.load_boston>`
-houseprices dataset to demonstrate how to use ML Tooling.
-
 .. seealso::
     Refer to :ref:`api` for a full overview of methods
 
-First we need to define how we want to load our data. This is done by defining a
-:class:`~ml_tooling.data.Dataset` class and creating the
-:meth:`~ml_tooling.data.Dataset.load_training_data`
-and :meth:`~ml_tooling.data.Dataset.load_prediction_data` methods.
+We will be using `scikit-learn's <scikit-learn>`_ built-in :func:`Boston <sklearn.datasets.load_boston>`
+houseprices dataset to demonstrate how to use ML Tooling. We use the method
+:meth:`~ml_tooling.data.demo_dataset.load_demo_dataset` to load the dataset.
 
 We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 :class:`Model` class and we are ready to begin!
 
 .. doctest::
 
-    >>> from ml_tooling.data import Dataset
-    >>> from sklearn.datasets import load_boston
-    >>> import pandas as pd
+    >>> from ml_tooling.data.demo_dataset import load_demo_dataset
     >>>
-    >>> class BostonData(Dataset):
-    ...    def load_training_data(self):
-    ...        data = load_boston()
-    ...        return pd.DataFrame(data.data, columns=data.feature_names), data.target
-    ...
-    ...    # Define where to get prediction time data - returning a DataFrame
-    ...    def load_prediction_data(self, idx):
-    ...        data = load_boston()
-    ...        x = pd.DataFrame(data.data, columns=data.feature_names)
-    ...        return x.loc[[idx]] # Return given observation
-    >>>
-    >>> bostondata = BostonData()
+    >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
-    <BostonData - Dataset>
+    <DemoData - Dataset>
 
 Creating your model
 ~~~~~~~~~~~~~~~~~~~
@@ -66,6 +49,7 @@ Scoring your model
 
 In order to evaluate the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
 This will train the estimator on the training split of our :data:`bostondata` Dataset and evaluate it on the test split.
+If no training split has been created from the data the method will create one using the default configuration values.
 It returns an instance of :class:`~ml_tooling.result.Result` which we can then introspect further.
 
 .. doctest::
@@ -84,7 +68,7 @@ This method trains each estimator on the train split and evaluates the performan
 :class:`~ml_tooling.baseclass.Model` instance with the best-performing estimator
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
 
-.. doctest::
+.. code-block:: python
 
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor
@@ -93,7 +77,7 @@ with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
     ...     [LinearRegression(), RandomForestRegressor(n_estimators=10, random_state=1337)],
     ...     metrics='r2')
     >>> results
-    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result LinearRegression: {'r2': 0.68}>])
+    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.82}>, <Result LinearRegression: {'r2': 0.68}>])
 
 Training your model
 ~~~~~~~~~~~~~~~~~~~

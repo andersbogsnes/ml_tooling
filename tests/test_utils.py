@@ -99,7 +99,7 @@ def test_validate_estimator_should_raise_on_invalid_input():
         def __str__(self):
             return "<AnyClass>"
 
-    with pytest.raises(MLToolingError, match=f"Expected a Pipeline or Estimator - got"):
+    with pytest.raises(MLToolingError, match="Expected a Pipeline or Estimator - got"):
         _validate_estimator(AnyClass)
 
     with pytest.raises(

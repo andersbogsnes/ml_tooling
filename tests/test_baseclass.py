@@ -52,7 +52,7 @@ class TestBaseClass:
     def test_instantiate_model_with_other_object_fails(self):
         with pytest.raises(
             MLToolingError,
-            match=f"Expected a Pipeline or Estimator - got <class 'dict'>",
+            match="Expected a Pipeline or Estimator - got <class 'dict'>",
         ):
             Model({})
 
@@ -431,12 +431,71 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_fails_if_no_train_test_data_available(self, iris_dataset):
+    def test_score_estimator_creates_train_test_data(
+        self, boston_dataset, train_boston_dataset
+    ):
         model = Model(LinearRegression())
-        data = iris_dataset()
+        data = boston_dataset()
+        model.score_estimator(data)
 
-        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(data)
+        test = train_boston_dataset
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+
+    def test_score_estimator_creates_train_test_data_classification(
+        self, iris_dataset, train_iris_dataset
+    ):
+        model = Model(LogisticRegression())
+        data = iris_dataset()
+        model.score_estimator(data)
+
+        test = train_iris_dataset
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+
+    def test_score_estimator_creates_train_test_data_with_changed_config(
+        self, boston_dataset
+    ):
+        model = Model(LinearRegression())
+        model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.5
+        model.config.SHUFFLE = False
+        data = boston_dataset()
+        model.score_estimator(data)
+
+        test = boston_dataset()
+        test.create_train_test(stratify=False, shuffle=False, seed=1, test_size=0.5)
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+        model.reset_config()
+
+    def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
+        self, iris_dataset
+    ):
+
+        model = Model(LogisticRegression())
+        model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.50
+        data = iris_dataset()
+        model.score_estimator(data)
+
+        test = iris_dataset()
+        test.create_train_test(stratify=True, seed=1, test_size=0.50)
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+        model.reset_config()
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))

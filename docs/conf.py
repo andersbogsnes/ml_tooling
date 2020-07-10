@@ -79,6 +79,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "friendly"
 autodoc_typehints = "none"
+autodoc_warningiserror = False
+autoclass_content = "both"
 
 
 # -- Options for HTML output -------------------------------------------------

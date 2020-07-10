@@ -87,3 +87,17 @@ database tables in sync.
     >>> source_data = TitanicSQLData("postgresql://my-prod-database", schema="prod")
     >>> target_data = TitanicSQLData("postgresql://my-api-database", schema="public")
     >>> source_data.copy_to(target_data)
+
+Demo Datasets
+----------------
+
+If you want to test your model on a demo datasets from :module:`sklearn.datasets`, you can use the method
+:meth:`~ml_tooling.data.demo_dataset.load_demo_dataset`
+.. doctest::
+
+    >>> from ml_tooling.data.demo_dataset import load_demo_dataset
+    >>>
+    >>> bostondata = load_demo_dataset("boston")
+    >>> # Remember to setup a train test split!
+    >>> bostondata.create_train_test()
+    <DemoData - Dataset>

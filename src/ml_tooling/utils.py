@@ -392,7 +392,7 @@ def _classify(
     if len(estimator.classes_) == 2:
         y_pred = estimator.predict_proba(x)
         return (y_pred[:, 1] > threshold).astype(np.int32)
-    else:
-        raise MLToolingError(
-            "Classification with threshold only works for binary classifiers"
-        )
+
+    raise MLToolingError(
+        "Classification with threshold only works for binary classifiers"
+    )

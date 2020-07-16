@@ -3,6 +3,8 @@ from typing import Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+
 from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
 from ml_tooling.plots.viz import DataVisualize
@@ -21,11 +23,39 @@ class Dataset(metaclass=abc.ABCMeta):
     test_y: Optional[DataType] = None
     train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
+    _transformed_train_x: Optional[pd.DataFrame] = None
+    _transformed_test_x: Optional[DataType] = None
     cached_data: Optional[pd.DataFrame] = None
+    feature_pipeline: Optional[Pipeline] = None
 
     @property
     def plot(self):
         return DataVisualize(self)
+
+    def _transform(self):
+        """
+        Transforms train_x and test_x using the given feature pipeline
+        """
+        if not self.feature_pipeline:
+            return None
+
+        if self._transformed_train_x is None:
+            self._transformed_train_x = self.feature_pipeline.fit_transform(
+                self.train_x
+            )
+
+        if self._transformed_test_x is None:
+            self._transformed_test_x = self.feature_pipeline.transform(self.test_x)
+
+    @property
+    def train_x_transformed(self):
+        self._transform()
+        return self._transformed_train_x
+
+    @property
+    def test_x_transformed(self):
+        self._transform()
+        return self._transformed_test_x
 
     def create_train_test(
         self,
@@ -67,6 +97,7 @@ class Dataset(metaclass=abc.ABCMeta):
             test_size=test_size,
             random_state=seed,
         )
+
         return self
 
     @property

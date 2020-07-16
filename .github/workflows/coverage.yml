@@ -2,6 +2,7 @@ name: Coverage
 on: push
 jobs:
   coverage:
+    name: Coverage report
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

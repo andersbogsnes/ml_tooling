@@ -5,6 +5,7 @@ on:
       - published
 jobs:
   release:
+    name: Release package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

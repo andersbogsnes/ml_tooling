@@ -8,6 +8,7 @@ from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 from sklearn.base import is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv
+from sklearn.pipeline import Pipeline
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
@@ -42,9 +43,17 @@ class Model:
     _config = None
     config = ConfigGetter()
 
-    def __init__(self, estimator):
-        self.estimator: Estimator = _validate_estimator(estimator)
+    def __init__(self, estimator, feature_pipeline: Pipeline = None):
+        self._estimator: Estimator = _validate_estimator(estimator)
         self.result: Optional[ResultType] = None
+        self.feature_pipeline = feature_pipeline
+
+    @property
+    def estimator(self):
+        if not self.feature_pipeline:
+            return self._estimator
+
+        return Pipeline([("features", self.feature_pipeline), ("clf", self._estimator)])
 
     @property
     def is_classifier(self) -> bool:

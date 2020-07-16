@@ -573,10 +573,10 @@ class TestTargetCorrelation:
         ax = train_iris_dataset.plot.target_correlation()
 
         assert [text.get_text() for text in ax.texts] == [
-            "0.01",
-            "0.02",
-            "0.12",
-            "-0.48",
+            "0.09",
+            "0.09",
+            "0.18",
+            "-0.50",
         ]
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Spearman Correlation"
@@ -586,10 +586,10 @@ class TestTargetCorrelation:
         ax = train_iris_dataset.plot.target_correlation(method="pearson")
 
         assert [text.get_text() for text in ax.texts] == [
-            "0.08",
             "0.12",
-            "0.20",
-            "-0.47",
+            "0.17",
+            "0.25",
+            "-0.49",
         ]
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Pearson Correlation"
@@ -597,21 +597,21 @@ class TestTargetCorrelation:
 
     def test_target_correlation_works_with_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(top_n=2)
-        assert [text.get_text() for text in ax.texts] == ["0.12", "-0.48"]
+        assert [text.get_text() for text in ax.texts] == ["0.18", "-0.50"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
     def test_target_correlation_works_with_bottom_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=2)
-        assert [text.get_text() for text in ax.texts] == ["0.01", "0.02"]
+        assert [text.get_text() for text in ax.texts] == ["0.09", "0.09"]
         assert ax.title.get_text() == "Feature-Target Correlation - Bottom 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
     def test_target_correlation_works_with_bottom_n_and_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=1, top_n=1)
-        assert [text.get_text() for text in ax.texts] == ["0.01", "-0.48"]
+        assert [text.get_text() for text in ax.texts] == ["0.09", "-0.50"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 1 - Bottom 1"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
@@ -626,15 +626,17 @@ class TestTargetCorrelation:
 class TestMissingDataViz:
     @pytest.fixture()
     def missing_data(self, train_boston_dataset):
-        train_boston_dataset.x.iloc[:10, 0] = np.nan
+        train_boston_dataset.train_x.iloc[:10, 0] = np.nan
         return train_boston_dataset
 
     @pytest.fixture()
     def ax(self, missing_data):
-        return missing_data.plot.missing_data()
+        axis = missing_data.plot.missing_data()
+        axis.figure.canvas.draw()
+        return axis
 
     def test_missing_data_text_labels_are_correct(self, ax):
-        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+        assert [text.get_text() for text in ax.texts] == ["2.6%"]
 
     def test_ylabel_is_correct(self, ax):
         assert ax.get_ylabel() == "Feature"
@@ -644,7 +646,7 @@ class TestMissingDataViz:
 
     def test_xticklabels_are_correct(self, ax):
         # Must trigger rendering before labels are accessible
-        ax.figure.canvas.draw()
+
         assert [text.get_text() for text in ax.get_xticklabels()] == [
             "0.00%",
             "0.50%",
@@ -652,6 +654,8 @@ class TestMissingDataViz:
             "1.50%",
             "2.00%",
             "2.50%",
+            "3.00%",
+            "3.50%",
         ]
 
     def test_missing_data_plots_can_be_given_an_ax(self, missing_data):

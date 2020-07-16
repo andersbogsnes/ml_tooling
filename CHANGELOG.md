@@ -3,6 +3,10 @@
 - If the dataset has no train set `score_estimator` will now run `create_train_test` with default configurations
 - `Model.make_prediction` now takes a threshold argument when making a binary classification
 - All ML-tooling logging messages now go to stdout instead of stderr
+- Can pass a feature pipeline to `Model` which will then automatically generate a
+ combined feature_pipeline + estimator Pipeline
+- Can pass a feature pipeline to `Dataset.plot` methods, to apply preprocessing
+before visualization
 
 # v0.10.3
 - Fixed typehints in Dataset

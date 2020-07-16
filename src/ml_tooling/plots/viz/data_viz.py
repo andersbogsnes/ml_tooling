@@ -52,7 +52,7 @@ class DataVisualize:
         -------
         plt.Axes
         """
-        x = self.data.train_x
+        x = self.data.x
 
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
@@ -60,7 +60,7 @@ class DataVisualize:
         with plt.style.context(MPL_STYLESHEET):
             return plot_target_correlation(
                 features=x,
-                target=self.data.train_y,
+                target=self.data.y,
                 method=method,
                 ax=ax,
                 top_n=top_n,
@@ -102,7 +102,7 @@ class DataVisualize:
         plt.Axes
         """
 
-        x = self.data.train_x
+        x = self.data.x
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
 

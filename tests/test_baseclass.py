@@ -49,6 +49,15 @@ class TestBaseClass:
         ):
             Model(example_pipe)
 
+    def test_instantiate_model_with_feature_pipeline_sets_estimator_correctly(self):
+        example_pipe = Pipeline([("scale", DFStandardScaler)])
+        clf = LinearRegression()
+        model = Model(clf, feature_pipeline=example_pipe)
+
+        expected = Pipeline([("features", example_pipe), ("clf", clf)])
+
+        assert model.estimator.steps == expected.steps
+
     def test_instantiate_model_with_other_object_fails(self):
         with pytest.raises(
             MLToolingError,

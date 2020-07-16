@@ -1,6 +1,8 @@
 """
 Test file for visualisations
 """
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,9 +23,9 @@ from ml_tooling.plots import (
     plot_pr_curve,
     plot_feature_importance,
 )
-from ml_tooling.utils import VizError
 from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
-from ml_tooling.transformers import ToCategorical
+from ml_tooling.transformers import ToCategorical, DFStandardScaler
+from ml_tooling.utils import VizError
 
 
 class TestVisualize:
@@ -569,15 +571,35 @@ class TestValidationCurve:
 
 
 class TestTargetCorrelation:
+    def test_target_correlation_can_pass_pipeline(self, train_iris_dataset: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = train_iris_dataset.plot.target_correlation(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == [
+            "0.01",
+            "0.02",
+            "0.12",
+            "-0.48",
+        ]
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
+
     def test_target_correlation_works_as_expected(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation()
 
         assert [text.get_text() for text in ax.texts] == [
-            "0.09",
-            "0.09",
-            "0.18",
-            "-0.50",
+            "0.01",
+            "0.02",
+            "0.12",
+            "-0.48",
         ]
+
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
@@ -586,10 +608,10 @@ class TestTargetCorrelation:
         ax = train_iris_dataset.plot.target_correlation(method="pearson")
 
         assert [text.get_text() for text in ax.texts] == [
+            "0.08",
             "0.12",
-            "0.17",
-            "0.25",
-            "-0.49",
+            "0.20",
+            "-0.47",
         ]
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Pearson Correlation"
@@ -597,21 +619,21 @@ class TestTargetCorrelation:
 
     def test_target_correlation_works_with_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(top_n=2)
-        assert [text.get_text() for text in ax.texts] == ["0.18", "-0.50"]
+        assert [text.get_text() for text in ax.texts] == ["0.12", "-0.48"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
     def test_target_correlation_works_with_bottom_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=2)
-        assert [text.get_text() for text in ax.texts] == ["0.09", "0.09"]
+        assert [text.get_text() for text in ax.texts] == ["0.01", "0.02"]
         assert ax.title.get_text() == "Feature-Target Correlation - Bottom 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
 
     def test_target_correlation_works_with_bottom_n_and_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=1, top_n=1)
-        assert [text.get_text() for text in ax.texts] == ["0.09", "-0.50"]
+        assert [text.get_text() for text in ax.texts] == ["0.01", "-0.48"]
         assert ax.title.get_text() == "Feature-Target Correlation - Top 1 - Bottom 1"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
@@ -626,7 +648,7 @@ class TestTargetCorrelation:
 class TestMissingDataViz:
     @pytest.fixture()
     def missing_data(self, train_boston_dataset):
-        train_boston_dataset.train_x.iloc[:10, 0] = np.nan
+        train_boston_dataset.x.iloc[:10, 0] = np.nan
         return train_boston_dataset
 
     @pytest.fixture()
@@ -635,8 +657,22 @@ class TestMissingDataViz:
         axis.figure.canvas.draw()
         return axis
 
+    def test_missing_data_can_pass_pipeline(self, missing_data: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = missing_data.plot.missing_data(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
+
     def test_missing_data_text_labels_are_correct(self, ax):
-        assert [text.get_text() for text in ax.texts] == ["2.6%"]
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
 
     def test_ylabel_is_correct(self, ax):
         assert ax.get_ylabel() == "Feature"
@@ -654,8 +690,6 @@ class TestMissingDataViz:
             "1.50%",
             "2.00%",
             "2.50%",
-            "3.00%",
-            "3.50%",
         ]
 
     def test_missing_data_plots_can_be_given_an_ax(self, missing_data):

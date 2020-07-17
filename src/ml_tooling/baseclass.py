@@ -53,7 +53,9 @@ class Model:
         if not self.feature_pipeline:
             return self._estimator
 
-        return Pipeline([("features", self.feature_pipeline), ("clf", self._estimator)])
+        return Pipeline(
+            [("features", self.feature_pipeline), ("estimator", self._estimator)]
+        )
 
     @property
     def is_classifier(self) -> bool:

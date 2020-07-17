@@ -4,13 +4,17 @@
 #
 #    pip-compile
 #
+--index-url http://artifactory-singlep.p001.alm.brand.dk/artifactory/api/pypi/pypi-virtual/simple
+--trusted-host artifactory-singlep.p001.alm.brand.dk
+
 attrs==19.3.0             # via ml_tooling (setup.py)
 cycler==0.10.0            # via matplotlib
 joblib==0.16.0            # via ml_tooling (setup.py), scikit-learn
 kiwisolver==1.2.0         # via matplotlib
-matplotlib==3.2.2         # via ml_tooling (setup.py)
+matplotlib==3.3.0         # via ml_tooling (setup.py)
 numpy==1.19.0             # via matplotlib, pandas, scikit-learn, scipy
 pandas==1.0.5             # via ml_tooling (setup.py)
+pillow==7.2.0             # via matplotlib
 pyparsing==2.4.7          # via matplotlib
 python-dateutil==2.8.1    # via matplotlib, pandas
 pytz==2020.1              # via pandas

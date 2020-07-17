@@ -91,7 +91,7 @@ database tables in sync.
 Demo Datasets
 ----------------
 
-If you want to test your model on a demo datasets from :module:`sklearn.datasets`, you can use the method
+If you want to test your model on a demo datasets from :ref:`sklearn:datasets`, you can use the method
 :meth:`~ml_tooling.data.demo_dataset.load_demo_dataset`
 .. doctest::
 

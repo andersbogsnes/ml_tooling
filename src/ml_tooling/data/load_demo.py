@@ -19,7 +19,7 @@ from ml_tooling.utils import DataType
 def load_demo_dataset(dataset_name: str, **kwargs):
     """
     Create a :class:`~ml_tooling.data.base_data.Dataset` implementing the demo
-    datasets from :module:`sklearn.datasets`
+    datasets from :ref:`sklearn.datasets <sklearn:datasets>`
 
     Parameters
     ----------

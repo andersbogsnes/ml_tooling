@@ -2,6 +2,8 @@ from typing import Optional, Union
 
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+from sklearn.pipeline import Pipeline
+
 from ml_tooling.plots import plot_target_correlation, plot_missing_data
 from ml_tooling.config import MPL_STYLESHEET
 
@@ -16,6 +18,7 @@ class DataVisualize:
         ax: Optional[Axes] = None,
         top_n: Optional[Union[int, float]] = None,
         bottom_n: Optional[Union[int, float]] = None,
+        feature_pipeline: Optional[Pipeline] = None,
     ) -> Axes:
         """
         Plot the correlation between each feature
@@ -42,13 +45,21 @@ class DataVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
+        feature_pipeline: Pipeline
+            A feature transformation pipeline to be applied before graphing the data
+
         Returns
         -------
         plt.Axes
         """
+        x = self.data.x
+
+        if feature_pipeline is not None:
+            x = feature_pipeline.fit_transform(x)
+
         with plt.style.context(MPL_STYLESHEET):
             return plot_target_correlation(
-                features=self.data.x,
+                features=x,
                 target=self.data.y,
                 method=method,
                 ax=ax,
@@ -61,6 +72,7 @@ class DataVisualize:
         ax: Optional[Axes] = None,
         top_n: Optional[Union[int, float]] = None,
         bottom_n: Optional[Union[int, float]] = None,
+        feature_pipeline: Optional[Pipeline] = None,
     ) -> Axes:
         """
         Plot number of missing data points per column. Sorted by number of missing values.
@@ -82,13 +94,17 @@ class DataVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
+        feature_pipeline: Pipeline
+            A feature transformation pipeline to be applied before graphing the final results
 
         Returns
         -------
         plt.Axes
         """
 
+        x = self.data.x
+        if feature_pipeline is not None:
+            x = feature_pipeline.fit_transform(x)
+
         with plt.style.context(MPL_STYLESHEET):
-            return plot_missing_data(
-                df=self.data.x, ax=ax, top_n=top_n, bottom_n=bottom_n
-            )
+            return plot_missing_data(df=x, ax=ax, top_n=top_n, bottom_n=bottom_n)

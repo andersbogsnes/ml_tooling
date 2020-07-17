@@ -9,5 +9,5 @@ Datasets
 Dataset Plotting Methods
 ------------------------
 
-.. autoclass:: ml_tooling.plots.viz.DataVisualize
+.. autoclass:: ml_tooling.plots.viz.data_viz.DataVisualize
     :members:

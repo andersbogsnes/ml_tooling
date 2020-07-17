@@ -91,11 +91,12 @@ database tables in sync.
 Demo Datasets
 ----------------
 
-If you want to test your model on a demo datasets from :module:`sklearn.datasets`, you can use the method
-:meth:`~ml_tooling.data.demo_dataset.load_demo_dataset`
+If you want to test your model on a demo datasets from :ref:`sklearn:datasets`, you can use the function
+:func:`~ml_tooling.data.load_demo_dataset`
+
 .. doctest::
 
-    >>> from ml_tooling.data.demo_dataset import load_demo_dataset
+    >>> from ml_tooling.data import load_demo_dataset
     >>>
     >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!

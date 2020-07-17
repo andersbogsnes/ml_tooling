@@ -13,16 +13,16 @@ using the Model class.
 .. seealso::
     Refer to :ref:`api` for a full overview of methods
 
-We will be using `scikit-learn's <scikit-learn>`_ built-in :func:`Boston <sklearn.datasets.load_boston>`
+We will be using `scikit-learn`_'s built-in :func:`Boston <sklearn.datasets.load_boston>`
 houseprices dataset to demonstrate how to use ML Tooling. We use the method
-:meth:`~ml_tooling.data.demo_dataset.load_demo_dataset` to load the dataset.
+:func:`~ml_tooling.data.load_demo_dataset` to load the dataset.
 
 We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 :class:`Model` class and we are ready to begin!
 
 .. doctest::
 
-    >>> from ml_tooling.data.demo_dataset import load_demo_dataset
+    >>> from ml_tooling.data import load_demo_dataset
     >>>
     >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!
@@ -60,10 +60,10 @@ It returns an instance of :class:`~ml_tooling.result.Result` which we can then i
 
 
 
-Testing your model
-~~~~~~~~~~~~~~~~~~
+Testing multiple estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To test which estimator performs best, use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
+To test which estimator performs best, use the :meth:`~ml_tooling.baseclass.Model.test_estimators` method.
 This method trains each estimator on the train split and evaluates the performance on the test split. It returns a new
 :class:`~ml_tooling.baseclass.Model` instance with the best-performing estimator
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
@@ -83,7 +83,7 @@ Training your model
 ~~~~~~~~~~~~~~~~~~~
 
 When the best model has been found use :meth:`~ml_tooling.baseclass.Model.train_estimator` to train the model
-on the full training set (not the training split).
+on the full dataset set.
 
 .. note::
 
@@ -110,6 +110,28 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
 :meth:`~ml_tooling.baseclass.Model.make_prediction` also has a parameter :code:`proba` which will return the
 underlying probabilities if working on a classification problem
 
+Defining a Feature Pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is very common to define a feature preprocessing pipeline to preprocess your data before passing it to the
+estimator. Using a :class:`~sklearn.pipeline.Pipeline` ensures that the preprocessing is "learned" on the training
+split and only applied on the validation split. When passing a feature_pipeline in the, :class:`Model`
+will automatically create a :class:`~sklearn.pipeline.Pipeline` with two steps: `features` and `estimator`.
+
+.. doctest::
+
+    >>> from ml_tooling import Model
+    >>> from ml_tooling.transformers import DFStandardScaler
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.linear_model import LinearRegression
+    >>>
+    >>> feature_pipeline = Pipeline([("scaler", DFStandardScaler())])
+    >>> model = Model(LinearRegression(), feature_pipeline=feature_pipeline)
+    >>> model.estimator
+    Pipeline(steps=[('features', Pipeline(steps=[('scaler', DFStandardScaler())])),
+                    ('estimator', LinearRegression())])
+
+
 Performing a gridsearch
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -127,12 +149,14 @@ gridsearching using a :class:`~sklearn.pipeline.Pipeline`, we can pass hyperpara
 
 .. doctest::
 
+
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.preprocessing import StandardScaler
+    >>> from ml_tooling.transformers import DFStandardScaler
+    >>> from ml_tooling import Model
     >>>
-    >>> pipe = Pipeline([('scale', StandardScaler()), ('clf', LinearRegression())])
-    >>> pipe_model = Model(pipe)
-    >>> best_estimator, results = pipe_model.gridsearch(bostondata, { "clf__normalize": [False, True]})
+    >>> feature_pipe = Pipeline([('scale', DFStandardScaler())])
+    >>> pipe_model = Model(LinearRegression(), feature_pipeline=feature_pipe)
+    >>> best_estimator, results = pipe_model.gridsearch(bostondata, { "estimator__normalize": [False, True]})
     >>> results
     ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>])
 
@@ -201,7 +225,7 @@ Storage
 ~~~~~~~
 
 In order to store our estimators for later use or comparison, we use a
-:class:`~ml_tooling.storage.Storage` class and pass it to :meth:`~ml_tooling.Model.save_estimator`.
+:class:`~ml_tooling.storage.Storage` class and pass it to :meth:`~ml_tooling.baseclass.Model.save_estimator`.
 
 .. testsetup::
 
@@ -251,7 +275,7 @@ You have a trained estimator ready to be saved for use in production on your fil
     >>> model.save_estimator(storage, prod=True)
 
 Now users of your model package can always find your estimator through
-:meth:`~ml_tooling.Model.load_production_estimator` using the module name.
+:meth:`~ml_tooling.baseclass.Model.load_production_estimator` using the module name.
 
 .. code-block::
 

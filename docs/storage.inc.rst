@@ -1,4 +1,4 @@
-.. _storage:
+.. _storage_class:
 
 Storage
 -------

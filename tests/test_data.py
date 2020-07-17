@@ -11,7 +11,7 @@ from sqlalchemy.exc import DBAPIError
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
-from ml_tooling.data.demo_dataset import load_demo_dataset
+from ml_tooling.data.load_demo import load_demo_dataset
 from ml_tooling.utils import DatasetError, DataType
 
 from sklearn.linear_model import LogisticRegression

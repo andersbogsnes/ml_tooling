@@ -8,6 +8,7 @@ from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
 from sklearn.base import is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv
+from sklearn.pipeline import Pipeline
 
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
@@ -42,9 +43,29 @@ class Model:
     _config = None
     config = ConfigGetter()
 
-    def __init__(self, estimator):
-        self.estimator: Estimator = _validate_estimator(estimator)
+    def __init__(self, estimator: Estimator, feature_pipeline: Pipeline = None):
+        """
+        Parameters
+        ----------
+        estimator: Estimator
+            Any scikit-learn compatible estimator
+
+        feature_pipeline: Pipeline
+            Optionally pass a feature preprocessing Pipeline. Model will automatically insert
+            the estimator into a preprocessing pipeline
+        """
+        self._estimator: Estimator = _validate_estimator(estimator)
+        self.feature_pipeline = feature_pipeline
         self.result: Optional[ResultType] = None
+
+    @property
+    def estimator(self):
+        if not self.feature_pipeline:
+            return self._estimator
+
+        return Pipeline(
+            [("features", self.feature_pipeline), ("estimator", self._estimator)]
+        )
 
     @property
     def is_classifier(self) -> bool:
@@ -627,7 +648,18 @@ class Model:
             self.config.RUN_DIR = old_dir
 
     @classmethod
-    def load_production_estimator(cls, module_name):
+    def load_production_estimator(cls, module_name: str):
+        """
+        Loads a model from a python package. Given that the package is an ML-Tooling
+        package, this will load the production model from the package and create an instance
+        of Model with that package
+
+        Parameters
+        ----------
+        module_name: str
+            The name of the package to load a model from
+
+        """
         file_name = "production_model.pkl"
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)

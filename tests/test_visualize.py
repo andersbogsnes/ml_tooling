@@ -1,6 +1,8 @@
 """
 Test file for visualisations
 """
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,9 +23,9 @@ from ml_tooling.plots import (
     plot_pr_curve,
     plot_feature_importance,
 )
-from ml_tooling.utils import VizError
 from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
-from ml_tooling.transformers import ToCategorical
+from ml_tooling.transformers import ToCategorical, DFStandardScaler
+from ml_tooling.utils import VizError
 
 
 class TestVisualize:
@@ -569,6 +571,25 @@ class TestValidationCurve:
 
 
 class TestTargetCorrelation:
+    def test_target_correlation_can_pass_pipeline(self, train_iris_dataset: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = train_iris_dataset.plot.target_correlation(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == [
+            "0.01",
+            "0.02",
+            "0.12",
+            "-0.48",
+        ]
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
+
     def test_target_correlation_works_as_expected(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation()
 
@@ -578,6 +599,7 @@ class TestTargetCorrelation:
             "0.12",
             "-0.48",
         ]
+
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
@@ -631,7 +653,23 @@ class TestMissingDataViz:
 
     @pytest.fixture()
     def ax(self, missing_data):
-        return missing_data.plot.missing_data()
+        axis = missing_data.plot.missing_data()
+        axis.figure.canvas.draw()
+        return axis
+
+    def test_missing_data_can_pass_pipeline(self, missing_data: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = missing_data.plot.missing_data(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
 
     def test_missing_data_text_labels_are_correct(self, ax):
         assert [text.get_text() for text in ax.texts] == ["2.0%"]
@@ -644,7 +682,7 @@ class TestMissingDataViz:
 
     def test_xticklabels_are_correct(self, ax):
         # Must trigger rendering before labels are accessible
-        ax.figure.canvas.draw()
+
         assert [text.get_text() for text in ax.get_xticklabels()] == [
             "0.00%",
             "0.50%",

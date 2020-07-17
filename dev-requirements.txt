@@ -4,6 +4,7 @@
 #
 #    pip-compile dev-requirements.in
 #
+
 appdirs==1.4.4            # via virtualenv
 attrs==19.3.0             # via -r requirements.txt, pytest
 certifi==2020.6.20        # via requests
@@ -14,16 +15,18 @@ cycler==0.10.0            # via -r requirements.txt, matplotlib
 distlib==0.3.1            # via virtualenv
 dohq-artifactory==0.7.379  # via -r dev-requirements.in
 filelock==3.0.12          # via tox, virtualenv
-identify==1.4.21          # via pre-commit
+identify==1.4.23          # via pre-commit
 idna==2.10                # via requests
+importlib-metadata==1.7.0  # via pluggy, pre-commit, pytest, tox, virtualenv
 joblib==0.16.0            # via -r requirements.txt, scikit-learn
 kiwisolver==1.2.0         # via -r requirements.txt, matplotlib
-matplotlib==3.2.2         # via -r requirements.txt
+matplotlib==3.3.0         # via -r requirements.txt
 more-itertools==8.4.0     # via pytest
 nodeenv==1.4.0            # via pre-commit
 numpy==1.19.0             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scipy
 packaging==20.4           # via pytest, tox
 pandas==1.0.5             # via -r requirements.txt
+pillow==7.2.0             # via -r requirements.txt, matplotlib
 pluggy==0.13.1            # via pytest, tox
 pre-commit==2.6.0         # via -r dev-requirements.in
 py==1.9.0                 # via pytest, tox
@@ -43,5 +46,6 @@ threadpoolctl==2.1.0      # via -r requirements.txt, scikit-learn
 toml==0.10.1              # via pre-commit, tox
 tox==3.17.1               # via -r dev-requirements.in
 urllib3==1.25.9           # via requests
-virtualenv==20.0.26       # via pre-commit, tox
+virtualenv==20.0.27       # via pre-commit, tox
 wcwidth==0.2.5            # via pytest
+zipp==3.1.0               # via importlib-metadata

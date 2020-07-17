@@ -54,7 +54,7 @@ class TestBaseClass:
         clf = LinearRegression()
         model = Model(clf, feature_pipeline=example_pipe)
 
-        expected = Pipeline([("features", example_pipe), ("clf", clf)])
+        expected = Pipeline([("features", example_pipe), ("estimator", clf)])
 
         assert model.estimator.steps == expected.steps
 

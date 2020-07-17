@@ -17,8 +17,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - uses: BSFishy/pip-action@v1
-          with:
-            packages: poetry==${{ env.POETRY_VERSION }} tox==${{ env.TOX_VERSION }}
+        with:
+          packages: poetry==${{ env.POETRY_VERSION }} tox==${{ env.TOX_VERSION }}
       - run: python -m poetry config virtualenvs.create false
       - run: tox -e py,optional-artifactory
 

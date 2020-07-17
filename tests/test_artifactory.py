@@ -62,19 +62,19 @@ class TestArtifactoryStorage:
 
         paths = [
             estimator_pickle_path_factory(
-                "LogisticRegression_2019-10-15_10:42:10.709197.pkl"
+                "LogisticRegression_2019_10_15_10_42_10_709197.pkl"
             ),
             estimator_pickle_path_factory(
-                "LogisticRegression_2019-10-15_10:32:41.780990.pkl"
+                "LogisticRegression_2019_10_15_10_32_41_780990.pkl"
             ),
             estimator_pickle_path_factory(
-                "LogisticRegression_2019-10-15_10:34:34.226695.pkl"
+                "LogisticRegression_2019_10_15_10_34_34_226695.pkl"
             ),
             estimator_pickle_path_factory(
-                "LogisticRegression_2019-10-15_10:51:50.760746.pkl"
+                "LogisticRegression_2019_10_15_10_51_50_760746.pkl"
             ),
             estimator_pickle_path_factory(
-                "LogisticRegression_2019-10-15_10:34:21.849358.pkl"
+                "LogisticRegression_2019_10_15_10_34_21_849358.pkl"
             ),
         ]
 

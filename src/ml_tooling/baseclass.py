@@ -197,7 +197,7 @@ class Model:
         if prod:
             file_name = "production_model.pkl"
         else:
-            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+            now_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
             file_name = f"{self.estimator_name}_{now_str}.pkl"
         estimator_file = storage.save(self.estimator, file_name, prod=prod)
 

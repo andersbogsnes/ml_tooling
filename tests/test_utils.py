@@ -193,9 +193,5 @@ class TestFindSrcDir:
         tmp_path.joinpath("setup.py").write_text("I exist")
         output_folder = tmp_path / "src" / "test"
         output_folder.mkdir(parents=True)
-        with pytest.raises(
-            MLToolingError,
-            match=f"No modules found in {output_folder.parent}! "
-            f"Is there an __init__.py file in your module?",
-        ):
+        with pytest.raises(MLToolingError, match="No modules found in"):
             _find_src_dir(output_folder)

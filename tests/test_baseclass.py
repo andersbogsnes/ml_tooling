@@ -132,7 +132,7 @@ class TestBaseClass:
         saved_model_path = classifier.save_estimator(storage)
         assert saved_model_path.exists()
         assert datetime.datetime.strptime(
-            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
+            saved_model_path.stem, f"{classifier.estimator_name}_%Y_%m_%d_%H_%M_%S_%f"
         )
 
     def test_save_model_saves_pipeline_correctly(

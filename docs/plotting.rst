@@ -1,4 +1,4 @@
-.. currentmodule:: ml_tooling.result.viz
+.. currentmodule:: ml_tooling.plots.viz
 .. _plotting:
 
 Plotting
@@ -8,7 +8,7 @@ Available Base plots
 --------------------
 
 First we define a :class:`~ml_tooling.data.Dataset` like we have done in Quickstart and Tutorial.
-When we score the estimator by calling :meth:`~ml_tooling.Model.score_estimator`, we get a
+When we score the estimator by calling :meth:`~ml_tooling.baseclass.Model.score_estimator`, we get a
 :class:`~ml_tooling.result.Result` back, which contains a number of handy plotting features.
 
 To use the visualizations, access them using the `.plot` accessor on the
@@ -130,16 +130,27 @@ These plot methods are used the same way as the result plots
 
     >>> bostondata.plot.target_correlation()
 
+Optionally, you can pass a preprocessing :class:`~sklearn.pipeline.Pipeline` to the plotter to preprocess the data
+before plotting. This can be useful if you want to check that the preprocessing is handling all the NaNs, or
+if you want to visualize computed columns.
+
+.. code-block::
+
+    >>> from ml_tooling.transformers import DFStandardScaler
+    >>> from sklearn.pipeline import Pipeline
+    >>>
+    >>> feature_pipeline = Pipeline([("scaler", DFStandardScaler())])
+    >>> bostondata.plot.target_correlation(feature_pipeline=feature_pipeline)
 
 Available Data Plots
 --------------------
 
-- :meth:`~DataVisualize.target_correlation`:
+- :meth:`~ml_tooling.plots.viz.data_viz.DataVisualize.target_correlation`:
     Visualizes the correlations between each feature and the target variable.
     The size of the correlation can indicate important features, but can also
     hint at data leakage if the correlation is too strong.
 
-- :meth:`~DataVisualize.missing_data`:
+- :meth:`~ml_tooling.plots.viz.data_viz.DataVisualize.missing_data`:
     Visualizes percentage of missing data for each column in the dataset. If no columns have missing data, will
     simply show an empty plot.
 

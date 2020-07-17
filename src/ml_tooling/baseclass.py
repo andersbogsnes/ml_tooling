@@ -43,10 +43,20 @@ class Model:
     _config = None
     config = ConfigGetter()
 
-    def __init__(self, estimator, feature_pipeline: Pipeline = None):
+    def __init__(self, estimator: Estimator, feature_pipeline: Pipeline = None):
+        """
+        Parameters
+        ----------
+        estimator: Estimator
+            Any scikit-learn compatible estimator
+
+        feature_pipeline: Pipeline
+            Optionally pass a feature preprocessing Pipeline. Model will automatically insert
+            the estimator into a preprocessing pipeline
+        """
         self._estimator: Estimator = _validate_estimator(estimator)
-        self.result: Optional[ResultType] = None
         self.feature_pipeline = feature_pipeline
+        self.result: Optional[ResultType] = None
 
     @property
     def estimator(self):
@@ -638,7 +648,18 @@ class Model:
             self.config.RUN_DIR = old_dir
 
     @classmethod
-    def load_production_estimator(cls, module_name):
+    def load_production_estimator(cls, module_name: str):
+        """
+        Loads a model from a python package. Given that the package is an ML-Tooling
+        package, this will load the production model from the package and create an instance
+        of Model with that package
+
+        Parameters
+        ----------
+        module_name: str
+            The name of the package to load a model from
+
+        """
         file_name = "production_model.pkl"
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)

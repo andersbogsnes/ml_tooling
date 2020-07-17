@@ -13,9 +13,9 @@ using the Model class.
 .. seealso::
     Refer to :ref:`api` for a full overview of methods
 
-We will be using `scikit-learn's <scikit-learn>`_ built-in :func:`Boston <sklearn.datasets.load_boston>`
+We will be using `scikit-learn`_'s built-in :func:`Boston <sklearn.datasets.load_boston>`
 houseprices dataset to demonstrate how to use ML Tooling. We use the method
-:meth:`~ml_tooling.data.demo_dataset.load_demo_dataset` to load the dataset.
+:func:`~ml_tooling.data.load_demo_dataset` to load the dataset.
 
 We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
 :class:`Model` class and we are ready to begin!
@@ -63,7 +63,7 @@ It returns an instance of :class:`~ml_tooling.result.Result` which we can then i
 Testing multiple estimators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To test which estimator performs best, use the :meth:`~ml_tooling.baseclass.Model.test_estimator` method.
+To test which estimator performs best, use the :meth:`~ml_tooling.baseclass.Model.test_estimators` method.
 This method trains each estimator on the train split and evaluates the performance on the test split. It returns a new
 :class:`~ml_tooling.baseclass.Model` instance with the best-performing estimator
 with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
@@ -225,7 +225,7 @@ Storage
 ~~~~~~~
 
 In order to store our estimators for later use or comparison, we use a
-:class:`~ml_tooling.storage.Storage` class and pass it to :meth:`~ml_tooling.Model.save_estimator`.
+:class:`~ml_tooling.storage.Storage` class and pass it to :meth:`~ml_tooling.baseclass.Model.save_estimator`.
 
 .. testsetup::
 
@@ -275,7 +275,7 @@ You have a trained estimator ready to be saved for use in production on your fil
     >>> model.save_estimator(storage, prod=True)
 
 Now users of your model package can always find your estimator through
-:meth:`~ml_tooling.Model.load_production_estimator` using the module name.
+:meth:`~ml_tooling.baseclass.Model.load_production_estimator` using the module name.
 
 .. code-block::
 

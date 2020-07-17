@@ -4,8 +4,6 @@
 #
 #    pip-compile dev-requirements.in
 #
---index-url http://artifactory-singlep.p001.alm.brand.dk/artifactory/api/pypi/pypi-virtual/simple
---trusted-host artifactory-singlep.p001.alm.brand.dk
 
 appdirs==1.4.4            # via virtualenv
 attrs==19.3.0             # via -r requirements.txt, pytest

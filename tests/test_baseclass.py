@@ -1,13 +1,12 @@
+import datetime
 import pathlib
 from unittest.mock import MagicMock, patch
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 import pytest
 import yaml
-import datetime
-
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -15,7 +14,6 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.utils.fixes import loguniform
 
-from ml_tooling.storage import FileStorage
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
@@ -23,8 +21,11 @@ from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
+from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
+
+plt.switch_backend("agg")
 
 
 class TestBaseClass:
@@ -490,7 +491,6 @@ class TestScoreEstimator:
     def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
         self, iris_dataset
     ):
-
         model = Model(LogisticRegression())
         model.config.RANDOM_STATE = 1
         model.config.TEST_SIZE = 0.50
@@ -723,7 +723,9 @@ class TestRandomSearch:
     ):
         model = Model(pipeline_logistic)
         model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
@@ -736,7 +738,9 @@ class TestRandomSearch:
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -745,7 +749,9 @@ class TestRandomSearch:
             assert isinstance(result, Result)
 
         best_model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -755,7 +761,7 @@ class TestRandomSearch:
 
     def test_prepare_randomsearch_estimators_has_different_parameters(self):
         estimators = prepare_randomsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -767,7 +773,7 @@ class TestRandomSearch:
         pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
 
         estimators = prepare_randomsearch_estimators(
-            pipe, params={"clf__penalty": ["l2", "l1"]}
+            pipe, params={"clf__penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -780,7 +786,7 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         model, results = classifier.randomsearch(
-            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}
+            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}, n_iter=2
         )
 
         assert len(results) == 2
@@ -793,10 +799,9 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         param_dist = {
-            "penalty": ["l1", "l2"],
-            "l1_ratio": stats.uniform(0, 1),
             "C": loguniform(1e-4, 1e0),
         }
+
         model, results = classifier.randomsearch(
             train_iris_dataset, param_distributions=param_dist, n_iter=2
         )
@@ -814,6 +819,7 @@ class TestRandomSearch:
             train_iris_dataset,
             param_distributions={"penalty": ["l1", "l2"]},
             metrics=["accuracy", "roc_auc"],
+            n_iter=2,
         )
 
         assert len(results) == 2
@@ -833,7 +839,9 @@ class TestRandomSearch:
         classifier.config.RUN_DIR = tmp_path
         with classifier.log("randomsearch_union_test"):
             _, _ = classifier.randomsearch(
-                train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+                train_iris_dataset,
+                param_distributions={"clf__penalty": ["l1", "l2"]},
+                n_iter=2,
             )
 
 

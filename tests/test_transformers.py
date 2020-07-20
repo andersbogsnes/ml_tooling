@@ -30,7 +30,9 @@ from ml_tooling.transformers import (
 class TransformerBase:
     @staticmethod
     def create_pipeline(transformer) -> Pipeline:
-        pipe = Pipeline([("transform", transformer), ("clf", DummyClassifier())])
+        pipe = Pipeline(
+            [("transform", transformer), ("clf", DummyClassifier(strategy="prior"))]
+        )
         return pipe
 
     def create_model(self, transformer) -> Model:
@@ -42,10 +44,7 @@ class TransformerBase:
     def create_gridsearch(self, transformer) -> GridSearchCV:
         pipe = self.create_pipeline(transformer)
         return GridSearchCV(
-            pipe,
-            param_grid={"clf__strategy": ["stratified", "most_frequent"]},
-            cv=2,
-            iid=False,
+            pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
         )
 
 
@@ -458,18 +457,15 @@ class TestDateEncoder(TransformerBase):
 
     def test_date_encoder_works_in_cv(self, dates: pd.DataFrame):
         pipe = self.create_pipeline(DateEncoder())
-        score = cross_val_score(pipe, dates, [0, 1, 1], n_jobs=2, cv=2)
+        score = cross_val_score(pipe, dates, y=[0, 0, 1, 1], n_jobs=2, cv=2)
         assert 2 == len(score)
 
     def test_date_encoder_works_in_grid_search(self, dates: pd.DataFrame):
         pipe = self.create_pipeline(DateEncoder())
         grid = GridSearchCV(
-            pipe,
-            param_grid={"clf__strategy": ["stratified", "most_frequent"]},
-            cv=2,
-            iid=False,
+            pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
         )
-        grid.fit(dates, [0, 1, 1])
+        grid.fit(dates, [0, 0, 1, 1])
         assert hasattr(grid, "best_score_")
 
 
@@ -755,7 +751,7 @@ class TestBinarize(TransformerBase):
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
     def test_binarize_can_be_used_cv(self, train_iris_dataset):
-        model = self.create_model(Binarize(value="a1"))
+        model = self.create_model(Binarize(value=1))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 

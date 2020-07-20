@@ -1,3 +1,13 @@
+# v0.11.0
+- Added `load_demo_dataset` function
+- If the dataset has no train set `score_estimator` will now run `create_train_test` with default configurations
+- `Model.make_prediction` now takes a threshold argument when making a binary classification
+- All ML-tooling logging messages now go to stdout instead of stderr
+- Can pass a feature pipeline to `Model` which will then automatically generate a
+ combined feature_pipeline + estimator Pipeline
+- Can pass a feature pipeline to `Dataset.plot` methods, to apply preprocessing
+before visualization
+
 # v0.10.3
 - Fixed typehints in Dataset
 - Dataset.create_train_test now takes a boolean `stratify` parameter.
@@ -8,6 +18,7 @@ human friendly manner
 - Added a missing data visualization to `Dataset.plot`
 - FillNA now accepts a `is_nan`flag which adds a flag indicating that a value was missing
 - `Model.make_prediction` now accepts a `use_cache`flag to score everything in cached `.x`
+- Added a new Transformer:  `RareFeatureEncoder`
 
 # v0.10.2
 - Fixed type inferences from data to sql in _load_data

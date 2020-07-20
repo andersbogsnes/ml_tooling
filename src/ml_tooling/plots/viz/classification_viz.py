@@ -6,8 +6,8 @@ from ml_tooling.plots import (
     plot_lift_curve,
     plot_pr_curve,
 )
-from ml_tooling.utils import VizError
-from ml_tooling.result.viz import BaseVisualize
+from ml_tooling.utils import VizError, _classify
+from ml_tooling.plots.viz.baseviz import BaseVisualize
 
 
 class ClassificationVisualize(BaseVisualize):
@@ -15,7 +15,9 @@ class ClassificationVisualize(BaseVisualize):
     Visualization class for Classification models
     """
 
-    def confusion_matrix(self, normalized: bool = True, **kwargs) -> plt.Axes:
+    def confusion_matrix(
+        self, normalized: bool = True, threshold: float = 0.5, **kwargs
+    ) -> plt.Axes:
         """
         Visualize a confusion matrix for a classification estimator
         Any kwargs are passed onto matplotlib
@@ -25,6 +27,8 @@ class ClassificationVisualize(BaseVisualize):
 
         normalized: bool
             Whether or not to normalize annotated class counts
+        threshold: float
+            Threshold to use for classification - defaults to 0.5
 
         Returns
         -------
@@ -33,7 +37,7 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(self._config.STYLE_SHEET):
             title = f"Confusion Matrix - {self._estimator_name}"
-            y_pred = self._estimator.predict(self._data.test_x)
+            y_pred = _classify(self._data.test_x, self._estimator, threshold=threshold)
             return plot_confusion_matrix(
                 self._data.test_y, y_pred, normalized, title, **kwargs
             )

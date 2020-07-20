@@ -36,8 +36,8 @@ CLASSIFIERS = [
 META_PATH = os.path.join("src", NAME, "__init__.py")
 
 EXTRAS_REQUIRE = {
-    "docs": ["sphinx"],
-    "tests": ["coverage", "pytest"],
+    "docs": ["sphinx", "sphinx_rtd_theme", "matplotlib"],
+    "tests": ["pytest", "pytest-cov"],
     "artifactory": ["dohq-artifactory"],
 }
 EXTRAS_REQUIRE["dev"] = (

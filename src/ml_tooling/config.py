@@ -26,6 +26,8 @@ class DefaultConfig:
         self.RUN_DIR = RUN_DIR
         self.ESTIMATOR_DIR = ESTIMATOR_DIR
         self.LOG = False
+        self.SHUFFLE = True
+        self.TEST_SIZE = 0.25
 
     @property
     def default_storage(self):

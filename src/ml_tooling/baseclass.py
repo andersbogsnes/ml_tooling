@@ -1,11 +1,15 @@
 import datetime
 import pathlib
+import joblib
+import pandas as pd
 from contextlib import contextmanager
 from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
+from sklearn.pipeline import Pipeline
 
-import joblib
-import pandas as pd
 from ml_tooling.config import DefaultConfig, ConfigGetter
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
@@ -19,17 +23,14 @@ from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DatasetError,
     Estimator,
     is_pipeline,
     serialize_pipeline,
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
+    _classify,
 )
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
 
 from skopt import BayesSearchCV
 
@@ -44,9 +45,29 @@ class Model:
     _config = None
     config = ConfigGetter()
 
-    def __init__(self, estimator):
-        self.estimator: Estimator = _validate_estimator(estimator)
+    def __init__(self, estimator: Estimator, feature_pipeline: Pipeline = None):
+        """
+        Parameters
+        ----------
+        estimator: Estimator
+            Any scikit-learn compatible estimator
+
+        feature_pipeline: Pipeline
+            Optionally pass a feature preprocessing Pipeline. Model will automatically insert
+            the estimator into a preprocessing pipeline
+        """
+        self._estimator: Estimator = _validate_estimator(estimator)
+        self.feature_pipeline = feature_pipeline
         self.result: Optional[ResultType] = None
+
+    @property
+    def estimator(self):
+        if not self.feature_pipeline:
+            return self._estimator
+
+        return Pipeline(
+            [("features", self.feature_pipeline), ("estimator", self._estimator)]
+        )
 
     @property
     def is_classifier(self) -> bool:
@@ -178,7 +199,7 @@ class Model:
         if prod:
             file_name = "production_model.pkl"
         else:
-            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+            now_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
             file_name = f"{self.estimator_name}_{now_str}.pkl"
         estimator_file = storage.save(self.estimator, file_name, prod=prod)
 
@@ -229,6 +250,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
+        threshold: float = None,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -246,6 +268,9 @@ class Model:
         proba: bool
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
+
+        threshold: float
+            Threshold to use for predicting a binary class
 
         use_index: bool
             Whether the index from the prediction data should be used for the result.
@@ -269,21 +294,21 @@ class Model:
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
-                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
+                columns = [
+                    f"Probability Class {col}" for col in self.estimator.classes_
+                ]
             else:
-                data = self.estimator.predict(x)
+                data = _classify(x, self.estimator, threshold=threshold)
                 columns = ["Prediction"]
-            if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
-            else:
-                prediction = pd.DataFrame(data=data, columns=columns)
 
-            return prediction
+            return pd.DataFrame(
+                data=data, index=x.index if use_index else None, columns=columns
+            )
 
         except NotFittedError:
             message = (
-                f"You haven't fitted the estimator. Call `.train_estimator` "
-                f"or `.score_estimator` first"
+                "You haven't fitted the estimator. Call `.train_estimator` "
+                "or `.score_estimator` first"
             )
             raise MLToolingError(message) from None
 
@@ -378,6 +403,8 @@ class Model:
         pass number of folds to cv. If cross-validation is used, `score_estimator` only
         cross-validates on training data and doesn't use the validation data.
 
+        If the dataset does not have a train set, it will create one using the default config.
+
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
 
         Parameters
@@ -405,12 +432,17 @@ class Model:
         cv = cv if cv else None
 
         if cv:
-            cv = check_cv(cv, data.train_y, self.is_classifier)
+            cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
 
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DatasetError("Must run create_train_test first!")
+            data.create_train_test(
+                stratify=self.is_classifier,
+                shuffle=self.config.SHUFFLE,
+                test_size=self.config.TEST_SIZE,
+                seed=self.config.RANDOM_STATE,
+            )
 
         self.estimator.fit(data.train_x, data.train_y)
 
@@ -472,7 +504,7 @@ class Model:
             metrics = self.default_metric if metrics == "default" else metrics
 
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, data.train_y, self.is_classifier)
+        cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.info("Starting search...")
@@ -725,7 +757,18 @@ class Model:
             self.config.RUN_DIR = old_dir
 
     @classmethod
-    def load_production_estimator(cls, module_name):
+    def load_production_estimator(cls, module_name: str):
+        """
+        Loads a model from a python package. Given that the package is an ML-Tooling
+        package, this will load the production model from the package and create an instance
+        of Model with that package
+
+        Parameters
+        ----------
+        module_name: str
+            The name of the package to load a model from
+
+        """
         file_name = "production_model.pkl"
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)

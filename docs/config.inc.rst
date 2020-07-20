@@ -49,3 +49,11 @@ All configuration options available
     Toggles whether or not to log runs to a file. Set to True if you
     want every run to be logged, else use the :meth:`~ml_tooling.baseclass.ModelData.log`
     context manager
+
+    :attr:`SHUFFLE` = True
+
+    Default whether or not to shuffle data for test set
+
+    :attr:`TEST_SIZE` = 0.25
+
+    Default percentage of data that will be part of the test set

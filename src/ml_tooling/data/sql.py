@@ -29,15 +29,6 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         copied when using `.copy_to` and should be the canonical definition of the feature set.
         Do not define a schema - that is set at runtime
 
-
-    Methods
-    -------
-    load_prediction_data(idx, conn)
-        Used to load prediction data for a given idx - returns features
-
-    load_training_data(conn)
-        Used to load the full training dataset - returns features and targets
-
     """
 
     table: Optional[sa.Table] = None
@@ -60,11 +51,11 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         elif isinstance(conn, str):
             self.engine = sa.create_engine(conn, **kwargs)
         else:
-            raise ValueError(f"Invalid connection")
+            raise ValueError("Invalid connection")
         if self.table is not None and self.table.schema is not None:
             raise DatasetError(
                 f"{self.table.schema.name} cannot have a defined schema - "
-                f"remove the schema declaration"
+                "remove the schema declaration"
             )
         self.schema = schema
 
@@ -93,10 +84,12 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
     def load_training_data(
         self, conn, *args, **kwargs
     ) -> Tuple[pd.DataFrame, DataType]:
+        """Used to load the full training dataset - returns features and targets"""
         raise NotImplementedError
 
     @abc.abstractmethod
     def load_prediction_data(self, idx, conn, *args, **kwargs) -> pd.DataFrame:
+        """Used to load prediction data for a given idx - returns features"""
         raise NotImplementedError
 
     def _load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:

@@ -1,13 +1,12 @@
+import datetime
 import pathlib
 from unittest.mock import MagicMock, patch
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.stats as stats
 import pytest
 import yaml
-import datetime
-
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -15,7 +14,6 @@ from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.utils.fixes import loguniform
 
-from ml_tooling.storage import FileStorage
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
@@ -23,8 +21,11 @@ from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
 from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
+from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
+
+plt.switch_backend("agg")
 
 
 class TestBaseClass:
@@ -49,10 +50,19 @@ class TestBaseClass:
         ):
             Model(example_pipe)
 
+    def test_instantiate_model_with_feature_pipeline_sets_estimator_correctly(self):
+        example_pipe = Pipeline([("scale", DFStandardScaler)])
+        clf = LinearRegression()
+        model = Model(clf, feature_pipeline=example_pipe)
+
+        expected = Pipeline([("features", example_pipe), ("estimator", clf)])
+
+        assert model.estimator.steps == expected.steps
+
     def test_instantiate_model_with_other_object_fails(self):
         with pytest.raises(
             MLToolingError,
-            match=f"Expected a Pipeline or Estimator - got <class 'dict'>",
+            match="Expected a Pipeline or Estimator - got <class 'dict'>",
         ):
             Model({})
 
@@ -123,7 +133,7 @@ class TestBaseClass:
         saved_model_path = classifier.save_estimator(storage)
         assert saved_model_path.exists()
         assert datetime.datetime.strptime(
-            saved_model_path.stem, f"{classifier.estimator_name}_%Y-%m-%d_%H:%M:%S.%f"
+            saved_model_path.stem, f"{classifier.estimator_name}_%Y_%m_%d_%H_%M_%S_%f"
         )
 
     def test_save_model_saves_pipeline_correctly(
@@ -431,12 +441,70 @@ class TestTrainEstimator:
 
 
 class TestScoreEstimator:
-    def test_score_estimator_fails_if_no_train_test_data_available(self, iris_dataset):
+    def test_score_estimator_creates_train_test_data(
+        self, boston_dataset, train_boston_dataset
+    ):
         model = Model(LinearRegression())
-        data = iris_dataset()
+        data = boston_dataset()
+        model.score_estimator(data)
 
-        with pytest.raises(MLToolingError, match="Must run create_train_test first!"):
-            model.score_estimator(data)
+        test = train_boston_dataset
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+
+    def test_score_estimator_creates_train_test_data_classification(
+        self, iris_dataset, train_iris_dataset
+    ):
+        model = Model(LogisticRegression())
+        data = iris_dataset()
+        model.score_estimator(data)
+
+        test = train_iris_dataset
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+
+    def test_score_estimator_creates_train_test_data_with_changed_config(
+        self, boston_dataset
+    ):
+        model = Model(LinearRegression())
+        model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.5
+        model.config.SHUFFLE = False
+        data = boston_dataset()
+        model.score_estimator(data)
+
+        test = boston_dataset()
+        test.create_train_test(stratify=False, shuffle=False, seed=1, test_size=0.5)
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+        model.reset_config()
+
+    def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
+        self, iris_dataset
+    ):
+        model = Model(LogisticRegression())
+        model.config.RANDOM_STATE = 1
+        model.config.TEST_SIZE = 0.50
+        data = iris_dataset()
+        model.score_estimator(data)
+
+        test = iris_dataset()
+        test.create_train_test(stratify=True, seed=1, test_size=0.50)
+
+        pd.testing.assert_frame_equal(data.test_x, test.test_x)
+        assert np.array_equal(data.test_y, test.test_y)
+        pd.testing.assert_frame_equal(data.train_x, test.train_x)
+        assert np.array_equal(data.train_y, test.train_y)
+        model.reset_config()
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))
@@ -655,7 +723,9 @@ class TestRandomSearch:
     ):
         model = Model(pipeline_logistic)
         model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
@@ -668,7 +738,9 @@ class TestRandomSearch:
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -677,7 +749,9 @@ class TestRandomSearch:
             assert isinstance(result, Result)
 
         best_model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -687,7 +761,7 @@ class TestRandomSearch:
 
     def test_prepare_randomsearch_estimators_has_different_parameters(self):
         estimators = prepare_randomsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -699,7 +773,7 @@ class TestRandomSearch:
         pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
 
         estimators = prepare_randomsearch_estimators(
-            pipe, params={"clf__penalty": ["l2", "l1"]}
+            pipe, params={"clf__penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -712,7 +786,7 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         model, results = classifier.randomsearch(
-            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}
+            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}, n_iter=2
         )
 
         assert len(results) == 2
@@ -725,10 +799,9 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         param_dist = {
-            "penalty": ["l1", "l2"],
-            "l1_ratio": stats.uniform(0, 1),
             "C": loguniform(1e-4, 1e0),
         }
+
         model, results = classifier.randomsearch(
             train_iris_dataset, param_distributions=param_dist, n_iter=2
         )
@@ -746,6 +819,7 @@ class TestRandomSearch:
             train_iris_dataset,
             param_distributions={"penalty": ["l1", "l2"]},
             metrics=["accuracy", "roc_auc"],
+            n_iter=2,
         )
 
         assert len(results) == 2
@@ -765,7 +839,9 @@ class TestRandomSearch:
         classifier.config.RUN_DIR = tmp_path
         with classifier.log("randomsearch_union_test"):
             _, _ = classifier.randomsearch(
-                train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+                train_iris_dataset,
+                param_distributions={"clf__penalty": ["l1", "l2"]},
+                n_iter=2,
             )
 
 
@@ -880,7 +956,7 @@ class TestMakePrediction:
         assert result.columns.tolist() == ["Probability Class 0", "Probability Class 1"]
 
     def test_make_prediction_errors_if_asked_for_proba_without_predict_proba_method(
-        self, train_iris_dataset
+        self, train_iris_dataset: Dataset
     ):
         with pytest.raises(
             MLToolingError, match="LinearRegression does not have a `predict_proba`"
@@ -895,7 +971,7 @@ class TestMakePrediction:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        train_iris_dataset,
+        train_iris_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             train_iris_dataset, 5, proba=False, use_index=use_index
@@ -914,7 +990,7 @@ class TestMakePrediction:
         classifier: Model,
         use_index: bool,
         expected_index: int,
-        train_iris_dataset,
+        train_iris_dataset: Dataset,
     ):
         results = classifier.make_prediction(
             train_iris_dataset, 5, proba=True, use_index=use_index
@@ -923,6 +999,25 @@ class TestMakePrediction:
         assert 2 == results.ndim
         assert np.all((results <= 1) & (results >= 0))
         assert np.all(np.sum(results, axis=1) == 1)
+        assert results.index == pd.RangeIndex(
+            start=expected_index, stop=expected_index + 1, step=1
+        )
+
+    @pytest.mark.parametrize("use_index, expected_index", [(False, 0), (True, 5)])
+    def test_make_prediction_returns_prediction_if_threshold_is_specified(
+        self,
+        classifier: Model,
+        use_index: bool,
+        expected_index: int,
+        train_iris_dataset: Dataset,
+    ):
+        results = classifier.make_prediction(
+            train_iris_dataset, 5, threshold=0.6, use_index=use_index
+        )
+        assert isinstance(results, pd.DataFrame)
+        assert 2 == results.ndim
+        assert np.all((results == 1) | (results == 0))
+        assert np.all(np.sum(results, axis=1) == 0)
         assert results.index == pd.RangeIndex(
             start=expected_index, stop=expected_index + 1, step=1
         )

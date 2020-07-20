@@ -1,11 +1,11 @@
 import abc
 import logging
+import pathlib
 from typing import Tuple
 
 import pandas as pd
-from ml_tooling.data.base_data import Dataset
-import pathlib
 
+from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import Pathlike, DatasetError, DataType
 
 logger = logging.getLogger("ml_tooling")
@@ -20,16 +20,6 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
     FileDataset takes a path as its initialization argument, pointing to a file which must be a
     filetype supported by Pandas, such as csv, parquet etc. The extension determines the
     pandas method used to read and write the data
-
-
-    Methods
-    -------
-    load_prediction_data(idx, conn)
-        Used to load prediction data for a given idx - returns features
-
-    load_training_data(conn)
-        Used to load the full training dataset - returns features and targets
-
     """
 
     def __init__(self, path: Pathlike):
@@ -49,13 +39,13 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
         self.extension = self.file_path.suffix[1:]
 
     @abc.abstractmethod
-    def load_training_data(
-        self, conn, *args, **kwargs
-    ) -> Tuple[pd.DataFrame, DataType]:
+    def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
+        """Used to load the full training dataset - returns features and targets"""
         raise NotImplementedError
 
     @abc.abstractmethod
-    def load_prediction_data(self, conn, *args, **kwargs) -> pd.DataFrame:
+    def load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
+        """Used to load prediction data for a given idx - returns features"""
         raise NotImplementedError
 
     def _dump_data(self, **kwargs) -> pd.DataFrame:

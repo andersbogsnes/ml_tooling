@@ -1,6 +1,8 @@
 """
 Test file for visualisations
 """
+from unittest.mock import MagicMock
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,9 +23,9 @@ from ml_tooling.plots import (
     plot_pr_curve,
     plot_feature_importance,
 )
+from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
+from ml_tooling.transformers import ToCategorical, DFStandardScaler
 from ml_tooling.utils import VizError
-from ml_tooling.result.viz import RegressionVisualize, ClassificationVisualize
-from ml_tooling.transformers import ToCategorical
 
 
 class TestVisualize:
@@ -81,6 +83,19 @@ class TestConfusionMatrixPlot:
         assert "Predicted Label" == ax.get_xlabel()
         plt.close()
 
+    def test_confusion_matrix_plots_have_correct_data_with_threshold(
+        self, classifier: Model
+    ):
+        ax = classifier.result.plot.confusion_matrix(threshold=0.70)
+
+        assert "Confusion Matrix - LogisticRegression - Normalized" == ax.title._text
+        result = [text._text for text in ax.texts]
+        assert pytest.approx(1) == np.round(np.sum([float(x) for x in result]), 1)
+        assert {"0.34", "0.66", "0.00"} == set(result)
+        assert "True Label" == ax.get_ylabel()
+        assert "Predicted Label" == ax.get_xlabel()
+        plt.close()
+
     def test_confusion_matrix_plots_have_correct_data_when_not_normalized(
         self, classifier: Model
     ):
@@ -101,8 +116,8 @@ class TestConfusionMatrixPlot:
         )
 
         assert "Confusion Matrix - Normalized" == ax.title._text
-        assert ["", "Pos", "Neg", ""] == [x._text for x in ax.get_xticklabels()]
-        assert ["", "Pos", "Neg", ""] == [y._text for y in ax.get_yticklabels()]
+        assert ["Pos", "Neg"] == [x._text for x in ax.get_xticklabels()]
+        assert ["Pos", "Neg"] == [y._text for y in ax.get_yticklabels()]
         plt.close()
 
 
@@ -322,6 +337,7 @@ class TestFeatureImportancePlot:
         data = IrisData().create_train_test()
         result = Model(RandomForestClassifier(n_estimators=2)).score_estimator(data)
         assert result.plot.feature_importance()
+        plt.close()
 
     def test_can_use_different_scoring_metrics(self, classifier: Model):
         ax = classifier.result.plot.feature_importance(
@@ -334,6 +350,7 @@ class TestFeatureImportancePlot:
             ax.get_xlabel()
             == "Permuted Feature Importance (Roc_Auc) Relative to Baseline"
         )
+        plt.close()
 
     def test_can_use_feature_importance_with_regressor(self, regression: Model):
         ax = regression.result.plot.feature_importance()
@@ -341,6 +358,7 @@ class TestFeatureImportancePlot:
         assert (
             ax.get_xlabel() == "Permuted Feature Importance (R2) Relative to Baseline"
         )
+        plt.close()
 
     def test_plot_feature_importance_with_default_metrics(self, classifier: Model):
         ax = plot_feature_importance(
@@ -352,6 +370,7 @@ class TestFeatureImportancePlot:
             ax.get_xlabel()
             == "Permuted Feature Importance (Accuracy) Relative to Baseline"
         )
+        plt.close()
 
 
 class TestLiftCurvePlot:
@@ -378,6 +397,7 @@ class TestLiftCurvePlot:
         proba = clf.predict_proba(x)
         with pytest.raises(VizError):
             plot_lift_curve(y, proba)
+        plt.close()
 
 
 class TestPredictionErrorPlot:
@@ -448,6 +468,7 @@ class TestRocCurve:
         result = svc.score_estimator(train_iris_dataset)
         with pytest.raises(VizError):
             result.plot.roc_curve()
+        plt.close()
 
 
 class TestPRCurve:
@@ -506,6 +527,7 @@ class TestLearningCurve:
             test_ax.lines[0].get_xdata().max()
             == (len(classifier.result.data.train_x) * 4) // 5
         )
+        plt.close()
 
     def test_learning_curve_can_use_different_scoring_parameters(
         self, classifier: Model
@@ -514,6 +536,7 @@ class TestLearningCurve:
         assert test_ax.get_ylabel() == "Roc_Auc Score"
         assert test_ax.get_legend().texts[0].get_text() == "Training Roc_Auc"
         assert test_ax.get_legend().texts[1].get_text() == "Cross-validated Roc_Auc"
+        plt.close()
 
 
 class TestValidationCurve:
@@ -537,12 +560,14 @@ class TestValidationCurve:
         assert test_ax.lines[0].get_xdata().min() == 0.001
         assert test_ax.get_legend().texts[0].get_text() == "Training Accuracy"
         assert test_ax.get_legend().texts[1].get_text() == "Test Accuracy"
+        plt.close()
 
     def test_validation_curve_plot_can_multiprocess(self, classifier: Model):
         param_range = [0.001, 0.01, 0.01, 0.1, 1]
         assert classifier.result.plot.validation_curve(
             param_name="C", param_range=param_range, n_jobs=-1
         )
+        plt.close()
 
     def test_validation_curve_can_plot_other_metrics(self, classifier: Model):
         param_range = [0.001, 0.01, 0.01, 0.1, 1]
@@ -553,9 +578,31 @@ class TestValidationCurve:
         assert test_ax.get_ylabel() == "Roc_Auc Score"
         assert test_ax.get_legend().texts[0].get_text() == "Training Roc_Auc"
         assert test_ax.get_legend().texts[1].get_text() == "Test Roc_Auc"
+        plt.close()
 
 
 class TestTargetCorrelation:
+    def test_target_correlation_can_pass_pipeline(self, train_iris_dataset: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = train_iris_dataset.plot.target_correlation(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == [
+            "0.01",
+            "0.02",
+            "0.12",
+            "-0.48",
+        ]
+        plt.close()
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
+        plt.close()
+
     def test_target_correlation_works_as_expected(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation()
 
@@ -565,9 +612,11 @@ class TestTargetCorrelation:
             "0.12",
             "-0.48",
         ]
+
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
+        plt.close()
 
     def test_target_correlation_works_with_different_methods(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(method="pearson")
@@ -581,6 +630,7 @@ class TestTargetCorrelation:
         assert ax.title.get_text() == "Feature-Target Correlation"
         assert ax.get_xlabel() == "Pearson Correlation"
         assert ax.get_ylabel() == "Feature Labels"
+        plt.close()
 
     def test_target_correlation_works_with_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(top_n=2)
@@ -588,6 +638,7 @@ class TestTargetCorrelation:
         assert ax.title.get_text() == "Feature-Target Correlation - Top 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
+        plt.close()
 
     def test_target_correlation_works_with_bottom_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=2)
@@ -595,6 +646,7 @@ class TestTargetCorrelation:
         assert ax.title.get_text() == "Feature-Target Correlation - Bottom 2"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
+        plt.close()
 
     def test_target_correlation_works_with_bottom_n_and_top_n(self, train_iris_dataset):
         ax = train_iris_dataset.plot.target_correlation(bottom_n=1, top_n=1)
@@ -602,6 +654,7 @@ class TestTargetCorrelation:
         assert ax.title.get_text() == "Feature-Target Correlation - Top 1 - Bottom 1"
         assert ax.get_xlabel() == "Spearman Correlation"
         assert ax.get_ylabel() == "Feature Labels"
+        plt.close()
 
     def test_target_correlation_plots_can_be_given_an_ax(self, train_iris_dataset):
         fig, ax = plt.subplots()
@@ -618,7 +671,26 @@ class TestMissingDataViz:
 
     @pytest.fixture()
     def ax(self, missing_data):
-        return missing_data.plot.missing_data()
+        axis = missing_data.plot.missing_data()
+        axis.figure.canvas.draw()
+        yield axis
+        plt.close()
+
+    def test_missing_data_can_pass_pipeline(self, missing_data: Dataset):
+        pipeline = Pipeline([("scaler", DFStandardScaler())])
+        ax = missing_data.plot.missing_data(feature_pipeline=pipeline)
+        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+        plt.close()
+
+    def test_target_correlation_uses_pipeline_when_passed(
+        self, train_iris_dataset: Dataset
+    ):
+        mock = MagicMock(spec=Pipeline)
+        mock.fit_transform.return_value = train_iris_dataset.x
+
+        train_iris_dataset.plot.target_correlation(feature_pipeline=mock)
+        mock.fit_transform.assert_called_once_with(train_iris_dataset.x)
+        plt.close()
 
     def test_missing_data_text_labels_are_correct(self, ax):
         assert [text.get_text() for text in ax.texts] == ["2.0%"]
@@ -630,8 +702,6 @@ class TestMissingDataViz:
         assert ax.get_xlabel() == "Percent Missing Data"
 
     def test_xticklabels_are_correct(self, ax):
-        # Must trigger rendering before labels are accessible
-        ax.figure.canvas.draw()
         assert [text.get_text() for text in ax.get_xticklabels()] == [
             "0.00%",
             "0.50%",
@@ -650,3 +720,4 @@ class TestMissingDataViz:
     def test_can_call_missing_data_with_no_missing_values(self, train_boston_dataset):
         ax = train_boston_dataset.plot.missing_data()
         assert ax.patches == []
+        plt.close()

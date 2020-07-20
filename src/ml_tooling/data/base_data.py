@@ -3,9 +3,10 @@ from typing import Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from ml_tooling.utils import DataType, DatasetError
 from sklearn.utils import indexable
-from ml_tooling.data.viz import DataVisualize
+
+from ml_tooling.plots.viz import DataVisualize
+from ml_tooling.utils import DataType, DatasetError
 
 
 class Dataset(metaclass=abc.ABCMeta):
@@ -17,10 +18,10 @@ class Dataset(metaclass=abc.ABCMeta):
 
     _x: Optional[pd.DataFrame] = None
     _y: Optional[DataType] = None
-    test_x: Optional[pd.DataFrame] = None
-    test_y: Optional[DataType] = None
-    train_y: Optional[DataType] = None
     train_x: Optional[pd.DataFrame] = None
+    test_x: Optional[pd.DataFrame] = None
+    train_y: Optional[DataType] = None
+    test_y: Optional[DataType] = None
     cached_data: Optional[pd.DataFrame] = None
 
     @property
@@ -67,6 +68,7 @@ class Dataset(metaclass=abc.ABCMeta):
             test_size=test_size,
             random_state=seed,
         )
+
         return self
 
     @property

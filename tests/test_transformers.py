@@ -8,6 +8,7 @@ from sklearn.model_selection import cross_val_score, GridSearchCV
 from sklearn.pipeline import make_pipeline, Pipeline
 
 from ml_tooling import Model
+from ml_tooling.data import Dataset
 from ml_tooling.result import Result
 from ml_tooling.utils import TransformerError
 from ml_tooling.transformers import (
@@ -23,32 +24,32 @@ from ml_tooling.transformers import (
     DFFeatureUnion,
     DFRowFunc,
     Binarize,
+    RareFeatureEncoder,
 )
 
 
-class TransformerBase:
-    @staticmethod
-    def create_pipeline(transformer) -> Pipeline:
-        pipe = Pipeline([("transform", transformer), ("clf", DummyClassifier())])
-        return pipe
-
-    def create_model(self, transformer) -> Model:
-        pipe = self.create_pipeline(transformer)
-        model = Model(pipe)
-        model.config.N_JOBS = 2
-        return model
-
-    def create_gridsearch(self, transformer) -> GridSearchCV:
-        pipe = self.create_pipeline(transformer)
-        return GridSearchCV(
-            pipe,
-            param_grid={"clf__strategy": ["stratified", "most_frequent"]},
-            cv=2,
-            iid=False,
-        )
+def create_pipeline(transformer) -> Pipeline:
+    pipe = Pipeline(
+        [("transform", transformer), ("clf", DummyClassifier(strategy="prior"))]
+    )
+    return pipe
 
 
-class TestDFSelector(TransformerBase):
+def create_model(transformer) -> Model:
+    pipe = Pipeline([("transform", transformer)])
+    model = Model(DummyClassifier(strategy="prior"), feature_pipeline=pipe)
+    model.config.N_JOBS = 2
+    return model
+
+
+def create_gridsearch(transformer) -> GridSearchCV:
+    pipe = create_pipeline(transformer)
+    return GridSearchCV(
+        pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
+    )
+
+
+class TestDFSelector:
     @pytest.mark.parametrize(
         "container", [["category_a"], "category_a", ("category_a",)]
     )
@@ -79,18 +80,18 @@ class TestDFSelector(TransformerBase):
             select.fit_transform(categorical)
 
     def test_df_selector_works_cross_validated(self, train_iris_dataset):
-        model = self.create_model(Select("sepal length (cm)"))
+        model = create_model(Select("sepal length (cm)"))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_df_selector_works_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(Select("sepal length (cm)"))
+        grid = create_gridsearch(Select("sepal length (cm)"))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestFillNA(TransformerBase):
+class TestFillNA:
     @pytest.mark.parametrize("value, strategy", [(None, None), (0, "mean")])
     def test_fillna_raises_error(self, numerical_na: pd.DataFrame, value, strategy):
         with pytest.raises(TransformerError):
@@ -222,12 +223,12 @@ class TestFillNA(TransformerBase):
         pd.testing.assert_frame_equal(result, expected, check_categorical=False)
 
     def test_fillna_works_cross_validated(self, train_iris_dataset):
-        model = self.create_model(FillNA(0))
+        model = create_model(FillNA(0))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_fillna_works_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(FillNA(0))
+        grid = create_gridsearch(FillNA(0))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
@@ -264,7 +265,7 @@ class TestFillNA(TransformerBase):
         assert np, all(result["sales_isna"] == [0, 0, 0, 1])
 
 
-class TestToCategorical(TransformerBase):
+class TestToCategorical:
     def test_to_categorical_returns_correct_dataframe(self, categorical: pd.DataFrame):
         to_cat = ToCategorical()
         result = to_cat.fit_transform(categorical)
@@ -305,18 +306,18 @@ class TestToCategorical(TransformerBase):
         assert set(expected_cols) == set(result.columns)
 
     def test_to_categorical_works_in_cv(self, train_iris_dataset):
-        model = self.create_model(ToCategorical())
+        model = create_model(ToCategorical())
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_to_categorical_works_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(ToCategorical())
+        grid = create_gridsearch(ToCategorical())
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestBinner(TransformerBase):
+class TestBinner:
     def test_binner_returns_correctly(self, numerical: pd.DataFrame):
         labels = ["1", "2", "3", "4"]
         binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
@@ -341,18 +342,18 @@ class TestBinner(TransformerBase):
         assert len(new_data) == result.isna().sum().sum()
 
     def test_binner_can_be_used_cv(self, train_iris_dataset):
-        model = self.create_model(Binner(3))
+        model = create_model(Binner(3))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_binner_works_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(Binner(3))
+        grid = create_gridsearch(Binner(3))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestRenamer(TransformerBase):
+class TestRenamer:
     def test_renamer_returns_correctly(self, numerical: pd.DataFrame):
         new_col_names = ["test_a", "test_b"]
         renamer = Renamer(new_col_names)
@@ -380,18 +381,18 @@ class TestRenamer(TransformerBase):
             renamer.fit_transform(numerical)
 
     def test_renamer_works_in_cv(self, train_iris_dataset):
-        model = self.create_model(Renamer(["1", "2", "3", "4"]))
+        model = create_model(Renamer(["1", "2", "3", "4"]))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_renamer_works_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(Renamer(["1", "2", "3", "4"]))
+        grid = create_gridsearch(Renamer(["1", "2", "3", "4"]))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestDateEncoder(TransformerBase):
+class TestDateEncoder:
     def test_date_encoder_returns_correctly(self, dates: pd.DataFrame):
         date_coder = DateEncoder()
         result = date_coder.fit_transform(dates)
@@ -456,23 +457,20 @@ class TestDateEncoder(TransformerBase):
         assert "date_a_week" in result.columns
 
     def test_date_encoder_works_in_cv(self, dates: pd.DataFrame):
-        pipe = self.create_pipeline(DateEncoder())
-        score = cross_val_score(pipe, dates, [0, 1, 1], n_jobs=2, cv=2)
+        pipe = create_pipeline(DateEncoder())
+        score = cross_val_score(pipe, dates, y=[0, 0, 1, 1], n_jobs=2, cv=2)
         assert 2 == len(score)
 
     def test_date_encoder_works_in_grid_search(self, dates: pd.DataFrame):
-        pipe = self.create_pipeline(DateEncoder())
+        pipe = create_pipeline(DateEncoder())
         grid = GridSearchCV(
-            pipe,
-            param_grid={"clf__strategy": ["stratified", "most_frequent"]},
-            cv=2,
-            iid=False,
+            pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
         )
-        grid.fit(dates, [0, 1, 1])
+        grid.fit(dates, [0, 0, 1, 1])
         assert hasattr(grid, "best_score_")
 
 
-class TestFreqFeature(TransformerBase):
+class TestFreqFeature:
     def test_freqfeature_returns_correctly(self, categorical: pd.DataFrame):
         freq_feature = FreqFeature()
         result = freq_feature.fit_transform(categorical)
@@ -514,12 +512,12 @@ class TestFreqFeature(TransformerBase):
     def test_freq_feature_can_be_used_in_cross_validation_string_data(
         self, categorical: pd.DataFrame
     ):
-        pipe = self.create_pipeline(FreqFeature())
+        pipe = create_pipeline(FreqFeature())
         score = cross_val_score(pipe, categorical, np.array([1, 0, 1, 0]), cv=2)
         assert np.all(score >= 0)
 
     def test_freq_feature_can_be_used_in_grid_search(self, categorical: pd.DataFrame):
-        pipe = self.create_pipeline(FreqFeature())
+        pipe = create_pipeline(FreqFeature())
         model = GridSearchCV(
             pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2
         )
@@ -527,7 +525,7 @@ class TestFreqFeature(TransformerBase):
         assert hasattr(model, "best_estimator_")
 
 
-class TestFeatureUnion(TransformerBase):
+class TestFeatureUnion:
     def test_featureunion_returns_concatenated_df(
         self, categorical: pd.DataFrame, numerical: pd.DataFrame
     ):
@@ -546,7 +544,7 @@ class TestFeatureUnion(TransformerBase):
         assert len(df) == len(transform_df)
 
 
-class TestStandardScaler(TransformerBase):
+class TestStandardScaler:
     def test_can_reset_scaler_parameters(self):
         scaler = DFStandardScaler()
         scaler.scale_ = 0.7
@@ -605,18 +603,18 @@ class TestStandardScaler(TransformerBase):
         pd.testing.assert_frame_equal(result, numerical_scaled)
 
     def test_standard_scaler_works_in_cv(self, train_iris_dataset):
-        model = self.create_model(DFStandardScaler())
+        model = create_model(DFStandardScaler())
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_standard_scaler_works_in_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(DFStandardScaler())
+        grid = create_gridsearch(DFStandardScaler())
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestDFRowFunc(TransformerBase):
+class TestDFRowFunc:
     @pytest.mark.parametrize(
         "strategy, match",
         [
@@ -653,12 +651,12 @@ class TestDFRowFunc(TransformerBase):
         pd.testing.assert_frame_equal(result, expected)
 
     def test_dfrowfunc_cross_validates_correctly(self, train_iris_dataset):
-        model = self.create_model(DFRowFunc(strategy="mean"))
+        model = create_model(DFRowFunc(strategy="mean"))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_dfrowfunc_works_in_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(DFRowFunc(strategy="mean"))
+        grid = create_gridsearch(DFRowFunc(strategy="mean"))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
@@ -708,7 +706,7 @@ def test_func_transformer_returns_correctly_numerical(
     pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
 
-class TestFuncTransformer(TransformerBase):
+class TestFuncTransformer:
     def test_func_transformer_returns_correctly_on_categorical(
         self, categorical: pd.DataFrame
     ):
@@ -721,18 +719,18 @@ class TestFuncTransformer(TransformerBase):
             assert result[col].str.isupper().all()
 
     def test_func_transformer_can_be_validated(self, train_iris_dataset):
-        model = self.create_model(FuncTransformer(np.sum))
+        model = create_model(FuncTransformer(np.sum))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_func_transformer_works_in_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(FuncTransformer(np.mean))
+        grid = create_gridsearch(FuncTransformer(np.mean))
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
 
-class TestBinarize(TransformerBase):
+class TestBinarize:
     def test_binarize_returns_correctly_on_categorical_na(
         self, categorical_na: pd.DataFrame
     ):
@@ -754,12 +752,106 @@ class TestBinarize(TransformerBase):
         pd.testing.assert_frame_equal(expected, result, check_dtype=False)
 
     def test_binarize_can_be_used_cv(self, train_iris_dataset):
-        model = self.create_model(Binarize(value="a1"))
+        model = create_model(Binarize(value=1))
         result = model.score_estimator(train_iris_dataset, cv=2)
         assert isinstance(result, Result)
 
     def test_binarize_works_in_gridsearch(self, train_iris_dataset):
-        grid = self.create_gridsearch(Binarize(value=2))
+        grid = create_gridsearch(Binarize(value=2))
+        model = Model(grid)
+        result = model.score_estimator(train_iris_dataset)
+        assert isinstance(result, Result)
+
+
+class TestRareFeatureEncoder:
+    @pytest.fixture
+    def rare(self) -> RareFeatureEncoder:
+        return RareFeatureEncoder(threshold=2, fill_rare="Rare")
+
+    @pytest.fixture
+    def categorical_int_and_string(self) -> pd.DataFrame:
+        return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
+
+    def test_rare_feature_encoder_that_transformed_data_and_input_data_same_shape(
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
+    ):
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [1, 1, 1, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+        assert new_data.shape == result.shape
+
+    def test_rare_feature_encoder_returns_correctly_dataframe(
+        self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame
+    ):
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame(
+            {
+                "categorical": [2, 2, 2, "a", "b", "b", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame(
+            {
+                "categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", 3],
+                "numerical": [1, 2, 3, 4, 5, 6, 7],
+            }
+        )
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_doesnt_count_nans(self, rare: RareFeatureEncoder):
+        data = pd.DataFrame(
+            {
+                "categorical": [1, "a", "a", 2, "b", np.nan],
+                "numerical": [1, 2, 2, 3, 3, 3],
+            }
+        )
+        rare.fit(data)
+
+        new_data = pd.DataFrame({"categorical": [1, 1, 1, "a", "b", "b", np.nan]})
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame(
+            {"categorical": ["Rare", "Rare", "Rare", "a", "Rare", "Rare", np.nan]}
+        )
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_correctly_counts_rare_when_given_percent_threshold(
+        self, categorical_int_and_string: pd.DataFrame
+    ):
+        rare = RareFeatureEncoder(threshold=0.2, fill_rare=99)
+
+        rare.fit(categorical_int_and_string)
+
+        new_data = pd.DataFrame({"categorical": [1, "a", "b", "b", 2]})
+
+        result = rare.transform(new_data)
+
+        expected = pd.DataFrame({"categorical": [1, "a", 99, 99, 99]})
+
+        pd.testing.assert_frame_equal(expected, result)
+
+    def test_rare_feature_encoder_can_be_used_cv(
+        self, train_iris_dataset: Dataset, rare: RareFeatureEncoder
+    ):
+        model = create_model(rare)
+        result = model.score_estimator(train_iris_dataset, cv=2)
+        assert isinstance(result, Result)
+
+    def test_rare_feature_encoder_works_gridsearch(
+        self, train_iris_dataset: Dataset, rare: RareFeatureEncoder
+    ):
+        grid = create_gridsearch(rare)
         model = Model(grid)
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)

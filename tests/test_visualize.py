@@ -116,8 +116,8 @@ class TestConfusionMatrixPlot:
         )
 
         assert "Confusion Matrix - Normalized" == ax.title._text
-        assert ["", "Pos", "Neg", ""] == [x._text for x in ax.get_xticklabels()]
-        assert ["", "Pos", "Neg", ""] == [y._text for y in ax.get_yticklabels()]
+        assert ["Pos", "Neg"] == [x._text for x in ax.get_xticklabels()]
+        assert ["Pos", "Neg"] == [y._text for y in ax.get_yticklabels()]
         plt.close()
 
 
@@ -702,8 +702,6 @@ class TestMissingDataViz:
         assert ax.get_xlabel() == "Percent Missing Data"
 
     def test_xticklabels_are_correct(self, ax):
-        # Must trigger rendering before labels are accessible
-
         assert [text.get_text() for text in ax.get_xticklabels()] == [
             "0.00%",
             "0.50%",

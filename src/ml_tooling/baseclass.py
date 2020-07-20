@@ -430,7 +430,7 @@ class Model:
         cv = cv if cv else None
 
         if cv:
-            cv = check_cv(cv, data.train_y, self.is_classifier)
+            cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
 
         logger.info("Scoring estimator...")
 

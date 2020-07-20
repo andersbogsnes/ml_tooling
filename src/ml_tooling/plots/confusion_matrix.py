@@ -61,8 +61,9 @@ def plot_confusion_matrix(
     ax.set_ylabel("True Label")
     ax.set_xlabel("Predicted Label")
 
-    labels.insert(0, "")
     ax.set_title(title)
+    ax.set_xticks(np.arange(len(labels)))
+    ax.set_yticks(np.arange(len(labels)))
     ax.set_yticklabels(labels)
     ax.set_xticklabels(labels)
     ax.xaxis.set_ticks_position("bottom")

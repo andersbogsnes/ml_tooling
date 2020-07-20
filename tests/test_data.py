@@ -7,11 +7,13 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import load_iris
+from sklearn.pipeline import Pipeline
 from sqlalchemy.exc import DBAPIError
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.data.load_demo import load_demo_dataset
+from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import DatasetError, DataType
 
 from sklearn.linear_model import LogisticRegression
@@ -171,7 +173,7 @@ class TestSqlDataset:
     ):
         class FailingDataset(boston_sqldataset):
             def load_training_data(self, *args, **kwargs):
-                return pd.DataFrame(), pd.Series()
+                return pd.DataFrame(dtype="object"), pd.Series(dtype="object")
 
         with pytest.raises(
             DatasetError, match="An empty dataset was returned by load_training_data"
@@ -272,7 +274,7 @@ class TestFileDataset:
     ):
         class FailingDataset(boston_filedataset):
             def load_training_data(self, *args, **kwargs):
-                return pd.DataFrame(), pd.Series()
+                return pd.DataFrame(dtype="object"), pd.Series(dtype="object")
 
         with pytest.raises(
             DatasetError, match="An empty dataset was returned by load_training_data"
@@ -346,7 +348,8 @@ class TestDemoDatasetModule:
     def test_load_prediction_data_works_as_expected(self):
         dataset = load_demo_dataset("iris")
         dataset.create_train_test(stratify=True)
-        model = Model(LogisticRegression())
+        feature_pipeline = Pipeline([("scale", DFStandardScaler())])
+        model = Model(LogisticRegression(), feature_pipeline=feature_pipeline)
         model.train_estimator(dataset)
         result = model.make_prediction(dataset, 5)
 

@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
-import scipy.stats as stats
 import yaml
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyClassifier
@@ -724,7 +723,9 @@ class TestRandomSearch:
     ):
         model = Model(pipeline_logistic)
         model, results = model.randomsearch(
-            train_iris_dataset, param_distributions={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset,
+            param_distributions={"clf__penalty": ["l1", "l2"]},
+            n_iter=2,
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
@@ -760,7 +761,7 @@ class TestRandomSearch:
 
     def test_prepare_randomsearch_estimators_has_different_parameters(self):
         estimators = prepare_randomsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
+            LogisticRegression(), params={"penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -772,7 +773,7 @@ class TestRandomSearch:
         pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
 
         estimators = prepare_randomsearch_estimators(
-            pipe, params={"clf__penalty": ["l2", "l1"]}
+            pipe, params={"clf__penalty": ["l2", "l1"]}, n_iter=2
         )
 
         for estimator, penalty in zip(estimators, ["l2", "l1"]):
@@ -798,9 +799,9 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         param_dist = {
-            "l1_ratio": stats.uniform(0, 1),
             "C": loguniform(1e-4, 1e0),
         }
+
         model, results = classifier.randomsearch(
             train_iris_dataset, param_distributions=param_dist, n_iter=2
         )

@@ -34,7 +34,8 @@ def dates() -> pd.DataFrame:
     return pd.DataFrame(
         {
             "date_a": pd.to_datetime(
-                ["2018-01-01", "2018-02-01", "2018-03-01"], format="%Y-%m-%d"
+                ["2018-01-01", "2018-02-01", "2018-03-01", "2018-04-01"],
+                format="%Y-%m-%d",
             )
         }
     )

@@ -129,7 +129,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_feature_importance_plots_have_correct_data(self, classifier: Model):
-        ax = classifier.result.plot.feature_importance(random_state=42)
+        ax = classifier.result.plot.feature_importance()
 
         expected = {"0.04", "0.06", "0.10", "-0.03"}
         assert {text.get_text() for text in ax.texts} == expected
@@ -161,7 +161,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_set(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(top_n=2, random_state=42)
+        ax = classifier.result.plot.feature_importance(top_n=2)
         assert 2 == len(ax.texts)
         assert {text.get_text() for text in ax.texts} == {"0.10", "0.06"}
 
@@ -179,7 +179,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_labels_when_top_n_is_percent(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(top_n=0.2, random_state=42)
+        ax = classifier.result.plot.feature_importance(top_n=0.2)
         assert len(ax.texts) == 1
         assert {text.get_text() for text in ax.texts} == {"0.10"}
 
@@ -197,7 +197,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_int(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(bottom_n=2, random_state=42)
+        ax = classifier.result.plot.feature_importance(bottom_n=2)
         assert len(ax.texts) == 2
         assert {text.get_text() for text in ax.texts} == {"0.04", "-0.03"}
 
@@ -215,7 +215,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_percent(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(bottom_n=0.2, random_state=42)
+        ax = classifier.result.plot.feature_importance(bottom_n=0.2)
         assert len(ax.texts) == 1
         assert {text.get_text() for text in ax.texts} == {"-0.03"}
 
@@ -233,9 +233,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(
-            top_n=1, bottom_n=1, random_state=42
-        )
+        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
         assert len(ax.texts) == 2
         assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
         assert ax.get_ylabel() == "Feature Labels"
@@ -252,9 +250,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(
-            top_n=1, bottom_n=0.2, random_state=42
-        )
+        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=0.2)
         assert 2 == len(ax.texts)
         assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
         assert ax.get_ylabel() == "Feature Labels"
@@ -271,9 +267,7 @@ class TestFeatureImportancePlot:
     def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(
         self, classifier: Model
     ):
-        ax = classifier.result.plot.feature_importance(
-            top_n=0.2, bottom_n=1, random_state=42
-        )
+        ax = classifier.result.plot.feature_importance(top_n=0.2, bottom_n=1)
         assert len(ax.texts) == 2
         assert {text.get_text() for text in ax.texts} == {"-0.03", "0.10"}
         assert ax.get_ylabel() == "Feature Labels"
@@ -340,9 +334,7 @@ class TestFeatureImportancePlot:
         plt.close()
 
     def test_can_use_different_scoring_metrics(self, classifier: Model):
-        ax = classifier.result.plot.feature_importance(
-            scoring="roc_auc", random_state=42
-        )
+        ax = classifier.result.plot.feature_importance(scoring="roc_auc")
         assert (
             ax.title.get_text() == "Feature Importances (Roc_Auc) - LogisticRegression"
         )
@@ -516,7 +508,7 @@ class TestLearningCurve:
         plt.close()
 
     def test_learning_curve_plots_have_correct_elements(self, classifier: Model):
-        test_ax = classifier.result.plot.learning_curve()
+        test_ax = classifier.result.plot.learning_curve(cv=5)
         assert test_ax.title.get_text() == "Learning Curve - LogisticRegression"
         assert test_ax.get_ylabel() == "Accuracy Score"
         assert test_ax.get_xlabel() == "Number of Examples Used"

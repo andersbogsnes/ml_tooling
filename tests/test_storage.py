@@ -90,8 +90,10 @@ class TestFileStorage:
         assert estimators[-1] == paths[3]
 
     def test_raise_when_non_dir(self, classifier: Model, tmp_path: pathlib.Path):
+        path = tmp_path / "file.txt"
+        path.write_text("test")
         with pytest.raises(MLToolingError, match="which is not a directory"):
-            _ = FileStorage("/not/a/dir.file")
+            FileStorage(path)
 
     def test_cannot_instantiate_an_abstract_baseclass(self):
         with pytest.raises(TypeError):

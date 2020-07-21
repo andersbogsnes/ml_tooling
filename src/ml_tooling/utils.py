@@ -118,7 +118,7 @@ def _get_estimator_name(clf: Estimator) -> str:
     return class_name
 
 
-def listify(collection) -> list:
+def listify(collection: Any) -> List:
     """
     Takes a given collection and returns a list of the elements, handling strings correctly
 
@@ -140,7 +140,7 @@ def listify(collection) -> list:
     return collection
 
 
-def _validate_estimator(estimator: Estimator):
+def _validate_estimator(estimator: Estimator) -> Estimator:
     """
     Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
     or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`

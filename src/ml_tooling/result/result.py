@@ -32,10 +32,8 @@ class Result:
     @property
     def plot(self):
         if self.model.is_classifier:
-            return ClassificationVisualize(
-                self.model.estimator, self.data, self.model.config
-            )
-        return RegressionVisualize(self.model.estimator, self.data, self.model.config)
+            return ClassificationVisualize(self.model.estimator, self.data)
+        return RegressionVisualize(self.model.estimator, self.data)
 
     @classmethod
     def from_model(

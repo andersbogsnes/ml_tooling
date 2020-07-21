@@ -11,7 +11,7 @@ from ml_tooling.plots import (
 )
 from ml_tooling.utils import _get_estimator_name
 from sklearn.base import is_classifier
-from ml_tooling.config import MPL_STYLESHEET
+from ml_tooling.config import MPL_STYLESHEET, config
 
 
 class BaseVisualize:
@@ -19,10 +19,9 @@ class BaseVisualize:
     Base class for visualizers
     """
 
-    def __init__(self, estimator, data, config):
+    def __init__(self, estimator, data):
         self._estimator = estimator
         self._estimator_name = _get_estimator_name(estimator)
-        self._config = config
         self._data = data
 
     @property
@@ -40,9 +39,9 @@ class BaseVisualize:
         """
 
         return (
-            self._config.CLASSIFIER_METRIC
+            config.CLASSIFIER_METRIC
             if is_classifier(self._estimator)
-            else self._config.REGRESSION_METRIC
+            else config.REGRESSION_METRIC
         )
 
     def feature_importance(
@@ -53,7 +52,6 @@ class BaseVisualize:
         bottom_n: Union[int, float] = None,
         add_label: bool = True,
         n_jobs: int = None,
-        random_state: int = None,
         ax: Axes = None,
         **kwargs,
     ) -> Axes:
@@ -84,9 +82,6 @@ class BaseVisualize:
             Overwrites N_JOBS from settings. Useful if data is to big to fit
             in memory multiple times.
 
-        random_state: int
-            Random state to be used when permuting features,
-
         ax: Axes
             Draws graph on passed ax - otherwise creates new ax
 
@@ -98,7 +93,7 @@ class BaseVisualize:
             matplotlib.Axes
         """
 
-        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
+        n_jobs = config.N_JOBS if n_jobs is None else n_jobs
         scoring = self.default_metric if scoring == "default" else scoring
         title = f"Feature Importances ({scoring.title()}) - {self._estimator_name}"
 
@@ -110,7 +105,7 @@ class BaseVisualize:
                 scoring=scoring,
                 n_repeats=n_repeats,
                 n_jobs=n_jobs,
-                random_state=random_state,
+                random_state=config.RANDOM_STATE,
                 ax=ax,
                 top_n=top_n,
                 bottom_n=bottom_n,
@@ -121,7 +116,7 @@ class BaseVisualize:
 
     def learning_curve(
         self,
-        cv: int = 5,
+        cv: int = None,
         scoring: str = "default",
         n_jobs: int = None,
         train_sizes: Sequence[float] = np.linspace(0.1, 1.0, 5),
@@ -158,7 +153,8 @@ class BaseVisualize:
         """
 
         title = f"Learning Curve - {self._estimator_name}"
-        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
+        n_jobs = config.N_JOBS if n_jobs is None else n_jobs
+        cv = config.CROSS_VALIDATION if cv is None else cv
 
         with plt.style.context(MPL_STYLESHEET):
             ax = plot_learning_curve(
@@ -181,7 +177,7 @@ class BaseVisualize:
         param_name: str,
         param_range: Sequence,
         n_jobs: int = None,
-        cv: int = 5,
+        cv: int = None,
         scoring: str = "default",
         ax: Axes = None,
         **kwargs,
@@ -206,7 +202,8 @@ class BaseVisualize:
             Number of jobs to use in parallelizing the estimator fitting and scoring
 
         cv: int
-            Number of CV iterations to run. Uses a :class:`~sklearn.model_selection.StratifiedKFold`
+            Number of CV iterations to run. Defaults to value in `Model.config`.
+            Uses a :class:`~sklearn.model_selection.StratifiedKFold`
             if`estimator` is a classifier - otherwise a :class:`~sklearn.model_selection.KFold`
             is used.
 
@@ -225,7 +222,8 @@ class BaseVisualize:
         plt.Axes
 
         """
-        n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
+        n_jobs = config.N_JOBS if n_jobs is None else n_jobs
+        cv = config.CROSS_VALIDATION if cv is None else cv
         title = f"Validation Curve - {self._estimator_name}"
 
         with plt.style.context(MPL_STYLESHEET):

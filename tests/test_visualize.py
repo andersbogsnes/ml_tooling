@@ -402,7 +402,7 @@ class TestPredictionErrorPlot:
     def test_prediction_error_plots_have_correct_data(self, regression: Model):
         ax = regression.result.plot.prediction_error()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.model.estimator.predict(x)
+        y_pred = regression.result.estimator.predict(x)
 
         assert "Prediction Error - LinearRegression" == ax.title._text
         assert "$\\hat{y}$" == ax.get_ylabel()
@@ -423,7 +423,7 @@ class TestResidualPlot:
     def test_residual_plots_have_correct_data(self, regression: Model):
         ax = regression.result.plot.residuals()
         x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.model.estimator.predict(x)
+        y_pred = regression.result.estimator.predict(x)
         expected = y_pred - y
 
         assert "Residual Plot - LinearRegression" == ax.title._text

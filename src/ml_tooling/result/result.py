@@ -1,9 +1,11 @@
 import attr
+from sklearn.base import is_classifier
 
 from ml_tooling.data import Dataset
 from ml_tooling.logging.log_estimator import Log
 from ml_tooling.metrics import Metrics
 from ml_tooling.plots.viz import ClassificationVisualize, RegressionVisualize
+from ml_tooling.utils import Estimator, _get_estimator_name
 
 
 @attr.s(repr=False)
@@ -15,8 +17,8 @@ class Result:
     Parameters
     ----------
 
-    model: Model
-        Model used to generate the result
+    estimator: Estimator
+        Estimator used to generate the result
 
     metrics: Metrics
         Metrics used to score the model
@@ -25,15 +27,21 @@ class Result:
         Dataset used to generate the result
     """
 
-    model = attr.ib(eq=False)
+    estimator: Estimator = attr.ib(eq=False)
     metrics: Metrics = attr.ib()
     data: Dataset = attr.ib(eq=False)
 
     @property
     def plot(self):
-        if self.model.is_classifier:
-            return ClassificationVisualize(self.model.estimator, self.data)
-        return RegressionVisualize(self.model.estimator, self.data)
+        if is_classifier(self.estimator):
+            return ClassificationVisualize(self.estimator, self.data)
+        return RegressionVisualize(self.estimator, self.data)
+
+    @property
+    def model(self):
+        from ml_tooling import Model
+
+        return Model(self.estimator)
 
     @classmethod
     def from_model(
@@ -53,7 +61,7 @@ class Result:
                 estimator=model.estimator, x=data.test_x, y=data.test_y
             )
 
-        return cls(metrics=metrics, model=model, data=data)
+        return cls(metrics=metrics, estimator=model.estimator, data=data)
 
     def log(self, saved_estimator_path=None, savedir=None) -> Log:
         log = Log.from_result(result=self, estimator_path=saved_estimator_path)
@@ -65,4 +73,4 @@ class Result:
         metrics = {
             name: round(value, 2) for name, value in self.metrics.to_dict().items()
         }
-        return f"<Result {self.model.estimator_name}: {metrics}>"
+        return f"<Result {_get_estimator_name(self.estimator)}: {metrics}>"

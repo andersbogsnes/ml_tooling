@@ -26,11 +26,11 @@ from ml_tooling.utils import (
     _validate_estimator,
     Estimator,
     is_pipeline,
-    serialize_pipeline,
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
     _classify,
+    serialize_estimator,
 )
 
 logger = create_logger("ml_tooling")
@@ -224,16 +224,7 @@ class Model:
         -------
         List of dicts
         """
-        if self.is_pipeline:
-            return serialize_pipeline(self.estimator)
-
-        return [
-            {
-                "module": self.estimator.__class__.__module__,
-                "classname": self.estimator.__class__.__name__,
-                "params": self.estimator.get_params(),
-            }
-        ]
+        return serialize_estimator(self.estimator)
 
     @classmethod
     def from_yaml(cls, log_file: pathlib.Path) -> "Model":
@@ -352,7 +343,7 @@ class Model:
         if log_dir:
             results.log(pathlib.Path(log_dir))
 
-        best_estimator: Model = results[0].model
+        best_estimator: Model = cls(results[0].estimator)
         logger.info(
             f"Best estimator: {best_estimator.estimator_name} - "
             f"{results[0].metrics.name}: {results[0].metrics.score}"
@@ -516,7 +507,7 @@ class Model:
             result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return self.result[0].model, self.result
+        return Model(self.result[0].estimator), self.result
 
     def gridsearch(
         self,

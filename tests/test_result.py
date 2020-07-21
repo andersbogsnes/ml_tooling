@@ -178,3 +178,13 @@ class TestResultGroup:
 
         results.sort(by="roc_auc")
         assert results.results == [result3, result2, result1]
+
+    def test_can_instantiate_model_from_result(self, classifier: Model):
+        result = Result(
+            classifier.estimator,
+            metrics=Metrics.from_dict({"accuracy": 0.1, "roc_auc": 0.9}),
+            data=None,
+        )
+
+        assert isinstance(result.model, Model)
+        assert result.model.estimator == classifier.estimator

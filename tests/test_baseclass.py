@@ -594,12 +594,6 @@ class TestModelSelection:
             train_iris_dataset, estimators, "accuracy"
         )
 
-        for result in results:
-            assert (
-                result.model.estimator_name
-                == result.model.estimator.steps[-1][1].__class__.__name__
-            )
-
         assert best_estimator.estimator == estimators[0]
 
     def test_model_selection_refits_final_model(self, train_iris_dataset):

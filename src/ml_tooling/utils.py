@@ -396,3 +396,30 @@ def _classify(
     raise MLToolingError(
         "Classification with threshold only works for binary classifiers"
     )
+
+
+def serialize_estimator(estimator: Estimator) -> List[dict]:
+    """
+    Serializes an estimator to a dict
+
+    Parameters
+    ----------
+    estimator: Estimator
+        An instance of a sklearn-compatible Estimator
+
+    Returns
+    -------
+    List of dicts
+        A serialized representation of an estimator
+
+    """
+    if is_pipeline(estimator):
+        return serialize_pipeline(estimator)
+
+    return [
+        {
+            "module": estimator.__class__.__module__,
+            "classname": estimator.__class__.__name__,
+            "params": estimator.get_params(),
+        }
+    ]

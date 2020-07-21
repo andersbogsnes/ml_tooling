@@ -1,16 +1,17 @@
 import datetime
 import pathlib
-import joblib
-import pandas as pd
 from contextlib import contextmanager
 from importlib.resources import path as import_path
 from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+
+import joblib
+import pandas as pd
 from sklearn.base import is_classifier, is_regressor
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.config import DefaultConfig, ConfigGetter
+from ml_tooling.config import config
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.metrics.metric import Metrics
@@ -40,9 +41,6 @@ class Model:
     Wrapper class for Estimators
     """
 
-    _config = None
-    config = ConfigGetter()
-
     def __init__(self, estimator: Estimator, feature_pipeline: Pipeline = None):
         """
         Parameters
@@ -57,6 +55,7 @@ class Model:
         self._estimator: Estimator = _validate_estimator(estimator)
         self.feature_pipeline = feature_pipeline
         self.result: Optional[ResultType] = None
+        self.config = config
 
     @property
     def estimator(self):
@@ -437,7 +436,7 @@ class Model:
         if not data.has_validation_set:
             data.create_train_test(
                 stratify=self.is_classifier,
-                shuffle=self.config.SHUFFLE,
+                shuffle=self.config.TRAIN_TEST_SHUFFLE,
                 test_size=self.config.TEST_SIZE,
                 seed=self.config.RANDOM_STATE,
             )
@@ -664,15 +663,6 @@ class Model:
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)
         return cls(estimator)
-
-    @classmethod
-    def reset_config(cls):
-        """
-        Reset configuration to default
-        """
-        cls._config = DefaultConfig()
-
-        return cls
 
     def __repr__(self):
         return f"<Model: {self.estimator_name}>"

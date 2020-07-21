@@ -75,7 +75,7 @@ class TestBaseClass:
         assert rf.config.CLASSIFIER_METRIC == "fowlkes_mallows_score"
         assert rf.config.REGRESSION_METRIC == "r2"
         assert rf.default_metric == "fowlkes_mallows_score"
-        rf.reset_config()
+        rf.config.reset_config()
 
     def test_default_metric_getter_works_as_expected_regressor(self):
         linreg = Model(LinearRegression())
@@ -86,7 +86,7 @@ class TestBaseClass:
         assert linreg.config.CLASSIFIER_METRIC == "accuracy"
         assert linreg.config.REGRESSION_METRIC == "neg_mean_squared_error"
         assert linreg.default_metric == "neg_mean_squared_error"
-        linreg.reset_config()
+        linreg.config.reset_config()
 
     def test_default_metric_works_as_expected_without_pipeline(self):
         rf = Model(RandomForestClassifier(n_estimators=10))
@@ -97,8 +97,8 @@ class TestBaseClass:
         linreg.config.REGRESSION_METRIC = "neg_mean_squared_error"
         assert "fowlkes_mallows_score" == rf.default_metric
         assert "neg_mean_squared_error" == linreg.default_metric
-        rf.reset_config()
-        linreg.reset_config()
+        rf.config.reset_config()
+        linreg.config.reset_config()
 
     def test_default_metric_works_as_expected_with_pipeline(
         self, pipeline_logistic: Pipeline, pipeline_linear: Pipeline
@@ -111,8 +111,8 @@ class TestBaseClass:
         linreg.config.REGRESSION_METRIC = "neg_mean_squared_error"
         assert "fowlkes_mallows_score" == logreg.default_metric
         assert "neg_mean_squared_error" == linreg.default_metric
-        logreg.reset_config()
-        linreg.reset_config()
+        logreg.config.reset_config()
+        linreg.config.reset_config()
 
     def test_regression_model_can_be_saved(
         self, classifier: Model, tmp_path: pathlib.Path, train_iris_dataset
@@ -475,7 +475,7 @@ class TestScoreEstimator:
         model = Model(LinearRegression())
         model.config.RANDOM_STATE = 1
         model.config.TEST_SIZE = 0.5
-        model.config.SHUFFLE = False
+        model.config.TRAIN_TEST_SHUFFLE = False
         data = boston_dataset()
         model.score_estimator(data)
 
@@ -486,7 +486,7 @@ class TestScoreEstimator:
         assert np.array_equal(data.test_y, test.test_y)
         pd.testing.assert_frame_equal(data.train_x, test.train_x)
         assert np.array_equal(data.train_y, test.train_y)
-        model.reset_config()
+        model.config.reset_config()
 
     def test_score_estimator_creates_train_test_data_with_changed_config_and_classification_data(
         self, iris_dataset
@@ -504,7 +504,7 @@ class TestScoreEstimator:
         assert np.array_equal(data.test_y, test.test_y)
         pd.testing.assert_frame_equal(data.train_x, test.train_x)
         assert np.array_equal(data.train_y, test.train_y)
-        model.reset_config()
+        model.config.reset_config()
 
     def test_can_score_estimator_with_specified_metric(self, train_iris_dataset):
         model = Model(LogisticRegression(solver="liblinear"))

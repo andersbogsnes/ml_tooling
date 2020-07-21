@@ -11,6 +11,7 @@ from ml_tooling.plots import (
 )
 from ml_tooling.utils import _get_estimator_name
 from sklearn.base import is_classifier
+from ml_tooling.config import MPL_STYLESHEET
 
 
 class BaseVisualize:
@@ -101,7 +102,7 @@ class BaseVisualize:
         scoring = self.default_metric if scoring == "default" else scoring
         title = f"Feature Importances ({scoring.title()}) - {self._estimator_name}"
 
-        with plt.style.context(self._config.STYLE_SHEET):
+        with plt.style.context(MPL_STYLESHEET):
             return plot_feature_importance(
                 estimator=self._estimator,
                 x=self._data.x,
@@ -159,7 +160,7 @@ class BaseVisualize:
         title = f"Learning Curve - {self._estimator_name}"
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
 
-        with plt.style.context(self._config.STYLE_SHEET):
+        with plt.style.context(MPL_STYLESHEET):
             ax = plot_learning_curve(
                 estimator=self._estimator,
                 x=self._data.train_x,
@@ -227,7 +228,7 @@ class BaseVisualize:
         n_jobs = self._config.N_JOBS if n_jobs is None else n_jobs
         title = f"Validation Curve - {self._estimator_name}"
 
-        with plt.style.context(self._config.STYLE_SHEET):
+        with plt.style.context(MPL_STYLESHEET):
             ax = plot_validation_curve(
                 self._estimator,
                 x=self._data.train_x,

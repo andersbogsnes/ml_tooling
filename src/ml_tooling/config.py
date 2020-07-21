@@ -12,7 +12,7 @@ ESTIMATOR_DIR = CWD.joinpath("models")
 
 class DefaultConfig:
     """
-    Configuration for a given BaseClass. Configs propagate through each instance
+    Configuration for Models
     """
 
     default_config = {

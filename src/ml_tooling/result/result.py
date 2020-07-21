@@ -41,7 +41,9 @@ class Result:
     def model(self):
         from ml_tooling import Model
 
-        return Model(self.estimator)
+        model = Model(self.estimator)
+        model.result = self
+        return model
 
     @classmethod
     def from_model(

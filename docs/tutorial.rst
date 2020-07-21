@@ -121,7 +121,7 @@ the `.plot` accessor.
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> rf_clf = Model(RandomForestClassifier(n_estimators=10, random_state=42))
     >>> best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
-    >>> best_model.result.plot.feature_importance()
+    >>> results.plot.feature_importance()
 
 .. testsetup::
 

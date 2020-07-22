@@ -329,7 +329,7 @@ class TestDemoDatasetModule:
         dataset = load_demo_dataset("openml", name="miceprotein")
         assert len(dataset.x) == 1080
 
-    def test_dataset_x_from_fetchopenml_with_paramteres_works(self):
+    def test_dataset_x_from_fetchopenml_with_parameters_works(self):
         dataset = load_demo_dataset(
             "openml", name="blood-transfusion-service-center", target_column="V1"
         )

@@ -4,6 +4,8 @@
 #
 #    pip-compile dev-requirements.in
 #
+--index-url http://artifactory-singlep.p001.alm.brand.dk/artifactory/api/pypi/pypi-virtual/simple
+--trusted-host artifactory-singlep.p001.alm.brand.dk
 
 appdirs==1.4.4            # via virtualenv
 attrs==19.3.0             # via -r requirements.txt, pytest
@@ -15,7 +17,7 @@ cycler==0.10.0            # via -r requirements.txt, matplotlib
 distlib==0.3.1            # via virtualenv
 dohq-artifactory==0.7.379  # via -r dev-requirements.in
 filelock==3.0.12          # via tox, virtualenv
-identify==1.4.23          # via pre-commit
+identify==1.4.25          # via pre-commit
 idna==2.10                # via requests
 importlib-metadata==1.7.0  # via pluggy, pre-commit, pytest, tox, virtualenv
 joblib==0.16.0            # via -r requirements.txt, scikit-learn
@@ -23,7 +25,7 @@ kiwisolver==1.2.0         # via -r requirements.txt, matplotlib
 matplotlib==3.3.0         # via -r requirements.txt
 more-itertools==8.4.0     # via pytest
 nodeenv==1.4.0            # via pre-commit
-numpy==1.19.0             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scipy
+numpy==1.19.1             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scipy
 packaging==20.4           # via pytest, tox
 pandas==1.0.5             # via -r requirements.txt
 pillow==7.2.0             # via -r requirements.txt, matplotlib

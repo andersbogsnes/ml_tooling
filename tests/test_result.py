@@ -92,11 +92,15 @@ class TestResultGroup:
     def test_result_group_proxies_correctly(
         self, train_iris_dataset, classifier: Model, classifier_cv: Model
     ):
-        result1 = Result.from_model(
-            classifier, train_iris_dataset, metrics=Metrics([Metric("accuracy")])
+        result1 = Result.from_estimator(
+            classifier.estimator,
+            train_iris_dataset,
+            metrics=Metrics([Metric("accuracy")]),
         )
-        result2 = Result.from_model(
-            classifier_cv, train_iris_dataset, metrics=Metrics([Metric("accuracy")])
+        result2 = Result.from_estimator(
+            classifier_cv.estimator,
+            train_iris_dataset,
+            metrics=Metrics([Metric("accuracy")]),
         )
 
         group = ResultGroup([result1, result2])
@@ -106,14 +110,14 @@ class TestResultGroup:
     def test_result_group_implements_indexing_properly(
         self, train_iris_dataset, classifier: Model
     ):
-        result1 = Result.from_model(
-            model=classifier,
+        result1 = Result.from_estimator(
+            estimator=classifier.estimator,
             data=train_iris_dataset,
             metrics=Metrics.from_list(["accuracy"]),
         )
 
-        result2 = Result.from_model(
-            model=classifier,
+        result2 = Result.from_estimator(
+            estimator=classifier.estimator,
             data=train_iris_dataset,
             metrics=Metrics.from_list(["accuracy"]),
         )
@@ -127,13 +131,13 @@ class TestResultGroup:
         self, tmp_path: pathlib.Path, train_iris_dataset, classifier: Model
     ):
         runs = tmp_path / "runs"
-        result1 = Result.from_model(
-            model=classifier,
+        result1 = Result.from_estimator(
+            estimator=classifier.estimator,
             data=train_iris_dataset,
             metrics=Metrics.from_list(["accuracy"]),
         )
-        result2 = Result.from_model(
-            model=classifier,
+        result2 = Result.from_estimator(
+            estimator=classifier.estimator,
             data=train_iris_dataset,
             metrics=Metrics.from_list(["accuracy"]),
         )

@@ -2,7 +2,7 @@ import datetime
 import pathlib
 from contextlib import contextmanager
 from importlib.resources import path as import_path
-from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+from typing import Tuple, Optional, Sequence, Union, List, Any
 
 import joblib
 import pandas as pd
@@ -18,8 +18,9 @@ from ml_tooling.metrics.metric import Metrics
 from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
-from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
-from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
+from ml_tooling.search.base import Searcher
+from ml_tooling.search.gridsearch import GridSearch
+from ml_tooling.search.randomsearch import RandomSearch
 from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
@@ -437,8 +438,8 @@ class Model:
         if cv:
             logger.info("Cross-validating...")
 
-        self.result = Result.from_model(
-            model=self,
+        self.result = Result.from_estimator(
+            estimator=self.estimator,
             data=data,
             metrics=score_metrics,
             cv=cv,
@@ -454,11 +455,10 @@ class Model:
     def _cross_validated_search(
         self,
         data: Dataset,
-        params: dict,
-        estimators: Iterable[Estimator],
+        searcher: Searcher,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
-    ) -> Tuple["Model", ResultGroup]:
+    ) -> ResultGroup:
         """
         Runs a cross-validated search on the given estimators.
 
@@ -467,11 +467,8 @@ class Model:
         data: Dataset
             An instance of a DataSet object
 
-        params: dict
-            Parameters to use for search
-
-        estimators: Iterable[Estimator]
-            estimators to cross validate
+        searcher: Searcher
+            An implementation of a Searcher, which knows how to search for hyperparameters
 
         metrics: str, list of str
             Metrics to use for scoring. "default" sets metric equal to
@@ -489,7 +486,7 @@ class Model:
             ResultGroup object containing each individual score
         """
         if isinstance(metrics, str):
-            metrics = self.default_metric if metrics == "default" else metrics
+            metrics = [self.default_metric if metrics == "default" else metrics]
 
         cv = self.config.CROSS_VALIDATION if cv is None else cv
         cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
@@ -497,8 +494,8 @@ class Model:
         logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.info("Starting search...")
 
-        self.result = _train_estimators(
-            list(estimators), data=data, metrics=metrics, cv=cv
+        self.result: ResultGroup = searcher.search(
+            data, metrics, cv, n_jobs=config.N_JOBS, verbose=config.VERBOSITY
         )
 
         logger.info("Done!")
@@ -507,7 +504,7 @@ class Model:
             result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return Model(self.result[0].estimator), self.result
+        return self.result
 
     def gridsearch(
         self,
@@ -515,6 +512,7 @@ class Model:
         param_grid: dict,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
+        refit: bool = True,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated gridsearch on the estimator with the passed in parameter grid.
@@ -534,6 +532,9 @@ class Model:
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
+        refit: bool
+            Whether or not to refit the best model
+
         Returns
         -------
         best_estimator: Model
@@ -543,13 +544,16 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        estimators: Iterable[Estimator] = prepare_gridsearch_estimators(
-            estimator=self.estimator, params=param_grid
-        )
-
+        gs = GridSearch(self.estimator, param_grid=param_grid)
         logger.debug(f"Gridsearching using {param_grid}")
+        results = self._cross_validated_search(data, gs, metrics=metrics, cv=cv)
 
-        return self._cross_validated_search(data, param_grid, estimators, metrics, cv)
+        best_model = results[0].model
+
+        if refit:
+            best_model.score_estimator(data, metrics)
+
+        return best_model, results
 
     def randomsearch(
         self,
@@ -558,6 +562,7 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
         n_iter: int = 10,
+        refit: bool = True,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated randomsearch on the estimator with a randomized
@@ -565,6 +570,7 @@ class Model:
 
         Parameters
         ----------
+
         data: Dataset
             An instance of a DataSet object
 
@@ -578,11 +584,11 @@ class Model:
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
-        n_iter:
+        n_iter: int
             Number of parameter settings that are sampled.
 
-        random_state:
-            Pseudo random number generator state used for random uniform sampling.
+        refit: bool
+            Whether or not to refit the best model
 
         Returns
         -------
@@ -593,18 +599,20 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        estimators: Iterable[Estimator] = prepare_randomsearch_estimators(
-            estimator=self.estimator,
-            params=param_distributions,
-            n_iter=n_iter,
-            random_state=self.config.RANDOM_STATE,
+        searcher = RandomSearch(
+            self.estimator, param_grid=param_distributions, n_iter=n_iter
         )
 
-        logger.debug(f"Randomsearching using {param_distributions}")
-
-        return self._cross_validated_search(
-            data, param_distributions, estimators, metrics, cv
+        results = self._cross_validated_search(
+            data=data, searcher=searcher, metrics=metrics, cv=cv
         )
+
+        best_model = Model(results[0].estimator)
+
+        if refit:
+            best_model.score_estimator(data, metrics)
+
+        return best_model, results
 
     @contextmanager
     def log(self, run_directory: str):

@@ -19,8 +19,6 @@ from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
-from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
-from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
 from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
@@ -269,7 +267,7 @@ class TestBaseClass:
                 "params": {"copy": True, "with_mean": True, "with_std": True},
             },
             {
-                "name": "clf",
+                "name": "estimator",
                 "module": "sklearn.linear_model._base",
                 "classname": "LinearRegression",
                 "params": {
@@ -615,7 +613,7 @@ class TestGridSearch:
     ):
         model = Model(pipeline_logistic)
         model, results = model.gridsearch(
-            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"estimator__penalty": ["l1", "l2"]}
         )
         assert isinstance(model.estimator, Pipeline)
         assert 2 == len(results)
@@ -623,12 +621,25 @@ class TestGridSearch:
         for result in results:
             assert isinstance(result, Result)
 
+    def test_gridsearch_best_model_is_not_fitted_if_refit_is_not_true(
+        self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
+    ):
+
+        model = Model(pipeline_logistic)
+        model, results = model.gridsearch(
+            train_iris_dataset,
+            param_grid={"estimator__penalty": ["l1", "l2"]},
+            refit=False,
+        )
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
+            model.make_prediction(data=train_iris_dataset, idx=1)
+
     def test_gridsearch_model_does_not_fail_when_run_twice(
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.gridsearch(
-            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"estimator__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
@@ -637,36 +648,13 @@ class TestGridSearch:
             assert isinstance(result, Result)
 
         best_model, results = model.gridsearch(
-            train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+            train_iris_dataset, param_grid={"estimator__penalty": ["l1", "l2"]}
         )
         assert isinstance(best_model.estimator, Pipeline)
         assert 2 == len(results)
 
         for result in results:
             assert isinstance(result, Result)
-
-    def test_prepare_gridsearch_estimators_has_different_parameters(self):
-        estimators = prepare_gridsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            assert estimator.get_params()["penalty"] == penalty
-            assert hasattr(estimator, "coef_") is False
-            assert isinstance(estimator, LogisticRegression)
-
-    def test_prepare_gridsearch_estimators_in_pipeline_has_different_parameters(self):
-        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
-
-        estimators = prepare_gridsearch_estimators(
-            pipe, params={"clf__penalty": ["l2", "l1"]}
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            clf = estimator["clf"]
-            assert clf.get_params()["penalty"] == penalty
-            assert hasattr(clf, "coef_") is False
-            assert isinstance(clf, LogisticRegression)
 
     def test_gridsearch_uses_default_metric(
         self, classifier: Model, train_iris_dataset
@@ -707,7 +695,7 @@ class TestGridSearch:
         classifier.config.RUN_DIR = tmp_path
         with classifier.log("gridsearch_union_test"):
             _, _ = classifier.gridsearch(
-                train_iris_dataset, param_grid={"clf__penalty": ["l1", "l2"]}
+                train_iris_dataset, param_grid={"estimator__penalty": ["l1", "l2"]}
             )
 
 
@@ -718,7 +706,7 @@ class TestRandomSearch:
         model = Model(pipeline_logistic)
         model, results = model.randomsearch(
             train_iris_dataset,
-            param_distributions={"clf__penalty": ["l1", "l2"]},
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
         )
         assert isinstance(model.estimator, Pipeline)
@@ -727,13 +715,26 @@ class TestRandomSearch:
         for result in results:
             assert isinstance(result, Result)
 
+    def test_randomsearch_best_model_is_not_fitted_if_refit_is_not_true(
+        self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
+    ):
+
+        model = Model(pipeline_logistic)
+        model, results = model.randomsearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            refit=False,
+        )
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
+            model.make_prediction(data=train_iris_dataset, idx=1)
+
     def test_randomsearch_model_does_not_fail_when_run_twice(
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
         best_model, results = model.randomsearch(
             train_iris_dataset,
-            param_distributions={"clf__penalty": ["l1", "l2"]},
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
@@ -744,7 +745,7 @@ class TestRandomSearch:
 
         best_model, results = model.randomsearch(
             train_iris_dataset,
-            param_distributions={"clf__penalty": ["l1", "l2"]},
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
         )
         assert isinstance(best_model.estimator, Pipeline)
@@ -752,29 +753,6 @@ class TestRandomSearch:
 
         for result in results:
             assert isinstance(result, Result)
-
-    def test_prepare_randomsearch_estimators_has_different_parameters(self):
-        estimators = prepare_randomsearch_estimators(
-            LogisticRegression(), params={"penalty": ["l2", "l1"]}, n_iter=2
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            assert estimator.get_params()["penalty"] == penalty
-            assert hasattr(estimator, "coef_") is False
-            assert isinstance(estimator, LogisticRegression)
-
-    def test_prepare_randomsearch_estimators_in_pipeline_has_different_parameters(self):
-        pipe = Pipeline([("scale", DFStandardScaler()), ("clf", LogisticRegression())])
-
-        estimators = prepare_randomsearch_estimators(
-            pipe, params={"clf__penalty": ["l2", "l1"]}, n_iter=2
-        )
-
-        for estimator, penalty in zip(estimators, ["l2", "l1"]):
-            clf = estimator["clf"]
-            assert clf.get_params()["penalty"] == penalty
-            assert hasattr(clf, "coef_") is False
-            assert isinstance(clf, LogisticRegression)
 
     def test_randomsearch_uses_default_metric(
         self, classifier: Model, train_iris_dataset
@@ -834,7 +812,7 @@ class TestRandomSearch:
         with classifier.log("randomsearch_union_test"):
             _, _ = classifier.randomsearch(
                 train_iris_dataset,
-                param_distributions={"clf__penalty": ["l1", "l2"]},
+                param_distributions={"estimator__penalty": ["l1", "l2"]},
                 n_iter=2,
             )
 

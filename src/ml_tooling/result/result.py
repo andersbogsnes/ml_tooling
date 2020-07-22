@@ -1,3 +1,5 @@
+from typing import Any
+
 import attr
 from sklearn.base import is_classifier
 
@@ -46,12 +48,18 @@ class Result:
         return model
 
     @classmethod
-    def from_model(
-        cls, model, data: Dataset, metrics: Metrics, cv=None, n_jobs=None, verbose=None
+    def from_estimator(
+        cls,
+        estimator: Estimator,
+        data: Dataset,
+        metrics: Metrics,
+        cv: Any = None,
+        n_jobs: int = None,
+        verbose: int = 0,
     ) -> "Result":
         if cv:
             metrics.score_metrics_cv(
-                estimator=model.estimator,
+                estimator=estimator,
                 x=data.train_x,
                 y=data.train_y,
                 cv=cv,
@@ -59,11 +67,9 @@ class Result:
                 verbose=verbose,
             )
         else:
-            metrics.score_metrics(
-                estimator=model.estimator, x=data.test_x, y=data.test_y
-            )
+            metrics.score_metrics(estimator=estimator, x=data.test_x, y=data.test_y)
 
-        return cls(metrics=metrics, estimator=model.estimator, data=data)
+        return cls(metrics=metrics, estimator=estimator, data=data)
 
     def log(self, saved_estimator_path=None, savedir=None) -> Log:
         log = Log.from_result(result=self, estimator_path=saved_estimator_path)

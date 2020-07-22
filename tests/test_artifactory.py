@@ -1,21 +1,18 @@
 import pathlib
-import sys
-import pytest
-import joblib
 from unittest.mock import MagicMock, patch
 
-from sklearn.pipeline import Pipeline
+import joblib
+import pytest
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
+
 from ml_tooling.storage.artifactory import ArtifactoryStorage
 from ml_tooling.utils import MLToolingError
 
-require_artifactory = pytest.mark.skipif(
-    "artifactory" not in sys.modules, reason="artifactory must be installed"
-)
+artifactory = pytest.importorskip("artifactory")
 
 
 class TestArtifactoryStorage:
-    @require_artifactory
     @patch("ml_tooling.storage.artifactory.ArtifactoryPath")
     def test_can_load_from_artifactory(
         self, artifactorypath_mock, open_estimator_pickle
@@ -34,7 +31,6 @@ class TestArtifactoryStorage:
 
         assert isinstance(f, (BaseEstimator, Pipeline))
 
-    @require_artifactory
     def test_can_save_to_artifactory(
         self, open_estimator_pickle, tmp_path: pathlib.Path, regression
     ):
@@ -53,7 +49,6 @@ class TestArtifactoryStorage:
         f = joblib.load(file_path)
         assert isinstance(f, (BaseEstimator, Pipeline))
 
-    @require_artifactory
     @patch("ml_tooling.storage.artifactory.ArtifactoryPath")
     def test_can_get_list_of_paths_and_load_from_output(
         self, artifactorypath_mock, estimator_pickle_path_factory, open_estimator_pickle
@@ -100,7 +95,6 @@ class TestArtifactoryStorage:
         assert artifactory_paths[0] == paths[1]
         assert artifactory_paths[-1] == paths[3]
 
-    @require_artifactory
     def test_artifactory_initialization_path(self):
         from dohq_artifactory.auth import XJFrogArtApiAuth
 
@@ -111,7 +105,6 @@ class TestArtifactoryStorage:
         assert isinstance(storage.artifactory_path.auth, XJFrogArtApiAuth)
         assert storage.artifactory_path.auth.apikey == "key"
 
-    @require_artifactory
     def test_artifactory_initialization_with_artifactory_suffix_works_as_expected(self):
         storage = ArtifactoryStorage("http://www.testy.com/artifactory", "test")
         assert storage.artifactory_path.repo == "test"

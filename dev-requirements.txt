@@ -12,7 +12,7 @@ chardet==3.0.4            # via requests
 coverage==5.2             # via pytest-cov
 cycler==0.10.0            # via -r requirements.txt, matplotlib
 distlib==0.3.1            # via virtualenv
-dohq-artifactory==0.7.379  # via -r dev-requirements.in
+dohq-artifactory==0.7.382  # via -r dev-requirements.in
 filelock==3.0.12          # via tox, virtualenv
 identify==1.4.25          # via pre-commit
 idna==2.10                # via requests

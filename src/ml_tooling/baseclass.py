@@ -14,7 +14,6 @@ from sklearn.pipeline import Pipeline
 from ml_tooling.config import config
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
-from ml_tooling.metrics.metric import Metrics
 from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
@@ -417,7 +416,6 @@ class Model:
         if isinstance(metrics, str):
             metrics = [self.default_metric] if metrics == "default" else [metrics]
 
-        score_metrics = Metrics.from_list(metrics)
         cv = cv if cv else None
 
         if cv:
@@ -441,7 +439,7 @@ class Model:
         self.result = Result.from_estimator(
             estimator=self.estimator,
             data=data,
-            metrics=score_metrics,
+            metrics=metrics,
             cv=cv,
             n_jobs=self.config.N_JOBS,
             verbose=self.config.VERBOSITY,

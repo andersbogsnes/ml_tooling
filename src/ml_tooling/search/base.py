@@ -1,7 +1,6 @@
 from typing import List, Any, Iterable
 
 from ml_tooling.data import Dataset
-from ml_tooling.metrics import Metrics
 from ml_tooling.result import ResultGroup, Result
 from ml_tooling.utils import Estimator
 
@@ -20,7 +19,6 @@ class Searcher:
         cv: Any,
         verbose: int,
     ):
-        metrics = Metrics.from_list(metrics)
         results = [
             Result.from_estimator(
                 estimator=estimator,

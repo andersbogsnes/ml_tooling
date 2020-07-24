@@ -1,22 +1,22 @@
 from typing import List, Any
 
-import sklearn.utils.fixes
-
-# Hack to fix https://github.com/scikit-optimize/scikit-optimize/issues/902
-from numpy.ma import MaskedArray
-
-sklearn.utils.fixes.MaskedArray = MaskedArray
-
-from sklearn import clone
-from skopt import Optimizer
-from skopt.utils import dimensions_aslist, point_asdict
-
 import numpy as np
 
 from ml_tooling.data import Dataset
 from ml_tooling.result import ResultGroup, Result
 from ml_tooling.search.base import Searcher
 from ml_tooling.utils import Estimator
+
+import sklearn.utils.fixes
+from sklearn import clone
+
+# Hack to fix https://github.com/scikit-optimize/scikit-optimize/issues/902
+from numpy.ma import MaskedArray
+
+sklearn.utils.fixes.MaskedArray = MaskedArray
+
+from skopt import Optimizer  # noqa: 402
+from skopt.utils import dimensions_aslist, point_asdict  # noqa: 402
 
 
 class BayesSearch(Searcher):
@@ -43,7 +43,7 @@ class BayesSearch(Searcher):
         n_jobs: int,
         verbose: int,
     ) -> Result:
-        params = optimizer.ask(1)
+        params = optimizer.ask()
         params = [np.array(p).item() for p in params]
 
         # make lists into dictionaries

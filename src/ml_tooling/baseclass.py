@@ -17,6 +17,7 @@ from ml_tooling.logging.logger import create_logger
 from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
+from ml_tooling.search import BayesSearch
 from ml_tooling.search.base import Searcher
 from ml_tooling.search.gridsearch import GridSearch
 from ml_tooling.search.randomsearch import RandomSearch
@@ -456,7 +457,8 @@ class Model:
         searcher: Searcher,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
-    ) -> ResultGroup:
+        refit: bool = True,
+    ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated search on the given estimators.
 
@@ -474,6 +476,9 @@ class Model:
 
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
+
+        refit: bool
+            Whether or not to refit the best model
 
         Returns
         -------
@@ -495,6 +500,10 @@ class Model:
         self.result: ResultGroup = searcher.search(
             data, metrics, cv, n_jobs=config.N_JOBS, verbose=config.VERBOSITY
         )
+        best_model = Model(self.result[0].estimator)
+
+        if refit:
+            best_model.score_estimator(data, metrics)
 
         logger.info("Done!")
 
@@ -502,7 +511,7 @@ class Model:
             result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return self.result
+        return best_model, self.result
 
     def gridsearch(
         self,
@@ -544,14 +553,9 @@ class Model:
 
         gs = GridSearch(self.estimator, param_grid=param_grid)
         logger.debug(f"Gridsearching using {param_grid}")
-        results = self._cross_validated_search(data, gs, metrics=metrics, cv=cv)
-
-        best_model = results[0].model
-
-        if refit:
-            best_model.score_estimator(data, metrics)
-
-        return best_model, results
+        return self._cross_validated_search(
+            data, gs, metrics=metrics, cv=cv, refit=refit
+        )
 
     def randomsearch(
         self,
@@ -601,16 +605,69 @@ class Model:
             self.estimator, param_grid=param_distributions, n_iter=n_iter
         )
 
-        results = self._cross_validated_search(
-            data=data, searcher=searcher, metrics=metrics, cv=cv
+        logger.debug("Random Searching using %s", param_distributions)
+
+        return self._cross_validated_search(
+            data=data, searcher=searcher, metrics=metrics, cv=cv, refit=refit
         )
 
-        best_model = Model(results[0].estimator)
+    def bayessearch(
+        self,
+        data: Dataset,
+        param_distributions: dict,
+        metrics: Union[str, List[str]] = "default",
+        cv: Optional[int] = None,
+        n_iter: int = 10,
+        refit: bool = True,
+    ) -> Tuple["Model", ResultGroup]:
+        """
+        Runs a cross-validated Bayesian Search on the estimator with a randomized
+        sampling of the passed parameter distributions
 
-        if refit:
-            best_model.score_estimator(data, metrics)
+        Parameters
+        ----------
 
-        return best_model, results
+        data: Dataset
+            An instance of a DataSet object
+
+        param_distributions: dict
+            Parameter distributions to use for randomizing search. Should be a dictionary
+            of param_names -> one of:
+                - :class:`ml_tooling.search.Integer`
+                - :class:`ml_tooling.search.Categorical`
+                - :class:`ml_tooling.search.Real`
+
+        metrics: str, list of str
+            Metrics to use for scoring. "default" sets metric equal to
+            :attr:`self.default_metric`. First metric is used to sort results.
+
+        cv: int, optional
+            Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
+
+        n_iter: int
+            Number of parameter settings that are sampled.
+
+        refit: bool
+            Whether or not to refit the best model
+
+        Returns
+        -------
+        best_estimator: Model
+            Best estimator as found by the Bayesian Search
+
+        result_group: ResultGroup
+            ResultGroup object containing each individual score
+        """
+
+        searcher = BayesSearch(
+            self.estimator, param_grid=param_distributions, n_iter=n_iter
+        )
+
+        logger.debug("Bayesian Search using %s", param_distributions)
+
+        return self._cross_validated_search(
+            data=data, searcher=searcher, metrics=metrics, cv=cv, refit=refit
+        )
 
     @contextmanager
     def log(self, run_directory: str):

@@ -1,5 +1,6 @@
 from typing import Iterator, List, Any
 
+import numpy as np
 from sklearn import clone
 from sklearn.model_selection import ParameterSampler
 
@@ -19,7 +20,15 @@ class RandomSearch(Searcher):
         grid = ParameterSampler(
             self.param_grid, n_iter=self.n_iter, random_state=config.RANDOM_STATE
         )
-        yield from (clone(self.estimator).set_params(**p) for p in grid)
+        yield from (
+            clone(self.estimator).set_params(
+                **{
+                    k: np.array(v).item()  # To ensure compatibility with skopt Spaces
+                    for k, v in p.items()
+                }
+            )
+            for p in grid
+        )
 
     def search(
         self, data: Dataset, metrics: List[str], cv: Any, n_jobs: int, verbose: int = 0

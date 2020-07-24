@@ -12,7 +12,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.utils.fixes import loguniform
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
@@ -22,6 +21,7 @@ from ml_tooling.result import Result
 from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
+from ml_tooling.search import Real
 
 plt.switch_backend("agg")
 
@@ -771,7 +771,7 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         param_dist = {
-            "C": loguniform(1e-4, 1e0),
+            "C": Real(0, 50),
         }
 
         model, results = classifier.randomsearch(
@@ -805,6 +805,124 @@ class TestRandomSearch:
             assert result.metrics.score == result.metrics[0].score
 
     def test_randomsearch_can_log_with_context_manager(
+        self, feature_union_classifier, train_iris_dataset, tmp_path
+    ):
+        classifier = Model(feature_union_classifier)
+        classifier.config.RUN_DIR = tmp_path
+        with classifier.log("randomsearch_union_test"):
+            _, _ = classifier.randomsearch(
+                train_iris_dataset,
+                param_distributions={"estimator__penalty": ["l1", "l2"]},
+                n_iter=2,
+            )
+
+
+class TestBayesSearch:
+    def test_bayessearc_model_returns_as_expected(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        model, results = model.bayessearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_bayessearch_best_model_is_not_fitted_if_refit_is_not_true(
+        self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
+    ):
+
+        model = Model(pipeline_logistic)
+        model, results = model.bayessearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            refit=False,
+        )
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
+            model.make_prediction(data=train_iris_dataset, idx=1)
+
+    def test_bayes_search_model_does_not_fail_when_run_twice(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        best_model, results = model.bayessearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+        best_model, results = model.bayessearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_bayessearch_uses_default_metric(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.bayessearch(
+            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}, n_iter=2
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_bayessearch_can_take_dist_objs(
+        self, classifier: Model, train_iris_dataset
+    ):
+        param_dist = {
+            "C": Real(1e-4, 1e0),
+        }
+
+        model, results = classifier.bayessearch(
+            train_iris_dataset, param_distributions=param_dist, n_iter=2
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_bayessearch_can_take_multiple_metrics(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.bayessearch(
+            train_iris_dataset,
+            param_distributions={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+            n_iter=2,
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
+
+    def test_bayessearch_can_log_with_context_manager(
         self, feature_union_classifier, train_iris_dataset, tmp_path
     ):
         classifier = Model(feature_union_classifier)

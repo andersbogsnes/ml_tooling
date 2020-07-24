@@ -626,16 +626,15 @@ class Model:
 
         Parameters
         ----------
-
         data: Dataset
             An instance of a DataSet object
 
         param_distributions: dict
             Parameter distributions to use for randomizing search. Should be a dictionary
-            of param_names -> one of:
-                - :class:`ml_tooling.search.Integer`
-                - :class:`ml_tooling.search.Categorical`
-                - :class:`ml_tooling.search.Real`
+            of param_names -> one of
+            - :class:`ml_tooling.search.Integer`
+            - :class:`ml_tooling.search.Categorical`
+            - :class:`ml_tooling.search.Real`
 
         metrics: str, list of str
             Metrics to use for scoring. "default" sets metric equal to

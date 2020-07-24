@@ -205,21 +205,47 @@ search of the parameter space with a randomized search.
 .. doctest::
 
     >>> from sklearn.ensemble import RandomForestRegressor
-    >>> from scipy.stats import loguniform
+    >>> from ml_tooling.search import Real
     >>> rand_forest = Model(RandomForestRegressor())
     >>>
     >>> search_space = {
     ...     "max_depth": [1, 3],
-    ...     "min_weight_fraction_leaf": loguniform(1e-4, 1e0),
+    ...     "min_weight_fraction_leaf": Real(0, 0.5),
     ... }
     >>> best_estimator, results = rand_forest.randomsearch(bostondata, search_space, n_iter=2)
     >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 
 Here we specify the number of iterations `n_iter=2` just for demonstration purposes,
-n_iter is the number of points in the parameter samples that are tried out from the `sampler <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.ParameterSampler.html>`_.
+n_iter is the number of times we sample from the parameter space to try. ML-Tooling uses skopt's :ref:`Spaces <skopt:space>`
+to define a sampling space. You can import them from :mod:`ml_tooling.search` or from skopt directly.
+
 When a list is given in the search space, a linear distribution is used by default, but you may also
-pass other `distributions <https://docs.scipy.org/doc/scipy/reference/stats.html#continuous-distributions>`_
+pass other distributions. ML-Tooling supports :class:`~skopt.space.space.Real`, :class:`~skopt.space.space.Integer`
+and :class:`~skopt.space.space.Categorical`. Each of these also support prior distributions, if more granular
+distributions are required.
+
+Performing a Bayesian Search
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ML-Tooling also supports Bayesian search - a stepwise search, where we build a surrogate model to estimate the effect
+of changing a given hyperparameter on the error. This surrogate model allows us to take steps in directions where the
+model thinks it can improve the error. Bayesian search is implemented using skopt and is a drop-in replacement for
+:meth:`~Model.randomsearch`.
+
+.. doctest::
+
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from ml_tooling.search import Real
+    >>> rand_forest = Model(RandomForestRegressor())
+    >>>
+    >>> search_space = {
+    ...     "max_depth": [1, 3],
+    ...     "min_weight_fraction_leaf": Real(0, 0.5),
+    ... }
+    >>> best_estimator, results = rand_forest.bayessearch(bostondata, search_space, n_iter=2)
+    >>> results #doctest:+SKIP
+    ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
+
 
 Storage
 ~~~~~~~
@@ -281,6 +307,8 @@ Now users of your model package can always find your estimator through
 
     >>> model.load_production_estimator('your_module_name')
 
+By default, if no storage is specified, ML-Tooling will save models in your current working directory in a folder
+called `estimators`
 
 Configuration
 ~~~~~~~~~~~~~

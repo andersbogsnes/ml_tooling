@@ -1,0 +1,68 @@
+name: Integration
+on: push
+env:
+  TOX_VERSION: 3.17.1
+  POETRY_VERSION: 1.0.9
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8']
+        os: [ubuntu-latest, windows-latest]
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2.1.1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: BSFishy/pip-action@v1
+        with:
+          packages: poetry==${{ env.POETRY_VERSION }} tox==${{ env.TOX_VERSION }}
+      - run: python -m poetry config virtualenvs.create false
+      - run: tox -e py,optional-artifactory
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2.1.1
+        with:
+          python-version: 3.8
+      - uses: pre-commit/action@v2.0.0
+        env:
+          SKIP: no-commit-to-branch
+
+  docs:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.7', '3.8']
+    name: Documentation python ${{ matrix.python-version }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2.1.1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: dschep/install-poetry-action@v1.3
+        with:
+          version: ${{ env.POETRY_VERSION }}
+      - run: pip install tox==$TOX_VERSION
+      - run: tox -e docs
+
+  coverage:
+    name: Coverage report
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2.1.1
+        with:
+          python-version: 3.8
+      - uses: dschep/install-poetry-action@v1.3
+        with:
+          version: ${{ env.POETRY_VERSION }}
+      - run: pip install tox==$TOX_VERSION
+      - run: tox -e py,optional-artifactory,coverage-report
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.12

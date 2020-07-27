@@ -62,7 +62,7 @@ each other using different metrics. The best estimator is then picked using the 
     >>> from sklearn.dummy import DummyClassifier
     >>> estimators = [LogisticRegression(solver='lbfgs'),
     ...               RandomForestClassifier(n_estimators=10, random_state=42),
-    ...               DummyClassifier(random_state=42)]
+    ...               DummyClassifier(strategy="prior", random_state=42)]
     >>> best_model, results = Model.test_estimators(data, estimators, metrics=['accuracy', 'roc_auc'], cv=10)
 
 We can see that the results are sorted and shows us a nice repr of each model's performance
@@ -85,7 +85,7 @@ context manager, passing a log_directory where to save the files.
     ...     best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
     >>>
     >>> results
-    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.93}>])
+    ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>, <Result RandomForestClassifier: {'accuracy': 0.95}>])
 
 .. testcleanup::
 
@@ -121,7 +121,7 @@ the `.plot` accessor.
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> rf_clf = Model(RandomForestClassifier(n_estimators=10, random_state=42))
     >>> best_model, results = rf_clf.gridsearch(data, {"max_depth": [3, 5, 10, 15]})
-    >>> best_model.result.plot.feature_importance()
+    >>> results.plot.feature_importance()
 
 .. testsetup::
 

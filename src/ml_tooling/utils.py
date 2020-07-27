@@ -118,7 +118,7 @@ def _get_estimator_name(clf: Estimator) -> str:
     return class_name
 
 
-def listify(collection) -> list:
+def listify(collection: Any) -> List:
     """
     Takes a given collection and returns a list of the elements, handling strings correctly
 
@@ -140,7 +140,7 @@ def listify(collection) -> list:
     return collection
 
 
-def _validate_estimator(estimator: Estimator):
+def _validate_estimator(estimator: Estimator) -> Estimator:
     """
     Ensures that estimator is a valid estimator - either a :class:`~sklearn.base.BaseEstimator`
     or a :class:`~sklearn.pipeline.Pipeline` with a :class:`~sklearn.base.BaseEstimator`
@@ -319,8 +319,12 @@ def _find_setup_file(path: pathlib.Path, level: int, max_level: int) -> pathlib.
     """
     if level > max_level:
         raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
-    if path.joinpath("setup.py").exists():
-        return path
+
+    package_files = ["setup.py", "pyproject.toml"]
+
+    for package_file in package_files:
+        if path.joinpath(package_file).exists():
+            return path
 
     return _find_setup_file(path.parent, level + 1, max_level)
 
@@ -362,3 +366,64 @@ def _find_src_dir(path: pathlib.Path = None, max_level: int = 2) -> pathlib.Path
     raise MLToolingError(
         f"No modules found in {output_folder}! Is there an __init__.py file in your module?"
     )
+
+
+def _classify(
+    x: pd.DataFrame, estimator: Estimator, threshold: float = None
+) -> np.ndarray:
+    """
+    Make a binary classification of prediction probabilities with the given threshold
+
+    Parameters
+    ----------
+    x: pd.DataFrame
+        The data to use for classification
+
+    estimator: Estimator
+        The estimator to use for making the prediction
+
+    threshold: float
+        Threshold of classification
+
+    Returns
+    -------
+    np.ndarray
+        Array of class predictions
+    """
+    if threshold is None:
+        return estimator.predict(x)
+
+    if len(estimator.classes_) == 2:
+        y_pred = estimator.predict_proba(x)
+        return (y_pred[:, 1] > threshold).astype(np.int32)
+
+    raise MLToolingError(
+        "Classification with threshold only works for binary classifiers"
+    )
+
+
+def serialize_estimator(estimator: Estimator) -> List[dict]:
+    """
+    Serializes an estimator to a dict
+
+    Parameters
+    ----------
+    estimator: Estimator
+        An instance of a sklearn-compatible Estimator
+
+    Returns
+    -------
+    List of dicts
+        A serialized representation of an estimator
+
+    """
+    if is_pipeline(estimator):
+        return serialize_pipeline(estimator)
+
+    return [
+        {
+            "module": estimator.__class__.__module__,
+            "classname": estimator.__class__.__name__,
+            "params": estimator.get_params(),
+        }
+    ]

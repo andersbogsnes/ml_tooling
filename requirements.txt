@@ -4,21 +4,21 @@
 #
 #    pip-compile
 #
-attrs==19.3.0
+
+attrs==19.3.0             # via ml_tooling (setup.py)
 cycler==0.10.0            # via matplotlib
-joblib==0.15.1
+joblib==0.16.0            # via ml_tooling (setup.py), scikit-learn
 kiwisolver==1.2.0         # via matplotlib
-matplotlib==3.2.1
-numpy==1.18.5             # via matplotlib, pandas, scikit-learn, scipy
-pandas==1.0.4
+matplotlib==3.3.0         # via ml_tooling (setup.py)
+numpy==1.19.1             # via matplotlib, pandas, scikit-learn, scipy
+pandas==1.0.5             # via ml_tooling (setup.py)
+pillow==7.2.0             # via matplotlib
 pyparsing==2.4.7          # via matplotlib
 python-dateutil==2.8.1    # via matplotlib, pandas
 pytz==2020.1              # via pandas
-pyyaml==5.3.1
-scikit-learn==0.23.1
-scipy==1.4.1              # via scikit-learn
-sqlalchemy==1.3.17
+pyyaml==5.3.1             # via ml_tooling (setup.py)
+scikit-learn==0.23.1      # via ml_tooling (setup.py)
+scipy==1.5.2              # via scikit-learn
 six==1.15.0               # via cycler, python-dateutil
-
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools==45.1.0        # via kiwisolver
+sqlalchemy==1.3.18        # via ml_tooling (setup.py)
+threadpoolctl==2.1.0      # via scikit-learn

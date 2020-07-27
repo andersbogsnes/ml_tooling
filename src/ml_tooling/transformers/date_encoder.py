@@ -7,7 +7,22 @@ class DateEncoder(BaseEstimator, TransformerMixin):
     Converts a date column into multiple day-month-year columns
     """
 
-    def __init__(self, day=True, month=True, week=True, year=True):
+    def __init__(
+        self, day: bool = True, month: bool = True, week: bool = True, year: bool = True
+    ):
+        """
+
+        Parameters
+        ----------
+        day: bool
+            If True, a new day column will be added.
+        month: bool
+            If True, a new month column will be added.
+        week: bool
+            If True, a new week column will be added.
+        year: bool
+            If True, a new year column will be added.
+        """
         self.day = day
         self.month = month
         self.week = week

@@ -1,53 +1,7 @@
-from ml_tooling import Model
 from ml_tooling.config import DefaultConfig
-from sklearn.linear_model import LinearRegression
 
 
 class TestConfig:
-    def test_config_is_set_globally(self, pipeline_dummy_classifier, pipeline_linear):
-        class TestModel(Model):
-            @classmethod
-            def setup_estimator(cls):
-                pass
-
-            def get_prediction_data(self, *args):
-                pass
-
-            def get_training_data(self):
-                pass
-
-        TestModel.reset_config()
-
-        assert TestModel.config.N_JOBS == -1
-
-        model = TestModel(pipeline_dummy_classifier)
-        assert model.config.N_JOBS == -1
-
-        TestModel.config.N_JOBS = 1
-        assert TestModel.config.N_JOBS == 1
-        assert model.config.N_JOBS == 1
-
-        new_model = TestModel(pipeline_dummy_classifier)
-        assert new_model.config.N_JOBS == 1
-
-    def test_can_change_config(self):
-        class SomeModel(Model):
-            @classmethod
-            def setup_estimator(cls):
-                pass
-
-            def get_training_data(self):
-                pass
-
-            def get_prediction_data(self, *args):
-                pass
-
-        SomeModel.reset_config()
-        test_model = SomeModel(LinearRegression())
-        assert 10 == test_model.config.CROSS_VALIDATION
-        test_model.config.CROSS_VALIDATION = 2
-        assert test_model.config.CROSS_VALIDATION == 2
-
     def test_config_repr_works(self):
         config = DefaultConfig()
         for key in [
@@ -55,7 +9,6 @@ class TestConfig:
             "CLASSIFIER_METRIC",
             "REGRESSION_METRIC",
             "CROSS_VALIDATION",
-            "STYLE_SHEET",
             "N_JOBS",
             "RANDOM_STATE",
         ]:
@@ -69,23 +22,7 @@ class TestConfig:
         assert log.config.CLASSIFIER_METRIC == "accuracy"
         log.config.CLASSIFIER_METRIC = "fowlkes_mallows_score"
         assert rf.config.CLASSIFIER_METRIC == "fowlkes_mallows_score"
-
-    def test_from_different_classes_do_not_share_config(
-        self, base, pipeline_logistic, pipeline_forest_classifier
-    ):
-        class NoModel(Model):
-            def get_prediction_data(self, idx):
-                pass
-
-            def get_training_data(self):
-                pass
-
-        log = base(pipeline_logistic)
-        rf = NoModel(pipeline_forest_classifier)
-        assert log.config.CLASSIFIER_METRIC == "accuracy"
-        log.config.CLASSIFIER_METRIC = "fowlkes_mallows_score"
-        assert rf.config.CLASSIFIER_METRIC == "accuracy"
-        assert log.config.CLASSIFIER_METRIC == "fowlkes_mallows_score"
+        log.config.reset_config()
 
     def test_config_default_storage_points_to_cwd(self, base, tmp_path):
         base.config.ESTIMATOR_DIR = tmp_path

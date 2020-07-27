@@ -12,24 +12,42 @@ ESTIMATOR_DIR = CWD.joinpath("models")
 
 class DefaultConfig:
     """
-    Configuration for a given BaseClass. Configs propagate through each instance
+    Configuration for Models
     """
 
+    default_config = {
+        "VERBOSITY": 0,
+        "CLASSIFIER_METRIC": "accuracy",
+        "REGRESSION_METRIC": "r2",
+        "CROSS_VALIDATION": 10,
+        "N_JOBS": -1,
+        "RANDOM_STATE": 42,
+        "TRAIN_TEST_SHUFFLE": True,
+        "TEST_SIZE": 0.25,
+    }
+
     def __init__(self):
-        self.VERBOSITY = 0
-        self.CLASSIFIER_METRIC = "accuracy"
-        self.REGRESSION_METRIC = "r2"
-        self.CROSS_VALIDATION = 10
-        self.STYLE_SHEET = MPL_STYLESHEET
-        self.N_JOBS = -1
-        self.RANDOM_STATE = 42
+        self._set_config()
+        self.LOG = False
         self.RUN_DIR = RUN_DIR
         self.ESTIMATOR_DIR = ESTIMATOR_DIR
-        self.LOG = False
+
+    def _set_config(self):
+        self.VERBOSITY = self.default_config["VERBOSITY"]
+        self.CLASSIFIER_METRIC = self.default_config["CLASSIFIER_METRIC"]
+        self.REGRESSION_METRIC = self.default_config["REGRESSION_METRIC"]
+        self.CROSS_VALIDATION = self.default_config["CROSS_VALIDATION"]
+        self.N_JOBS = self.default_config["N_JOBS"]
+        self.RANDOM_STATE = self.default_config["RANDOM_STATE"]
+        self.TRAIN_TEST_SHUFFLE = self.default_config["TRAIN_TEST_SHUFFLE"]
+        self.TEST_SIZE = self.default_config["TEST_SIZE"]
 
     @property
     def default_storage(self):
         return FileStorage(self.ESTIMATOR_DIR)
+
+    def reset_config(self):
+        self._set_config()
 
     def __repr__(self):
         attrs = "\n".join(
@@ -42,13 +60,4 @@ class DefaultConfig:
         return f"<Config: \n{attrs}\n>"
 
 
-class ConfigGetter:
-    """
-    Give each class that inherits from Model an individual config attribute
-    without relying on the user to overriding the config when they define their class.
-    """
-
-    def __get__(self, obj, cls):
-        if cls._config is None:
-            cls._config = DefaultConfig()
-        return cls._config
+config = DefaultConfig()

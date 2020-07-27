@@ -2,34 +2,37 @@ import datetime
 import pathlib
 from contextlib import contextmanager
 from importlib.resources import path as import_path
-from typing import Tuple, Optional, Sequence, Union, List, Iterable, Any
+from typing import Tuple, Optional, Sequence, Union, List, Any
 
 import joblib
 import pandas as pd
-from ml_tooling.config import DefaultConfig, ConfigGetter
+from sklearn.base import is_classifier, is_regressor
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import check_cv
+from sklearn.pipeline import Pipeline
+
+from ml_tooling.config import config
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.logging.logger import create_logger
 from ml_tooling.metrics.metric import Metrics
 from ml_tooling.result import ResultType
 from ml_tooling.result.result import Result
 from ml_tooling.result.result_group import ResultGroup
-from ml_tooling.search.gridsearch import prepare_gridsearch_estimators
-from ml_tooling.search.randomsearch import prepare_randomsearch_estimators
+from ml_tooling.search.base import Searcher
+from ml_tooling.search.gridsearch import GridSearch
+from ml_tooling.search.randomsearch import RandomSearch
 from ml_tooling.storage.base import Storage
 from ml_tooling.utils import (
     MLToolingError,
     _validate_estimator,
-    DatasetError,
     Estimator,
     is_pipeline,
-    serialize_pipeline,
     _get_estimator_name,
     make_pipeline_from_definition,
     read_yaml,
+    _classify,
+    serialize_estimator,
 )
-from sklearn.base import is_classifier, is_regressor
-from sklearn.exceptions import NotFittedError
-from sklearn.model_selection import check_cv
 
 logger = create_logger("ml_tooling")
 
@@ -39,12 +42,30 @@ class Model:
     Wrapper class for Estimators
     """
 
-    _config = None
-    config = ConfigGetter()
+    def __init__(self, estimator: Estimator, feature_pipeline: Pipeline = None):
+        """
+        Parameters
+        ----------
+        estimator: Estimator
+            Any scikit-learn compatible estimator
 
-    def __init__(self, estimator):
-        self.estimator: Estimator = _validate_estimator(estimator)
+        feature_pipeline: Pipeline
+            Optionally pass a feature preprocessing Pipeline. Model will automatically insert
+            the estimator into a preprocessing pipeline
+        """
+        self._estimator: Estimator = _validate_estimator(estimator)
+        self.feature_pipeline = feature_pipeline
         self.result: Optional[ResultType] = None
+        self.config = config
+
+    @property
+    def estimator(self):
+        if not self.feature_pipeline:
+            return self._estimator
+
+        return Pipeline(
+            [("features", self.feature_pipeline), ("estimator", self._estimator)]
+        )
 
     @property
     def is_classifier(self) -> bool:
@@ -176,7 +197,7 @@ class Model:
         if prod:
             file_name = "production_model.pkl"
         else:
-            now_str = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S.%f")
+            now_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S_%f")
             file_name = f"{self.estimator_name}_{now_str}.pkl"
         estimator_file = storage.save(self.estimator, file_name, prod=prod)
 
@@ -204,16 +225,7 @@ class Model:
         -------
         List of dicts
         """
-        if self.is_pipeline:
-            return serialize_pipeline(self.estimator)
-
-        return [
-            {
-                "module": self.estimator.__class__.__module__,
-                "classname": self.estimator.__class__.__name__,
-                "params": self.estimator.get_params(),
-            }
-        ]
+        return serialize_estimator(self.estimator)
 
     @classmethod
     def from_yaml(cls, log_file: pathlib.Path) -> "Model":
@@ -227,6 +239,7 @@ class Model:
         data: Dataset,
         *args,
         proba: bool = False,
+        threshold: float = None,
         use_index: bool = False,
         use_cache: bool = False,
         **kwargs,
@@ -244,6 +257,9 @@ class Model:
         proba: bool
             Whether prediction is returned as a probability or not.
             Note that the return value is an n-dimensional array where n = number of classes
+
+        threshold: float
+            Threshold to use for predicting a binary class
 
         use_index: bool
             Whether the index from the prediction data should be used for the result.
@@ -267,16 +283,16 @@ class Model:
         try:
             if proba:
                 data = self.estimator.predict_proba(x)
-                columns = [f"Probability Class {col}" for col in range(data.shape[1])]
+                columns = [
+                    f"Probability Class {col}" for col in self.estimator.classes_
+                ]
             else:
-                data = self.estimator.predict(x)
+                data = _classify(x, self.estimator, threshold=threshold)
                 columns = ["Prediction"]
-            if use_index:
-                prediction = pd.DataFrame(data=data, index=x.index, columns=columns)
-            else:
-                prediction = pd.DataFrame(data=data, columns=columns)
 
-            return prediction
+            return pd.DataFrame(
+                data=data, index=x.index if use_index else None, columns=columns
+            )
 
         except NotFittedError:
             message = (
@@ -328,7 +344,7 @@ class Model:
         if log_dir:
             results.log(pathlib.Path(log_dir))
 
-        best_estimator: Model = results[0].model
+        best_estimator: Model = cls(results[0].estimator)
         logger.info(
             f"Best estimator: {best_estimator.estimator_name} - "
             f"{results[0].metrics.name}: {results[0].metrics.score}"
@@ -376,6 +392,8 @@ class Model:
         pass number of folds to cv. If cross-validation is used, `score_estimator` only
         cross-validates on training data and doesn't use the validation data.
 
+        If the dataset does not have a train set, it will create one using the default config.
+
         Returns a :class:`~ml_tooling.result.result.Result` object containing all result parameters
 
         Parameters
@@ -403,20 +421,25 @@ class Model:
         cv = cv if cv else None
 
         if cv:
-            cv = check_cv(cv, data.train_y, self.is_classifier)
+            cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
 
         logger.info("Scoring estimator...")
 
         if not data.has_validation_set:
-            raise DatasetError("Must run create_train_test first!")
+            data.create_train_test(
+                stratify=self.is_classifier,
+                shuffle=self.config.TRAIN_TEST_SHUFFLE,
+                test_size=self.config.TEST_SIZE,
+                seed=self.config.RANDOM_STATE,
+            )
 
         self.estimator.fit(data.train_x, data.train_y)
 
         if cv:
             logger.info("Cross-validating...")
 
-        self.result = Result.from_model(
-            model=self,
+        self.result = Result.from_estimator(
+            estimator=self.estimator,
             data=data,
             metrics=score_metrics,
             cv=cv,
@@ -432,11 +455,10 @@ class Model:
     def _cross_validated_search(
         self,
         data: Dataset,
-        params: dict,
-        estimators: Iterable[Estimator],
+        searcher: Searcher,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
-    ) -> Tuple["Model", ResultGroup]:
+    ) -> ResultGroup:
         """
         Runs a cross-validated search on the given estimators.
 
@@ -445,11 +467,8 @@ class Model:
         data: Dataset
             An instance of a DataSet object
 
-        params: dict
-            Parameters to use for search
-
-        estimators: Iterable[Estimator]
-            estimators to cross validate
+        searcher: Searcher
+            An implementation of a Searcher, which knows how to search for hyperparameters
 
         metrics: str, list of str
             Metrics to use for scoring. "default" sets metric equal to
@@ -467,16 +486,16 @@ class Model:
             ResultGroup object containing each individual score
         """
         if isinstance(metrics, str):
-            metrics = self.default_metric if metrics == "default" else metrics
+            metrics = [self.default_metric if metrics == "default" else metrics]
 
         cv = self.config.CROSS_VALIDATION if cv is None else cv
-        cv = check_cv(cv, data.train_y, self.is_classifier)
+        cv = check_cv(cv=cv, y=data.train_y, classifier=self.is_classifier)
 
         logger.debug(f"Cross-validating with {cv}-fold cv using {metrics}")
         logger.info("Starting search...")
 
-        self.result = _train_estimators(
-            list(estimators), data=data, metrics=metrics, cv=cv
+        self.result: ResultGroup = searcher.search(
+            data, metrics, cv, n_jobs=config.N_JOBS, verbose=config.VERBOSITY
         )
 
         logger.info("Done!")
@@ -485,7 +504,7 @@ class Model:
             result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return self.result[0].model, self.result
+        return self.result
 
     def gridsearch(
         self,
@@ -493,6 +512,7 @@ class Model:
         param_grid: dict,
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
+        refit: bool = True,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated gridsearch on the estimator with the passed in parameter grid.
@@ -512,6 +532,9 @@ class Model:
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
+        refit: bool
+            Whether or not to refit the best model
+
         Returns
         -------
         best_estimator: Model
@@ -521,13 +544,16 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        estimators: Iterable[Estimator] = prepare_gridsearch_estimators(
-            estimator=self.estimator, params=param_grid
-        )
-
+        gs = GridSearch(self.estimator, param_grid=param_grid)
         logger.debug(f"Gridsearching using {param_grid}")
+        results = self._cross_validated_search(data, gs, metrics=metrics, cv=cv)
 
-        return self._cross_validated_search(data, param_grid, estimators, metrics, cv)
+        best_model = results[0].model
+
+        if refit:
+            best_model.score_estimator(data, metrics)
+
+        return best_model, results
 
     def randomsearch(
         self,
@@ -536,6 +562,7 @@ class Model:
         metrics: Union[str, List[str]] = "default",
         cv: Optional[int] = None,
         n_iter: int = 10,
+        refit: bool = True,
     ) -> Tuple["Model", ResultGroup]:
         """
         Runs a cross-validated randomsearch on the estimator with a randomized
@@ -543,6 +570,7 @@ class Model:
 
         Parameters
         ----------
+
         data: Dataset
             An instance of a DataSet object
 
@@ -556,11 +584,11 @@ class Model:
         cv: int, optional
             Cross validation to use. Defaults to value in :attr:`config.CROSS_VALIDATION`
 
-        n_iter:
+        n_iter: int
             Number of parameter settings that are sampled.
 
-        random_state:
-            Pseudo random number generator state used for random uniform sampling.
+        refit: bool
+            Whether or not to refit the best model
 
         Returns
         -------
@@ -571,18 +599,20 @@ class Model:
             ResultGroup object containing each individual score
         """
 
-        estimators: Iterable[Estimator] = prepare_randomsearch_estimators(
-            estimator=self.estimator,
-            params=param_distributions,
-            n_iter=n_iter,
-            random_state=self.config.RANDOM_STATE,
+        searcher = RandomSearch(
+            self.estimator, param_grid=param_distributions, n_iter=n_iter
         )
 
-        logger.debug(f"Randomsearching using {param_distributions}")
-
-        return self._cross_validated_search(
-            data, param_distributions, estimators, metrics, cv
+        results = self._cross_validated_search(
+            data=data, searcher=searcher, metrics=metrics, cv=cv
         )
+
+        best_model = Model(results[0].estimator)
+
+        if refit:
+            best_model.score_estimator(data, metrics)
+
+        return best_model, results
 
     @contextmanager
     def log(self, run_directory: str):
@@ -616,20 +646,22 @@ class Model:
             self.config.RUN_DIR = old_dir
 
     @classmethod
-    def load_production_estimator(cls, module_name):
+    def load_production_estimator(cls, module_name: str):
+        """
+        Loads a model from a python package. Given that the package is an ML-Tooling
+        package, this will load the production model from the package and create an instance
+        of Model with that package
+
+        Parameters
+        ----------
+        module_name: str
+            The name of the package to load a model from
+
+        """
         file_name = "production_model.pkl"
         with import_path(module_name, file_name) as path:
             estimator = joblib.load(path)
         return cls(estimator)
-
-    @classmethod
-    def reset_config(cls):
-        """
-        Reset configuration to default
-        """
-        cls._config = DefaultConfig()
-
-        return cls
 
     def __repr__(self):
         return f"<Model: {self.estimator_name}>"

@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 
 def create_logger(logger_name):
@@ -11,7 +12,9 @@ def create_logger(logger_name):
 
     fmt = logging.Formatter(fmt="[%(asctime)s] - %(message)s", datefmt="%H:%M:%S")
 
-    handler = logging.StreamHandler() if default_logger else logging.NullHandler()
+    handler = (
+        logging.StreamHandler(sys.stdout) if default_logger else logging.NullHandler()
+    )
 
     handler.setFormatter(fmt)
     logger.addHandler(handler)

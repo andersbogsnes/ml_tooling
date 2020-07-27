@@ -1,7 +1,7 @@
 import pathlib
 import subprocess
 from unittest.mock import patch
-
+import numpy as np
 import matplotlib.pyplot as plt
 import pytest
 from sklearn.ensemble import RandomForestClassifier
@@ -17,6 +17,7 @@ from ml_tooling.utils import (
     make_dir,
     _find_src_dir,
     _find_setup_file,
+    _classify,
 )
 
 
@@ -108,6 +109,28 @@ def test_validate_estimator_should_raise_on_invalid_input():
         _validate_estimator(make_pipeline(StandardScaler()))
 
 
+def test_classify_with_threshold_works_on_classification_output(
+    classifier, train_iris_dataset
+):
+    data = train_iris_dataset.load_prediction_data(0)
+
+    pred = _classify(data, classifier.estimator)
+    assert pred == np.array([0])
+
+    pred = _classify(data, classifier.estimator, threshold=0.1)
+    assert pred == np.array([1])
+
+
+def test_classify_with_threshold_raises_error_on_non_binary_estimators(
+    classifier, train_iris_dataset
+):
+    classifier.estimator.classes_ = [0, 1, 2]
+    data = train_iris_dataset.load_prediction_data(0)
+
+    with pytest.raises(MLToolingError):
+        _classify(data, classifier.estimator, threshold=0.3)
+
+
 class TestGridsearchParams:
     def test_make_dir_fails_on_input_files(self, tmp_path: pathlib.Path):
         file_path = tmp_path / "test.txt"
@@ -170,9 +193,5 @@ class TestFindSrcDir:
         tmp_path.joinpath("setup.py").write_text("I exist")
         output_folder = tmp_path / "src" / "test"
         output_folder.mkdir(parents=True)
-        with pytest.raises(
-            MLToolingError,
-            match=f"No modules found in {output_folder.parent}! "
-            f"Is there an __init__.py file in your module?",
-        ):
+        with pytest.raises(MLToolingError, match="No modules found in"):
             _find_src_dir(output_folder)

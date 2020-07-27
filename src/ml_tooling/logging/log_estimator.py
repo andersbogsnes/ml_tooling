@@ -5,7 +5,13 @@ from typing import Optional, List
 import yaml
 
 from ml_tooling.metrics import Metrics
-from ml_tooling.utils import get_git_hash, make_dir, Pathlike
+from ml_tooling.utils import (
+    get_git_hash,
+    make_dir,
+    Pathlike,
+    serialize_estimator,
+    _get_estimator_name,
+)
 import attr
 
 
@@ -29,9 +35,9 @@ class Log:
     @classmethod
     def from_result(cls, result, estimator_path: Optional[pathlib.Path] = None):
         return cls(
-            name=f"{result.data.class_name}_{result.model.estimator_name}",
+            name=f"{result.data.class_name}_{_get_estimator_name(result.estimator)}",
             metrics=result.metrics,
-            estimator=result.model.to_dict(),
+            estimator=serialize_estimator(result.estimator),
             estimator_path=estimator_path,
         )
 

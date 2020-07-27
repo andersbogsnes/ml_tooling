@@ -2,4 +2,5 @@
 tox
 pre-commit
 pytest
+pytest-cov
 dohq-artifactory

@@ -15,7 +15,7 @@ class FileStorage(Storage):
 
     def __init__(self, dir_path: Pathlike = None):
         self.dir_path = Path.cwd() if dir_path is None else Path(dir_path)
-        if not self.dir_path.is_dir():
+        if self.dir_path.is_file():
             raise MLToolingError(
                 f"dir_path is {self.dir_path} which is not a directory"
             )

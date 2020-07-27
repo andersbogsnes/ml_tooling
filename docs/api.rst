@@ -5,7 +5,7 @@ API
 
 Model
 -----
-Abstract BaseClass to inherit from.
+A wrapper for scikit-learn based estimators
 Implements all the base functionality needed to create the wrapper
 
 .. autoclass:: ml_tooling.baseclass.Model

@@ -45,21 +45,27 @@ def classifier_cv(train_iris_dataset) -> Model:
 @pytest.fixture
 def pipeline_logistic() -> Pipeline:
     pipe = Pipeline(
-        [("scale", StandardScaler()), ("clf", LogisticRegression(solver="liblinear"))]
+        [
+            ("scale", StandardScaler()),
+            ("estimator", LogisticRegression(solver="liblinear")),
+        ]
     )
     return pipe
 
 
 @pytest.fixture
 def pipeline_linear() -> Pipeline:
-    pipe = Pipeline([("scale", StandardScaler()), ("clf", LinearRegression())])
+    pipe = Pipeline([("scale", StandardScaler()), ("estimator", LinearRegression())])
     return pipe
 
 
 @pytest.fixture
 def pipeline_dummy_classifier() -> Pipeline:
     pipe = Pipeline(
-        [("scale", DFStandardScaler()), ("clf", DummyClassifier(strategy="prior"))]
+        [
+            ("scale", DFStandardScaler()),
+            ("estimator", DummyClassifier(strategy="prior")),
+        ]
     )
     return pipe
 
@@ -80,7 +86,7 @@ def feature_union_classifier() -> Pipeline:
     )
     union = DFFeatureUnion(transformer_list=[("pipe1", pipe1), ("pipe2", pipe2)])
     return Pipeline(
-        [("features", union), ("clf", LogisticRegression(solver="liblinear"))]
+        [("features", union), ("estimator", LogisticRegression(solver="liblinear"))]
     )
 
 
@@ -89,7 +95,7 @@ def pipeline_forest_classifier() -> Pipeline:
     pipe = Pipeline(
         [
             ("scale", DFStandardScaler()),
-            ("clf", RandomForestClassifier(n_estimators=10)),
+            ("estimator", RandomForestClassifier(n_estimators=10)),
         ]
     )
     return pipe

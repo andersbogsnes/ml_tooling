@@ -39,10 +39,10 @@ def monkeypatch_git_hash(monkeypatch):
     monkeypatch.setattr("ml_tooling.utils.get_git_hash", mockreturn)
 
 
-@pytest.fixture
-def temp_project_structure(tmp_path: pathlib.Path) -> pathlib.Path:
+@pytest.fixture(params=["setup.py", "pyproject.toml"])
+def temp_project_structure(tmp_path: pathlib.Path, request) -> pathlib.Path:
     # Write a setup.py file
-    tmp_path.joinpath("setup.py").write_text("my_setup\nfile")
+    tmp_path.joinpath(request.param).write_text("my_setup\nfile")
 
     # Setup a src project
     project = tmp_path.joinpath("src").joinpath("my_test_project")

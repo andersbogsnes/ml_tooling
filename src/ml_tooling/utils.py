@@ -427,3 +427,26 @@ def serialize_estimator(estimator: Estimator) -> List[dict]:
             "params": estimator.get_params(),
         }
     ]
+
+
+def _get_labels_from_pipeline(estimator: Estimator, x: pd.DataFrame) -> np.ndarray:
+    """
+    Extract transformed labels from the estimator pipeline
+
+    Parameters
+    ----------
+    estimator: Estimator
+        The estimator pipeline to extract labels through
+
+    x: pd.DataFrame
+        Input dataframe to extract labels from
+
+    Returns
+    -------
+    np.ndarray
+    """
+
+    if not is_pipeline(estimator):
+        return x.columns.to_numpy()
+
+    return Pipeline(estimator.steps[:-1]).transform(x.iloc[[0], :]).columns.to_numpy()

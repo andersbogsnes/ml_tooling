@@ -1,10 +1,13 @@
 """Base implementation for Hyperparameter optimization"""
 
 from typing import List, Any, Iterable
+import logging
 
 from ml_tooling.data import Dataset
 from ml_tooling.result import ResultGroup, Result
 from ml_tooling.utils import Estimator
+
+logger = logging.getLogger("ml_tooling.search")
 
 
 class Searcher:
@@ -24,7 +27,22 @@ class Searcher:
         self.param_grid = param_grid
 
     @staticmethod
+    def _train_estimator(estimator, metrics, data, cv, n_jobs, verbose):
+        logger.info("Training %s", estimator)
+        result = Result.from_estimator(
+            estimator=estimator,
+            metrics=metrics,
+            data=data,
+            cv=cv,
+            n_jobs=n_jobs,
+            verbose=verbose,
+        )
+        logger.info("Finished %s", estimator)
+        logger.info("Result: %s", result)
+        return result
+
     def _train_estimators(
+        self,
         estimators: Iterable[Estimator],
         metrics: List[str],
         data: Dataset,
@@ -60,8 +78,9 @@ class Searcher:
         ResultGroup
             A list of Results
         """
+
         results = [
-            Result.from_estimator(
+            self._train_estimator(
                 estimator=estimator,
                 metrics=metrics,
                 data=data,

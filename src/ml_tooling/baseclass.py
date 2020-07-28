@@ -323,6 +323,9 @@ class Model:
         estimators: Sequence[Estimator]
             List of estimators to train
 
+        feature_pipeline: Pipeline
+            A pipeline for transforming features
+
         metrics: str, list of str
             Metric or list of metrics to use in scoring of estimators
 

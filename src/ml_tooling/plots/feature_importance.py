@@ -13,7 +13,7 @@ from ml_tooling.utils import (
     Estimator,
     is_pipeline,
     _get_labels_from_pipeline,
-    MLToolingError,
+    VizError,
 )
 
 
@@ -87,7 +87,7 @@ def plot_feature_importance(
         x_label = "Feature Importances"
 
     else:
-        raise MLToolingError(
+        raise VizError(
             "Estimator must have one of coef_ or feature_importances_."
             f"{estimator} has neither."
         )

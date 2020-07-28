@@ -96,7 +96,7 @@ def plot_permutation_importance(
 
     feature_importance = importances.importances_mean
     labels = x.columns
-    plot_title = title if title else f"Feature Importances ({scoring.title()})"
+    plot_title = title if title else f"Permutation Importances ({scoring.title()})"
     ax = _plot_barh(
         feature_importance,
         labels,

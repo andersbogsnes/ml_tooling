@@ -11,6 +11,7 @@ from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
+from ml_tooling.plots import plot_feature_importance
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import VizError
 
@@ -258,3 +259,9 @@ class TestFeatureImportancePlot:
         result = model.score_estimator(train_iris_dataset)
         with pytest.raises(VizError):
             result.plot.feature_importance()
+
+    def test_raises_if_func_is_passed_unfitted_estimator(self, iris_dataset: Dataset):
+        with pytest.raises(VizError):
+            plot_feature_importance(
+                RandomForestClassifier(), iris_dataset.x, iris_dataset.y
+            )

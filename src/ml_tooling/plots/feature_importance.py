@@ -70,7 +70,6 @@ def plot_feature_importance(
     plt.Axes
 
     """
-    estimator.fit(x, y)
 
     trained_estimator: BaseEstimator = estimator.steps[-1][1] if is_pipeline(
         estimator
@@ -89,7 +88,7 @@ def plot_feature_importance(
     else:
         raise VizError(
             "Estimator must have one of coef_ or feature_importances_."
-            f"{estimator} has neither."
+            f"{estimator} has neither. Make sure that it has been fitted"
         )
 
     labels = _get_labels_from_pipeline(estimator, x)

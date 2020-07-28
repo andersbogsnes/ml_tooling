@@ -319,8 +319,12 @@ def _find_setup_file(path: pathlib.Path, level: int, max_level: int) -> pathlib.
     """
     if level > max_level:
         raise MLToolingError("Exceeded max_level. Does your project have a setup.py?")
-    if path.joinpath("setup.py").exists():
-        return path
+
+    package_files = ["setup.py", "pyproject.toml"]
+
+    for package_file in package_files:
+        if path.joinpath(package_file).exists():
+            return path
 
     return _find_setup_file(path.parent, level + 1, max_level)
 
@@ -423,3 +427,26 @@ def serialize_estimator(estimator: Estimator) -> List[dict]:
             "params": estimator.get_params(),
         }
     ]
+
+
+def _get_labels_from_pipeline(estimator: Estimator, x: pd.DataFrame) -> np.ndarray:
+    """
+    Extract transformed labels from the estimator pipeline
+
+    Parameters
+    ----------
+    estimator: Estimator
+        The estimator pipeline to extract labels through
+
+    x: pd.DataFrame
+        Input dataframe to extract labels from
+
+    Returns
+    -------
+    np.ndarray
+    """
+
+    if not is_pipeline(estimator):
+        return x.columns.to_numpy()
+
+    return Pipeline(estimator.steps[:-1]).transform(x.iloc[[0], :]).columns.to_numpy()

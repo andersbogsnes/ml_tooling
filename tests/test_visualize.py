@@ -5,11 +5,9 @@ from unittest.mock import MagicMock
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pytest
 from matplotlib.axes import Axes
 from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
@@ -21,10 +19,9 @@ from ml_tooling.plots import (
     plot_lift_curve,
     plot_confusion_matrix,
     plot_pr_curve,
-    plot_feature_importance,
 )
 from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
-from ml_tooling.transformers import ToCategorical, DFStandardScaler
+from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import VizError
 
 
@@ -56,6 +53,7 @@ class TestVisualize:
             "feature_importance",
             "pr_curve",
             "learning_curve",
+            "permutation_importance",
         ],
     )
     def test_classifier_visualize_has_all_plots(self, attr: str, classifier: Model):
@@ -118,250 +116,6 @@ class TestConfusionMatrixPlot:
         assert "Confusion Matrix - Normalized" == ax.title._text
         assert ["Pos", "Neg"] == [x._text for x in ax.get_xticklabels()]
         assert ["Pos", "Neg"] == [y._text for y in ax.get_yticklabels()]
-        plt.close()
-
-
-class TestFeatureImportancePlot:
-    def test_feature_importance_plots_can_be_given_an_ax(self, classifier: Model):
-        fig, ax = plt.subplots()
-        test_ax = classifier.result.plot.feature_importance(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_feature_importance_plots_have_correct_data(self, classifier: Model):
-        ax = classifier.result.plot.feature_importance()
-
-        expected = {"0.04", "0.06", "0.10", "-0.03"}
-        assert {text.get_text() for text in ax.texts} == expected
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text() == "Feature Importances (Accuracy) - LogisticRegression"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_have_no_labels_if_value_is_false(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(add_label=False)
-        assert len(ax.texts) == 0
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text() == "Feature Importances (Accuracy) - LogisticRegression"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_have_correct_labels_when_top_n_is_set(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(top_n=2)
-        assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.10", "0.06"}
-
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Top 2"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_have_correct_labels_when_top_n_is_percent(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(top_n=0.2)
-        assert len(ax.texts) == 1
-        assert {text.get_text() for text in ax.texts} == {"0.10"}
-
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Top 20%"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_int(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(bottom_n=2)
-        assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.04", "-0.03"}
-
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Bottom 2"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_have_correct_labels_when_bottom_n_is_percent(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(bottom_n=0.2)
-        assert len(ax.texts) == 1
-        assert {text.get_text() for text in ax.texts} == {"-0.03"}
-
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Bottom 20%"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_correct_if_top_n_is_int_and_bottom_n_is_int(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=1)
-        assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Top 1 - Bottom 1"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_correct_when_top_n_is_int_and_bottom_n_is_percent(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(top_n=1, bottom_n=0.2)
-        assert 2 == len(ax.texts)
-        assert {text.get_text() for text in ax.texts} == {"0.10", "-0.03"}
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Top 1 - Bottom 20%"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_correct_when_top_n_is_percent_and_bottom_n_is_int(
-        self, classifier: Model
-    ):
-        ax = classifier.result.plot.feature_importance(top_n=0.2, bottom_n=1)
-        assert len(ax.texts) == 2
-        assert {text.get_text() for text in ax.texts} == {"-0.03", "0.10"}
-        assert ax.get_ylabel() == "Feature Labels"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
-        assert (
-            ax.title.get_text()
-            == "Feature Importances (Accuracy) - LogisticRegression - Top 20% - Bottom 1"
-        )
-        plt.close()
-
-    def test_feature_importance_plots_correctly_in_pipeline(
-        self, categorical: Model, train_iris_dataset
-    ):
-        pipe = Pipeline(
-            [
-                ("tocategory", ToCategorical()),
-                ("clf", RandomForestClassifier(n_estimators=10)),
-            ]
-        )
-
-        model = Model(pipe)
-        result = model.score_estimator(train_iris_dataset)
-        ax = result.plot.feature_importance()
-
-        assert (
-            "Feature Importances (Accuracy) - RandomForestClassifier" == ax.title._text
-        )
-        assert 4 == len(list(ax.get_yticklabels()))
-        plt.close()
-
-    def test_feature_importance_doesnt_error_in_on_large_datasets(
-        self, train_iris_dataset
-    ):
-        """
-        When joblib.Parallel receives data that is larger than a given size, it will do a read-only
-        memmap on the data.
-
-        scikit-learn's permutation importance implementation modifies the object,
-        resulting in an error.
-
-        This test replicates the error by creating a large DataFrame
-        """
-
-        # Make a new dataset with lots of rows to trigger the joblib.Parallel error
-        class IrisData(Dataset):
-            def load_training_data(self):
-                data = load_iris()
-                return (
-                    pd.DataFrame(
-                        data=data.data.repeat(1000, axis=0), columns=data.feature_names
-                    ),
-                    data.target.repeat(1000),
-                )
-
-            def load_prediction_data(self):
-                pass
-
-        data = IrisData().create_train_test()
-        result = Model(RandomForestClassifier(n_estimators=2)).score_estimator(data)
-        assert result.plot.feature_importance()
-        plt.close()
-
-    def test_can_use_different_scoring_metrics(self, classifier: Model):
-        ax = classifier.result.plot.feature_importance(scoring="roc_auc")
-        assert (
-            ax.title.get_text() == "Feature Importances (Roc_Auc) - LogisticRegression"
-        )
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Roc_Auc) Relative to Baseline"
-        )
-        plt.close()
-
-    def test_can_use_feature_importance_with_regressor(self, regression: Model):
-        ax = regression.result.plot.feature_importance()
-        assert ax.title.get_text() == "Feature Importances (R2) - LinearRegression"
-        assert (
-            ax.get_xlabel() == "Permuted Feature Importance (R2) Relative to Baseline"
-        )
-        plt.close()
-
-    def test_plot_feature_importance_with_default_metrics(self, classifier: Model):
-        ax = plot_feature_importance(
-            classifier.estimator, classifier.result.data.x, classifier.result.data.y
-        )
-
-        assert ax.title.get_text() == "Feature Importances (Accuracy)"
-        assert (
-            ax.get_xlabel()
-            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
-        )
         plt.close()
 
 

@@ -3,15 +3,16 @@ from typing import Union, Sequence
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from sklearn.base import is_classifier
 
+from ml_tooling.config import MPL_STYLESHEET, config
 from ml_tooling.plots import (
     plot_feature_importance,
     plot_learning_curve,
     plot_validation_curve,
 )
+from ml_tooling.plots.permutation_importance import plot_permutation_importance
 from ml_tooling.utils import _get_estimator_name
-from sklearn.base import is_classifier
-from ml_tooling.config import MPL_STYLESHEET, config
 
 
 class BaseVisualize:
@@ -46,6 +47,56 @@ class BaseVisualize:
 
     def feature_importance(
         self,
+        top_n: Union[int, float] = None,
+        bottom_n: Union[int, float] = None,
+        add_label: bool = True,
+        ax: Axes = None,
+        **kwargs,
+    ) -> Axes:
+        """
+        Visualizes feature importance of the estimator through permutation.
+
+        Parameters
+        ----------
+        top_n: int, float
+            If top_n is an integer, return top_n features.
+            If top_n is a float between (0, 1), return top_n percent features
+
+        bottom_n: int, float
+            If bottom_n is an integer, return bottom_n features.
+            If bottom_n is a float between (0, 1), return bottom_n percent features
+
+        add_label : bool
+            Toggles value labels on end of each bar
+
+        ax: Axes
+            Draws graph on passed ax - otherwise creates new ax
+
+        kwargs: dict
+            Passed to plt.barh
+
+        Returns
+        -------
+            matplotlib.Axes
+        """
+
+        title = f"Feature Importances - {self._estimator_name}"
+
+        with plt.style.context(MPL_STYLESHEET):
+            return plot_feature_importance(
+                estimator=self._estimator,
+                x=self._data.train_x,
+                y=self._data.train_y,
+                ax=ax,
+                top_n=top_n,
+                bottom_n=bottom_n,
+                add_label=add_label,
+                title=title,
+                **kwargs,
+            )
+
+    def permutation_importance(
+        self,
         n_repeats: int = 5,
         scoring: str = "default",
         top_n: Union[int, float] = None,
@@ -65,7 +116,7 @@ class BaseVisualize:
 
         scoring: str
             Metric to use in scoring - must be a scikit-learn compatible
-            :ref:`scoring method<sklearn:scoring_parameter>`
+            :ref:`scoring method <sklearn:scoring_parameter>`
 
         top_n: int, float
             If top_n is an integer, return top_n features.
@@ -78,12 +129,11 @@ class BaseVisualize:
         add_label : bool
             Toggles value labels on end of each bar
 
-        n_jobs: int
-            Overwrites N_JOBS from settings. Useful if data is to big to fit
-            in memory multiple times.
-
         ax: Axes
             Draws graph on passed ax - otherwise creates new ax
+
+        n_jobs: int, optional
+            Number of parallel jobs to run. Defaults to N_JOBS setting in config.
 
         kwargs: dict
             Passed to plt.barh
@@ -92,23 +142,22 @@ class BaseVisualize:
         -------
             matplotlib.Axes
         """
-
         n_jobs = config.N_JOBS if n_jobs is None else n_jobs
         scoring = self.default_metric if scoring == "default" else scoring
-        title = f"Feature Importances ({scoring.title()}) - {self._estimator_name}"
+        title = f"Permutation Importances ({scoring.title()}) - {self._estimator_name}"
 
         with plt.style.context(MPL_STYLESHEET):
-            return plot_feature_importance(
+            return plot_permutation_importance(
                 estimator=self._estimator,
-                x=self._data.x,
-                y=self._data.y,
+                x=self._data.train_x,
+                y=self._data.train_y,
                 scoring=scoring,
                 n_repeats=n_repeats,
                 n_jobs=n_jobs,
                 random_state=config.RANDOM_STATE,
                 ax=ax,
-                top_n=top_n,
                 bottom_n=bottom_n,
+                top_n=top_n,
                 add_label=add_label,
                 title=title,
                 **kwargs,

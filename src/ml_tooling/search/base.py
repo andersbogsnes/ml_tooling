@@ -1,4 +1,6 @@
-"""Base implementation for Hyperparameter optimization"""
+"""
+Base implementation for Hyperparameter optimization
+"""
 
 from typing import List, Any, Iterable
 import logging
@@ -28,6 +30,34 @@ class Searcher:
 
     @staticmethod
     def _train_estimator(estimator, metrics, data, cv, n_jobs, verbose):
+        """
+        Helper method to wrap training step in a logger call
+
+        Parameters
+        ----------
+        estimator: Estimator
+            Estimator to train
+
+        metrics: List[str]
+            List of metrics to calculate for the estimator
+
+        data: Dataset
+            Dataset to train estimator on
+
+        cv: Any
+            Either a CV object from sklearn or an int to specify number of folds
+
+        verbose: int
+            Verbosity level of the method
+
+
+        n_jobs: int
+            Number of parallel jobs to train
+
+        Returns
+        -------
+        Result
+        """
         logger.info("Training %s", estimator)
         result = Result.from_estimator(
             estimator=estimator,

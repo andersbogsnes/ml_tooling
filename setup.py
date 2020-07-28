@@ -16,6 +16,7 @@ INSTALL_REQUIRES = [
     "joblib",
     "sqlalchemy",
     "attrs",
+    "scikit-optimize",
 ]
 KEYWORDS = ["ml", "framework", "tooling"]
 PROJECT_URLS = {

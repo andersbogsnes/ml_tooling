@@ -13,6 +13,7 @@
 - Can pass a feature pipeline to `Dataset.plot` methods, to apply preprocessing
 before visualization
 - New config implementation. If you need to reset the configuration, you should use `Model.config.reset_config()`
+- Implement Bayesian Search for hyperparameter optimization
 
 # v0.10.3
 - Fixed typehints in Dataset

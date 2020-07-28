@@ -94,7 +94,7 @@ class FillNA(BaseEstimator, TransformerMixin):
         for col in x_.columns:
             if self._col_is_categorical_and_is_missing_category(col, x_):
                 x_[col].cat.add_categories(self.value_map_[col], inplace=True)
-            if self.indicate_nan and x_[col].isna().sum() > 0:
+            if self.indicate_nan:
                 is_nan_col_name = f"{col}_is_nan"
                 x_[is_nan_col_name] = x_[col].isna().astype(int)
 

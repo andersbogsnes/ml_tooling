@@ -306,6 +306,7 @@ class Model:
         cls,
         data: Dataset,
         estimators: Sequence[Estimator],
+        feature_pipeline: Pipeline = None,
         metrics: Union[str, List[str]] = "default",
         cv: Union[int, bool] = False,
         log_dir: str = None,
@@ -339,7 +340,13 @@ class Model:
         List of Result objects
         """
 
-        results = _train_estimators(estimators, data, metrics, cv)
+        results = _train_estimators(
+            estimators=estimators,
+            feature_pipeline=feature_pipeline,
+            data=data,
+            metrics=metrics,
+            cv=cv,
+        )
 
         if log_dir:
             results.log(pathlib.Path(log_dir))
@@ -672,6 +679,7 @@ def _train_estimators(
     data: Dataset,
     metrics: Union[str, List[str]],
     cv: Any,
+    feature_pipeline: Pipeline = None,
 ) -> ResultGroup:
     """
     Sequentially train a series of models and create a ResultGroup of the results
@@ -697,7 +705,7 @@ def _train_estimators(
 
     results = []
     for i, estimator in enumerate(estimators, start=1):
-        challenger_estimator = Model(estimator)
+        challenger_estimator = Model(estimator, feature_pipeline=feature_pipeline)
         logger.info(
             f"Training estimator {i}/{len(estimators)}: {challenger_estimator.estimator_name}"
         )

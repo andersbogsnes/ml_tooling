@@ -589,10 +589,25 @@ class TestModelSelection:
     ):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
         best_estimator, results = Model.test_estimators(
-            train_iris_dataset, estimators, "accuracy"
+            data=train_iris_dataset, estimators=estimators, metrics="accuracy"
         )
 
         assert best_estimator.estimator == estimators[0]
+
+    def test_model_selection_works_with_feature_pipeline(
+        self, train_iris_dataset: Dataset
+    ):
+        estimators = [RandomForestClassifier(), DummyClassifier(strategy="stratified")]
+        feature_pipeline = Pipeline([("scale", DFStandardScaler())])
+        best_estimator, results = Model.test_estimators(
+            data=train_iris_dataset,
+            estimators=estimators,
+            feature_pipeline=feature_pipeline,
+        )
+        expected = Pipeline(
+            [("features", feature_pipeline), ("estimator", estimators[0])]
+        )
+        assert best_estimator.estimator.get_params() == expected.get_params()
 
     def test_model_selection_refits_final_model(self, train_iris_dataset):
         estimators = [LogisticRegression(solver="liblinear")]

@@ -1,6 +1,8 @@
 # v0.11.1
 - Permutation importance and Feature importance are now two different plotting methods.
 - `Model.test_estimators` now takes a `feature_pipeline` argument
+- Fixed a bug where `FillNA` did not create a `_is_na` column if the column didn't have a missing value
+
 # v0.11.0
 - Added `load_demo_dataset` function
 - If the dataset has no train set `score_estimator` will now run `create_train_test` with default configurations

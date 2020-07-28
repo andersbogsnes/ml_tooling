@@ -23,6 +23,13 @@ To use the visualizations, access them using the `.plot` accessor on the
 
     >>> result.plot.feature_importance()
 
+.. code-block::
+
+    >>> result.plot.permutation_importance()
+
+.. plot::
+
+    >>> result.plot.permutation_importance()
 
 .. code-block:: python
 
@@ -73,6 +80,11 @@ as arguments:
 Available Base plots
 --------------------
 - :meth:`~RegressionVisualize.feature_importance`
+    Uses the estimator's learned coefficients or learned feature importance in the case of RandomForest
+    to plot the relative importance of each feature. Note that for most usecases, permutation importance is
+    going to be more accurate, but is also more computationally expensive
+
+- :meth:`~RegressionVisualize.permutation_importance`
     Uses random permutation to calculate feature importance by randomly permuting each column
     and measuring the difference in the model metric against the baseline.
 

@@ -510,10 +510,14 @@ class Model:
         self.result: ResultGroup = searcher.search(
             data, metrics, cv, n_jobs=config.N_JOBS, verbose=config.VERBOSITY
         )
-        best_model = Model(self.result[0].estimator)
+        best_estimator = Model(self.result.estimator)
+        logger.info(
+            f"Best estimator: {best_estimator.estimator_name} - "
+            f"{self.result.metrics.name}: {self.result.metrics.score}"
+        )
 
         if refit:
-            best_model.score_estimator(data, metrics)
+            best_estimator.score_estimator(data, metrics)
 
         logger.info("Done!")
 
@@ -521,7 +525,7 @@ class Model:
             result_file = self.result.log(self.config.RUN_DIR)
             logger.info(f"Saved run info at {result_file}")
 
-        return best_model, self.result
+        return best_estimator, self.result
 
     def gridsearch(
         self,

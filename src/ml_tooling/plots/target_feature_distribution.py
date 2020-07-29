@@ -20,7 +20,7 @@ def plot_target_feature_distribution(
     title: str = "Target feature distribution",
     method: str = "mean",
     ax: plt.Axes = None,
-    n_boots: int = 1000,
+    n_boots: int = None,
 ) -> Axes:
     """
     Creates a plot which compares the mean or median
@@ -28,18 +28,18 @@ def plot_target_feature_distribution(
 
     Parameters
     ----------
-    target: np.Array or pd.Series
-        Target to compare with feature
-    feature: np.Array or pd.Series
-        Feature to compare with target
+    target: DataType
+        Target to aggregate per feature category
+    feature: DataType
+        Categorical feature to group by
     title: str
         Title of graph
     method: str
-        Which method to compare with. Support one of 'median' and 'mean'.
+        Which method to compare with. One of 'median' or 'mean'.
     ax: plt.Axes
         Matplotlib axes to draw the graph on. Creates a new one by default
     n_boots: int
-        The number of boostrap iterations to use.
+        The number of bootstrap iterations to use.
     Returns
     -------
     plt.Axes
@@ -48,32 +48,33 @@ def plot_target_feature_distribution(
     if 0 and 1 not in np.unique(target):
         raise VizError("Target feature distribution plot only works for binary target")
 
-    method_mapping = {"mean": np.mean, "median": np.median}
+    if ax is None:
+        fig, ax = plt.subplots()
 
-    selected_method = method_mapping[method]
+    agg_func_mapping = {"mean": np.mean, "median": np.median}
+
+    selected_agg_func = agg_func_mapping[method]
 
     feature_categories = np.unique(feature)
 
     data = np.asarray(
         [
-            selected_method(target[feature == category])
+            selected_agg_func(target[feature == category])
             for category in feature_categories
         ]
     )
 
-    final_bootstrap = np.empty([n_boots, len(feature_categories)])
-    for i in range(n_boots):
-        boots_index = np.random.choice(feature, size=len(feature), replace=True)
-        boots_temp = [
-            selected_method(target[boots_index][feature[boots_index] == category])
-            for category in feature_categories
-        ]
-        final_bootstrap[i, :] = boots_temp
-
-    percentile = np.percentile(final_bootstrap, (2.5, 97.5), axis=0)
-
-    if ax is None:
-        fig, ax = plt.subplots()
+    if n_boots:
+        percentile = np.zeros((2, feature_categories.shape[0]))
+        i = 0
+        for category in feature_categories:
+            data_temp = target[feature == category]
+            boots_sample = np.random.choice(
+                data_temp, size=n_boots * data_temp.shape[0], replace=True
+            ).reshape((data_temp.shape[0], -1))
+            boots_temp = np.mean(boots_sample, axis=0)
+            percentile[:, i] = np.percentile(boots_temp, (2.5, 97.5))
+            i = +1
 
     ax = _plot_barh(
         feature_categories,
@@ -83,9 +84,9 @@ def plot_target_feature_distribution(
         x_label=f"Percentage of target compared to {method}",
         y_label="Feature categories",
         ax=ax,
-        yerr=percentile,
+        xerr=percentile if n_boots else None,
     )
 
-    ax.axvline(y=selected_method(feature), linestyle="--", color="red")
+    ax.axvline(y=selected_agg_func(feature), linestyle="--", color="red")
 
     return ax

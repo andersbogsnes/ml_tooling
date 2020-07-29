@@ -1,4 +1,7 @@
-"""Implements RandomSearch hyperparameter optimization"""
+"""
+Implements RandomSearch hyperparameter optimization
+"""
+
 from typing import Iterator, List, Any
 
 import numpy as np
@@ -69,7 +72,7 @@ class RandomSearch(Searcher):
 
         Returns
         -------
-
+        ResultGroup
         """
         estimators = self.prepare_randomsearch_estimators()
         return self._train_estimators(

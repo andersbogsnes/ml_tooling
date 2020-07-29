@@ -9,6 +9,7 @@ from .rare_feature import RareFeatureEncoder
 from .renamer import Renamer
 from .scaler import DFStandardScaler
 from .select import Select
+from .pipeline import Pipeline
 
 
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "Renamer",
     "DFStandardScaler",
     "Select",
+    "Pipeline",
 ]

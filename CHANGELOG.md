@@ -1,3 +1,8 @@
+# v0.11.1
+- Permutation importance and Feature importance are now two different plotting methods.
+- `Model.test_estimators` now takes a `feature_pipeline` argument
+- Fixed a bug where `FillNA` did not create a `_is_na` column if the column didn't have a missing value
+
 # v0.11.0
 - Added `load_demo_dataset` function
 - If the dataset has no train set `score_estimator` will now run `create_train_test` with default configurations
@@ -8,6 +13,7 @@
 - Can pass a feature pipeline to `Dataset.plot` methods, to apply preprocessing
 before visualization
 - New config implementation. If you need to reset the configuration, you should use `Model.config.reset_config()`
+- Implement Bayesian Search for hyperparameter optimization
 
 # v0.10.3
 - Fixed typehints in Dataset

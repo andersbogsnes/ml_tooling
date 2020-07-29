@@ -91,11 +91,11 @@ This creates a new column of 1 and 0 indicating missing values
 
     >>> fill_na = FillNA(strategy='mean', indicate_nan=True)
     >>> fill_na.fit_transform(df)
-       id   sales  sales_is_nan
-    0   1  2000.0             0
-    1   2  3000.0             0
-    2   3  4000.0             0
-    3   4  3000.0             1
+       id   sales  id_is_nan  sales_is_nan
+    0   1  2000.0          0             0
+    1   2  3000.0          0             0
+    2   3  4000.0          0             0
+    3   4  3000.0          0             1
 
 ToCategorical
 -------------

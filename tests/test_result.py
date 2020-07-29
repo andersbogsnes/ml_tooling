@@ -93,14 +93,10 @@ class TestResultGroup:
         self, train_iris_dataset, classifier: Model, classifier_cv: Model
     ):
         result1 = Result.from_estimator(
-            classifier.estimator,
-            train_iris_dataset,
-            metrics=Metrics([Metric("accuracy")]),
+            classifier.estimator, train_iris_dataset, metrics=["accuracy"],
         )
         result2 = Result.from_estimator(
-            classifier_cv.estimator,
-            train_iris_dataset,
-            metrics=Metrics([Metric("accuracy")]),
+            classifier_cv.estimator, train_iris_dataset, metrics=["accuracy"],
         )
 
         group = ResultGroup([result1, result2])
@@ -113,13 +109,13 @@ class TestResultGroup:
         result1 = Result.from_estimator(
             estimator=classifier.estimator,
             data=train_iris_dataset,
-            metrics=Metrics.from_list(["accuracy"]),
+            metrics=["accuracy"],
         )
 
         result2 = Result.from_estimator(
             estimator=classifier.estimator,
             data=train_iris_dataset,
-            metrics=Metrics.from_list(["accuracy"]),
+            metrics=["accuracy"],
         )
 
         group = ResultGroup([result1, result2])
@@ -134,12 +130,12 @@ class TestResultGroup:
         result1 = Result.from_estimator(
             estimator=classifier.estimator,
             data=train_iris_dataset,
-            metrics=Metrics.from_list(["accuracy"]),
+            metrics=["accuracy"],
         )
         result2 = Result.from_estimator(
             estimator=classifier.estimator,
             data=train_iris_dataset,
-            metrics=Metrics.from_list(["accuracy"]),
+            metrics=["accuracy"],
         )
 
         group = ResultGroup([result1, result2])

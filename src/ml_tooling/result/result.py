@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List
 
 import attr
 from sklearn.base import is_classifier
@@ -52,11 +52,12 @@ class Result:
         cls,
         estimator: Estimator,
         data: Dataset,
-        metrics: Metrics,
+        metrics: List[str],
         cv: Any = None,
         n_jobs: int = None,
         verbose: int = 0,
     ) -> "Result":
+        metrics = Metrics.from_list(metrics)
         if cv:
             metrics.score_metrics_cv(
                 estimator=estimator,

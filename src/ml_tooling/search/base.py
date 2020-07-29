@@ -1,10 +1,15 @@
-"""Base implementation for Hyperparameter optimization"""
+"""
+Base implementation for Hyperparameter optimization
+"""
 
 from typing import List, Any, Iterable
+import logging
 
 from ml_tooling.data import Dataset
 from ml_tooling.result import ResultGroup, Result
 from ml_tooling.utils import Estimator
+
+logger = logging.getLogger("ml_tooling.search")
 
 
 class Searcher:
@@ -24,7 +29,50 @@ class Searcher:
         self.param_grid = param_grid
 
     @staticmethod
+    def _train_estimator(estimator, metrics, data, cv, n_jobs, verbose):
+        """
+        Helper method to wrap training step in a logger call
+
+        Parameters
+        ----------
+        estimator: Estimator
+            Estimator to train
+
+        metrics: List[str]
+            List of metrics to calculate for the estimator
+
+        data: Dataset
+            Dataset to train estimator on
+
+        cv: Any
+            Either a CV object from sklearn or an int to specify number of folds
+
+        verbose: int
+            Verbosity level of the method
+
+
+        n_jobs: int
+            Number of parallel jobs to train
+
+        Returns
+        -------
+        Result
+        """
+        logger.info("Training %s", estimator)
+        result = Result.from_estimator(
+            estimator=estimator,
+            metrics=metrics,
+            data=data,
+            cv=cv,
+            n_jobs=n_jobs,
+            verbose=verbose,
+        )
+        logger.info("Finished %s", estimator)
+        logger.info("Result: %s", result)
+        return result
+
     def _train_estimators(
+        self,
         estimators: Iterable[Estimator],
         metrics: List[str],
         data: Dataset,
@@ -60,8 +108,9 @@ class Searcher:
         ResultGroup
             A list of Results
         """
+
         results = [
-            Result.from_estimator(
+            self._train_estimator(
                 estimator=estimator,
                 metrics=metrics,
                 data=data,

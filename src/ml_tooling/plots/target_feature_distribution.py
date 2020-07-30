@@ -45,8 +45,11 @@ def plot_target_feature_distribution(
     plt.Axes
 
     """
-    if 0 and 1 not in np.unique(target):
-        raise VizError("Target feature distribution plot only works for binary target")
+    if np.isnan(target).any() or np.isnan(feature).any():
+        raise VizError(
+            "Target feature distribution plot only works if feature and "
+            "target do not contain NaN Values"
+        )
 
     if ax is None:
         fig, ax = plt.subplots()
@@ -57,6 +60,9 @@ def plot_target_feature_distribution(
 
     feature_categories = np.unique(feature)
 
+    if len(feature_categories) > 15:
+        raise VizError("Should there be a limit")
+
     data = np.asarray(
         [
             selected_agg_func(target[feature == category])
@@ -65,6 +71,7 @@ def plot_target_feature_distribution(
     )
 
     if n_boots:
+
         percentile = np.zeros((2, feature_categories.shape[0]))
         i = 0
         for category in feature_categories:
@@ -74,14 +81,14 @@ def plot_target_feature_distribution(
             ).reshape((data_temp.shape[0], -1))
             boots_temp = np.mean(boots_sample, axis=0)
             percentile[:, i] = np.percentile(boots_temp, (2.5, 97.5))
-            i = +1
+            i += 1
 
     ax = _plot_barh(
         feature_categories,
         data,
         add_label=True,
         title=title,
-        x_label=f"Percentage of target compared to {method}",
+        x_label=f"Target compared to {method}",
         y_label="Feature categories",
         ax=ax,
         xerr=percentile if n_boots else None,

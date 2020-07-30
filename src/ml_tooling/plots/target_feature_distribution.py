@@ -61,7 +61,7 @@ def plot_target_feature_distribution(
     feature_categories = np.unique(feature)
 
     if len(feature_categories) > 15:
-        raise VizError("Should there be a limit")
+        raise VizError("Should there be a limit?")
 
     data = np.asarray(
         [
@@ -94,6 +94,6 @@ def plot_target_feature_distribution(
         xerr=percentile if n_boots else None,
     )
 
-    ax.axvline(y=selected_agg_func(feature), linestyle="--", color="red")
+    ax.axvline(x=selected_agg_func(target), linestyle="--", color="#97233f")
 
     return ax

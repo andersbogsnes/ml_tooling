@@ -4,7 +4,11 @@ from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.plots import plot_target_correlation, plot_missing_data
+from ml_tooling.plots import (
+    plot_target_correlation,
+    plot_missing_data,
+    plot_target_feature_distribution,
+)
 from ml_tooling.config import MPL_STYLESHEET
 
 
@@ -108,3 +112,43 @@ class DataVisualize:
 
         with plt.style.context(MPL_STYLESHEET):
             return plot_missing_data(df=x, ax=ax, top_n=top_n, bottom_n=bottom_n)
+
+    def target_feature_distribution(
+        self,
+        feature: str = None,
+        method: str = "mean",
+        ax: Optional[Axes] = None,
+        feature_pipeline: Optional[Pipeline] = None,
+        n_boots: int = None,
+    ) -> Axes:
+        """
+        Creates a plot which compares the mean or median
+        of a binary target based on the given category features.
+
+        Parameters
+        ----------
+        feature: str
+            Categorical feature to group by
+        method: str
+            Which method to compare with. One of 'median' or 'mean'.
+        ax: plt.Axes
+            Matplotlib axes to draw the graph on. Creates a new one by default
+        feature_pipeline: Pipeline
+            A feature transformation pipeline to be applied before graphing the data
+        n_boots: int
+            The number of bootstrap iterations to use.
+
+        Returns
+        -------
+        plt.Axes
+        """
+
+        x = self.data[feature]
+
+        if feature_pipeline is not None:
+            x = feature_pipeline.fit_transform(x)
+
+        with plt.style.context(MPL_STYLESHEET):
+            return plot_target_feature_distribution(
+                feature=x, target=self.data.y, method=method, ax=ax, n_boots=n_boots,
+            )

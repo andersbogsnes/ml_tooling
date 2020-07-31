@@ -33,7 +33,7 @@ pyaml==20.4.0             # via -r requirements.txt, scikit-optimize
 pyjwt==1.7.1              # via dohq-artifactory
 pyparsing==2.4.7          # via -r requirements.txt, matplotlib, packaging
 pytest-cov==2.10.0        # via -r dev-requirements.in
-pytest==6.0.0             # via -r dev-requirements.in, pytest-cov
+pytest==6.0.1             # via -r dev-requirements.in, pytest-cov
 python-dateutil==2.8.1    # via -r requirements.txt, dohq-artifactory, matplotlib, pandas
 pytz==2020.1              # via -r requirements.txt, pandas
 pyyaml==5.3.1             # via -r requirements.txt, pre-commit, pyaml

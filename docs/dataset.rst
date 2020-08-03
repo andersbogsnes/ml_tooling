@@ -43,7 +43,7 @@ Creating a FileDataset from a csv file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When we create a FileDataset, we need to specify the location of our datafiles -
-this will be available in the :code:`self.file_path` attribute
+this will be available in the :code:`self.file_path` attribute. ML Tooling can
 A more elaborate example of using this dataset can be found at :file:`../notebooks/Titanic Demo.ipynb`.
 
 .. code-block::
@@ -53,12 +53,12 @@ A more elaborate example of using this dataset can be found at :file:`../noteboo
     >>>
     >>> class TitanicData(FileDataset):
     ...     def load_training_data(self):
-    ...         data = pd.read_csv(self.file_path)
-    ...         return data.drop('Survived', axis=1), data.Survived
+    ...         data = self.read_file()
+    ...         return data.drop(columns='Survived'), data.Survived
     ...
-    ...     def load_prediction_data(self):
-    ...         data = pd.read_csv(self.file_path)
-    ...         return data
+    ...     def load_prediction_data(self, idx):
+    ...         data = self.read_file()
+    ...         return data.drop(columns="Survived").idx[[idx]]
     >>>
     >>> TitanicData("./titanic.csv")
     <TitanicData - FileDataset>

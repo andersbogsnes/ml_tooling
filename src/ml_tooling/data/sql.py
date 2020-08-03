@@ -132,7 +132,10 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         conn: sa.engine.Connection
             Connection to the database
         """
-        if not self.engine.dialect.has_schema(self.engine, self.schema):
+        if (
+            not self.engine.dialect.has_schema(self.engine, self.schema)
+            and self.schema is not None
+        ):
             self.engine.execute(sa.schema.CreateSchema(self.schema))
         self.table.drop(bind=conn, checkfirst=True)
         self.table.create(bind=conn)

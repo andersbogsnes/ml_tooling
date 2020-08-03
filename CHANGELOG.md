@@ -3,6 +3,7 @@
 - `Model.test_estimators` now takes a `feature_pipeline` argument
 - Fixed a bug where `FillNA` did not create a `_is_na` column if the column didn't have a missing value
 - Implemented Bayesian Search for hyperparameter optimization
+- Added a `read_file` convenience method to `FileDataset` to read
 
 # v0.11.0
 - Added `load_demo_dataset` function

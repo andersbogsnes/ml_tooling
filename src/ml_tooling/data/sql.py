@@ -33,7 +33,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
     table: Optional[sa.Table] = None
 
-    def __init__(self, conn: Union[str, Connectable], schema: str, **kwargs):
+    def __init__(self, conn: Union[str, Connectable], schema: Optional[str], **kwargs):
         """
         Instantiates a dataset with the necessary arguments to connect to the database.
 
@@ -132,9 +132,8 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
         conn: sa.engine.Connection
             Connection to the database
         """
-        if (
-            not self.engine.dialect.has_schema(self.engine, self.schema)
-            and self.schema is not None
+        if self.schema is not None and not self.engine.dialect.has_schema(
+            self.engine, self.schema
         ):
             self.engine.execute(sa.schema.CreateSchema(self.schema))
         self.table.drop(bind=conn, checkfirst=True)

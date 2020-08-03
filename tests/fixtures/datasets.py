@@ -66,7 +66,6 @@ def train_boston_dataset(boston_dataset):
 @pytest.fixture
 def test_engine():
     engine = sa.create_engine("sqlite:///:memory:")
-    engine.dialect.has_schema = lambda *args: True
     return engine
 
 

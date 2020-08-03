@@ -1,3 +1,5 @@
+from typing import Optional
+
 from matplotlib import pyplot as plt
 
 from ml_tooling.plots import (
@@ -17,7 +19,7 @@ class ClassificationVisualize(BaseVisualize):
     """
 
     def confusion_matrix(
-        self, normalized: bool = True, threshold: float = 0.5, **kwargs
+        self, normalized: bool = True, threshold: Optional[float] = None, **kwargs
     ) -> plt.Axes:
         """
         Visualize a confusion matrix for a classification estimator

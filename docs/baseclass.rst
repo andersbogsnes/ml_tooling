@@ -27,7 +27,7 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
-    <DemoData - Dataset>
+    <BostonData - Dataset>
 
 Creating your model
 ~~~~~~~~~~~~~~~~~~~

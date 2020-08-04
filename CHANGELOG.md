@@ -6,6 +6,7 @@
 - Added a `read_file` convenience method to `FileDataset` to read
 - Fixed a bug where `copy_to` failed between two instances of Sqlite based SQLDatasets
 - Fixed a bug where `ClassificationVisualize.confusion_matrix` would fail on multi-class problems due to wrong defaults
+- Added __repr__ to demodataset
 
 # v0.11.0
 - Added `load_demo_dataset` function

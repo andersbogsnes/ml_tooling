@@ -28,7 +28,7 @@ class TestDemoDatasetModule:
 
     def test_repr_is_correct_load(self, load_dataset_iris: Dataset):
         result = str(load_dataset_iris)
-        assert result == "<DemoData - Dataset>"
+        assert result == "<IrisData - Dataset>"
 
     def test_dataset_return_correct_x_attribute(
         self, load_dataset_iris: Dataset, iris_df: Tuple[pd.DataFrame, DataType]

@@ -71,8 +71,8 @@ def load_demo_dataset(dataset_name: str, **kwargs) -> Dataset:
         def load_prediction_data(self, idx) -> pd.DataFrame:
             x = pd.DataFrame(selected_data.data, columns=selected_data.feature_names)
             return x.loc[[idx]]
-            
+
         def __repr__(self):
-            return f"<{dataset_name.capitalize()} - DemoData>"
+            return f"<{dataset_name.capitalize()}Data - Dataset>"
 
     return DemoData()

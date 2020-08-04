@@ -1,7 +1,6 @@
 import numpy as np
 
-from ml_tooling.utils import DataType
-from .utils import MetricError
+from ml_tooling.utils import DataType, MetricError
 
 
 def lift_score(y_target: DataType, y_predicted: DataType) -> float:

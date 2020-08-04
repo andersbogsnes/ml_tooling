@@ -75,7 +75,7 @@ class ClassificationVisualize(BaseVisualize):
         """
         with plt.style.context(MPL_STYLESHEET):
             title = f"Lift Curve - {self._estimator_name}"
-            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
+            y_proba = self._estimator.predict_proba(self._data.test_x)
             return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)
 
     def pr_curve(self, **kwargs) -> plt.Axes:

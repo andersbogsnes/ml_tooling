@@ -7,8 +7,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib.axes import Axes
-from sklearn.datasets import load_iris
-from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -16,7 +14,6 @@ from sklearn.svm import SVC
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.plots import (
-    plot_lift_curve,
     plot_confusion_matrix,
     plot_pr_curve,
 )
@@ -116,33 +113,6 @@ class TestConfusionMatrixPlot:
         assert "Confusion Matrix - Normalized" == ax.title._text
         assert ["Pos", "Neg"] == [x._text for x in ax.get_xticklabels()]
         assert ["Pos", "Neg"] == [y._text for y in ax.get_yticklabels()]
-        plt.close()
-
-
-class TestLiftCurvePlot:
-    def test_lift_curve_plots_can_be_given_an_ax(self, classifier: Model):
-        fig, ax = plt.subplots()
-        test_ax = classifier.result.plot.lift_curve(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_lift_curve_have_correct_data(self, classifier: Model):
-        ax = classifier.result.plot.lift_curve()
-
-        assert "Lift Curve - LogisticRegression" == ax.title._text
-        assert "Lift" == ax.get_ylabel()
-        assert "% of Data" == ax.get_xlabel()
-        assert pytest.approx(19.5) == np.sum(ax.lines[0].get_xdata())
-        assert pytest.approx(49.849, rel=0.0001) == np.sum(ax.lines[0].get_ydata())
-        plt.close()
-
-    def test_lift_chart_fails_correctly_with_2d_proba(self):
-        x, y = load_iris(return_X_y=True)
-        clf = LogisticRegression(solver="liblinear", multi_class="auto")
-        clf.fit(x, y)
-        proba = clf.predict_proba(x)
-        with pytest.raises(VizError):
-            plot_lift_curve(y, proba)
         plt.close()
 
 

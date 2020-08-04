@@ -4,10 +4,6 @@ from typing import Union, Tuple, List
 import numpy as np
 
 
-class MetricError(Exception):
-    pass
-
-
 def _get_top_n_idx(idx: np.ndarray, top_n: Union[int, float]) -> np.ndarray:
     """
     Gets top n idx, where n can be a float representing a percentage,
@@ -134,29 +130,3 @@ def _is_percent(number: Union[float, int]) -> bool:
     return False
 
 
-def _cum_gain_curve(
-    y_true: np.ndarray, y_proba: np.ndarray, positive_label=1
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Calculate a cumulative gain curve of how many positives are captured
-    per percent of sorted data.
-
-    :param y_true:
-        True labels
-
-    :param y_proba:
-        Predicted label
-
-    :param positive_label:
-        Which class is considered positive class in multi-class settings
-
-    :return:
-        array of data percents and cumulative gain
-    """
-    n = len(y_true)
-    n_true = np.sum(y_true == positive_label)
-
-    idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
-    cum_gains = np.cumsum(y_true[idx]) / n_true
-    percents = np.arange(1, n + 1) / n
-    return percents, cum_gains

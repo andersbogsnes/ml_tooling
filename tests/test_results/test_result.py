@@ -4,12 +4,10 @@ import numpy as np
 import pytest
 import yaml
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
 from ml_tooling.data import load_demo_dataset
 from ml_tooling.logging import Log
-from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
 
 
@@ -31,6 +29,16 @@ class TestResult:
         dataset = load_demo_dataset("boston")
         return model.score_estimator(dataset, cv=2)
 
+    @pytest.fixture()
+    def logs(self, result: Result, tmp_path: pathlib.Path) -> dict:
+        log = Log.from_result(result)
+        log.save_log(tmp_path)
+
+        with log.output_path.open() as f:
+            saved_log = yaml.safe_load(f)
+
+        return saved_log
+
     def test_cv_result_has_two_cross_val_scores(self, result_cv: Result):
         """Expect a cross-validated result to have two cross_val_scores"""
         assert len(result_cv.metrics.cross_val_scores) == 2
@@ -46,83 +54,41 @@ class TestResult:
         assert result_cv.metrics.name == "r2"
 
     def test_cv_result_should_have_std_deviation_of_cross_validation(self, result_cv: Result):
-        """Expect cross-validated results to have """
-        assert result_cv.metrics.cross_val_std == np.std(result_cv.metrics.cross_val_scores)
+        """Expect cross-validated results to have a std deviation equal to the std deviation
+        of the cross val scores
+        """
+        assert result_cv.metrics.std == np.std(result_cv.metrics.cross_val_scores)
 
     def test_cv_result_should_have_a_score_equal_to_the_mean_of_cross_val(self, result_cv: Result):
+        """Expect the cross-validated score to be equal to the mean of cross validated scores"""
         assert result_cv.metrics.score == np.mean(result_cv.metrics.cross_val_scores)
 
-    @pytest.mark.parametrize("cv", ["with_cv", "without_cv"])
-    def test_linear_model_returns_a_result(
-        self, regression: Model, regression_cv: Model, cv: str
-    ):
-        if cv == "with_cv":
-            result = regression_cv.result
-            assert isinstance(result, Result)
-            assert len(result.metrics[0].cross_val_scores) == 2
-            assert result.estimator == regression_cv.estimator
-        else:
-            result = regression.result
-            assert isinstance(result, Result)
-            assert hasattr(result, "cross_val_std") is False
-            assert regression.estimator == result.estimator
+    def test_cv_result_should_have_only_one_metric(self, result_cv: Result):
+        """Expect the cross-validated result to have only one metric"""
+        assert len(result_cv.metrics) == 1
 
-        assert isinstance(result.metrics[0].score, float)
-        assert result.metrics[0].name == "r2"
-        assert result.estimator.__class__.__name__ == "LinearRegression"
+    def test_cv_results_should_have_a_score(self, result_cv: Result):
+        assert result_cv.metrics.score == pytest.approx(0.73037122)
 
-    @pytest.mark.parametrize("cv", ["with_cv", "without_cv"])
-    def test_regression_model_returns_a_result(
-        self, classifier: Model, classifier_cv: Model, cv: str
-    ):
-        if cv == "with_cv":
-            result = classifier_cv.result
-            assert isinstance(result, Result)
-            assert 2 == len(result.metrics[0].cross_val_scores)
-            assert classifier_cv.estimator == result.estimator
+    def test_result_should_not_have_a_cross_val_std(self, result: Result):
+        """Expect the result's metrics to not have a cross_val_std attribute"""
+        assert result.metrics.std is None
 
-        else:
-            result = classifier.result
-            assert isinstance(result, Result)
-            assert hasattr(result, "cross_val_std") is False
-            assert classifier.estimator == result.estimator
-
-        assert result.metrics.score > 0
-        assert result.metrics.name == "accuracy"
-        assert result.estimator.__class__.__name__ == "LogisticRegression"
-
-    def test_pipeline_regression_returns_correct_result(
-        self, pipeline_linear: Pipeline, train_iris_dataset
-    ):
-        model = Model(pipeline_linear)
-        result = model.score_estimator(train_iris_dataset)
-        assert isinstance(result, Result)
+    def test_result_should_have_same_estimator_as_model(self, result: Result, model: Model):
+        """Expect the result's estimator to be the same as the model"""
         assert result.estimator == model.estimator
-        assert isinstance(result.estimator, Pipeline)
 
-    def test_pipeline_logistic_returns_correct_result(
-        self, pipeline_logistic: Pipeline, train_iris_dataset
-    ):
-        model = Model(pipeline_logistic)
-        result = model.score_estimator(train_iris_dataset)
-        assert isinstance(result, Result)
-        assert result.estimator == model.estimator
-        assert isinstance(result.estimator, Pipeline)
+    def test_result_score_should_be_correct(self, result: Result):
+        """Expect the result's score to be correct"""
+        assert result.metrics.score == pytest.approx(0.6844267)
 
-    def test_result_log_model_returns_correctly(
-        self, tmp_path: pathlib.Path, classifier: Model, train_iris_dataset
-    ):
-        runs = tmp_path / "runs"
-        result = Result(
-            classifier.estimator,
-            data=train_iris_dataset,
-            metrics=Metrics([Metric(score=0.7, name="accuracy")]),
-        )
-        log = Log.from_result(result)
-        log.save_log(runs)
+    def test_result_score_should_be_r2_by_default(self, result: Result):
+        """Expect the scoring method to be r2 by default"""
+        assert result.metrics.name == "r2"
 
-        with log.output_path.open(mode="r") as f:
-            logged = yaml.safe_load(f)
+    def test_result_logs_metric_score_correctly(self, logs: dict, result: Result):
+        """Expect the log to contain the same data as the result"""
+        assert logs["metrics"]["r2"] == result.metrics.score
 
-        assert 0.7 == logged["metrics"]["accuracy"]
-        assert logged["model_name"] == "IrisData_LogisticRegression"
+    def test_result_logs_model_name_correctly(self, logs: dict, result: Result):
+        assert logs["model_name"] == "DemoData_LinearRegression"

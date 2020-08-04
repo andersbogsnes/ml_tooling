@@ -6,58 +6,14 @@ from unittest.mock import MagicMock
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-from matplotlib.axes import Axes
-from sklearn.metrics import roc_curve, precision_recall_curve
 from sklearn.pipeline import Pipeline
-from sklearn.svm import SVC
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.plots import (
     plot_confusion_matrix,
-    plot_pr_curve,
 )
-from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.transformers import DFStandardScaler
-from ml_tooling.utils import VizError
-
-
-class TestVisualize:
-    def test_result_regression_gets_correct_visualizers(self, regression: Model):
-        result = regression.result
-        assert isinstance(result.plot, RegressionVisualize)
-
-    def test_result_classification_gets_correct_visualizers(self, classifier: Model):
-        result = classifier.result
-        assert isinstance(result.plot, ClassificationVisualize)
-
-    @pytest.mark.parametrize(
-        "attr",
-        ["residuals", "prediction_error", "feature_importance", "learning_curve"],
-    )
-    def test_regression_visualize_has_all_plots(self, attr: str, regression: Model):
-        result = regression.result.plot
-        plotter = getattr(result, attr)()
-        assert isinstance(plotter, Axes)
-        plt.close()
-
-    @pytest.mark.parametrize(
-        "attr",
-        [
-            "confusion_matrix",
-            "roc_curve",
-            "lift_curve",
-            "feature_importance",
-            "pr_curve",
-            "learning_curve",
-            "permutation_importance",
-        ],
-    )
-    def test_classifier_visualize_has_all_plots(self, attr: str, classifier: Model):
-        result = classifier.result.plot
-        plotter = getattr(result, attr)()
-        assert isinstance(plotter, Axes)
-        plt.close()
 
 
 class TestConfusionMatrixPlot:
@@ -113,114 +69,6 @@ class TestConfusionMatrixPlot:
         assert "Confusion Matrix - Normalized" == ax.title._text
         assert ["Pos", "Neg"] == [x._text for x in ax.get_xticklabels()]
         assert ["Pos", "Neg"] == [y._text for y in ax.get_yticklabels()]
-        plt.close()
-
-
-class TestPredictionErrorPlot:
-    def test_prediction_error_plots_can_be_given_an_ax(self, regression: Model):
-        fig, ax = plt.subplots()
-        test_ax = regression.result.plot.prediction_error(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_prediction_error_plots_have_correct_data(self, regression: Model):
-        ax = regression.result.plot.prediction_error()
-        x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.estimator.predict(x)
-
-        assert "Prediction Error - LinearRegression" == ax.title._text
-        assert "$\\hat{y}$" == ax.get_ylabel()
-        assert "$y$" == ax.get_xlabel()
-
-        assert np.all(y_pred == ax.collections[0].get_offsets()[:, 1])
-        assert np.all(y == ax.collections[0].get_offsets()[:, 0])
-        plt.close()
-
-
-class TestResidualPlot:
-    def test_residuals_plots_can_be_given_an_ax(self, regression: Model):
-        fig, ax = plt.subplots()
-        test_ax = regression.result.plot.residuals(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_residual_plots_have_correct_data(self, regression: Model):
-        ax = regression.result.plot.residuals()
-        x, y = regression.result.plot._data.test_x, regression.result.plot._data.test_y
-        y_pred = regression.result.estimator.predict(x)
-        expected = y_pred - y
-
-        assert "Residual Plot - LinearRegression" == ax.title._text
-        assert "Residuals" == ax.get_ylabel()
-        assert "Predicted Value" == ax.get_xlabel()
-
-        assert np.all(expected == ax.collections[0].get_offsets()[:, 1])
-        assert np.all(y_pred == ax.collections[0].get_offsets()[:, 0])
-        plt.close()
-
-
-class TestRocCurve:
-    def test_roc_curve_plots_can_be_given_an_ax(self, classifier: Model):
-        fig, ax = plt.subplots()
-        test_ax = classifier.result.plot.roc_curve(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_roc_curve_have_correct_data(self, classifier: Model):
-        ax = classifier.result.plot.roc_curve()
-        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
-        y_proba = classifier.estimator.predict_proba(x)[:, 1]
-        fpr, tpr, _ = roc_curve(y, y_proba)
-
-        assert "ROC AUC - LogisticRegression" == ax.title._text
-        assert "True Positive Rate" == ax.get_ylabel()
-        assert "False Positive Rate" == ax.get_xlabel()
-        assert np.all(fpr == ax.lines[0].get_xdata())
-        assert np.all(tpr == ax.lines[0].get_ydata())
-        plt.close()
-
-    def test_roc_curve_fails_correctly_without_predict_proba(self, train_iris_dataset):
-        svc = Model(SVC(gamma="scale"))
-        result = svc.score_estimator(train_iris_dataset)
-        with pytest.raises(VizError):
-            result.plot.roc_curve()
-        plt.close()
-
-
-class TestPRCurve:
-    def test_prediction_error_plots_can_be_given_an_ax(self, classifier: Model):
-        fig, ax = plt.subplots()
-        test_ax = classifier.result.plot.pr_curve(ax=ax)
-        assert ax == test_ax
-        plt.close()
-
-    def test_pr_curve_have_correct_data(self, classifier: Model):
-        ax = classifier.result.plot.pr_curve()
-        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
-        y_proba = classifier.estimator.predict_proba(x)[:, 1]
-
-        precision, recall, _ = precision_recall_curve(y, y_proba)
-
-        assert "Precision-Recall - LogisticRegression" == ax.title.get_text()
-        assert "Precision" == ax.get_ylabel()
-        assert "Recall" == ax.get_xlabel()
-        assert np.all(recall == ax.lines[0].get_xdata())
-        assert np.all(precision == ax.lines[0].get_ydata())
-        plt.close()
-
-    def test_pr_curve_fails_correctly_without_predict_proba(self, train_iris_dataset):
-        svc = Model(SVC(gamma="scale"))
-        result = svc.score_estimator(train_iris_dataset)
-        with pytest.raises(VizError):
-            result.plot.pr_curve()
-        plt.close()
-
-    def test_pr_curve_can_use_ax(self, classifier: Model):
-        fig, ax = plt.subplots()
-        x, y = classifier.result.plot._data.test_x, classifier.result.plot._data.test_y
-        y_proba = classifier.estimator.predict_proba(x)[:, 1]
-
-        assert ax is plot_pr_curve(y, y_proba, ax=ax)
         plt.close()
 
 

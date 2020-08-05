@@ -43,9 +43,9 @@ class TestResult:
         """Expect a cross-validated result to have two cross_val_scores"""
         assert len(result_cv.metrics.cross_val_scores) == 2
 
-    def test_cv_result_contains_the_same_estimator_as_the_model(self,
-                                                                result_cv: Result,
-                                                                model: Model):
+    def test_cv_result_contains_the_same_estimator_as_the_model(
+        self, result_cv: Result, model: Model
+    ):
         """Expect the Result to have the same estimator as Model"""
         assert result_cv.estimator == model.estimator
 
@@ -53,13 +53,17 @@ class TestResult:
         """Expect the cross-validated result to use r2 as the default for a regression"""
         assert result_cv.metrics.name == "r2"
 
-    def test_cv_result_should_have_std_deviation_of_cross_validation(self, result_cv: Result):
+    def test_cv_result_should_have_std_deviation_of_cross_validation(
+        self, result_cv: Result
+    ):
         """Expect cross-validated results to have a std deviation equal to the std deviation
         of the cross val scores
         """
         assert result_cv.metrics.std == np.std(result_cv.metrics.cross_val_scores)
 
-    def test_cv_result_should_have_a_score_equal_to_the_mean_of_cross_val(self, result_cv: Result):
+    def test_cv_result_should_have_a_score_equal_to_the_mean_of_cross_val(
+        self, result_cv: Result
+    ):
         """Expect the cross-validated score to be equal to the mean of cross validated scores"""
         assert result_cv.metrics.score == np.mean(result_cv.metrics.cross_val_scores)
 
@@ -74,7 +78,9 @@ class TestResult:
         """Expect the result's metrics to not have a cross_val_std attribute"""
         assert result.metrics.std is None
 
-    def test_result_should_have_same_estimator_as_model(self, result: Result, model: Model):
+    def test_result_should_have_same_estimator_as_model(
+        self, result: Result, model: Model
+    ):
         """Expect the result's estimator to be the same as the model"""
         assert result.estimator == model.estimator
 
@@ -86,9 +92,14 @@ class TestResult:
         """Expect the scoring method to be r2 by default"""
         assert result.metrics.name == "r2"
 
+    def test_result_can_return_a_model(self, result: Result):
+        """Expect that a result can return a Model"""
+        assert result.model.estimator_name == Model(LinearRegression()).estimator_name
+
     def test_result_logs_metric_score_correctly(self, logs: dict, result: Result):
         """Expect the log to contain the same data as the result"""
         assert logs["metrics"]["r2"] == result.metrics.score
 
     def test_result_logs_model_name_correctly(self, logs: dict, result: Result):
+        """Expect the log to have the correct model name"""
         assert logs["model_name"] == "DemoData_LinearRegression"

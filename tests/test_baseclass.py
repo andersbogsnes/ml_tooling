@@ -4,7 +4,6 @@ import pickle
 from io import BytesIO
 from unittest.mock import MagicMock, patch
 
-import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -21,10 +20,10 @@ from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
+from ml_tooling.search import Real
 from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
-from ml_tooling.search import Real
 
 plt.switch_backend("agg")
 
@@ -192,7 +191,7 @@ class TestBaseClass:
         buffer.seek(0)
         mock_path.return_value.__enter__.return_value = buffer
         model = Model.load_production_estimator("test")
-        
+
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)
 

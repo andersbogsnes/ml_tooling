@@ -15,11 +15,13 @@ from ml_tooling.metrics import lift_score
 from ml_tooling.utils import VizError, DataType
 
 
-def plot_lift_curve(y_true: DataType,
-                    y_proba: DataType,
-                    title: str = None,
-                    ax: Axes = None,
-                    labels: List[str] = None) -> Axes:
+def plot_lift_curve(
+    y_true: DataType,
+    y_proba: DataType,
+    title: str = None,
+    ax: Axes = None,
+    labels: List[str] = None,
+) -> Axes:
     """
     Plot a lift chart from results. Also calculates lift score based on a .5 threshold
 
@@ -56,8 +58,10 @@ def plot_lift_curve(y_true: DataType,
     classes = np.unique(y_true)
 
     if labels and len(classes) != len(labels):
-        raise VizError(f"Number of labels must equal number of classes: got {len(classes)} classes"
-                       f" and {len(labels)} labels")
+        raise VizError(
+            f"Number of labels must equal number of classes: got {len(classes)} classes"
+            f" and {len(labels)} labels"
+        )
 
     for class_label in classes:
         if len(classes) == 2 and class_label == 0:
@@ -68,10 +72,12 @@ def plot_lift_curve(y_true: DataType,
         percents, gains = _cum_gain_curve(target, y_proba[:, class_label])
         positives = np.where(y_proba[:, class_label] > 0.5, 1, 0)
         score = lift_score(target, positives)
-        ax.plot(percents,
-                gains / percents,
-                label=f"Class {labels[class_label] if labels else class_label} "
-                      f"$Lift = {score:.2f}$ ")
+        ax.plot(
+            percents,
+            gains / percents,
+            label=f"Class {labels[class_label] if labels else class_label} "
+            f"$Lift = {score:.2f}$ ",
+        )
 
     ax.axhline(y=1, color="grey", linestyle="--", label="Baseline")
     ax.set_title(title)
@@ -82,7 +88,7 @@ def plot_lift_curve(y_true: DataType,
 
 
 def _cum_gain_curve(
-        y_true: np.ndarray, y_proba: np.ndarray, positive_label=1
+    y_true: np.ndarray, y_proba: np.ndarray, positive_label=1
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate a cumulative gain curve of how many positives are captured

@@ -93,11 +93,11 @@ def _sort_values(
     tuple(labels, values)
         List of labels and list of feature importances sorted by importance
     """
-    if not isinstance(labels, np.ndarray):
-        labels = np.array(labels)
+    labels = np.array(labels)
 
     if abs_sort:
         idx = np.argsort(np.abs(values))[::-1]
+
     else:
         idx = np.argsort(values)[::-1]
 
@@ -128,5 +128,3 @@ def _is_percent(number: Union[float, int]) -> bool:
             raise ValueError(f"Floats only valid between 0 and 1. Got {number}")
         return True
     return False
-
-

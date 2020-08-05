@@ -24,11 +24,15 @@ class TestVisualize:
         model = Model(LogisticRegression())
         return model.score_estimator(dataset)
 
-    def test_result_regression_gets_correct_visualizers(self, regression_result: Result):
+    def test_result_regression_gets_correct_visualizers(
+        self, regression_result: Result
+    ):
         """Expect a regression result to have a RegressionVisualize class when plotting"""
         assert isinstance(regression_result.plot, RegressionVisualize)
 
-    def test_result_classification_gets_correct_visualizers(self, classification_result: Result):
+    def test_result_classification_gets_correct_visualizers(
+        self, classification_result: Result
+    ):
         """Expect a classification result to have a ClassificatoinVisualize class when plotting"""
         assert isinstance(classification_result.plot, ClassificationVisualize)
 
@@ -36,9 +40,11 @@ class TestVisualize:
         "attr",
         ["residuals", "prediction_error", "feature_importance", "learning_curve"],
     )
-    def test_regression_visualize_has_all_plots(self, attr: str, regression_result: Result):
+    def test_regression_visualize_has_all_plots(
+        self, attr: str, regression_result: Result
+    ):
         """Expect a regression Result to be able to plot all the given plots"""
-        plotter = getattr(regression_result, attr)()
+        plotter = getattr(regression_result.plot, attr)()
         assert isinstance(plotter, Axes)
         plt.close()
 
@@ -54,8 +60,10 @@ class TestVisualize:
             "permutation_importance",
         ],
     )
-    def test_classifier_visualize_has_all_plots(self, attr: str, classification_result: Result):
+    def test_classifier_visualize_has_all_plots(
+        self, attr: str, classification_result: Result
+    ):
         """Expect a classification Result to be able to plot all the above plots"""
-        plotter = getattr(classification_result, attr)()
+        plotter = getattr(classification_result.plot, attr)()
         assert isinstance(plotter, Axes)
         plt.close()

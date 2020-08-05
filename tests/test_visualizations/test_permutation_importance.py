@@ -273,3 +273,25 @@ class TestPermutationImportancePlot:
         model.fit(dataset.x, dataset.y)
         ax = plot_permutation_importance(model, dataset.x, dataset.y, n_repeats=1)
         assert ax.title.get_text() == f"Permutation Importances ({scorer.title()})"
+
+
+def test_doesnt_error_in_on_large_datasets(train_iris_dataset: Dataset):
+
+    # Make a new dataset with lots of rows to trigger the joblib.Parallel error
+    class IrisData(Dataset):
+        def load_training_data(self):
+            data = load_iris()
+            return (
+                pd.DataFrame(
+                    data=data.data.repeat(1000, axis=0), columns=data.feature_names
+                ),
+                data.target.repeat(1000),
+            )
+
+        def load_prediction_data(self):
+            pass
+
+    data = IrisData().create_train_test()
+    result = Model(RandomForestClassifier(n_estimators=2)).score_estimator(data)
+    assert result.plot.feature_importance()
+    plt.close()

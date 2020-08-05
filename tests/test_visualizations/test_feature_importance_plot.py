@@ -42,13 +42,13 @@ class TestFeatureImportancePlot:
         yield classifier_result.plot.feature_importance(class_name=0)
         plt.close()
 
-    def test_can_be_given_an_ax(self, classifier: Model):
+    def test_can_be_given_an_ax(self, classifier_result: Result):
         """
         Expect that if the method is given an ax, it will use that ax
         to plot on
         """
         fig, ax = plt.subplots()
-        test_ax = classifier.result.plot.feature_importance(ax=ax, class_name=0)
+        test_ax = classifier_result.plot.feature_importance(ax=ax, class_name=0)
         assert ax == test_ax
         plt.close()
 

@@ -1,5 +1,7 @@
 import datetime
 import pathlib
+import pickle
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import matplotlib.pyplot as plt
@@ -18,10 +20,10 @@ from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
+from ml_tooling.search import Real
 from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
-from ml_tooling.search import Real
 
 plt.switch_backend("agg")
 
@@ -182,10 +184,14 @@ class TestBaseClass:
 
     @patch("ml_tooling.baseclass.import_path")
     def test_can_load_production_estimator(
-        self, mock_path: MagicMock, open_estimator_pickle
+        self, mock_path: MagicMock, classifier: Model
     ):
-        mock_path.return_value.__enter__.return_value = open_estimator_pickle()
+        buffer = BytesIO()
+        pickle.dump(classifier.estimator, buffer)
+        buffer.seek(0)
+        mock_path.return_value.__enter__.return_value = buffer
         model = Model.load_production_estimator("test")
+
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)
 

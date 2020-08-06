@@ -6,6 +6,9 @@
 - Added a `read_file` convenience method to `FileDataset` to read
 - Fixed a bug where `copy_to` failed between two instances of Sqlite based SQLDatasets
 - Fixed a bug where `ClassificationVisualize.confusion_matrix` would fail on multi-class problems due to wrong defaults
+- Lift curve now can plot multi-class
+- Precision-Recall curve can now plot multi-class
+- ROC AUC curve can now plot multi-class
 
 # v0.11.0
 - Added `load_demo_dataset` function

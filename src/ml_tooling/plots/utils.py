@@ -125,7 +125,9 @@ def _plot_barh(
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
 
             ax.annotate(
-                f"{values[i]:.1%}" if is_percent else f"{values[i]:.2f}",
+                f"{values.ravel()[i]:.1%}"
+                if is_percent
+                else f"{values.ravel()[i]:.2f}",
                 (x, y),
                 xytext=(5, 0),
                 textcoords="offset points",

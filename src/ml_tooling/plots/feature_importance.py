@@ -9,7 +9,6 @@ from sklearn.base import BaseEstimator
 
 from ml_tooling.plots.utils import _plot_barh
 from ml_tooling.utils import (
-    DataType,
     Estimator,
     is_pipeline,
     _get_labels_from_pipeline,
@@ -20,8 +19,8 @@ from ml_tooling.utils import (
 def plot_feature_importance(
     estimator: Estimator,
     x: pd.DataFrame,
-    y: DataType,
     ax: Axes = None,
+    class_index: int = None,
     bottom_n: Union[int, float] = None,
     top_n: Union[int, float] = None,
     add_label: bool = True,
@@ -38,17 +37,19 @@ def plot_feature_importance(
 
     Parameters
     ----------
+
     estimator: Estimator
         Estimator to use to calculate permuted feature importance
 
     x: DataType
         Features to calculate permuted feature importance for
 
-    y: DataType
-        Target to use in scoring
-
     ax: Axes
         Matplotlib axes to draw the graph on. Creates a new one by default
+
+    class_index: int, optional
+        In a multi-class setting, choose which class to get feature importances for. If None,
+        will assume a binary classifier
 
     bottom_n: int
         Plot only bottom n features
@@ -75,8 +76,21 @@ def plot_feature_importance(
         estimator
     ) else estimator
 
+    default_class_name = 0 if class_index is None else class_index
+
     if hasattr(trained_estimator, "coef_"):
-        feature_importances: np.ndarray = getattr(trained_estimator, "coef_").squeeze()
+        feature_importances: np.ndarray = np.atleast_2d(
+            getattr(trained_estimator, "coef_")
+        )
+        try:
+            feature_importances = feature_importances[default_class_name, :]
+        except IndexError:
+            raise VizError(
+                f"Tried to get coefficients for {class_index} - "
+                f"class_index can only be one of "
+                f"{[x for x in range(feature_importances.shape[0])]}"
+            )
+
         x_label = "Coefficients"
 
     elif hasattr(trained_estimator, "feature_importances_"):
@@ -93,10 +107,16 @@ def plot_feature_importance(
 
     labels = _get_labels_from_pipeline(estimator, x)
 
-    plot_title = title if title else "Feature Importances"
+    default_title = (
+        "Feature Importances"
+        if class_index is None
+        else f"Feature Importances - Class {default_class_name}"
+    )
+
+    plot_title = title if title else default_title
 
     ax = _plot_barh(
-        feature_importances.squeeze(),
+        feature_importances,
         labels,
         add_label=add_label,
         title=plot_title,

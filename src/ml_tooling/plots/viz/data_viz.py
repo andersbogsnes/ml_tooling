@@ -1,11 +1,11 @@
 from typing import Optional, Union
 
-from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from sklearn.pipeline import Pipeline
 
-from ml_tooling.plots import plot_target_correlation, plot_missing_data
 from ml_tooling.config import MPL_STYLESHEET
+from ml_tooling.plots import plot_target_correlation, plot_missing_data
 
 
 class DataVisualize:

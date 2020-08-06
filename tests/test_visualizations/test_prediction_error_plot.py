@@ -34,13 +34,15 @@ class TestPredictionErrorPlot:
 
     def test_has_correct_ylabel(self, ax: Axes):
         """Expect plot to have correct y label"""
-        assert  ax.get_ylabel() == "$\\hat{y}$"
+        assert ax.get_ylabel() == "$\\hat{y}$"
 
     def test_has_correct_xlabel(self, ax: Axes):
         """Expect plot to have correct x label"""
         assert ax.get_xlabel() == "$y$"
 
-    def test_prediction_error_plots_have_correct_data(self, ax: Axes, regression_result: Result):
+    def test_prediction_error_plots_have_correct_data(
+        self, ax: Axes, regression_result: Result
+    ):
         """Expect plot to have correct data on x and y axes"""
         x = regression_result.plot._data.test_x
         y = regression_result.plot._data.test_y

@@ -79,13 +79,17 @@ def plot_feature_importance(
     default_class_name = 0 if class_index is None else class_index
 
     if hasattr(trained_estimator, "coef_"):
-        feature_importances: np.ndarray = np.atleast_2d(getattr(trained_estimator, "coef_"))
+        feature_importances: np.ndarray = np.atleast_2d(
+            getattr(trained_estimator, "coef_")
+        )
         try:
             feature_importances = feature_importances[default_class_name, :]
         except IndexError:
-            raise VizError(f"Tried to get coefficients for {class_index} - "
-                           f"class_index can only be one of "
-                           f"{[x for x in range(feature_importances.shape[0])]}")
+            raise VizError(
+                f"Tried to get coefficients for {class_index} - "
+                f"class_index can only be one of "
+                f"{[x for x in range(feature_importances.shape[0])]}"
+            )
 
         x_label = "Coefficients"
 

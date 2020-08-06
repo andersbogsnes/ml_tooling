@@ -47,11 +47,14 @@ class TestPRCurve:
         assert ax.get_xlabel() == "Recall"
 
     @pytest.mark.parametrize("class_index", [0, 1, 2])
-    def test_pr_curve_have_correct_data(self, ax: Axes, classifier_result: Result, class_index):
+    def test_pr_curve_have_correct_data(
+        self, ax: Axes, classifier_result: Result, class_index
+    ):
         """Expect the pr curve to have the correct data"""
         x = classifier_result.plot._data.test_x
-        y_true = label_binarize(classifier_result.plot._data.test_y,
-                                classes=[0, 1, 2])[:, class_index]
+        y_true = label_binarize(classifier_result.plot._data.test_y, classes=[0, 1, 2])[
+            :, class_index
+        ]
         y_proba = classifier_result.estimator.predict_proba(x)[:, class_index]
 
         precision, recall, _ = precision_recall_curve(y_true, y_proba)

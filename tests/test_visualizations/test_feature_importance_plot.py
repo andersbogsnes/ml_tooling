@@ -226,4 +226,3 @@ class TestFeatureImportancePlot:
         """Expect plot to raise if trying to access a class_index that doesn't exist"""
         with pytest.raises(VizError):
             classifier_result.plot.feature_importance(class_index=100)
-

@@ -42,7 +42,9 @@ class TestResidualPlot:
         """Expect the plot to have correct xlabels"""
         assert ax.get_xlabel() == "Predicted Value"
 
-    def test_residual_plots_have_correct_data(self, ax: Axes, regression_result: Result):
+    def test_residual_plots_have_correct_data(
+        self, ax: Axes, regression_result: Result
+    ):
         """Expect the plot to have the correct data"""
         x = regression_result.plot._data.test_x
         y = regression_result.plot._data.test_y

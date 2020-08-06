@@ -95,7 +95,8 @@ class TestLiftCurvePlot:
     def test_raises_if_wrong_number_of_labels_is_passed(self, iris_result: Result):
         """Expect lift_curve to fail if wrong number of labels is passed"""
         with pytest.raises(
-            VizError, match="Number of labels must match number of classes: "
-                            "got 1 labels and 3 classes"
+            VizError,
+            match="Number of labels must match number of classes: "
+            "got 1 labels and 3 classes",
         ):
             iris_result.plot.lift_curve(labels=["Only one"])

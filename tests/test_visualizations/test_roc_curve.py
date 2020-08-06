@@ -47,10 +47,9 @@ class TestRocCurve:
         assert ax.get_xlabel() == "False Positive Rate"
 
     @pytest.mark.parametrize("class_index", [0, 1, 2])
-    def test_roc_curve_have_correct_data(self,
-                                         ax: Axes,
-                                         classifier_result: Result,
-                                         class_index: int):
+    def test_roc_curve_have_correct_data(
+        self, ax: Axes, classifier_result: Result, class_index: int
+    ):
         """Expect the plot to have the correct data"""
         x = classifier_result.data.test_x
         y = classifier_result.data.test_y

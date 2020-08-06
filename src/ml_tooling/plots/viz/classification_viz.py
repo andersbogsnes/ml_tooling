@@ -60,7 +60,7 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(MPL_STYLESHEET):
             title = f"ROC AUC - {self._estimator_name}"
-            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
+            y_proba = self._estimator.predict_proba(self._data.test_x)
             return plot_roc_auc(self._data.test_y, y_proba, title=title, **kwargs)
 
     def lift_curve(self, **kwargs) -> plt.Axes:
@@ -71,14 +71,14 @@ class ClassificationVisualize(BaseVisualize):
 
         Returns
         -------
-        matplotlib.Axes
+        plt.Axes
         """
         with plt.style.context(MPL_STYLESHEET):
             title = f"Lift Curve - {self._estimator_name}"
             y_proba = self._estimator.predict_proba(self._data.test_x)
             return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)
 
-    def pr_curve(self, **kwargs) -> plt.Axes:
+    def precision_recall_curve(self, **kwargs) -> plt.Axes:
         """
         Visualize a Precision-Recall curve for a classification estimator.
         Estimator must implement a `predict_proba` method.
@@ -100,5 +100,5 @@ class ClassificationVisualize(BaseVisualize):
 
         with plt.style.context(MPL_STYLESHEET):
             title = f"Precision-Recall - {self._estimator_name}"
-            y_proba = self._estimator.predict_proba(self._data.test_x)[:, 1]
+            y_proba = self._estimator.predict_proba(self._data.test_x)
             return plot_pr_curve(self._data.test_y, y_proba, title=title, **kwargs)

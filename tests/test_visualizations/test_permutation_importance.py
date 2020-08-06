@@ -6,7 +6,6 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 
 from ml_tooling import Model
@@ -14,7 +13,6 @@ from ml_tooling.data import Dataset, load_demo_dataset
 from ml_tooling.plots.permutation_importance import plot_permutation_importance
 from ml_tooling.result import Result
 from ml_tooling.transformers import DFStandardScaler
-from ml_tooling.utils import VizError
 
 feature_importances = ["0.56", "0.15", "0.01", "0.00"]
 
@@ -59,7 +57,10 @@ class TestPermutationImportancePlot:
 
     def test_has_correct_xlabel(self, ax: Axes):
         """Expect that the plot will have the correct xlabel"""
-        assert ax.get_xlabel() == "Permuted Feature Importance (Accuracy) Relative to Baseline"
+        assert (
+            ax.get_xlabel()
+            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
+        )
 
     def test_can_turn_labels_off(self, classifier_result: Result):
         """
@@ -81,11 +82,11 @@ class TestPermutationImportancePlot:
         ],
     )
     def test_has_correct_label_for_each_bar(
-            self,
-            top_n: Union[int, float],
-            bottom_n: Union[int, float],
-            expected: List[str],
-            classifier_result: Result,
+        self,
+        top_n: Union[int, float],
+        bottom_n: Union[int, float],
+        expected: List[str],
+        classifier_result: Result,
     ):
         """
         Expect that the plot will have the correct labels for each bar
@@ -100,29 +101,55 @@ class TestPermutationImportancePlot:
         "top_n, bottom_n, expected",
         [
             (None, None, "Permutation Importances (Accuracy) - LogisticRegression"),
-            (2, None, "Permutation Importances (Accuracy) - LogisticRegression - Top 2"),
-            (None, 2, "Permutation Importances (Accuracy) - LogisticRegression - Bottom 2"),
-            (2, 2, "Permutation Importances (Accuracy) - LogisticRegression - Top 2 - Bottom 2"),
-            (0.2, None, "Permutation Importances (Accuracy) - LogisticRegression - Top 20%"),
-            (None, 0.2, "Permutation Importances (Accuracy) - LogisticRegression - Bottom 20%"),
             (
-                    0.2,
-                    0.2,
-                    "Permutation Importances (Accuracy) - LogisticRegression - Top 20% - Bottom "
-                    "20%",
+                2,
+                None,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 2",
             ),
             (
-            1, 0.2, "Permutation Importances (Accuracy) - LogisticRegression - Top 1 - Bottom 20%"),
+                None,
+                2,
+                "Permutation Importances (Accuracy) - LogisticRegression - Bottom 2",
+            ),
             (
-            0.2, 1, "Permutation Importances (Accuracy) - LogisticRegression - Top 20% - Bottom 1"),
+                2,
+                2,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 2 - Bottom 2",
+            ),
+            (
+                0.2,
+                None,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 20%",
+            ),
+            (
+                None,
+                0.2,
+                "Permutation Importances (Accuracy) - LogisticRegression - Bottom 20%",
+            ),
+            (
+                0.2,
+                0.2,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 20% - Bottom "
+                "20%",
+            ),
+            (
+                1,
+                0.2,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 1 - Bottom 20%",
+            ),
+            (
+                0.2,
+                1,
+                "Permutation Importances (Accuracy) - LogisticRegression - Top 20% - Bottom 1",
+            ),
         ],
     )
     def test_has_correct_title(
-            self,
-            classifier_result: Result,
-            top_n: Union[int, float],
-            bottom_n: Union[int, float],
-            expected: str,
+        self,
+        classifier_result: Result,
+        top_n: Union[int, float],
+        bottom_n: Union[int, float],
+        expected: str,
     ):
         """
         Expect that the plot has a correct title, depending on the top_n and bottom_n
@@ -148,11 +175,11 @@ class TestPermutationImportancePlot:
         ],
     )
     def test_has_correct_number_of_labels(
-            self,
-            classifier_result: Result,
-            top_n: Union[int, float],
-            bottom_n: Union[int, float],
-            expected: int,
+        self,
+        classifier_result: Result,
+        top_n: Union[int, float],
+        bottom_n: Union[int, float],
+        expected: int,
     ):
         """
         Expect that the plot has correct number of labels based on
@@ -180,7 +207,10 @@ class TestPermutationImportancePlot:
         result = model.score_estimator(dataset)
         ax = result.plot.permutation_importance()
 
-        assert ax.title.get_text() == "Permutation Importances (Accuracy) - RandomForestClassifier"
+        assert (
+            ax.title.get_text()
+            == "Permutation Importances (Accuracy) - RandomForestClassifier"
+        )
 
         assert 4 == len(list(ax.get_yticklabels()))
         plt.close()
@@ -197,7 +227,10 @@ class TestPermutationImportancePlot:
         model = Model(RandomForestClassifier())
         result = model.score_estimator(dataset)
         ax = result.plot.permutation_importance()
-        assert ax.get_xlabel() == "Permuted Feature Importance (Accuracy) Relative to Baseline"
+        assert (
+            ax.get_xlabel()
+            == "Permuted Feature Importance (Accuracy) Relative to Baseline"
+        )
         plt.close()
 
     def test_raises_if_func_is_passed_unfitted_estimator(self, dataset: Dataset):

@@ -20,7 +20,7 @@ class TestVisualize:
     @pytest.fixture(scope="class")
     def classification_result(self) -> Result:
         """Setup a classification Result"""
-        dataset = load_demo_dataset("iris")
+        dataset = load_demo_dataset("breast_cancer")
         model = Model(LogisticRegression())
         return model.score_estimator(dataset)
 
@@ -55,7 +55,7 @@ class TestVisualize:
             "roc_curve",
             "lift_curve",
             "feature_importance",
-            "pr_curve",
+            "precision_recall_curve",
             "learning_curve",
             "permutation_importance",
         ],

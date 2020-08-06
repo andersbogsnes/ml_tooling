@@ -75,16 +75,12 @@ def plot_feature_importance(
         estimator
     ) else estimator
 
+    default_class_name = 0 if class_name is None else class_name
+
     if hasattr(trained_estimator, "coef_"):
         feature_importances: np.ndarray = getattr(trained_estimator, "coef_")
         if feature_importances.ndim == 2:
-            if class_name is None:
-                raise VizError(
-                    f"{trained_estimator} is multi-class - Need to set what "
-                    "class label to plot"
-                )
-            feature_importances = feature_importances[class_name, :]
-
+            feature_importances = feature_importances[default_class_name, :]
         x_label = "Coefficients"
 
     elif hasattr(trained_estimator, "feature_importances_"):

@@ -10,6 +10,8 @@ from typing import List, Tuple
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.ticker import PercentFormatter
+from sklearn.preprocessing import label_binarize
 
 from ml_tooling.metrics import lift_score
 from ml_tooling.utils import VizError, DataType
@@ -21,6 +23,7 @@ def plot_lift_curve(
     title: str = None,
     ax: Axes = None,
     labels: List[str] = None,
+    threshold: float = 0.5,
 ) -> Axes:
     """
     Plot a lift chart from results. Also calculates lift score based on a .5 threshold
@@ -42,6 +45,9 @@ def plot_lift_curve(
     labels: List of str
         Labels to use per class
 
+    threshold: float
+        Threshold to use when determining lift score
+
     Returns
     -------
     matplotlib.Axes
@@ -51,44 +57,48 @@ def plot_lift_curve(
         fig, ax = plt.subplots()
 
     title = "Lift Curve" if title is None else title
-
-    # Convert to numpy array as _cum_gain_curve takes numpy arrays
-    y_true = np.array(y_true)
-
     classes = np.unique(y_true)
+    binarized_labels = label_binarize(y_true, classes=classes)
 
-    if labels and len(classes) != len(labels):
+    if labels and len(labels) != len(classes):
         raise VizError(
-            f"Number of labels must equal number of classes: got {len(classes)} classes"
-            f" and {len(labels)} labels"
+            "Number of labels must match number of classes: "
+            f"got {len(labels)} labels and {len(classes)} classes"
         )
 
-    for class_label in classes:
-        if len(classes) == 2 and class_label == 0:
-            # Skip label 0 in the binary classification case
-            continue
-
-        target = y_true == class_label
-        percents, gains = _cum_gain_curve(target, y_proba[:, class_label])
-        positives = np.where(y_proba[:, class_label] > 0.5, 1, 0)
-        score = lift_score(target, positives)
-        ax.plot(
-            percents,
-            gains / percents,
-            label=f"Class {labels[class_label] if labels else class_label} "
-            f"$Lift = {score:.2f}$ ",
-        )
+    if binarized_labels.shape[1] == 1:
+        # Binary classification case
+        percents, gains = _cum_gain_curve(binarized_labels, y_proba[:, 1])
+        score = lift_score(binarized_labels.ravel(), y_proba[:, 1] > threshold)
+        ax.plot(percents, gains / percents, label=f"$Lift = {score:.2f}$")
+    else:
+        # Multi-class case
+        for class_ in classes:
+            percents, gains = _cum_gain_curve(
+                binarized_labels[:, class_], y_proba[:, class_]
+            )
+            score = lift_score(
+                binarized_labels[:, class_], y_proba[:, class_] > threshold
+            )
+            ax.plot(
+                percents,
+                gains / percents,
+                label=f"Class {labels[class_] if labels else class_} "
+                f"$Lift = {score:.2f}$ ",
+            )
 
     ax.axhline(y=1, color="grey", linestyle="--", label="Baseline")
     ax.set_title(title)
     ax.set_ylabel("Lift")
     ax.set_xlabel("% of Data")
+    formatter = PercentFormatter(xmax=1)
+    ax.xaxis.set_major_formatter(formatter)
     ax.legend()
     return ax
 
 
 def _cum_gain_curve(
-    y_true: np.ndarray, y_proba: np.ndarray, positive_label=1
+    y_true: np.ndarray, y_proba: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate a cumulative gain curve of how many positives are captured
@@ -100,14 +110,11 @@ def _cum_gain_curve(
     :param y_proba:
         Predicted label
 
-    :param positive_label:
-        Which class is considered positive class in multi-class settings
-
     :return:
         array of data percents and cumulative gain
     """
     n = len(y_true)
-    n_true = np.sum(y_true == positive_label)
+    n_true = np.sum(y_true)
 
     idx = np.argsort(y_proba)[::-1]  # Reverse sort to get descending values
     cum_gains = np.cumsum(y_true[idx]) / n_true

@@ -74,3 +74,11 @@ class TestPRCurve:
         with pytest.raises(VizError):
             result.plot.precision_recall_curve()
         plt.close()
+
+    def test_fails_if_wrong_number_of_labels_passed(self, classifier_result: Result):
+        """
+        Expect the plot to raise if a different number of labels are passed, than there are
+        classes in the data
+        """
+        with pytest.raises(VizError):
+            classifier_result.plot.precision_recall_curve(labels=["one"])

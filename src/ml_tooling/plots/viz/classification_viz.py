@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from matplotlib import pyplot as plt
 
@@ -47,7 +47,7 @@ class ClassificationVisualize(BaseVisualize):
                 self._data.test_y, y_pred, normalized, title, **kwargs
             )
 
-    def roc_curve(self, **kwargs) -> plt.Axes:
+    def roc_curve(self, labels: List[str] = None, **kwargs) -> plt.Axes:
         """
         Visualize a ROC curve for a classification estimator.
         Estimator must implement a `predict_proba` method
@@ -55,6 +55,9 @@ class ClassificationVisualize(BaseVisualize):
 
         Parameters
         ----------
+        labels: List of str
+            Labels to use for the class names if multi-class
+
         kwargs : optional
             Keyword arguments to pass on to matplotlib
 
@@ -69,7 +72,9 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(MPL_STYLESHEET):
             title = f"ROC AUC - {self._estimator_name}"
             y_proba = self._estimator.predict_proba(self._data.test_x)
-            return plot_roc_auc(self._data.test_y, y_proba, title=title, **kwargs)
+            return plot_roc_auc(
+                self._data.test_y, y_proba, title=title, labels=labels, **kwargs
+            )
 
     def lift_curve(self, **kwargs) -> plt.Axes:
         """
@@ -91,7 +96,7 @@ class ClassificationVisualize(BaseVisualize):
             y_proba = self._estimator.predict_proba(self._data.test_x)
             return plot_lift_curve(self._data.test_y, y_proba, title=title, **kwargs)
 
-    def precision_recall_curve(self, **kwargs) -> plt.Axes:
+    def precision_recall_curve(self, labels: List[str] = None, **kwargs) -> plt.Axes:
         """
         Visualize a Precision-Recall curve for a classification estimator.
         Estimator must implement a `predict_proba` method.
@@ -99,6 +104,9 @@ class ClassificationVisualize(BaseVisualize):
 
         Parameters
         ----------
+        labels: List of str
+            Labels to use for the class names if multi-class
+
         kwargs : optional
             Keyword arguments to pass on to matplotlib
 
@@ -114,4 +122,6 @@ class ClassificationVisualize(BaseVisualize):
         with plt.style.context(MPL_STYLESHEET):
             title = f"Precision-Recall - {self._estimator_name}"
             y_proba = self._estimator.predict_proba(self._data.test_x)
-            return plot_pr_curve(self._data.test_y, y_proba, title=title, **kwargs)
+            return plot_pr_curve(
+                self._data.test_y, y_proba, title=title, labels=labels, **kwargs
+            )

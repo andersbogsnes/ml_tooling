@@ -103,3 +103,10 @@ class TestResult:
     def test_result_logs_model_name_correctly(self, logs: dict, result: Result):
         """Expect the log to have the correct model name"""
         assert logs["model_name"] == "DemoData_LinearRegression"
+
+    def test_log_from_estimator_works_correctly(self, result: Result):
+        """Expect a log created from a result and a log created from a log using
+        the same result to be the same"""
+        log = Log.from_result(result)
+        log2 = result.log()
+        assert log == log2

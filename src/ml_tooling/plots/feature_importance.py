@@ -20,7 +20,7 @@ def plot_feature_importance(
     estimator: Estimator,
     x: pd.DataFrame,
     ax: Axes = None,
-    class_name: int = None,
+    class_index: int = None,
     bottom_n: Union[int, float] = None,
     top_n: Union[int, float] = None,
     add_label: bool = True,
@@ -47,8 +47,9 @@ def plot_feature_importance(
     ax: Axes
         Matplotlib axes to draw the graph on. Creates a new one by default
 
-    class_name: int, optional
-        In a multi-class setting, choose which class to get feature importances for
+    class_index: int, optional
+        In a multi-class setting, choose which class to get feature importances for. If None,
+        will assume a binary classifier
 
     bottom_n: int
         Plot only bottom n features
@@ -75,12 +76,17 @@ def plot_feature_importance(
         estimator
     ) else estimator
 
-    default_class_name = 0 if class_name is None else class_name
+    default_class_name = 0 if class_index is None else class_index
 
     if hasattr(trained_estimator, "coef_"):
-        feature_importances: np.ndarray = getattr(trained_estimator, "coef_")
-        if feature_importances.ndim == 2:
+        feature_importances: np.ndarray = np.atleast_2d(getattr(trained_estimator, "coef_"))
+        try:
             feature_importances = feature_importances[default_class_name, :]
+        except IndexError:
+            raise VizError(f"Tried to get coefficients for {class_index} - "
+                           f"class_index can only be one of "
+                           f"{[x for x in range(feature_importances.shape[0])]}")
+
         x_label = "Coefficients"
 
     elif hasattr(trained_estimator, "feature_importances_"):
@@ -96,11 +102,13 @@ def plot_feature_importance(
         )
 
     labels = _get_labels_from_pipeline(estimator, x)
+
     default_title = (
         "Feature Importances"
-        if class_name is None
-        else f"Feature Importances - Class {class_name}"
+        if class_index is None
+        else f"Feature Importances - Class {default_class_name}"
     )
+
     plot_title = title if title else default_title
 
     ax = _plot_barh(

@@ -39,7 +39,7 @@ class TestFeatureImportancePlot:
     @pytest.fixture(scope="class")
     def ax(self, classifier_result: Result) -> Axes:
         """Setup a feature importance plot"""
-        yield classifier_result.plot.feature_importance(class_name=0)
+        yield classifier_result.plot.feature_importance(class_index=0)
         plt.close()
 
     def test_can_be_given_an_ax(self, classifier_result: Result):
@@ -48,7 +48,7 @@ class TestFeatureImportancePlot:
         to plot on
         """
         fig, ax = plt.subplots()
-        test_ax = classifier_result.plot.feature_importance(ax=ax, class_name=0)
+        test_ax = classifier_result.plot.feature_importance(ax=ax, class_index=0)
         assert ax == test_ax
         plt.close()
 
@@ -64,7 +64,7 @@ class TestFeatureImportancePlot:
         """
         Expect classifier results to be able to toggle labels off with the add_label flag
         """
-        ax = classifier_result.plot.feature_importance(add_label=False, class_name=0)
+        ax = classifier_result.plot.feature_importance(add_label=False, class_index=0)
         assert len(ax.texts) == 0
 
     @pytest.mark.parametrize(
@@ -91,7 +91,7 @@ class TestFeatureImportancePlot:
         depending on top_n and bottom_n
         """
         ax = classifier_result.plot.feature_importance(
-            top_n=top_n, bottom_n=bottom_n, class_name=0
+            top_n=top_n, bottom_n=bottom_n, class_index=0
         )
         assert {text.get_text() for text in ax.texts} == set(expected)
 
@@ -125,7 +125,7 @@ class TestFeatureImportancePlot:
         arguments
         """
         ax = classifier_result.plot.feature_importance(
-            top_n=top_n, bottom_n=bottom_n, class_name=0
+            top_n=top_n, bottom_n=bottom_n, class_index=0
         )
         assert ax.title.get_text() == expected
 
@@ -155,7 +155,7 @@ class TestFeatureImportancePlot:
         top_n and bottom_n parameters
         """
         ax = classifier_result.plot.feature_importance(
-            top_n=top_n, bottom_n=bottom_n, class_name=0
+            top_n=top_n, bottom_n=bottom_n, class_index=0
         )
         assert len(ax.texts) == expected
         plt.close()
@@ -196,6 +196,14 @@ class TestFeatureImportancePlot:
         assert ax.get_xlabel() == "Feature Importances"
         plt.close()
 
+    def test_has_correct_title_when_using_trees(self, dataset: Dataset):
+        """Expect the plot to not have Class in the title"""
+        model = Model(RandomForestClassifier())
+        result = model.score_estimator(dataset)
+
+        ax = result.plot.feature_importance(class_index=10)
+        assert "Class 10" not in ax.title.get_text()
+
     def test_raises_if_passed_model_without_feature_importance_or_coefs(
         self, dataset: Dataset
     ):
@@ -213,3 +221,9 @@ class TestFeatureImportancePlot:
         """Expect the function to raise if an unfitted estimator is passed"""
         with pytest.raises(VizError):
             plot_feature_importance(RandomForestClassifier(), dataset.x, dataset.y)
+
+    def test_raises_if_passed_an_invalid_classname(self, classifier_result: Result):
+        """Expect plot to raise if trying to access a class_index that doesn't exist"""
+        with pytest.raises(VizError):
+            classifier_result.plot.feature_importance(class_index=100)
+

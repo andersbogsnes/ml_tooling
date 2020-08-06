@@ -49,7 +49,7 @@ class BaseVisualize:
         self,
         top_n: Union[int, float] = None,
         bottom_n: Union[int, float] = None,
-        class_name: int = None,
+        class_index: int = None,
         add_label: bool = True,
         ax: Axes = None,
         **kwargs,
@@ -68,8 +68,9 @@ class BaseVisualize:
             If bottom_n is an integer, return bottom_n features.
             If bottom_n is a float between (0, 1), return bottom_n percent features
 
-        class_name: int, optional
-            In a multi-class setting, plot the feature importances for the given label
+        class_index: int, optional
+            In a multi-class setting, plot the feature importances for the given label.
+            If None, assume a binary classification
 
         add_label : bool
             Toggles value labels on end of each bar
@@ -86,14 +87,17 @@ class BaseVisualize:
         """
 
         title = f"Feature Importances - {self._estimator_name}"
-        title = f"{title} - Class {class_name}" if class_name else title
+
+        if not hasattr(self._estimator, "feature_importances_"):
+            # Don't add class index to title if we are using feature importance
+            title = f"{title} - Class {class_index}" if class_index else title
 
         with plt.style.context(MPL_STYLESHEET):
             return plot_feature_importance(
                 estimator=self._estimator,
                 x=self._data.train_x,
                 ax=ax,
-                class_name=class_name,
+                class_index=class_index,
                 bottom_n=bottom_n,
                 top_n=top_n,
                 add_label=add_label,

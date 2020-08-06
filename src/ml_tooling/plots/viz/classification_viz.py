@@ -30,12 +30,14 @@ class ClassificationVisualize(BaseVisualize):
 
         normalized: bool
             Whether or not to normalize annotated class counts
+
         threshold: float
             Threshold to use for classification - defaults to 0.5
 
         Returns
         -------
-        matplotlib.Axes
+        plt.Axes
+            Returns a Confusion Matrix plot
         """
 
         with plt.style.context(MPL_STYLESHEET):
@@ -51,9 +53,15 @@ class ClassificationVisualize(BaseVisualize):
         Estimator must implement a `predict_proba` method
         Any kwargs are passed onto matplotlib
 
+        Parameters
+        ----------
+        kwargs : optional
+            Keyword arguments to pass on to matplotlib
+
         Returns
         -------
-        matplotlib.Axes
+        plt.Axes
+            Returns a ROC AUC plot
         """
         if not hasattr(self._estimator, "predict_proba"):
             raise VizError("Model must provide a 'predict_proba' method")
@@ -68,6 +76,11 @@ class ClassificationVisualize(BaseVisualize):
         Visualize a Lift Curve for a classification estimator
         Estimator must implement a `predict_proba` method
         Any kwargs are passed onto matplotlib
+
+        Parameters
+        ----------
+        kwargs : optional
+            Keyword arguments to pass on to matplotlib
 
         Returns
         -------

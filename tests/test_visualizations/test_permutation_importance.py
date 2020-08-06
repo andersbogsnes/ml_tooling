@@ -47,7 +47,7 @@ class TestPermutationImportancePlot:
         to plot on
         """
         fig, ax = plt.subplots()
-        test_ax = classifier_result.plot.feature_importance(ax=ax, class_name=0)
+        test_ax = classifier_result.plot.feature_importance(ax=ax, class_index=0)
         assert ax == test_ax
         plt.close()
 

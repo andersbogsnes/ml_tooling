@@ -139,5 +139,6 @@ class BayesSearch(Searcher):
             n_jobs=n_jobs,
             verbose=verbose,
         )
+        logger.info("Result: %s", result)
         optimizer.tell([params], [-result.metrics[0].score])
         return result

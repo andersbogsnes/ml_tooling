@@ -86,7 +86,7 @@ We can save and load our model:
     >>> from ml_tooling.storage import FileStorage
     >>> storage = FileStorage('./estimator_dir')
     >>> file_path = regression.save_estimator(storage)
-    >>> my_new_model = regression.load_estimator(storage, file_path.name)
+    >>> my_new_model = regression.load_estimator(file_path.name, storage=storage)
     >>> my_new_model
     <Model: LinearRegression>
 

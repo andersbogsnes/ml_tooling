@@ -274,7 +274,7 @@ We can also load the model from a storage by specifying the filename to load in 
 
 .. doctest::
 
-    >>> loaded_linear = linear.load_estimator(storage, estimator_path.name)
+    >>> loaded_linear = linear.load_estimator(estimator_path.name, storage=storage)
     >>> loaded_linear
     <Model: LinearRegression>
 

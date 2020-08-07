@@ -12,6 +12,7 @@
 - ROC AUC curve can now plot multi-class
 - Fixed Binner to have a default value
 - Fixed FuncTransform to have a default value
+- `load_estimator` now uses default storage if nothing is passed
 
 # v0.11.0
 - Added `load_demo_dataset` function

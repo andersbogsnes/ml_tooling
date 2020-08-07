@@ -123,7 +123,7 @@ class TestBaseClass:
         storage = FileStorage(tmp_path)
         saved_model_path = classifier.save_estimator(storage)
         assert saved_model_path.exists()
-        loaded_model = classifier.load_estimator(load_storage, saved_model_path)
+        loaded_model = classifier.load_estimator(saved_model_path, storage=load_storage)
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_regression_model_filename_is_generated_correctly(
@@ -150,7 +150,7 @@ class TestBaseClass:
     ):
         mock_hash.return_value = "1234"
 
-        with classifier.log(tmp_path):
+        with classifier.log(str(tmp_path)):
             expected_file = classifier.save_estimator(FileStorage(tmp_path))
 
         assert expected_file.exists()
@@ -175,9 +175,7 @@ class TestBaseClass:
 
         models = classifier.config.default_storage.get_list()
         assert len(models) == 1
-        new_classifier = Model.load_estimator(
-            classifier.config.default_storage, models[0]
-        )
+        new_classifier = Model.load_estimator(models[0])
         assert (
             classifier.estimator.get_params() == new_classifier.estimator.get_params()
         )
@@ -625,7 +623,7 @@ class TestModelSelection:
             train_iris_dataset, estimators, cv=2, refit=True, metrics="accuracy"
         )
 
-        assert (model.coef_ == model2.estimator.coef_).all()
+        assert np.all(model.coef_ == model2.estimator.coef_)
 
 
 class TestGridSearch:

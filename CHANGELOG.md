@@ -13,6 +13,7 @@
 - Fixed Binner to have a default value
 - Fixed FuncTransform to have a default value
 - `load_estimator` now uses default storage if nothing is passed
+- `Model.bayessearc` is now `Model.bayesiansearch`
 
 # v0.11.0
 - Added `load_demo_dataset` function

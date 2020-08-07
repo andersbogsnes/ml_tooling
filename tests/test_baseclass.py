@@ -841,7 +841,7 @@ class TestBayesSearch:
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        model, results = model.bayessearch(
+        model, results = model.bayesiansearch(
             train_iris_dataset,
             param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -857,7 +857,7 @@ class TestBayesSearch:
     ):
 
         model = Model(pipeline_logistic)
-        model, results = model.bayessearch(
+        model, results = model.bayesiansearch(
             train_iris_dataset,
             param_distributions={"estimator__penalty": ["l1", "l2"]},
             refit=False,
@@ -869,7 +869,7 @@ class TestBayesSearch:
         self, pipeline_logistic: Pipeline, train_iris_dataset
     ):
         model = Model(pipeline_logistic)
-        best_model, results = model.bayessearch(
+        best_model, results = model.bayesiansearch(
             train_iris_dataset,
             param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -880,7 +880,7 @@ class TestBayesSearch:
         for result in results:
             assert isinstance(result, Result)
 
-        best_model, results = model.bayessearch(
+        best_model, results = model.bayesiansearch(
             train_iris_dataset,
             param_distributions={"estimator__penalty": ["l1", "l2"]},
             n_iter=2,
@@ -894,7 +894,7 @@ class TestBayesSearch:
     def test_bayessearch_uses_default_metric(
         self, classifier: Model, train_iris_dataset
     ):
-        model, results = classifier.bayessearch(
+        model, results = classifier.bayesiansearch(
             train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}, n_iter=2
         )
 
@@ -911,7 +911,7 @@ class TestBayesSearch:
             "C": Real(1e-4, 1e0),
         }
 
-        model, results = classifier.bayessearch(
+        model, results = classifier.bayesiansearch(
             train_iris_dataset, param_distributions=param_dist, n_iter=2
         )
 
@@ -924,7 +924,7 @@ class TestBayesSearch:
     def test_bayessearch_can_take_multiple_metrics(
         self, classifier: Model, train_iris_dataset
     ):
-        model, results = classifier.bayessearch(
+        model, results = classifier.bayesiansearch(
             train_iris_dataset,
             param_distributions={"penalty": ["l1", "l2"]},
             metrics=["accuracy", "roc_auc"],

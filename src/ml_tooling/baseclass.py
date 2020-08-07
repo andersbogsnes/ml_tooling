@@ -635,7 +635,7 @@ class Model:
             data=data, searcher=searcher, metrics=metrics, cv=cv, refit=refit
         )
 
-    def bayessearch(
+    def bayesiansearch(
         self,
         data: Dataset,
         param_distributions: dict,

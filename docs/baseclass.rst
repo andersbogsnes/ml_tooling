@@ -235,6 +235,16 @@ model thinks it can improve the error. Bayesian search is implemented using skop
 .. doctest::
 
     >>> from sklearn.ensemble import RandomForestRegressor
+        >>> from ml_tooling.search import Real
+        >>> rand_forest = Model(RandomForestRegressor())
+        >>>
+        >>> search_space = {
+        ...     "max_depth": [1, 3],
+        ...     "min_weight_fraction_leaf": Real(0, 0.5),
+        ... }
+        >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
+        >>> results #doctest:+SKIP
+        ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
     >>> from ml_tooling.search import Real
     >>> rand_forest = Model(RandomForestRegressor())
     >>>
@@ -242,7 +252,7 @@ model thinks it can improve the error. Bayesian search is implemented using skop
     ...     "max_depth": [1, 3],
     ...     "min_weight_fraction_leaf": Real(0, 0.5),
     ... }
-    >>> best_estimator, results = rand_forest.bayessearch(bostondata, search_space, n_iter=2)
+    >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
     >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 

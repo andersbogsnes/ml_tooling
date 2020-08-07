@@ -89,8 +89,14 @@ class TestDFSelector:
         result = model.score_estimator(train_iris_dataset)
         assert isinstance(result, Result)
 
+    def test_works_without_args(self):
+        assert Select()
+
 
 class TestToCategorical:
+    def test_works_without_args(self):
+        assert ToCategorical()
+
     def test_to_categorical_returns_correct_dataframe(self, categorical: pd.DataFrame):
         to_cat = ToCategorical()
         result = to_cat.fit_transform(categorical)
@@ -143,6 +149,9 @@ class TestToCategorical:
 
 
 class TestBinner:
+    def test_works_without_args(self):
+        assert Binner()
+
     def test_binner_returns_correctly(self, numerical: pd.DataFrame):
         labels = ["1", "2", "3", "4"]
         binner = Binner(bins=[0, 1, 2, 3, 4], labels=labels)
@@ -179,6 +188,9 @@ class TestBinner:
 
 
 class TestRenamer:
+    def test_works_without_args(self):
+        assert Renamer()
+
     def test_renamer_returns_correctly(self, numerical: pd.DataFrame):
         new_col_names = ["test_a", "test_b"]
         renamer = Renamer(new_col_names)
@@ -218,6 +230,9 @@ class TestRenamer:
 
 
 class TestDateEncoder:
+    def test_works_without_args(self):
+        assert DateEncoder()
+
     def test_date_encoder_returns_correctly(self, dates: pd.DataFrame):
         date_coder = DateEncoder()
         result = date_coder.fit_transform(dates)
@@ -296,6 +311,9 @@ class TestDateEncoder:
 
 
 class TestFreqFeature:
+    def test_works_without_args(self):
+        assert FreqFeature()
+
     def test_freqfeature_returns_correctly(self, categorical: pd.DataFrame):
         freq_feature = FreqFeature()
         result = freq_feature.fit_transform(categorical)
@@ -370,6 +388,9 @@ class TestFeatureUnion:
 
 
 class TestStandardScaler:
+    def test_works_without_args(self):
+        assert DFStandardScaler()
+
     def test_can_reset_scaler_parameters(self):
         scaler = DFStandardScaler()
         scaler.scale_ = 0.7
@@ -440,6 +461,9 @@ class TestStandardScaler:
 
 
 class TestDFRowFunc:
+    def test_works_without_args(self):
+        assert DFRowFunc()
+
     @pytest.mark.parametrize(
         "strategy, match",
         [
@@ -532,6 +556,9 @@ def test_func_transformer_returns_correctly_numerical(
 
 
 class TestFuncTransformer:
+    def test_works_without_args(self):
+        assert FuncTransformer()
+
     def test_func_transformer_returns_correctly_on_categorical(
         self, categorical: pd.DataFrame
     ):
@@ -556,6 +583,9 @@ class TestFuncTransformer:
 
 
 class TestBinarize:
+    def test_works_without_args(self):
+        assert Binarize()
+
     def test_binarize_returns_correctly_on_categorical_na(
         self, categorical_na: pd.DataFrame
     ):
@@ -596,6 +626,9 @@ class TestRareFeatureEncoder:
     @pytest.fixture
     def categorical_int_and_string(self) -> pd.DataFrame:
         return pd.DataFrame({"categorical": [1, "a", "a", 2, "b", 1]})
+
+    def test_works_without_args(self):
+        assert RareFeatureEncoder()
 
     def test_rare_feature_encoder_that_transformed_data_and_input_data_same_shape(
         self, rare: RareFeatureEncoder, categorical_int_and_string: pd.DataFrame

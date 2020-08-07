@@ -12,7 +12,7 @@ class FuncTransformer(BaseEstimator, TransformerMixin):
     Applies a given function to each column
     """
 
-    def __init__(self, func: Callable[..., pd.DataFrame], **kwargs):
+    def __init__(self, func: Callable[..., pd.DataFrame] = None, **kwargs):
         """
 
         Parameters

@@ -132,7 +132,9 @@ class Model:
         return storage.get_list()
 
     @classmethod
-    def load_estimator(cls, storage: Storage, path: pathlib.Path) -> "Model":
+    def load_estimator(
+        cls, path: Union[str, pathlib.Path], storage: Storage = None
+    ) -> "Model":
         """
         Instantiates the class with a joblib pickled estimator.
 
@@ -140,7 +142,8 @@ class Model:
         ----------
         storage : Storage
             Storage class to load the estimator with
-        path: str, optional
+
+        path: str, pathlib.Path, optional
             Path to estimator pickle file
 
         Example
@@ -148,17 +151,24 @@ class Model:
         We can load a trained estimator from disk::
 
             storage = FileStorage('path/to/dir')
-            my_estimator = Model.load_estimator(storage, 'my_model.pkl')
+            my_estimator = Model.load_estimator('my_model.pkl', storage=storage)
 
         We now have a trained estimator loaded.
+
+        We can also use the default storage::
+
+            my_estimator = Model.load_estimator('my_model.pkl')
+
+        This will use the default FileStorage defined in Model.config.default_storage
 
         Returns
         -------
         Model
             Instance of Model with a saved estimator
         """
+        fs = config.default_storage if storage is None else storage
         filename = pathlib.Path(path).name
-        estimator = storage.load(filename)
+        estimator = fs.load(filename)
         instance = cls(estimator)
         logger.info(f"Loaded {instance.estimator_name}")
         return instance

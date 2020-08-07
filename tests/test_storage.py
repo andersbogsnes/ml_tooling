@@ -43,10 +43,12 @@ class TestFileStorage:
         storage = FileStorage(tmp_path)
         expected_file = classifier.save_estimator(storage)
         assert expected_file.exists()
-        loaded_file = classifier.load_estimator(storage, expected_file)
+        loaded_file = classifier.load_estimator(expected_file, storage=storage)
         assert isinstance(loaded_file, Model)
         storage_context = FileStorage(tmp_path)
-        context_loaded_file = classifier.load_estimator(storage_context, expected_file)
+        context_loaded_file = classifier.load_estimator(
+            expected_file, storage=storage_context
+        )
         assert isinstance(context_loaded_file, Model)
 
     def test_can_list_estimators(self, classifier: Model, tmp_path: pathlib.Path):

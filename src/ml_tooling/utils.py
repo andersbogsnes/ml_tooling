@@ -450,3 +450,7 @@ def _get_labels_from_pipeline(estimator: Estimator, x: pd.DataFrame) -> np.ndarr
         return x.columns.to_numpy()
 
     return Pipeline(estimator.steps[:-1]).transform(x.iloc[[0], :]).columns.to_numpy()
+
+
+class MetricError(Exception):
+    pass

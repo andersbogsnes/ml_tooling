@@ -101,4 +101,4 @@ If you want to test your model on a demo datasets from :ref:`sklearn:datasets`, 
     >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
-    <DemoData - Dataset>
+    <BostonData - Dataset>

@@ -58,7 +58,9 @@ class Searcher:
         -------
         Result
         """
-        logger.info("Training %s", estimator)
+        logger.info("Training...")
+        logger.debug("Training %s", estimator)
+
         result = Result.from_estimator(
             estimator=estimator,
             metrics=metrics,
@@ -67,7 +69,8 @@ class Searcher:
             n_jobs=n_jobs,
             verbose=verbose,
         )
-        logger.info("Finished %s", estimator)
+        logger.info("Finished...")
+        logger.debug("Finished %s", estimator)
         logger.info("Result: %s", result)
         return result
 

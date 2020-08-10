@@ -10,11 +10,11 @@ from ml_tooling.metrics import (
     Metrics,
 )
 from ml_tooling.metrics.utils import (
-    MetricError,
     _sort_values,
     _get_top_n_idx,
     _get_bottom_n_idx,
 )
+from ml_tooling.utils import MetricError
 
 
 class TestMetricClass:

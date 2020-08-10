@@ -1,5 +1,6 @@
 from .binner import Binner
-from .categorical import ToCategorical, Binarize
+from .to_categorical import ToCategorical
+from .binarize import Binarize
 from .date_encoder import DateEncoder
 from .feature_union import DFFeatureUnion
 from .fillna import FillNA
@@ -13,9 +14,9 @@ from .pipeline import Pipeline
 
 
 __all__ = [
+    "Binarize",
     "Binner",
     "ToCategorical",
-    "Binarize",
     "DateEncoder",
     "DFFeatureUnion",
     "FillNA",

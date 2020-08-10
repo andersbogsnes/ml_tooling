@@ -1,40 +1,79 @@
+from typing import List
+
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.preprocessing import label_binarize
 
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, VizError
+import numpy as np
 
 
 def plot_roc_auc(
-    y_true: DataType, y_proba: DataType, title: str = None, ax: Axes = None
+    y_true: DataType,
+    y_proba: DataType,
+    title: str = None,
+    ax: Axes = None,
+    labels: List[str] = None,
 ) -> Axes:
     """
     Plot ROC AUC curve. Works only with probabilities
 
-    :param y_true:
+    Parameters
+    ----------
+    y_true: DataType
         True labels
 
-    :param y_proba:
+    y_proba: DataType
         Probability estimate from estimator
 
-    :param title:
+    title: str
         Plot title
 
-    :param ax:
+    ax: Axes
         Pass in your own ax
 
-    :return:
-        matplotlib.Axes
-    """
-    title = "ROC AUC curve" if title is None else title
+    labels: List of str
+        Optionally specify label names
 
-    fpr, tpr, _ = roc_curve(y_true, y_proba)
-    score = roc_auc_score(y_true, y_proba)
+    Returns
+    -------
+    plt.Axes
+        Plot of ROC AUC curve
+    """
 
     if ax is None:
         fig, ax = plt.subplots()
 
-    ax.plot(fpr, tpr, label=f"ROC Score: {score}")
+    title = "ROC AUC curve" if title is None else title
+    classes = np.unique(y_true)
+    binarized_labels = label_binarize(y_true, classes=classes)
+
+    if labels and len(labels) != len(classes):
+        raise VizError(
+            "Number of labels must match number of classes:"
+            f"got {len(labels)} labels and {len(classes)} classes"
+        )
+
+    if binarized_labels.shape[1] == 1:
+        # Binary classification case
+
+        fpr, tpr, _ = roc_curve(binarized_labels, y_proba[:, 1])
+        score = roc_auc_score(binarized_labels, y_proba[:, 1])
+        ax.plot(fpr, tpr, label=f"ROC Score: {score:.2f}")
+
+    else:
+        # Multi-class case
+        for class_ in classes:
+            fpr, tpr, _ = roc_curve(binarized_labels[:, class_], y_proba[:, class_])
+            score = roc_auc_score(binarized_labels[:, class_], y_proba[:, class_])
+            ax.plot(
+                fpr,
+                tpr,
+                label=f"Class {labels[class_] if labels else class_} - "
+                f"ROC Score: {score:.2f}",
+            )
+
     ax.plot([0, 1], "--")
     ax.set_title(title)
     ax.set_ylabel("True Positive Rate")

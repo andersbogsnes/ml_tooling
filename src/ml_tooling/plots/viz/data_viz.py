@@ -1,8 +1,9 @@
 from typing import Optional, Union
 
-from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from sklearn.pipeline import Pipeline
+
 
 from ml_tooling.plots import (
     plot_target_correlation,

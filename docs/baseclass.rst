@@ -27,7 +27,7 @@ We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
     >>> bostondata = load_demo_dataset("boston")
     >>> # Remember to setup a train test split!
     >>> bostondata.create_train_test()
-    <DemoData - Dataset>
+    <BostonData - Dataset>
 
 Creating your model
 ~~~~~~~~~~~~~~~~~~~
@@ -235,6 +235,16 @@ model thinks it can improve the error. Bayesian search is implemented using skop
 .. doctest::
 
     >>> from sklearn.ensemble import RandomForestRegressor
+        >>> from ml_tooling.search import Real
+        >>> rand_forest = Model(RandomForestRegressor())
+        >>>
+        >>> search_space = {
+        ...     "max_depth": [1, 3],
+        ...     "min_weight_fraction_leaf": Real(0, 0.5),
+        ... }
+        >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
+        >>> results #doctest:+SKIP
+        ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
     >>> from ml_tooling.search import Real
     >>> rand_forest = Model(RandomForestRegressor())
     >>>
@@ -242,7 +252,7 @@ model thinks it can improve the error. Bayesian search is implemented using skop
     ...     "max_depth": [1, 3],
     ...     "min_weight_fraction_leaf": Real(0, 0.5),
     ... }
-    >>> best_estimator, results = rand_forest.bayessearch(bostondata, search_space, n_iter=2)
+    >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
     >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 
@@ -274,7 +284,7 @@ We can also load the model from a storage by specifying the filename to load in 
 
 .. doctest::
 
-    >>> loaded_linear = linear.load_estimator(storage, estimator_path.name)
+    >>> loaded_linear = linear.load_estimator(estimator_path.name, storage=storage)
     >>> loaded_linear
     <Model: LinearRegression>
 

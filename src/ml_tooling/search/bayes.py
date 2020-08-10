@@ -128,7 +128,8 @@ class BayesSearch(Searcher):
         # make lists into dictionaries
         params_dict = point_asdict(self.param_grid, params)
         estimator = clone(self.estimator).set_params(**params_dict)
-        logger.info("Fitting estimator %s", estimator)
+        logger.info("Fitting estimator...")
+        logger.debug("Fitting estimator %s", estimator)
 
         result = Result.from_estimator(
             estimator=estimator,
@@ -138,5 +139,6 @@ class BayesSearch(Searcher):
             n_jobs=n_jobs,
             verbose=verbose,
         )
+        logger.info("Result: %s", result)
         optimizer.tell([params], [-result.metrics[0].score])
         return result

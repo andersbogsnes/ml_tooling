@@ -178,6 +178,7 @@ Example
 -------
 
 Here we want to bin our sales data into 3 buckets
+
 .. doctest::
 
     >>> from ml_tooling.transformers import Binner
@@ -240,6 +241,7 @@ Converts a column into a normalized frequency
 
 Example
 #######
+
 .. doctest::
 
     >>> from ml_tooling.transformers import FreqFeature

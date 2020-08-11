@@ -2,16 +2,8 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 import numpy as np
 
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, VizError
 from ml_tooling.plots.utils import _plot_barh
-
-
-class MLToolingError(Exception):
-    """Error which occurs when using ML Tooling"""
-
-
-class VizError(MLToolingError):
-    """Error which occurs when using a Visualization"""
 
 
 def plot_target_feature_distribution(
@@ -20,7 +12,7 @@ def plot_target_feature_distribution(
     title: str = "Target feature distribution",
     method: str = "mean",
     ax: plt.Axes = None,
-    n_boots: int = None,
+    n_boot: int = None,
 ) -> Axes:
     """
     Creates a plot which compares the mean or median
@@ -38,25 +30,25 @@ def plot_target_feature_distribution(
         Which method to compare with. One of 'median' or 'mean'.
     ax: plt.Axes
         Matplotlib axes to draw the graph on. Creates a new one by default
-    n_boots: int
+    n_boot: int
         The number of bootstrap iterations to use.
     Returns
     -------
     plt.Axes
 
     """
-    if np.isnan(target).any() or np.isnan(feature).any():
+    """if pd.isna(target).all().all() | pd.isna(feature).all():
         raise VizError(
             "Target feature distribution plot only works if feature and "
             "target do not contain NaN Values"
         )
-
+"""
     if ax is None:
         fig, ax = plt.subplots()
 
     agg_func_mapping = {"mean": np.mean, "median": np.median}
 
-    selected_agg_func = agg_func_mapping[method]
+    agg_func = agg_func_mapping[method]
 
     feature_categories = np.unique(feature)
 
@@ -64,24 +56,20 @@ def plot_target_feature_distribution(
         raise VizError("Should there be a limit?")
 
     data = np.asarray(
-        [
-            selected_agg_func(target[feature == category])
-            for category in feature_categories
-        ]
+        [agg_func(target[feature == category]) for category in feature_categories]
     )
 
-    if n_boots:
+    if n_boot:
 
         percentile = np.zeros((2, feature_categories.shape[0]))
-        i = 0
-        for category in feature_categories:
+        for i, category in enumerate(feature_categories):
             data_temp = target[feature == category]
             boots_sample = np.random.choice(
-                data_temp, size=n_boots * data_temp.shape[0], replace=True
+                data_temp, size=n_boot * data_temp.shape[0], replace=True
             ).reshape((data_temp.shape[0], -1))
-            boots_temp = np.mean(boots_sample, axis=0)
-            percentile[:, i] = np.percentile(boots_temp, (2.5, 97.5))
-            i += 1
+            percentile[:, i - 1] = np.percentile(
+                np.mean(boots_sample, axis=0), (2.5, 97.5)
+            )
 
     ax = _plot_barh(
         feature_categories,
@@ -91,9 +79,9 @@ def plot_target_feature_distribution(
         x_label=f"Target compared to {method}",
         y_label="Feature categories",
         ax=ax,
-        xerr=percentile if n_boots else None,
+        xerr=percentile if n_boot else None,
     )
 
-    ax.axvline(x=selected_agg_func(target), linestyle="--", color="#97233f")
+    ax.axvline(x=agg_func(target), linestyle="--")
 
     return ax

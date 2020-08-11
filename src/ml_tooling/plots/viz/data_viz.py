@@ -116,11 +116,10 @@ class DataVisualize:
 
     def target_feature_distribution(
         self,
-        feature: str = None,
         method: str = "mean",
         ax: Optional[Axes] = None,
         feature_pipeline: Optional[Pipeline] = None,
-        n_boots: int = None,
+        n_boot: int = None,
     ) -> Axes:
         """
         Creates a plot which compares the mean or median
@@ -128,15 +127,13 @@ class DataVisualize:
 
         Parameters
         ----------
-        feature: str
-            Categorical feature to group by
         method: str
             Which method to compare with. One of 'median' or 'mean'.
         ax: plt.Axes
             Matplotlib axes to draw the graph on. Creates a new one by default
         feature_pipeline: Pipeline
             A feature transformation pipeline to be applied before graphing the data
-        n_boots: int
+        n_boot: int
             The number of bootstrap iterations to use.
 
         Returns
@@ -144,12 +141,12 @@ class DataVisualize:
         plt.Axes
         """
 
-        x = self.data[feature]
+        x = self.data.x
 
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
 
         with plt.style.context(MPL_STYLESHEET):
             return plot_target_feature_distribution(
-                feature=x, target=self.data.y, method=method, ax=ax, n_boots=n_boots,
+                feature=x, target=self.data.y, method=method, ax=ax, n_boot=n_boot,
             )

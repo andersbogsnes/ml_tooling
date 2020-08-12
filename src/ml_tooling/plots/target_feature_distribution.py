@@ -20,7 +20,7 @@ def plot_target_feature_distribution(
     title: str = "Target feature distribution",
     method: str = "mean",
     ax: plt.Axes = None,
-    n_boots: int = None,
+    n_boot: int = None,
 ) -> Axes:
     """
     Creates a plot which compares the mean or median
@@ -38,7 +38,7 @@ def plot_target_feature_distribution(
         Which method to compare with. One of 'median' or 'mean'.
     ax: plt.Axes
         Matplotlib axes to draw the graph on. Creates a new one by default
-    n_boots: int
+    n_boot: int
         The number of bootstrap iterations to use.
     Returns
     -------
@@ -70,14 +70,14 @@ def plot_target_feature_distribution(
         ]
     )
 
-    if n_boots:
+    if n_boot:
 
         percentile = np.zeros((2, feature_categories.shape[0]))
         i = 0
         for category in feature_categories:
             data_temp = target[feature == category]
             boots_sample = np.random.choice(
-                data_temp, size=n_boots * data_temp.shape[0], replace=True
+                data_temp, size=n_boot * data_temp.shape[0], replace=True
             ).reshape((data_temp.shape[0], -1))
             boots_temp = np.mean(boots_sample, axis=0)
             percentile[:, i] = np.percentile(boots_temp, (2.5, 97.5))
@@ -91,7 +91,7 @@ def plot_target_feature_distribution(
         x_label=f"Target compared to {method}",
         y_label="Feature categories",
         ax=ax,
-        xerr=percentile if n_boots else None,
+        xerr=percentile if n_boot else None,
     )
 
     ax.axvline(x=selected_agg_func(target), linestyle="--", color="#97233f")

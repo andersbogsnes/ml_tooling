@@ -2,7 +2,7 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 import numpy as np
 
-from ml_tooling.utils import DataType, VizError
+from ml_tooling.utils import DataType
 from ml_tooling.plots.utils import _plot_barh
 
 
@@ -46,14 +46,11 @@ def plot_target_feature_distribution(
     if ax is None:
         fig, ax = plt.subplots()
 
-    agg_func_mapping = {"mean": np.mean, "median": np.median}
+    agg_func_mapping = {"mean": np.nanmean, "median": np.nanmedian}
 
     agg_func = agg_func_mapping[method]
 
     feature_categories = np.unique(feature)
-
-    if len(feature_categories) > 15:
-        raise VizError("Should there be a limit?")
 
     data = np.asarray(
         [agg_func(target[feature == category]) for category in feature_categories]
@@ -62,12 +59,19 @@ def plot_target_feature_distribution(
     if n_boot:
 
         percentile = np.zeros((2, feature_categories.shape[0]))
+        boots_sample = np.random.choice(
+            len(target), size=n_boot * target.shape[0], replace=True
+        ).reshape((target.shape[0], -1))
+
+        target_boot_sample = np.zeros((boots_sample.shape[0], boots_sample.shape[1]))
+        feature_boot_sample = np.zeros((boots_sample.shape[0], boots_sample.shape[1]))
+        for i in range(len(target)):
+            target_boot_sample[i, :] = target[boots_sample[i, :]]
+            feature_boot_sample[i, :] = feature[boots_sample[i, :]]
+
         for i, category in enumerate(feature_categories):
-            data_temp = target[feature == category]
-            boots_sample = np.random.choice(
-                data_temp, size=n_boot * data_temp.shape[0], replace=True
-            ).reshape((data_temp.shape[0], -1))
-            percentile[:, i] = np.percentile(np.mean(boots_sample, axis=0), (2.5, 97.5))
+            data_temp = target_boot_sample[feature_boot_sample == category]
+            percentile[:, i] = np.percentile(np.mean(data_temp, axis=0), (2.5, 97.5))
 
     ax = _plot_barh(
         values=data,

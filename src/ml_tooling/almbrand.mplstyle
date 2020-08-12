@@ -3,10 +3,8 @@ lines.solid_capstyle: butt
 
 legend.fancybox: true
 
-axes.prop_cycle: cycler('color',  ['00B9EA', '9AD6F5', '162943', '00788E',
-                                  '48ABB9', 'D1EBFB', '706F6F','878787', 'B2B2B2',
-                                  'DADADA', 'A22743', 'DF053D', 'FDD200']
-)
+axes.prop_cycle: cycler('color',  ['00B9EA', '9AD6F5', '162943', '00788E','48ABB9', 'D1EBFB', '706F6F','878787', 'B2B2B2', 'DADADA', 'A22743', 'DF053D', 'FDD200']
+
 axes.facecolor: white
 axes.labelsize: large
 axes.axisbelow: true

@@ -70,8 +70,8 @@ def plot_target_feature_distribution(
             percentile[:, i] = np.percentile(np.mean(boots_sample, axis=0), (2.5, 97.5))
 
     ax = _plot_barh(
-        feature_categories,
-        data,
+        values=data,
+        label_names=feature_categories,
         add_label=True,
         title=title,
         x_label=f"Target compared to {method}",

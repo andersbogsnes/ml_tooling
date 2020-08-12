@@ -116,6 +116,7 @@ class DataVisualize:
 
     def target_feature_distribution(
         self,
+        feature_name: str,
         method: str = "mean",
         ax: Optional[Axes] = None,
         feature_pipeline: Optional[Pipeline] = None,
@@ -123,10 +124,12 @@ class DataVisualize:
     ) -> Axes:
         """
         Creates a plot which compares the mean or median
-        of a binary target based on the given category features.
+        of a binary target based on the given category feature.
 
         Parameters
         ----------
+        feature_name: str
+            Which feature showcase in plot.
         method: str
             Which method to compare with. One of 'median' or 'mean'.
         ax: plt.Axes
@@ -141,7 +144,7 @@ class DataVisualize:
         plt.Axes
         """
 
-        x = self.data.x
+        x = self.data.x[feature_name]
 
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)

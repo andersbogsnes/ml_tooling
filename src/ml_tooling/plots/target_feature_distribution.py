@@ -67,9 +67,7 @@ def plot_target_feature_distribution(
             boots_sample = np.random.choice(
                 data_temp, size=n_boot * data_temp.shape[0], replace=True
             ).reshape((data_temp.shape[0], -1))
-            percentile[:, i - 1] = np.percentile(
-                np.mean(boots_sample, axis=0), (2.5, 97.5)
-            )
+            percentile[:, i] = np.percentile(np.mean(boots_sample, axis=0), (2.5, 97.5))
 
     ax = _plot_barh(
         feature_categories,

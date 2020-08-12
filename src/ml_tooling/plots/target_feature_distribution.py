@@ -2,16 +2,8 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 import numpy as np
 
-from ml_tooling.utils import DataType
+from ml_tooling.utils import DataType, VizError
 from ml_tooling.plots.utils import _plot_barh
-
-
-class MLToolingError(Exception):
-    """Error which occurs when using ML Tooling"""
-
-
-class VizError(MLToolingError):
-    """Error which occurs when using a Visualization"""
 
 
 def plot_target_feature_distribution(
@@ -56,7 +48,7 @@ def plot_target_feature_distribution(
 
     agg_func_mapping = {"mean": np.mean, "median": np.median}
 
-    selected_agg_func = agg_func_mapping[method]
+    agg_func = agg_func_mapping[method]
 
     feature_categories = np.unique(feature)
 
@@ -64,24 +56,19 @@ def plot_target_feature_distribution(
         raise VizError("Should there be a limit?")
 
     data = np.asarray(
-        [
-            selected_agg_func(target[feature == category])
-            for category in feature_categories
-        ]
+        [agg_func(target[feature == category]) for category in feature_categories]
     )
 
     if n_boot:
 
         percentile = np.zeros((2, feature_categories.shape[0]))
-        i = 0
-        for category in feature_categories:
+
+        for i, category in enumerate(feature_categories):
             data_temp = target[feature == category]
             boots_sample = np.random.choice(
                 data_temp, size=n_boot * data_temp.shape[0], replace=True
             ).reshape((data_temp.shape[0], -1))
-            boots_temp = np.mean(boots_sample, axis=0)
-            percentile[:, i] = np.percentile(boots_temp, (2.5, 97.5))
-            i += 1
+            percentile[:, i] = np.percentile(np.mean(boots_sample, axis=0), (2.5, 97.5))
 
     ax = _plot_barh(
         feature_categories,
@@ -94,6 +81,6 @@ def plot_target_feature_distribution(
         xerr=percentile if n_boot else None,
     )
 
-    ax.axvline(x=selected_agg_func(target), linestyle="--", color="#97233f")
+    ax.axvline(x=agg_func(target), linestyle="--", color="#97233f")
 
     return ax

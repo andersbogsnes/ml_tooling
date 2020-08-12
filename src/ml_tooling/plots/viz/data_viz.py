@@ -144,7 +144,7 @@ class DataVisualize:
         plt.Axes
         """
 
-        x = self.data[feature]
+        x = self.data.x[feature]
 
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)

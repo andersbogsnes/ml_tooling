@@ -37,12 +37,7 @@ def plot_target_feature_distribution(
     plt.Axes
 
     """
-    """if pd.isna(target).all().all() | pd.isna(feature).all():
-        raise VizError(
-            "Target feature distribution plot only works if feature and "
-            "target do not contain NaN Values"
-        )
-    """
+
     if ax is None:
         fig, ax = plt.subplots()
 

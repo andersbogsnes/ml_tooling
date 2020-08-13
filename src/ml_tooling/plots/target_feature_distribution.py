@@ -42,7 +42,7 @@ def plot_target_feature_distribution(
             "Target feature distribution plot only works if feature and "
             "target do not contain NaN Values"
         )
-"""
+    """
     if ax is None:
         fig, ax = plt.subplots()
 
@@ -63,15 +63,21 @@ def plot_target_feature_distribution(
             len(target), size=n_boot * target.shape[0], replace=True
         ).reshape((target.shape[0], -1))
 
-        target_boot_sample = np.zeros((boots_sample.shape[0], boots_sample.shape[1]))
-        feature_boot_sample = np.zeros((boots_sample.shape[0], boots_sample.shape[1]))
+        target_boot_sample = np.zeros(
+            (boots_sample.shape[0], boots_sample.shape[1]), dtype="int32"
+        )
+        feature_boot_sample = np.zeros(
+            (boots_sample.shape[0], boots_sample.shape[1]), dtype="int32"
+        )
+
         for i in range(len(target)):
             target_boot_sample[i, :] = target[boots_sample[i, :]]
             feature_boot_sample[i, :] = feature[boots_sample[i, :]]
 
+        feature_categories = np.unique(feature_boot_sample)
         for i, category in enumerate(feature_categories):
             data_temp = target_boot_sample[feature_boot_sample == category]
-            percentile[:, i] = np.percentile(np.mean(data_temp, axis=0), (2.5, 97.5))
+            percentile[:, i] = np.percentile(np.nanmean(data_temp, axis=0), (2.5, 97.5))
 
     ax = _plot_barh(
         values=data,

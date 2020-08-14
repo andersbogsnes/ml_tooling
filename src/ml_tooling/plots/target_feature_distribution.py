@@ -4,6 +4,7 @@ import numpy as np
 
 from ml_tooling.utils import DataType
 from ml_tooling.plots.utils import _plot_barh
+from ml_tooling.config import config
 
 
 def plot_target_feature_distribution(
@@ -13,6 +14,7 @@ def plot_target_feature_distribution(
     method: str = "mean",
     ax: plt.Axes = None,
     n_boot: int = None,
+    seed: int = config.RANDOM_STATE,
 ) -> Axes:
     """
     Creates a plot which compares the mean or median
@@ -32,12 +34,13 @@ def plot_target_feature_distribution(
         Matplotlib axes to draw the graph on. Creates a new one by default
     n_boot: int
         The number of bootstrap iterations to use.
+    seed: int
+        Seed used for bootstrap
     Returns
     -------
     plt.Axes
 
     """
-
     if ax is None:
         fig, ax = plt.subplots()
 
@@ -45,34 +48,40 @@ def plot_target_feature_distribution(
 
     agg_func = agg_func_mapping[method]
 
-    feature_categories = np.unique(feature)
-
+    feature_categories = np.sort(np.unique(feature))
     data = np.asarray(
         [agg_func(target[feature == category]) for category in feature_categories]
     )
 
     if n_boot:
+        np.random.seed(seed)
 
         percentile = np.zeros((2, feature_categories.shape[0]))
+
         boots_sample = np.random.choice(
             len(target), size=n_boot * target.shape[0], replace=True
         ).reshape((target.shape[0], -1))
 
-        target_boot_sample = np.zeros(
-            (boots_sample.shape[0], boots_sample.shape[1]), dtype="int32"
-        )
-        feature_boot_sample = np.zeros(
-            (boots_sample.shape[0], boots_sample.shape[1]), dtype="int32"
+        target_boot_sample = np.zeros((boots_sample.shape[0], boots_sample.shape[1]))
+
+        feature_boot_sample = np.empty(
+            (boots_sample.shape[0], boots_sample.shape[1]),
+            dtype=feature_categories.dtype,
         )
 
         for i in range(len(target)):
             target_boot_sample[i, :] = target[boots_sample[i, :]]
             feature_boot_sample[i, :] = feature[boots_sample[i, :]]
 
-        feature_categories = np.unique(feature_boot_sample)
         for i, category in enumerate(feature_categories):
-            data_temp = target_boot_sample[feature_boot_sample == category]
-            percentile[:, i] = np.percentile(np.nanmean(data_temp, axis=0), (2.5, 97.5))
+            data_temp = np.where(
+                feature_boot_sample == category, target_boot_sample, np.nan
+            )
+
+            percentile[:, i] = np.percentile(agg_func(data_temp, axis=1), q=(2.5, 97.5))
+
+        percentile[0, :] = abs(data - percentile[0, :])
+        percentile[1, :] = abs(percentile[1, :] - data)
 
     ax = _plot_barh(
         values=data,

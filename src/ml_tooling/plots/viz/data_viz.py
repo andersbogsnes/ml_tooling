@@ -121,6 +121,7 @@ class DataVisualize:
         ax: Optional[Axes] = None,
         feature_pipeline: Optional[Pipeline] = None,
         n_boot: int = None,
+        seed: int = None,
     ) -> Axes:
         """
         Creates a plot which compares the mean or median
@@ -138,7 +139,8 @@ class DataVisualize:
             A feature transformation pipeline to be applied before graphing the data
         n_boot: int
             The number of bootstrap iterations to use.
-
+        seed: int
+            Seed used for bootstrap
         Returns
         -------
         plt.Axes
@@ -151,5 +153,10 @@ class DataVisualize:
 
         with plt.style.context(MPL_STYLESHEET):
             return plot_target_feature_distribution(
-                feature=x, target=self.data.y, method=method, ax=ax, n_boot=n_boot,
+                feature=x,
+                target=self.data.y,
+                method=method,
+                ax=ax,
+                n_boot=n_boot,
+                seed=seed,
             )

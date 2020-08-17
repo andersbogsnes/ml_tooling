@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy as sa
 from sklearn.datasets import load_boston, load_iris
 
-from ml_tooling.data import SQLDataset, FileDataset
+from ml_tooling.data import SQLDataset, FileDataset, load_demo_dataset
 from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 
@@ -180,3 +180,24 @@ def iris_filedataset():
             return df.drop(columns="target").iloc[[idx]]
 
     return IrisFileDataset
+
+
+@pytest.fixture()
+def australian_dataset():
+    australian_data = load_demo_dataset("openml", name="Australian", as_frame=True)
+    australian_data_df_target = australian_data.y.astype("int")
+
+    class AustralianData(Dataset):
+        def load_training_data(self):
+            return australian_data, australian_data_df_target
+
+        def load_prediction_data(self):
+            x = australian_data
+            return x
+
+    return AustralianData
+
+
+@pytest.fixture()
+def train_australian_dataset(australian_dataset):
+    return australian_dataset().create_train_test()

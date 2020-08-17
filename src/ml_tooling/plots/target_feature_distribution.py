@@ -49,6 +49,7 @@ def plot_target_feature_distribution(
     agg_func = agg_func_mapping[method]
 
     feature_categories = np.sort(np.unique(feature))
+    print("Number of features: ", feature_categories.shape)
     data = np.asarray(
         [agg_func(target[feature == category]) for category in feature_categories]
     )

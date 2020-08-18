@@ -9,7 +9,7 @@ attrs==19.3.0             # via ml_tooling (setup.py)
 cycler==0.10.0            # via matplotlib
 joblib==0.16.0            # via ml_tooling (setup.py), scikit-learn, scikit-optimize
 kiwisolver==1.2.0         # via matplotlib
-matplotlib==3.3.0         # via ml_tooling (setup.py)
+matplotlib==3.3.1         # via ml_tooling (setup.py)
 numpy==1.19.1             # via matplotlib, pandas, scikit-learn, scikit-optimize, scipy
 pandas==1.1.0             # via ml_tooling (setup.py)
 pillow==7.2.0             # via matplotlib

@@ -48,20 +48,6 @@ class TestTargetFeatureDistribution:
         assert ax.get_ylabel() == "Feature categories"
         plt.close()
 
-    def test_target_feature_distribution_works_with_n_boot(
-        self, australian_dataset: Dataset
-    ):
-        ax = australian_dataset.plot.target_feature_distribution(
-            feature_name="A4", n_boot=2
-        )
-
-        assert [text.get_text() for text in ax.texts] == ["0.28", "0.50", "1.00"]
-
-        assert ax.title.get_text() == "Target feature distribution"
-        assert ax.get_xlabel() == "Target compared to mean"
-        assert ax.get_ylabel() == "Feature categories"
-        plt.close()
-
     def test_target_feature_distribution_plots_can_be_given_an_ax(
         self, australian_dataset: Dataset
     ):

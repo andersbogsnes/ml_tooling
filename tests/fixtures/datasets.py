@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import sqlalchemy as sa
-from sklearn import datasets
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_boston, load_iris, fetch_openml
 
 from ml_tooling.data import SQLDataset, FileDataset
 from ml_tooling.data.base_data import Dataset
@@ -185,7 +184,7 @@ def iris_filedataset():
 
 @pytest.fixture()
 def australian_dataset():
-    australian_data = datasets.fetch_openml("Australian", as_frame=True)
+    australian_data = fetch_openml("Australian", as_frame=True)
     australian_data_df = pd.DataFrame(
         data=australian_data.data, columns=australian_data.feature_names
     )

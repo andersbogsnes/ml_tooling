@@ -137,10 +137,6 @@ class DataVisualize:
             Matplotlib axes to draw the graph on. Creates a new one by default
         feature_pipeline: Pipeline
             A feature transformation pipeline to be applied before graphing the data
-        n_boot: int
-            The number of bootstrap iterations to use.
-        seed: int
-            Seed used for bootstrap
         Returns
         -------
         plt.Axes
@@ -153,10 +149,5 @@ class DataVisualize:
 
         with plt.style.context(MPL_STYLESHEET):
             return plot_target_feature_distribution(
-                feature=x,
-                target=self.data.y,
-                method=method,
-                ax=ax,
-                n_boot=n_boot,
-                seed=seed,
+                feature=x, target=self.data.y, method=method, ax=ax,
             )

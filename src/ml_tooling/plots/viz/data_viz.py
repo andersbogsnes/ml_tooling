@@ -120,8 +120,6 @@ class DataVisualize:
         method: str = "mean",
         ax: Optional[Axes] = None,
         feature_pipeline: Optional[Pipeline] = None,
-        n_boot: int = None,
-        seed: int = None,
     ) -> Axes:
         """
         Creates a plot which compares the mean or median

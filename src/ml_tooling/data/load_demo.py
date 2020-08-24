@@ -16,7 +16,7 @@ from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 
 
-def load_demo_dataset(dataset_name: str, **kwargs):
+def load_demo_dataset(dataset_name: str, **kwargs) -> Dataset:
     """
     Create a :class:`~ml_tooling.data.base_data.Dataset` implementing the demo
     datasets from :ref:`sklearn.datasets <sklearn:datasets>`
@@ -71,5 +71,8 @@ def load_demo_dataset(dataset_name: str, **kwargs):
         def load_prediction_data(self, idx) -> pd.DataFrame:
             x = pd.DataFrame(selected_data.data, columns=selected_data.feature_names)
             return x.loc[[idx]]
+
+        def __repr__(self):
+            return f"<{dataset_name.capitalize()}Data - Dataset>"
 
     return DemoData()

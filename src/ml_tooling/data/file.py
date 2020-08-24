@@ -48,6 +48,16 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
         """Used to load prediction data for a given idx - returns features"""
         raise NotImplementedError
 
+    def read_file(self, **kwargs):
+        """Read the data from the passed file path
+
+        Parameters
+        ----------
+        kwargs: dict
+            Kwargs are passed to the relevant :meth:`pd.read_*` method for the given extension
+        """
+        return getattr(pd, f"read_{self.extension}")(self.file_path, **kwargs)
+
     def _dump_data(self, **kwargs) -> pd.DataFrame:
         """
         Reads the underlying file and returns a DataFrame
@@ -60,9 +70,8 @@ class FileDataset(Dataset, metaclass=abc.ABCMeta):
         Returns
         -------
         pd.DataFrame
-
         """
-        return getattr(pd, f"read_{self.extension}")(self.file_path, **kwargs)
+        return self.read_file(**kwargs)
 
     def _load_data(self, data: pd.DataFrame, **kwargs):
         """

@@ -49,6 +49,7 @@ extensions = [
 intersphinx_mapping = {
     "pd": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
+    "skopt": ("https://scikit-optimize.github.io/stable/", None),
 }
 
 

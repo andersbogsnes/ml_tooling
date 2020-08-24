@@ -1,5 +1,7 @@
 import datetime
 import pathlib
+import pickle
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import matplotlib.pyplot as plt
@@ -12,13 +14,13 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.pipeline import Pipeline
-from sklearn.utils.fixes import loguniform
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 from ml_tooling.logging import Log
 from ml_tooling.metrics import Metrics, Metric
 from ml_tooling.result import Result
+from ml_tooling.search import Real
 from ml_tooling.storage import FileStorage
 from ml_tooling.transformers import DFStandardScaler, DFFeatureUnion
 from ml_tooling.utils import MLToolingError, DatasetError
@@ -121,7 +123,7 @@ class TestBaseClass:
         storage = FileStorage(tmp_path)
         saved_model_path = classifier.save_estimator(storage)
         assert saved_model_path.exists()
-        loaded_model = classifier.load_estimator(load_storage, saved_model_path)
+        loaded_model = classifier.load_estimator(saved_model_path, storage=load_storage)
         assert loaded_model.estimator.get_params() == classifier.estimator.get_params()
 
     def test_regression_model_filename_is_generated_correctly(
@@ -148,7 +150,7 @@ class TestBaseClass:
     ):
         mock_hash.return_value = "1234"
 
-        with classifier.log(tmp_path):
+        with classifier.log(str(tmp_path)):
             expected_file = classifier.save_estimator(FileStorage(tmp_path))
 
         assert expected_file.exists()
@@ -173,19 +175,21 @@ class TestBaseClass:
 
         models = classifier.config.default_storage.get_list()
         assert len(models) == 1
-        new_classifier = Model.load_estimator(
-            classifier.config.default_storage, models[0]
-        )
+        new_classifier = Model.load_estimator(models[0])
         assert (
             classifier.estimator.get_params() == new_classifier.estimator.get_params()
         )
 
     @patch("ml_tooling.baseclass.import_path")
     def test_can_load_production_estimator(
-        self, mock_path: MagicMock, open_estimator_pickle
+        self, mock_path: MagicMock, classifier: Model
     ):
-        mock_path.return_value.__enter__.return_value = open_estimator_pickle()
+        buffer = BytesIO()
+        pickle.dump(classifier.estimator, buffer)
+        buffer.seek(0)
+        mock_path.return_value.__enter__.return_value = buffer
         model = Model.load_production_estimator("test")
+
         assert isinstance(model, Model)
         assert isinstance(model.estimator, BaseEstimator)
 
@@ -589,10 +593,25 @@ class TestModelSelection:
     ):
         estimators = [pipeline_logistic, pipeline_dummy_classifier]
         best_estimator, results = Model.test_estimators(
-            train_iris_dataset, estimators, "accuracy"
+            data=train_iris_dataset, estimators=estimators, metrics="accuracy"
         )
 
         assert best_estimator.estimator == estimators[0]
+
+    def test_model_selection_works_with_feature_pipeline(
+        self, train_iris_dataset: Dataset
+    ):
+        estimators = [RandomForestClassifier(), DummyClassifier(strategy="stratified")]
+        feature_pipeline = Pipeline([("scale", DFStandardScaler())])
+        best_estimator, results = Model.test_estimators(
+            data=train_iris_dataset,
+            estimators=estimators,
+            feature_pipeline=feature_pipeline,
+        )
+        expected = Pipeline(
+            [("features", feature_pipeline), ("estimator", estimators[0])]
+        )
+        assert best_estimator.estimator.get_params() == expected.get_params()
 
     def test_model_selection_refits_final_model(self, train_iris_dataset):
         estimators = [LogisticRegression(solver="liblinear")]
@@ -604,7 +623,7 @@ class TestModelSelection:
             train_iris_dataset, estimators, cv=2, refit=True, metrics="accuracy"
         )
 
-        assert (model.coef_ == model2.estimator.coef_).all()
+        assert np.all(model.coef_ == model2.estimator.coef_)
 
 
 class TestGridSearch:
@@ -771,7 +790,7 @@ class TestRandomSearch:
         self, classifier: Model, train_iris_dataset
     ):
         param_dist = {
-            "C": loguniform(1e-4, 1e0),
+            "C": Real(0, 50),
         }
 
         model, results = classifier.randomsearch(
@@ -805,6 +824,124 @@ class TestRandomSearch:
             assert result.metrics.score == result.metrics[0].score
 
     def test_randomsearch_can_log_with_context_manager(
+        self, feature_union_classifier, train_iris_dataset, tmp_path
+    ):
+        classifier = Model(feature_union_classifier)
+        classifier.config.RUN_DIR = tmp_path
+        with classifier.log("randomsearch_union_test"):
+            _, _ = classifier.randomsearch(
+                train_iris_dataset,
+                param_distributions={"estimator__penalty": ["l1", "l2"]},
+                n_iter=2,
+            )
+
+
+class TestBayesSearch:
+    def test_bayessearc_model_returns_as_expected(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        model, results = model.bayesiansearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_bayessearch_best_model_is_not_fitted_if_refit_is_not_true(
+        self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
+    ):
+
+        model = Model(pipeline_logistic)
+        model, results = model.bayesiansearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            refit=False,
+        )
+        with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
+            model.make_prediction(data=train_iris_dataset, idx=1)
+
+    def test_bayes_search_model_does_not_fail_when_run_twice(
+        self, pipeline_logistic: Pipeline, train_iris_dataset
+    ):
+        model = Model(pipeline_logistic)
+        best_model, results = model.bayesiansearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+        best_model, results = model.bayesiansearch(
+            train_iris_dataset,
+            param_distributions={"estimator__penalty": ["l1", "l2"]},
+            n_iter=2,
+        )
+        assert isinstance(best_model.estimator, Pipeline)
+        assert 2 == len(results)
+
+        for result in results:
+            assert isinstance(result, Result)
+
+    def test_bayessearch_uses_default_metric(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.bayesiansearch(
+            train_iris_dataset, param_distributions={"penalty": ["l1", "l2"]}, n_iter=2
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_bayessearch_can_take_dist_objs(
+        self, classifier: Model, train_iris_dataset
+    ):
+        param_dist = {
+            "C": Real(1e-4, 1e0),
+        }
+
+        model, results = classifier.bayesiansearch(
+            train_iris_dataset, param_distributions=param_dist, n_iter=2
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+        assert results[0].metrics.name == "accuracy"
+
+        assert isinstance(model, Model)
+
+    def test_bayessearch_can_take_multiple_metrics(
+        self, classifier: Model, train_iris_dataset
+    ):
+        model, results = classifier.bayesiansearch(
+            train_iris_dataset,
+            param_distributions={"penalty": ["l1", "l2"]},
+            metrics=["accuracy", "roc_auc"],
+            n_iter=2,
+        )
+
+        assert len(results) == 2
+        assert results[0].metrics.score >= results[1].metrics.score
+
+        for result in results:
+            assert len(result.metrics) == 2
+            assert "accuracy" in result.metrics
+            assert "roc_auc" in result.metrics
+            assert result.metrics.name == "accuracy"
+            assert result.metrics.score == result.metrics[0].score
+
+    def test_bayessearch_can_log_with_context_manager(
         self, feature_union_classifier, train_iris_dataset, tmp_path
     ):
         classifier = Model(feature_union_classifier)

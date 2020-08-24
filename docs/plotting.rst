@@ -23,6 +23,13 @@ To use the visualizations, access them using the `.plot` accessor on the
 
     >>> result.plot.feature_importance()
 
+.. code-block::
+
+    >>> result.plot.permutation_importance()
+
+.. plot::
+
+    >>> result.plot.permutation_importance()
 
 .. code-block:: python
 
@@ -73,6 +80,12 @@ as arguments:
 Available Base plots
 --------------------
 - :meth:`~RegressionVisualize.feature_importance`
+    Uses the estimator's learned coefficients or learned feature importance in the case of RandomForest
+    to plot the relative importance of each feature. Note that for most usecases, permutation importance is
+    going to be more accurate, but is also more computationally expensive.
+    Pass a `class_index` parameter to select which class to plot for in a multi-class setting
+
+- :meth:`~RegressionVisualize.permutation_importance`
     Uses random permutation to calculate feature importance by randomly permuting each column
     and measuring the difference in the model metric against the baseline.
 
@@ -90,16 +103,20 @@ Available Classifier plots
 - :meth:`~ClassificationVisualize.roc_curve`
     Visualize a ROC curve for a classification model.
     Shows the relationship between the True Positive Rate and the False Positive Rate.
+    Supports multi-class classification problems
 
 - :meth:`~ClassificationVisualize.confusion_matrix`:
     Visualize a confusion matrix for a classification model.
     Shows the distribution of predicted labels vs actual labels
+    Supports multi-class classification problems
 
 - :meth:`~ClassificationVisualize.lift_curve`
-    Visualizes how much of the target class we capture by setting different thresholds for probability
+    Visualizes how much of the target class we capture by setting different thresholds for probability.
+    Supports multi-class classification problems
 
-- :meth:`~ClassificationVisualize.pr_curve`
+- :meth:`~ClassificationVisualize.precision_recall_curve`
     Visualize a Precision-Recall curve for a classification estimator. Estimator must implement a `predict_proba` method.
+    Supports multi-class classification problems
 
 Available Regression Plots
 --------------------------

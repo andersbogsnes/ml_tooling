@@ -10,12 +10,13 @@ NAME = "ml_tooling"
 PACKAGES = find_packages(where="src")
 INSTALL_REQUIRES = [
     "pandas",
-    "scikit-learn>=0.22.1",
+    "scikit-learn>=0.22.1,<=0.23.1",
     "matplotlib",
     "pyyaml",
     "joblib",
     "sqlalchemy",
     "attrs",
+    "scikit-optimize",
 ]
 KEYWORDS = ["ml", "framework", "tooling"]
 PROJECT_URLS = {

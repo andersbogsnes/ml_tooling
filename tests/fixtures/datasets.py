@@ -12,7 +12,7 @@ from ml_tooling.data.base_data import Dataset
 from ml_tooling.utils import DataType
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def boston_df():
     boston_data = load_boston()
     return pd.DataFrame(
@@ -20,7 +20,7 @@ def boston_df():
     ).assign(MEDV=boston_data.target)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def iris_df():
     iris_data = load_iris()
     y = np.where(iris_data.target == 1, 1, 0)
@@ -29,7 +29,7 @@ def iris_df():
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def iris_dataset(iris_df):
     class IrisData(Dataset):
         def load_prediction_data(self, idx):
@@ -41,12 +41,12 @@ def iris_dataset(iris_df):
     return IrisData
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def train_iris_dataset(iris_dataset):
     return iris_dataset().create_train_test(stratify=True)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def boston_dataset(boston_df):
     class BostonData(Dataset):
         def load_prediction_data(self, idx) -> pd.DataFrame:
@@ -66,7 +66,6 @@ def train_boston_dataset(boston_dataset):
 @pytest.fixture
 def test_engine():
     engine = sa.create_engine("sqlite:///:memory:")
-    engine.dialect.has_schema = lambda *args: True
     return engine
 
 

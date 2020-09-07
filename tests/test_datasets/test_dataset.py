@@ -16,7 +16,7 @@ class TestDataset:
             "sepal length (cm)",
             "sepal width (cm)",
             "petal length (cm)",
-            "petal width (cm)"
+            "petal width (cm)",
         ]
 
     def test_dataset_x_attribute_access_works_correctly(self, iris_dataset):

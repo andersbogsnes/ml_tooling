@@ -1,12 +1,32 @@
 from unittest.mock import MagicMock
+import pytest
 
 from matplotlib import pyplot as plt
+import pandas as pd
 from sklearn.pipeline import Pipeline
+from sklearn.datasets import fetch_openml
 
 from ml_tooling.data import Dataset
 
 
 class TestTargetFeatureDistribution:
+    @pytest.fixture()
+    def australian_dataset(self):
+        australian_data = fetch_openml("Australian", as_frame=True)
+        australian_data_df = pd.DataFrame(
+            data=australian_data.data, columns=australian_data.feature_names
+        )
+        australian_data_df_target = australian_data.target.astype("int")
+
+        class AustralianData(Dataset):
+            def load_training_data(self):
+                return australian_data_df, australian_data_df_target
+
+            def load_prediction_data(self):
+                return australian_data_df
+
+        return AustralianData()
+
     def test_target_correlation_uses_pipeline_when_passed(
         self, train_iris_dataset: Dataset
     ):
@@ -30,7 +50,7 @@ class TestTargetFeatureDistribution:
         assert [text.get_text() for text in ax.texts] == ["0.28", "0.50", "1.00"]
 
         assert ax.title.get_text() == "Target feature distribution"
-        assert ax.get_xlabel() == "Target compared to mean"
+        assert ax.get_xlabel() == "mean target"
         assert ax.get_ylabel() == "Feature categories"
         plt.close()
 
@@ -44,7 +64,7 @@ class TestTargetFeatureDistribution:
         assert [text.get_text() for text in ax.texts] == ["0.00", "0.00", "1.00"]
 
         assert ax.title.get_text() == "Target feature distribution"
-        assert ax.get_xlabel() == "Target compared to median"
+        assert ax.get_xlabel() == "median target"
         assert ax.get_ylabel() == "Feature categories"
         plt.close()
 

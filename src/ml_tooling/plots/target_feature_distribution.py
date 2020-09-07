@@ -16,7 +16,7 @@ def plot_target_feature_distribution(
     """
     Creates a plot which compares the mean or median
     of a binary target based on the given category features.
-    Using np.nanmean or np.nanmedian
+    NaN values are ignored in the calculation.
 
     Parameters
     ----------
@@ -53,7 +53,7 @@ def plot_target_feature_distribution(
         label_names=feature_categories,
         add_label=True,
         title=title,
-        x_label=f"Target compared to {method}",
+        x_label=f"{method} target",
         y_label="Feature categories",
         ax=ax,
     )

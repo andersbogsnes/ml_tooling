@@ -12,7 +12,12 @@ class TestDataset:
 
     def test_feature_names_access_works_correctly(self, iris_dataset):
         dataset = iris_dataset()
-        assert dataset.features == ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+        assert dataset.features == [
+            "sepal length (cm)",
+            "sepal width (cm)",
+            "petal length (cm)",
+            "petal width (cm)"
+        ]
 
     def test_dataset_x_attribute_access_works_correctly(self, iris_dataset):
         dataset = iris_dataset()

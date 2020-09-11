@@ -9,6 +9,7 @@ from .precision_recall_curve import plot_pr_curve
 from .learning_curve import plot_learning_curve
 from .validation_curve import plot_validation_curve
 from .missing_data import plot_missing_data
+from .target_feature_distribution import plot_target_feature_distribution
 
 __all__ = [
     "plot_confusion_matrix",
@@ -22,4 +23,5 @@ __all__ = [
     "plot_learning_curve",
     "plot_validation_curve",
     "plot_missing_data",
+    "plot_target_feature_distribution",
 ]

@@ -19,12 +19,12 @@ idna==2.10                # via requests
 iniconfig==1.0.0          # via pytest
 joblib==0.16.0            # via -r requirements.txt, scikit-learn, scikit-optimize
 kiwisolver==1.2.0         # via -r requirements.txt, matplotlib
-matplotlib==3.3.1         # via -r requirements.txt
+matplotlib==3.3.2         # via -r requirements.txt
 more-itertools==8.4.0     # via pytest
 nodeenv==1.4.0            # via pre-commit
-numpy==1.19.1             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scikit-optimize, scipy
+numpy==1.19.2             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scikit-optimize, scipy
 packaging==20.4           # via pytest, tox
-pandas==1.1.1             # via -r requirements.txt
+pandas==1.1.2             # via -r requirements.txt
 pillow==7.2.0             # via -r requirements.txt, matplotlib
 pluggy==0.13.1            # via pytest, tox
 pre-commit==2.7.1         # via -r dev-requirements.in
@@ -33,7 +33,7 @@ pyaml==20.4.0             # via -r requirements.txt, scikit-optimize
 pyjwt==1.7.1              # via dohq-artifactory
 pyparsing==2.4.7          # via -r requirements.txt, matplotlib, packaging
 pytest-cov==2.10.1        # via -r dev-requirements.in
-pytest==6.0.1             # via -r dev-requirements.in, pytest-cov
+pytest==6.0.2             # via -r dev-requirements.in, pytest-cov
 python-dateutil==2.8.1    # via -r requirements.txt, dohq-artifactory, matplotlib, pandas
 pytz==2020.1              # via -r requirements.txt, pandas
 pyyaml==5.3.1             # via -r requirements.txt, pre-commit, pyaml

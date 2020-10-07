@@ -115,7 +115,7 @@ class Dataset(metaclass=abc.ABCMeta):
 
     @property
     def features(self):
-        return [feature_name for feature_name in self.x.columns]
+        return self.x.columns.tolist()
 
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         pred_data = self.load_prediction_data(*args, **kwargs)

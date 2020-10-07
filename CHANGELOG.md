@@ -1,3 +1,6 @@
+# v.0.12.1
+- Dataset features can now be easily accessed with the property dataset.features
+
 # v0.12.0
 - Permutation importance and Feature importance are now two different plotting methods.
 - `Model.test_estimators` now takes a `feature_pipeline` argument

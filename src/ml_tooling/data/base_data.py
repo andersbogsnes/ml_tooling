@@ -113,6 +113,10 @@ class Dataset(metaclass=abc.ABCMeta):
 
         return x, y
 
+    @property
+    def features(self):
+        return self.x.columns.tolist()
+
     def _load_prediction_data(self, *args, **kwargs) -> pd.DataFrame:
         pred_data = self.load_prediction_data(*args, **kwargs)
         if pred_data.empty:

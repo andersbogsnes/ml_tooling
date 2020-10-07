@@ -17,6 +17,7 @@
 - Fixed FuncTransform to have a default value
 - `load_estimator` now uses default storage if nothing is passed
 - `Model.bayessearc` is now `Model.bayesiansearch`
+- Added `target_feature_distribution`to `Dataset.plot`
 
 # v0.11.0
 - Added `load_demo_dataset` function

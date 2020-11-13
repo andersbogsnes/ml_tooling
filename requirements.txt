@@ -5,7 +5,7 @@
 #    pip-compile
 #
 
-attrs==20.2.0             # via ml_tooling (setup.py)
+attrs==20.3.0             # via ml_tooling (setup.py)
 cycler==0.10.0            # via matplotlib
 joblib==0.17.0            # via ml_tooling (setup.py), scikit-learn, scikit-optimize
 kiwisolver==1.3.1         # via matplotlib

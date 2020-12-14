@@ -23,10 +23,10 @@ matplotlib==3.3.3         # via -r requirements.txt
 nodeenv==1.4.0            # via pre-commit
 numpy==1.19.4             # via -r requirements.txt, matplotlib, pandas, scikit-learn, scikit-optimize, scipy
 packaging==20.4           # via pytest, tox
-pandas==1.1.4             # via -r requirements.txt
+pandas==1.1.5             # via -r requirements.txt
 pillow==8.0.1             # via -r requirements.txt, matplotlib
 pluggy==0.13.1            # via pytest, tox
-pre-commit==2.9.2         # via -r dev-requirements.in
+pre-commit==2.9.3         # via -r dev-requirements.in
 py==1.9.0                 # via pytest, tox
 pyaml==20.4.0             # via -r requirements.txt, scikit-optimize
 pyjwt==1.7.1              # via dohq-artifactory

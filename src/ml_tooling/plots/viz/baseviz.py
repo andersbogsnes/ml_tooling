@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from sklearn.base import is_classifier
 
-from ml_tooling.config import MPL_STYLESHEET, config
+from ml_tooling.config import config
 from ml_tooling.plots import (
     plot_feature_importance,
     plot_learning_curve,
@@ -92,7 +92,7 @@ class BaseVisualize:
             # Don't add class index to title if we are using feature importance
             title = f"{title} - Class {class_index}" if class_index else title
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             return plot_feature_importance(
                 estimator=self._estimator,
                 x=self._data.train_x,
@@ -156,7 +156,7 @@ class BaseVisualize:
         scoring = self.default_metric if scoring == "default" else scoring
         title = f"Permutation Importances ({scoring.title()}) - {self._estimator_name}"
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             return plot_permutation_importance(
                 estimator=self._estimator,
                 x=self._data.train_x,
@@ -215,7 +215,7 @@ class BaseVisualize:
         n_jobs = config.N_JOBS if n_jobs is None else n_jobs
         cv = config.CROSS_VALIDATION if cv is None else cv
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             ax = plot_learning_curve(
                 estimator=self._estimator,
                 x=self._data.train_x,
@@ -285,7 +285,7 @@ class BaseVisualize:
         cv = config.CROSS_VALIDATION if cv is None else cv
         title = f"Validation Curve - {self._estimator_name}"
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             ax = plot_validation_curve(
                 self._estimator,
                 x=self._data.train_x,

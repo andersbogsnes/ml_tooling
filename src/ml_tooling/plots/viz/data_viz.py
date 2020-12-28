@@ -10,7 +10,7 @@ from ml_tooling.plots import (
     plot_missing_data,
     plot_target_feature_distribution,
 )
-from ml_tooling.config import MPL_STYLESHEET
+from ml_tooling.config import config
 
 
 class DataVisualize:
@@ -62,7 +62,7 @@ class DataVisualize:
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             return plot_target_correlation(
                 features=x,
                 target=self.data.y,
@@ -111,7 +111,7 @@ class DataVisualize:
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             return plot_missing_data(df=x, ax=ax, top_n=top_n, bottom_n=bottom_n)
 
     def target_feature_distribution(
@@ -145,7 +145,7 @@ class DataVisualize:
         if feature_pipeline is not None:
             x = feature_pipeline.fit_transform(x)
 
-        with plt.style.context(MPL_STYLESHEET):
+        with plt.style.context(config.STYLE_SHEET):
             return plot_target_feature_distribution(
                 feature=x, target=self.data.y, method=method, ax=ax,
             )

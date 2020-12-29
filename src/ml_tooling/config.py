@@ -4,8 +4,6 @@ from ml_tooling.storage import FileStorage
 
 BASE_PATH = pathlib.Path(__file__).parent
 CWD = pathlib.Path.cwd()
-
-MPL_STYLESHEET = str(BASE_PATH.joinpath("almbrand.mplstyle"))
 RUN_DIR = CWD.joinpath("runs")
 ESTIMATOR_DIR = CWD.joinpath("models")
 
@@ -24,6 +22,7 @@ class DefaultConfig:
         "RANDOM_STATE": 42,
         "TRAIN_TEST_SHUFFLE": True,
         "TEST_SIZE": 0.25,
+        "MPL_STYLESHEET": str(BASE_PATH.joinpath("almbrand.mplstyle")),
     }
 
     def __init__(self):
@@ -41,6 +40,7 @@ class DefaultConfig:
         self.RANDOM_STATE = self.default_config["RANDOM_STATE"]
         self.TRAIN_TEST_SHUFFLE = self.default_config["TRAIN_TEST_SHUFFLE"]
         self.TEST_SIZE = self.default_config["TEST_SIZE"]
+        self.STYLE_SHEET = self.default_config["MPL_STYLESHEET"]
 
     @property
     def default_storage(self):

@@ -1,4 +1,4 @@
-from ml_tooling.config import DefaultConfig
+from ml_tooling.config import DefaultConfig, config
 
 
 class TestConfig:
@@ -29,3 +29,9 @@ class TestConfig:
         result = base.config.default_storage
 
         assert result.dir_path == tmp_path
+
+    def test_classifier_has_overwritten_stylesheet(self, classifier):
+        config.STYLE_SHEET = "custom stylesheet"
+        assert classifier.config.STYLE_SHEET == "custom stylesheet"
+
+        classifier.config.reset_config()

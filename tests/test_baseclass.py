@@ -255,6 +255,7 @@ class TestBaseClass:
                     "fit_intercept": True,
                     "n_jobs": None,
                     "normalize": False,
+                    "positive": False,
                 },
             }
         ]
@@ -279,6 +280,7 @@ class TestBaseClass:
                     "fit_intercept": True,
                     "n_jobs": None,
                     "normalize": False,
+                    "positive": False,
                 },
             },
         ]

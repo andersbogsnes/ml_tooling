@@ -370,7 +370,7 @@ class Model:
             f"{results[0].metrics.name}: {results[0].metrics.score}"
         )
         if refit:
-            best_estimator.score_estimator(data)
+            best_estimator.score_estimator(data, metrics=metrics, cv=cv)
 
         return best_estimator, results
 

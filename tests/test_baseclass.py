@@ -587,6 +587,20 @@ class TestModelSelection:
         for result in results:
             assert "roc_auc" in result.metrics
 
+    def test_model_selection_with_nonstandard_metric_and_refitting_works_as_expected(
+        self, train_iris_dataset
+    ):
+        estimators = [
+            LogisticRegression(solver="liblinear"),
+            RandomForestClassifier(n_estimators=10),
+        ]
+
+        metrics = ["roc_auc", "f1_macro"]
+        best_estimator, results = Model.test_estimators(
+            train_iris_dataset, estimators, metrics=metrics, refit=True
+        )
+        assert all(metric in best_estimator.result.metrics for metric in metrics)
+
     def test_model_selection_with_pipeline_works_as_expected(
         self,
         pipeline_logistic: Pipeline,

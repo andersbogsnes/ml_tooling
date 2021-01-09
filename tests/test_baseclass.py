@@ -587,7 +587,7 @@ class TestModelSelection:
         for result in results:
             assert "roc_auc" in result.metrics
 
-    def test_model_selection_with_nonstandard_metric_and_refitting_works_as_expected(
+    def test_model_selection_with_nonstandard_metric_and_refitting_keeps_same_metric(
         self, train_iris_dataset
     ):
         estimators = [

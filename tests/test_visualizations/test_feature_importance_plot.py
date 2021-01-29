@@ -128,6 +128,7 @@ class TestFeatureImportancePlot:
             top_n=top_n, bottom_n=bottom_n, class_index=0
         )
         assert ax.title.get_text() == expected
+        plt.close()
 
     @pytest.mark.parametrize(
         "top_n, bottom_n, expected",
@@ -203,6 +204,7 @@ class TestFeatureImportancePlot:
 
         ax = result.plot.feature_importance(class_index=10)
         assert "Class 10" not in ax.title.get_text()
+        plt.close()
 
     def test_raises_if_passed_model_without_feature_importance_or_coefs(
         self, dataset: Dataset

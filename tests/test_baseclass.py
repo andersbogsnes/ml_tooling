@@ -777,6 +777,7 @@ class TestRandomSearch:
             train_iris_dataset,
             param_distributions={"estimator__penalty": ["l1", "l2"]},
             refit=False,
+            n_iter=2,
         )
         with pytest.raises(MLToolingError, match="You haven't fitted the estimator"):
             model.make_prediction(data=train_iris_dataset, idx=1)

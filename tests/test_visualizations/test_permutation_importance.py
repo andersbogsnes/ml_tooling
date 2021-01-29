@@ -96,6 +96,7 @@ class TestPermutationImportancePlot:
             top_n=top_n, bottom_n=bottom_n
         )
         assert {text.get_text() for text in ax.texts} == set(expected)
+        plt.close()
 
     @pytest.mark.parametrize(
         "top_n, bottom_n, expected",
@@ -159,6 +160,7 @@ class TestPermutationImportancePlot:
             top_n=top_n, bottom_n=bottom_n
         )
         assert ax.title.get_text() == expected
+        plt.close()
 
     @pytest.mark.parametrize(
         "top_n, bottom_n, expected",

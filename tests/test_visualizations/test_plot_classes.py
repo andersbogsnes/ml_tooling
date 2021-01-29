@@ -9,6 +9,7 @@ from ml_tooling.plots.viz import RegressionVisualize, ClassificationVisualize
 from ml_tooling.result import Result
 
 
+@pytest.mark.filterwarnings("ignore:lbfgs failed to converge")
 class TestVisualize:
     @pytest.fixture(scope="class")
     def regression_result(self) -> Result:

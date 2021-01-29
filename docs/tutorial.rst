@@ -72,6 +72,15 @@ We can see that the results are sorted and shows us a nice repr of each model's 
     >>> results
     ResultGroup(results=[<Result RandomForestClassifier: {'accuracy': 0.95, 'roc_auc': 0.98}>, <Result LogisticRegression: {'accuracy': 0.71, 'roc_auc': 0.79}>, <Result DummyClassifier: {'accuracy': 0.55, 'roc_auc': 0.52}>])
 
+
+You can access the parameters via the :attr:`Result.parameters <ml_tooling.result.result.Result.parameters>` attribute.
+
+.. doctest::
+
+    >>> results.parameters
+    {'bootstrap': True, 'ccp_alpha': 0.0, 'class_weight': None, 'criterion': 'gini', 'max_depth': None, 'max_features': 'auto', 'max_leaf_nodes': None, 'max_samples': None, 'min_impurity_decrease': 0.0, 'min_impurity_split': None, 'min_samples_leaf': 1, 'min_samples_split': 2, 'min_weight_fraction_leaf': 0.0, 'n_estimators': 10, 'n_jobs': None, 'oob_score': False, 'random_state': 42, 'verbose': 0, 'warm_start': False}
+
+
 From our results, the :class:`~sklearn.ensemble.RandomForestClassifier` looks the most promising, so we want to see if
 we can tune it a bit more. We can run a gridsearch over the hyperparameters using the :meth:`~Model.gridsearch` method.
 We also want to log the results, so we can examine each potential model in depth, so we use the :meth:`~Model.log`

@@ -61,7 +61,7 @@ packaging==20.8
     # via
     #   pytest
     #   tox
-pandas==1.2.0
+pandas==1.2.1
     # via -r requirements.txt
 pillow==8.1.0
     # via
@@ -88,7 +88,7 @@ pyparsing==2.4.7
     #   -r requirements.txt
     #   matplotlib
     #   packaging
-pytest-cov==2.10.1
+pytest-cov==2.11.1
     # via -r dev-requirements.in
 pytest==6.2.1
     # via

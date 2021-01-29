@@ -47,6 +47,10 @@ class Result:
         model.result = self
         return model
 
+    @property
+    def parameters(self):
+        return self.estimator.get_params()
+
     @classmethod
     def from_estimator(
         cls,

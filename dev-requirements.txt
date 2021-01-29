@@ -16,7 +16,7 @@ cfgv==3.2.0
     # via pre-commit
 chardet==4.0.0
     # via requests
-coverage==5.3.1
+coverage==5.4
     # via pytest-cov
 cycler==0.10.0
     # via
@@ -24,13 +24,13 @@ cycler==0.10.0
     #   matplotlib
 distlib==0.3.1
     # via virtualenv
-dohq-artifactory==0.7.475
+dohq-artifactory==0.7.508
     # via -r dev-requirements.in
 filelock==3.0.12
     # via
     #   tox
     #   virtualenv
-identify==1.5.10
+identify==1.5.13
     # via pre-commit
 idna==2.10
     # via requests
@@ -45,7 +45,7 @@ kiwisolver==1.3.1
     # via
     #   -r requirements.txt
     #   matplotlib
-matplotlib==3.3.3
+matplotlib==3.3.4
     # via -r requirements.txt
 nodeenv==1.5.0
     # via pre-commit
@@ -61,7 +61,7 @@ packaging==20.8
     # via
     #   pytest
     #   tox
-pandas==1.2.0
+pandas==1.2.1
     # via -r requirements.txt
 pillow==8.1.0
     # via
@@ -71,7 +71,7 @@ pluggy==0.13.1
     # via
     #   pytest
     #   tox
-pre-commit==2.9.3
+pre-commit==2.10.0
     # via -r dev-requirements.in
 py==1.10.0
     # via
@@ -81,16 +81,16 @@ pyaml==20.4.0
     # via
     #   -r requirements.txt
     #   scikit-optimize
-pyjwt==2.0.0
+pyjwt==2.0.1
     # via dohq-artifactory
 pyparsing==2.4.7
     # via
     #   -r requirements.txt
     #   matplotlib
     #   packaging
-pytest-cov==2.10.1
+pytest-cov==2.11.1
     # via -r dev-requirements.in
-pytest==6.2.1
+pytest==6.2.2
     # via
     #   -r dev-requirements.in
     #   pytest-cov
@@ -104,14 +104,14 @@ pytz==2020.5
     # via
     #   -r requirements.txt
     #   pandas
-pyyaml==5.3.1
+pyyaml==5.4.1
     # via
     #   -r requirements.txt
     #   pre-commit
     #   pyaml
 requests==2.25.1
     # via dohq-artifactory
-scikit-learn==0.24.0
+scikit-learn==0.24.1
     # via
     #   -r requirements.txt
     #   scikit-optimize
@@ -140,11 +140,11 @@ toml==0.10.2
     #   pre-commit
     #   pytest
     #   tox
-tox==3.21.2
+tox==3.21.3
     # via -r dev-requirements.in
-urllib3==1.26.2
+urllib3==1.26.3
     # via requests
-virtualenv==20.2.2
+virtualenv==20.4.0
     # via
     #   pre-commit
     #   tox

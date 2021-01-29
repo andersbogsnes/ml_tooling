@@ -41,6 +41,6 @@ class DateEncoder(BaseEstimator, TransformerMixin):
             if self.year:
                 x_[f"{col}_year"] = x_[col].dt.year
             if self.week:
-                x_[f"{col}_week"] = x_[col].dt.week
+                x_[f"{col}_week"] = x_[col].dt.isocalendar().week
             x_ = x_.drop(col, axis=1)
         return x_

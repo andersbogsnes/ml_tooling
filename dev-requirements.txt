@@ -117,7 +117,7 @@ scikit-learn==0.24.1
     #   scikit-optimize
 scikit-optimize==0.8.1
     # via -r requirements.txt
-scipy==1.6.0
+scipy==1.6.1
     # via
     #   -r requirements.txt
     #   scikit-learn

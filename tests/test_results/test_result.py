@@ -110,3 +110,9 @@ class TestResult:
         log = Log.from_result(result)
         log2 = result.log()
         assert log == log2
+
+    def test_result_can_show_model_parameters(self, result: Result):
+        """Expect a log to be able to show what parameters were used to generate it"""
+        parameters = result.parameters
+        expected = result.estimator.get_params()
+        assert parameters == expected

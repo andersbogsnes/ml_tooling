@@ -24,7 +24,7 @@ numpy==1.20.1
     #   scikit-learn
     #   scikit-optimize
     #   scipy
-pandas==1.2.2
+pandas==1.2.3
     # via ml_tooling (setup.py)
 pillow==8.1.0
     # via matplotlib

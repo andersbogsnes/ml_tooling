@@ -61,9 +61,9 @@ packaging==20.8
     # via
     #   pytest
     #   tox
-pandas==1.2.2
+pandas==1.2.3
     # via -r requirements.txt
-pillow==8.1.0
+pillow==8.1.1
     # via
     #   -r requirements.txt
     #   matplotlib
@@ -140,7 +140,7 @@ toml==0.10.2
     #   pre-commit
     #   pytest
     #   tox
-tox==3.22.0
+tox==3.23.0
     # via -r dev-requirements.in
 urllib3==1.26.3
     # via requests

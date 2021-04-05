@@ -24,12 +24,14 @@ cycler==0.10.0
     #   matplotlib
 distlib==0.3.1
     # via virtualenv
-dohq-artifactory==0.7.508
+dohq-artifactory==0.7.534
     # via -r dev-requirements.in
 filelock==3.0.12
     # via
     #   tox
     #   virtualenv
+greenlet==1.0.0
+    # via sqlalchemy
 identify==1.5.13
     # via pre-commit
 idna==2.10
@@ -45,11 +47,11 @@ kiwisolver==1.3.1
     # via
     #   -r requirements.txt
     #   matplotlib
-matplotlib==3.3.4
+matplotlib==3.4.0
     # via -r requirements.txt
 nodeenv==1.5.0
     # via pre-commit
-numpy==1.20.1
+numpy==1.20.2
     # via
     #   -r requirements.txt
     #   matplotlib
@@ -63,7 +65,7 @@ packaging==20.8
     #   tox
 pandas==1.2.3
     # via -r requirements.txt
-pillow==8.1.1
+pillow==8.1.2
     # via
     #   -r requirements.txt
     #   matplotlib
@@ -117,7 +119,7 @@ scikit-learn==0.24.1
     #   scikit-optimize
 scikit-optimize==0.8.1
     # via -r requirements.txt
-scipy==1.6.1
+scipy==1.6.2
     # via
     #   -r requirements.txt
     #   scikit-learn
@@ -129,7 +131,7 @@ six==1.15.0
     #   python-dateutil
     #   tox
     #   virtualenv
-sqlalchemy==1.3.23
+sqlalchemy==1.4.3
     # via -r requirements.txt
 threadpoolctl==2.1.0
     # via

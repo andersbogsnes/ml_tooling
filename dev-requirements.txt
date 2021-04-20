@@ -63,7 +63,7 @@ packaging==20.8
     # via
     #   pytest
     #   tox
-pandas==1.2.3
+pandas==1.2.4
     # via -r requirements.txt
 pillow==8.2.0
     # via
@@ -73,7 +73,7 @@ pluggy==0.13.1
     # via
     #   pytest
     #   tox
-pre-commit==2.11.1
+pre-commit==2.12.1
     # via -r dev-requirements.in
 py==1.10.0
     # via

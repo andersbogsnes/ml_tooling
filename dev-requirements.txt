@@ -63,7 +63,7 @@ packaging==20.8
     # via
     #   pytest
     #   tox
-pandas==1.2.3
+pandas==1.2.4
     # via -r requirements.txt
 pillow==8.2.0
     # via

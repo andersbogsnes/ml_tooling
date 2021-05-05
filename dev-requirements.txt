@@ -92,7 +92,7 @@ pyparsing==2.4.7
     #   packaging
 pytest-cov==2.11.1
     # via -r dev-requirements.in
-pytest==6.2.3
+pytest==6.2.4
     # via
     #   -r dev-requirements.in
     #   pytest-cov
@@ -131,7 +131,7 @@ six==1.15.0
     #   python-dateutil
     #   tox
     #   virtualenv
-sqlalchemy==1.4.6
+sqlalchemy==1.4.11
     # via -r requirements.txt
 threadpoolctl==2.1.0
     # via

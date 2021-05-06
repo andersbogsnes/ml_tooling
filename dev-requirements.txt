@@ -131,7 +131,7 @@ six==1.15.0
     #   python-dateutil
     #   tox
     #   virtualenv
-sqlalchemy==1.4.11
+sqlalchemy==1.4.13
     # via -r requirements.txt
 threadpoolctl==2.1.0
     # via

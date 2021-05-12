@@ -12,7 +12,7 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-python@v2.2.2
         with:
           python-version: ${{ matrix.python-version }}
@@ -26,7 +26,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-python@v2.2.2
         with:
           python-version: 3.8
@@ -41,7 +41,7 @@ jobs:
         python-version: ['3.7', '3.8']
     name: Documentation python ${{ matrix.python-version }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-python@v2.2.2
         with:
           python-version: ${{ matrix.python-version }}
@@ -55,7 +55,7 @@ jobs:
     name: Coverage report
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: actions/setup-python@v2.2.2
         with:
           python-version: 3.8

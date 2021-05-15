@@ -24,7 +24,7 @@ cycler==0.10.0
     #   matplotlib
 distlib==0.3.1
     # via virtualenv
-dohq-artifactory==0.7.534
+dohq-artifactory==0.7.573
     # via -r dev-requirements.in
 filelock==3.0.12
     # via

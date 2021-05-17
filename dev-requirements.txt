@@ -16,7 +16,7 @@ cfgv==3.2.0
     # via pre-commit
 chardet==4.0.0
     # via requests
-coverage==5.4
+coverage[toml]==5.4
     # via pytest-cov
 cycler==0.10.0
     # via
@@ -90,7 +90,7 @@ pyparsing==2.4.7
     #   -r requirements.txt
     #   matplotlib
     #   packaging
-pytest-cov==2.11.1
+pytest-cov==2.12.0
     # via -r dev-requirements.in
 pytest==6.2.4
     # via
@@ -139,6 +139,7 @@ threadpoolctl==2.1.0
     #   scikit-learn
 toml==0.10.2
     # via
+    #   coverage
     #   pre-commit
     #   pytest
     #   tox

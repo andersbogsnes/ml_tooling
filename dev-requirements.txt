@@ -24,7 +24,7 @@ cycler==0.10.0
     #   matplotlib
 distlib==0.3.1
     # via virtualenv
-dohq-artifactory==0.7.534
+dohq-artifactory==0.7.574
     # via -r dev-requirements.in
 filelock==3.0.12
     # via
@@ -131,7 +131,7 @@ six==1.16.0
     #   python-dateutil
     #   tox
     #   virtualenv
-sqlalchemy==1.4.15
+sqlalchemy==1.4.18
     # via -r requirements.txt
 threadpoolctl==2.1.0
     # via

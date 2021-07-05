@@ -26,7 +26,7 @@ numpy==1.20.2
     #   scipy
 pandas==1.2.4
     # via ml_tooling (setup.py)
-pillow==8.2.0
+pillow==8.3.0
     # via matplotlib
 pyaml==20.4.0
     # via scikit-optimize
@@ -56,7 +56,7 @@ six==1.16.0
     # via
     #   cycler
     #   python-dateutil
-sqlalchemy==1.4.18
+sqlalchemy==1.4.20
     # via ml_tooling (setup.py)
 threadpoolctl==2.1.0
     # via scikit-learn

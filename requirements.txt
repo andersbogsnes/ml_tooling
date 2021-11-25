@@ -48,7 +48,7 @@ scikit-learn==0.24.2
     #   scikit-optimize
 scikit-optimize==0.8.1
     # via ml_tooling (setup.py)
-scipy==1.6.3
+scipy==1.7.3
     # via
     #   scikit-learn
     #   scikit-optimize

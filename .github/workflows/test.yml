@@ -13,7 +13,7 @@ jobs:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2.3.0
+      - uses: actions/setup-python@v2.3.1
         with:
           python-version: ${{ matrix.python-version }}
       - uses: BSFishy/pip-action@v1
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2.3.0
+      - uses: actions/setup-python@v2.3.1
         with:
           python-version: 3.8
       - uses: pre-commit/action@v2.0.3
@@ -42,7 +42,7 @@ jobs:
     name: Documentation python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2.3.0
+      - uses: actions/setup-python@v2.3.1
         with:
           python-version: ${{ matrix.python-version }}
       - uses: snok/install-poetry@v1.3
@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2.3.0
+      - uses: actions/setup-python@v2.3.1
         with:
           python-version: 3.8
       - uses: snok/install-poetry@v1.3

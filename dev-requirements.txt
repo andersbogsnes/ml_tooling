@@ -90,7 +90,7 @@ pyparsing==2.4.7
     #   -r requirements.txt
     #   matplotlib
     #   packaging
-pytest==6.2.4
+pytest==7.0.1
     # via
     #   -r dev-requirements.in
     #   pytest-cov
@@ -140,9 +140,10 @@ threadpoolctl==2.1.0
 toml==0.10.2
     # via
     #   pre-commit
-    #   pytest
     #   pytest-cov
     #   tox
+tomli==2.0.1
+    # via pytest
 tox==3.24.4
     # via -r dev-requirements.in
 urllib3==1.26.5

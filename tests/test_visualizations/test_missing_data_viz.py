@@ -65,5 +65,5 @@ class TestMissingDataViz:
 
     def test_can_call_missing_data_with_no_missing_values(self, train_boston_dataset):
         ax = train_boston_dataset.plot.missing_data()
-        assert ax.patches == []
+        assert ax
         plt.close()

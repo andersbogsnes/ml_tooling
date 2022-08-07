@@ -72,9 +72,9 @@ def plot_feature_importance(
 
     """
 
-    trained_estimator: BaseEstimator = estimator.steps[-1][1] if is_pipeline(
-        estimator
-    ) else estimator
+    trained_estimator: BaseEstimator = (
+        estimator.steps[-1][1] if is_pipeline(estimator) else estimator
+    )
 
     default_class_name = 0 if class_index is None else class_index
 

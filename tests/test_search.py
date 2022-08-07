@@ -71,7 +71,9 @@ class TestRandomSearch:
     def grid(self, pipeline_forest_classifier: Pipeline, request):
         """Setup a RandomSearch searcher"""
         return RandomSearch(
-            pipeline_forest_classifier, param_grid=request.param, n_iter=2,
+            pipeline_forest_classifier,
+            param_grid=request.param,
+            n_iter=2,
         )
 
     def test_random_search_has_different_hyperparams(
@@ -117,7 +119,9 @@ class TestBayesSearch:
     def grid(self, pipeline_forest_classifier: Pipeline, request) -> BayesSearch:
         """Setup a RandomSearch searcher"""
         return BayesSearch(
-            pipeline_forest_classifier, param_grid=request.param, n_iter=2,
+            pipeline_forest_classifier,
+            param_grid=request.param,
+            n_iter=2,
         )
 
     def test_bayes_search_with_one_parameter(

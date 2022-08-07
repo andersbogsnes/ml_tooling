@@ -147,5 +147,8 @@ class DataVisualize:
 
         with plt.style.context(config.STYLE_SHEET):
             return plot_target_feature_distribution(
-                feature=x, target=self.data.y, method=method, ax=ax,
+                feature=x,
+                target=self.data.y,
+                method=method,
+                ax=ax,
             )

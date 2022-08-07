@@ -265,8 +265,7 @@ Example
 
 .. doctest::
 
-    >>> from ml_tooling.transformers import FreqFeature, Binner, Select, DFFeatureUnion
-    >>> from sklearn.pipeline import Pipeline
+    >>> from ml_tooling.transformers import FreqFeature, Binner, Select, DFFeatureUnion, Pipeline
     >>> df = pd.DataFrame({
     ...     "sales_category": ['Sale', 'Sale', 'Not Sale', 'Not Sale'],
     ...     "sales": [1500, 2000, 2250, 7830]

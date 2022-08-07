@@ -44,7 +44,9 @@ def create_model(transformer) -> Model:
 def create_gridsearch(transformer) -> GridSearchCV:
     pipe = create_pipeline(transformer)
     return GridSearchCV(
-        pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
+        pipe,
+        param_grid={"clf__strategy": ["stratified", "most_frequent"]},
+        cv=2,
     )
 
 
@@ -304,7 +306,9 @@ class TestDateEncoder:
     def test_date_encoder_works_in_grid_search(self, dates: pd.DataFrame):
         pipe = create_pipeline(DateEncoder())
         grid = GridSearchCV(
-            pipe, param_grid={"clf__strategy": ["stratified", "most_frequent"]}, cv=2,
+            pipe,
+            param_grid={"clf__strategy": ["stratified", "most_frequent"]},
+            cv=2,
         )
         grid.fit(dates, [0, 0, 1, 1])
         assert hasattr(grid, "best_score_")

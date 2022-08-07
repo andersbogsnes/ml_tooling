@@ -24,9 +24,9 @@ def _get_top_n_idx(idx: np.ndarray, top_n: Union[int, float]) -> np.ndarray:
     """
 
     if _is_percent(top_n):
-        top_n: int = math.floor(
-            top_n * len(idx)
-        ) or 1  # If floor rounds to 0, use 1 instead
+        top_n: int = (
+            math.floor(top_n * len(idx)) or 1
+        )  # If floor rounds to 0, use 1 instead
     return idx[:top_n]
 
 

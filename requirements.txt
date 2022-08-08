@@ -62,7 +62,7 @@ scipy==1.9.0
     #   scikit-optimize
 six==1.16.0
     # via python-dateutil
-sqlalchemy==1.4.39
+sqlalchemy==1.4.40
     # via ml-tooling (setup.py)
 threadpoolctl==3.1.0
     # via scikit-learn

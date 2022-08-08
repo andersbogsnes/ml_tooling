@@ -1,8 +1,5 @@
 name: Integration
 on: pull_request
-env:
-  TOX_VERSION: 3.25.1
-  POETRY_VERSION: 1.1.14
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -16,23 +13,8 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: BSFishy/pip-action@v1
-        with:
-          packages: poetry==${{ env.POETRY_VERSION }} tox==${{ env.TOX_VERSION }}
-      - run: python -m poetry config virtualenvs.create false
+      - run: pip install tox
       - run: tox -e py,optional-artifactory
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.10'
-      - uses: pre-commit/action@v2.0.3
-        env:
-          SKIP: no-commit-to-branch
 
   docs:
     runs-on: ubuntu-latest
@@ -42,10 +24,7 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: '3.10'
-      - uses: snok/install-poetry@v1.3
-        with:
-          version: ${{ env.POETRY_VERSION }}
-      - run: pip install tox==$TOX_VERSION
+      - run: pip install tox
       - run: tox -e docs
 
   coverage:
@@ -56,10 +35,7 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: '3.10'
-      - uses: snok/install-poetry@v1.3
-        with:
-          version: ${{ env.POETRY_VERSION }}
-      - run: pip install tox==$TOX_VERSION
+      - run: pip install tox
       - run: tox -e py,optional-artifactory,coverage-report
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2.1.0

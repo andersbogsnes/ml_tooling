@@ -55,10 +55,12 @@ Now we can train our model. We start by splitting the data into training and tes
 by calling :meth:`~ml_tooling.data.Dataset.create_train_test`
 
 .. doctest::
+    :options: -ELLIPSIS
 
     >>> data.create_train_test()
     <BostonData - Dataset>
     >>> result = regression.score_estimator(data)
+    ...
     >>> result
     <Result LinearRegression: {'r2': 0.68}>
 

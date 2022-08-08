@@ -45,7 +45,7 @@ Creating a FileDataset from a csv file
 When we create a FileDataset, we need to specify the location of our datafiles -
 this will be available in the :code:`self.file_path` attribute. ML Tooling can
 A more elaborate example of using this dataset can be found at :file:`../notebooks/Titanic Demo.ipynb`.
-
+no
 .. code-block::
 
     >>> import pandas as pd
@@ -98,7 +98,7 @@ If you want to test your model on a demo datasets from :ref:`sklearn:datasets`, 
 
     >>> from ml_tooling.data import load_demo_dataset
     >>>
-    >>> bostondata = load_demo_dataset("boston")
+    >>> california_data = load_demo_dataset("california")
     >>> # Remember to setup a train test split!
-    >>> bostondata.create_train_test()
-    <BostonData - Dataset>
+    >>> california_data.create_train_test()
+    <CaliforniaData - Dataset>

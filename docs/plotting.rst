@@ -141,11 +141,11 @@ These plot methods are used the same way as the result plots
 
 .. code-block::
 
-    >>> bostondata.plot.target_correlation()
+    >>> california_data.plot.target_correlation()
 
 .. plot::
 
-    >>> bostondata.plot.target_correlation()
+    >>> california_data.plot.target_correlation()
 
 Optionally, you can pass a preprocessing :class:`~sklearn.pipeline.Pipeline` to the plotter to preprocess the data
 before plotting. This can be useful if you want to check that the preprocessing is handling all the NaNs, or
@@ -157,7 +157,7 @@ if you want to visualize computed columns.
     >>> from sklearn.pipeline import Pipeline
     >>>
     >>> feature_pipeline = Pipeline([("scaler", DFStandardScaler())])
-    >>> bostondata.plot.target_correlation(feature_pipeline=feature_pipeline)
+    >>> california_data.plot.target_correlation(feature_pipeline=feature_pipeline)
 
 Available Data Plots
 --------------------

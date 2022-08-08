@@ -13,21 +13,21 @@ using the Model class.
 .. seealso::
     Refer to :ref:`api` for a full overview of methods
 
-We will be using `scikit-learn`_'s built-in :func:`Boston <sklearn.datasets.load_boston>`
+We will be using `scikit-learn`_'s built-in :func:`Calfornia Housing <sklearn.datasets.fetch_california_housing>`
 houseprices dataset to demonstrate how to use ML Tooling. We use the method
 :func:`~ml_tooling.data.load_demo_dataset` to load the dataset.
 
-We then simply wrap a :class:`~sklearn.linear_model.LinearRegression` using our
+We then simply wrap a :class:`~sklearn.linear_model.Ridge` using our
 :class:`Model` class and we are ready to begin!
 
 .. doctest::
 
     >>> from ml_tooling.data import load_demo_dataset
     >>>
-    >>> bostondata = load_demo_dataset("boston")
+    >>> california_data = load_demo_dataset("california")
     >>> # Remember to setup a train test split!
-    >>> bostondata.create_train_test()
-    <BostonData - Dataset>
+    >>> california_data.create_train_test()
+    <CaliforniaData - Dataset>
 
 Creating your model
 ~~~~~~~~~~~~~~~~~~~
@@ -38,25 +38,25 @@ This is done by supplying an estimator to the :class:`~ml_tooling.baseclass.Mode
 .. doctest::
 
     >>> from ml_tooling import Model
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.linear_model import Ridge
     >>>
-    >>> linear = Model(LinearRegression())
+    >>> linear = Model(Ridge())
     >>> linear
-    <Model: LinearRegression>
+    <Model: Ridge>
 
 Scoring your model
 ~~~~~~~~~~~~~~~~~~
 
 In order to evaluate the performance of the model use the :meth:`~ml_tooling.baseclass.Model.score_estimator` method.
-This will train the estimator on the training split of our :data:`bostondata` Dataset and evaluate it on the test split.
+This will train the estimator on the training split of our :data:`california_data` Dataset and evaluate it on the test split.
 If no training split has been created from the data the method will create one using the default configuration values.
 It returns an instance of :class:`~ml_tooling.result.Result` which we can then introspect further.
 
 .. doctest::
 
-    >>> result = linear.score_estimator(bostondata)
+    >>> result = linear.score_estimator(california_data)
     >>> result
-    <Result LinearRegression: {'r2': 0.68}>
+    <Result Ridge: {'r2': 0.59}>
 
 
 
@@ -73,7 +73,7 @@ with the best estimator and a :class:`~ml_tooling.result.ResultGroup`.
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> best_model, results = Model.test_estimators(
-    ...     bostondata,
+    ...     california_data,
     ...     [LinearRegression(), RandomForestRegressor(n_estimators=10, random_state=1337)],
     ...     metrics='r2')
     >>> results
@@ -91,8 +91,8 @@ on the full dataset set.
 
 .. doctest::
 
-    >>> linear.train_estimator(bostondata)
-    <Model: LinearRegression>
+    >>> linear.train_estimator(california_data)
+    <Model: Ridge>
 
 Predicting with your model
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,9 +103,9 @@ This will call the :meth:`~ml_tooling.data.Dataset.load_prediction_data` defined
 .. doctest::
 
     >>> customer_id = 42
-    >>> linear.make_prediction(bostondata, customer_id)
+    >>> linear.make_prediction(california_data, customer_id)
        Prediction
-    0   25.203866
+    0    1.422608
 
 :meth:`~ml_tooling.baseclass.Model.make_prediction` also has a parameter :code:`proba` which will return the
 underlying probabilities if working on a classification problem
@@ -123,13 +123,13 @@ will automatically create a :class:`~sklearn.pipeline.Pipeline` with two steps: 
     >>> from ml_tooling import Model
     >>> from ml_tooling.transformers import DFStandardScaler
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.linear_model import Ridge
     >>>
     >>> feature_pipeline = Pipeline([("scaler", DFStandardScaler())])
-    >>> model = Model(LinearRegression(), feature_pipeline=feature_pipeline)
+    >>> model = Model(Ridge(), feature_pipeline=feature_pipeline)
     >>> model.estimator
     Pipeline(steps=[('features', Pipeline(steps=[('scaler', DFStandardScaler())])),
-                    ('estimator', LinearRegression())])
+                    ('estimator', Ridge())])
 
 
 Performing a gridsearch
@@ -140,9 +140,9 @@ To find the best hyperparameters for an estimator you can use
 
 .. doctest::
 
-    >>> best_estimator, results = linear.gridsearch(bostondata, { "normalize": [False, True] })
+    >>> best_estimator, results = linear.gridsearch(california_data, { "alpha": [1, 0.5] })
     >>> results
-    ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>])
+    ResultGroup(results=[<Result Ridge: {'r2': 0.61}>, <Result Ridge: {'r2': 0.61}>])
 
 The input hyperparameters have a similar format to :class:`~sklearn.model_selection.GridSearchCV`, so if we are
 gridsearching using a :class:`~sklearn.pipeline.Pipeline`, we can pass hyperparameters using the same syntax.
@@ -155,23 +155,23 @@ gridsearching using a :class:`~sklearn.pipeline.Pipeline`, we can pass hyperpara
     >>> from ml_tooling import Model
     >>>
     >>> feature_pipe = Pipeline([('scale', DFStandardScaler())])
-    >>> pipe_model = Model(LinearRegression(), feature_pipeline=feature_pipe)
-    >>> best_estimator, results = pipe_model.gridsearch(bostondata, { "estimator__normalize": [False, True]})
+    >>> pipe_model = Model(Ridge(), feature_pipeline=feature_pipe)
+    >>> best_estimator, results = pipe_model.gridsearch(california_data, { "estimator__alpha": [1, 0.5]})
     >>> results
-    ResultGroup(results=[<Result LinearRegression: {'r2': 0.72}>, <Result LinearRegression: {'r2': 0.72}>])
+    ResultGroup(results=[<Result Ridge: {'r2': 0.61}>, <Result Ridge: {'r2': 0.61}>])
 
 Using the logging capability of Model :meth:`~ml_tooling.Model.log` method,
 we can save each result to a yaml file.
 
 .. doctest::
 
-    >>> with linear.log("./bostondata_linear"):
-    ...     best_estimator, results = linear.gridsearch(bostondata, { "normalize": [False, True] })
+    >>> with linear.log("./california_data_linear"):
+    ...     best_estimator, results = linear.gridsearch(california_data, { "alpha": [1, 0.5] })
 
 .. testcleanup::
 
     import shutil
-    shutil.rmtree(linear.config.RUN_DIR.joinpath('bostondata_linear'))
+    shutil.rmtree(linear.config.RUN_DIR.joinpath('california_data_linear'))
 
 This will generate a yaml file for each
 
@@ -179,18 +179,18 @@ This will generate a yaml file for each
 
     created_time: 2019-10-31 17:32:08.233522
     estimator:
-    - classname: LinearRegression
-    module: sklearn.linear_model.base
+    - classname: Ridge
+    module: sklearn.linear_model
     params:
+        alpha: 1.0
         copy_X: true
         fit_intercept: true
         n_jobs: null
-        normalize: true
     estimator_path: null
     git_hash: afa6def92a1e8a0ac571bec254129818bb337c49
     metrics:
         r2: 0.7160133196648374
-    model_name: BostonData_LinearRegression
+    model_name: CaliforniaData_Ridge
     versions:
         ml_tooling: 0.9.1
         pandas: 0.25.2
@@ -212,7 +212,7 @@ search of the parameter space with a randomized search.
     ...     "max_depth": [1, 3],
     ...     "min_weight_fraction_leaf": Real(0, 0.5),
     ... }
-    >>> best_estimator, results = rand_forest.randomsearch(bostondata, search_space, n_iter=2)
+    >>> best_estimator, results = rand_forest.randomsearch(california_data, search_space, n_iter=2)
     >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 
@@ -242,7 +242,7 @@ model thinks it can improve the error. Bayesian search is implemented using skop
         ...     "max_depth": [1, 3],
         ...     "min_weight_fraction_leaf": Real(0, 0.5),
         ... }
-        >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
+        >>> best_estimator, results = rand_forest.bayesiansearch(california_data, search_space, n_iter=2)
         >>> results #doctest:+SKIP
         ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
     >>> from ml_tooling.search import Real
@@ -252,7 +252,7 @@ model thinks it can improve the error. Bayesian search is implemented using skop
     ...     "max_depth": [1, 3],
     ...     "min_weight_fraction_leaf": Real(0, 0.5),
     ... }
-    >>> best_estimator, results = rand_forest.bayesiansearch(bostondata, search_space, n_iter=2)
+    >>> best_estimator, results = rand_forest.bayesiansearch(california_data, search_space, n_iter=2)
     >>> results #doctest:+SKIP
     ResultGroup(results=[<Result RandomForestRegressor: {'r2': 0.83}>, <Result RandomForestRegressor: {'r2': 0.56}>])
 
@@ -286,7 +286,7 @@ We can also load the model from a storage by specifying the filename to load in 
 
     >>> loaded_linear = linear.load_estimator(estimator_path.name, storage=storage)
     >>> loaded_linear
-    <Model: LinearRegression>
+    <Model: Ridge>
 
 .. testcleanup::
 
@@ -318,7 +318,7 @@ Now users of your model package can always find your estimator through
     >>> model.load_production_estimator('your_module_name')
 
 By default, if no storage is specified, ML-Tooling will save models in your current working directory in a folder
-called `estimators`
+called ``estimators``
 
 Configuration
 ~~~~~~~~~~~~~
@@ -343,8 +343,8 @@ The results will be saved in
 .. doctest::
 
     >>> with linear.log('test_dir'):
-    ...     linear.score_estimator(bostondata)
-    <Result LinearRegression: {'r2': 0.68}>
+    ...     linear.score_estimator(california_data)
+    <Result Ridge: {'r2': 0.59}>
 
 .. testcleanup::
 

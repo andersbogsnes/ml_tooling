@@ -2,7 +2,7 @@ from typing import Tuple
 
 import pandas as pd
 from sklearn.datasets import (
-    load_boston,
+    fetch_california_housing,
     load_iris,
     load_diabetes,
     load_digits,
@@ -30,7 +30,7 @@ def load_demo_dataset(dataset_name: str, **kwargs) -> Dataset:
 
         One of:
             - iris
-            - boston
+            - california
             - diabetes
             - digits
             - linnerud
@@ -50,7 +50,7 @@ def load_demo_dataset(dataset_name: str, **kwargs) -> Dataset:
 
     dataset_mapping = {
         "iris": load_iris,
-        "boston": load_boston,
+        "california": fetch_california_housing,
         "diabetes": load_diabetes,
         "digits": load_digits,
         "linnerud": load_linnerud,
@@ -68,7 +68,7 @@ def load_demo_dataset(dataset_name: str, **kwargs) -> Dataset:
                 selected_data.target,
             )
 
-        def load_prediction_data(self, idx) -> pd.DataFrame:
+        def load_prediction_data(self, idx: int) -> pd.DataFrame:
             x = pd.DataFrame(selected_data.data, columns=selected_data.feature_names)
             return x.loc[[idx]]
 

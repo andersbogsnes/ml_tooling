@@ -192,22 +192,22 @@ epub_exclude_files = ["search.html"]
 
 plot_pre_code = """
 from ml_tooling.data import Dataset
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 import pandas as pd
-class BostonData(Dataset):
+class CaliforniaData(Dataset):
     def load_training_data(self):
-        data = load_boston()
+        data = fetch_california_housing()
         return pd.DataFrame(data.data, columns=data.feature_names), data.target
         # Define where to get prediction time data - returning a DataFrame
     def load_prediction_data(self, idx):
-        data = load_boston()
+        data = fetch_california_housing()
         x = pd.DataFrame(data.data, labels=data.feature_names)
         return x.loc[idx] # Return given observation
-bostondata = BostonData()
+california_data = CaliforniaData()
 # Remember to setup a train test split!
-bostondata.create_train_test()
+california_data.create_train_test()
 from ml_tooling import Model
 from sklearn.linear_model import LinearRegression
 linear = Model(LinearRegression())
-result = linear.score_estimator(bostondata)
+result = linear.score_estimator(california_data)
 """

@@ -4,7 +4,11 @@ import sys
 
 
 def create_logger(logger_name):
-    default_logger = os.getenv("ML_LOGGING", True)
+    default_logger = os.getenv("ML_LOGGING", "1")
+    if default_logger.lower() in ["true", "1"]:
+        default_logger = True
+    else:
+        default_logger = False
 
     log_level = logging.DEBUG if os.getenv("ML_DEBUG", False) else logging.INFO
 

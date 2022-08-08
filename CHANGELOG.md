@@ -2,6 +2,7 @@
 - Dataset features can now be easily accessed with the property dataset.features
 - `model.test_estimators` with CV will keep using CV if it's refitting the best estimator.
 - `Result` now has a `.parameters` attribute to show what parameters generated the result
+- Switch to pyproject.toml for project metadata
 
 # v0.12.0
 - Permutation importance and Feature importance are now two different plotting methods.

@@ -20,13 +20,13 @@ class TestResult:
     @pytest.fixture(scope="class")
     def result(self, model: Model) -> Result:
         """Setup a Result from a score_estimator without cv"""
-        dataset = load_demo_dataset("boston")
+        dataset = load_demo_dataset("california")
         return model.score_estimator(dataset)
 
     @pytest.fixture(scope="class")
     def result_cv(self, model: Model) -> Result:
-        """Setup a Result from a cross-validated scoring"""
-        dataset = load_demo_dataset("boston")
+        """Return a Result from a cross-validated scoring"""
+        dataset = load_demo_dataset("california")
         return model.score_estimator(dataset, cv=2)
 
     @pytest.fixture()
@@ -72,7 +72,7 @@ class TestResult:
         assert len(result_cv.metrics) == 1
 
     def test_cv_results_should_have_a_score(self, result_cv: Result):
-        assert result_cv.metrics.score == pytest.approx(0.73037122)
+        assert result_cv.metrics.score == pytest.approx(0.5529787734759861)
 
     def test_result_should_not_have_a_cross_val_std(self, result: Result):
         """Expect the result's metrics to not have a cross_val_std attribute"""
@@ -86,7 +86,7 @@ class TestResult:
 
     def test_result_score_should_be_correct(self, result: Result):
         """Expect the result's score to be correct"""
-        assert result.metrics.score == pytest.approx(0.6844267)
+        assert result.metrics.score == pytest.approx(0.5910509795491354)
 
     def test_result_score_should_be_r2_by_default(self, result: Result):
         """Expect the scoring method to be r2 by default"""

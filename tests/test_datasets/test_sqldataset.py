@@ -14,10 +14,10 @@ from ml_tooling.utils import DatasetError
 
 class TestSqlDataset:
     def test_sqldataset_repr_prints_correctly(
-        self, boston_sqldataset: Type[SQLDataset], test_engine: Engine
+        self, california_sqldataset: Type[SQLDataset], test_engine: Engine
     ):
-        repr_str = str(boston_sqldataset(test_engine, schema=None))
-        assert repr_str == "<BostonSQLData - SQLDataset Engine(sqlite:///:memory:)>"
+        repr_str = str(california_sqldataset(test_engine, schema=None))
+        assert repr_str == "<CaliforniaSQLData - SQLDataset Engine(sqlite:///:memory:)>"
 
     def test_sqldataset_can_be_instantiated_with_engine_string(
         self, iris_sqldataset: Type[SQLDataset]
@@ -27,85 +27,80 @@ class TestSqlDataset:
             iris_sqldataset(["not_a_url"], "schema")  # noqa
 
     def test_sqldataset_errors_when_schema_is_defined_on_instantiation(
-        self, boston_sqldataset: Type[SQLDataset], test_engine: Engine
+        self, california_sqldataset: Type[SQLDataset], test_engine: Engine
     ):
         schema = MagicMock(return_value="something")
-        boston_sqldataset.table.schema = schema
+        california_sqldataset.table.schema = schema
 
         with pytest.raises(
             DatasetError,
             match="cannot have a defined schema - remove the schema declaration",
         ):
-            boston_sqldataset(test_engine, "schema")
+            california_sqldataset(test_engine, "schema")
 
     def test_sqldataset_can_load_training_data(
         self,
-        boston_sqldataset: Type[SQLDataset],
-        loaded_boston_db: str,
-        boston_df: pd.DataFrame,
+        california_sqldataset: Type[SQLDataset],
+        loaded_california_db: str,
+        california_df: pd.DataFrame,
     ):
-        dataset = boston_sqldataset(loaded_boston_db, None)
+        dataset = california_sqldataset(loaded_california_db, None)
         x, y = dataset._load_training_data()
-        pd.testing.assert_frame_equal(x.assign(MEDV=y), boston_df)
+        pd.testing.assert_frame_equal(x.assign(MedHouseVal=y), california_df)
 
     def test_sqldataset_can_load_prediction_data(
         self,
-        boston_sqldataset: Type[SQLDataset],
-        boston_df: pd.DataFrame,
-        loaded_boston_db: str,
+        california_sqldataset: Type[SQLDataset],
+        california_df: pd.DataFrame,
+        loaded_california_db: str,
     ):
-        dataset = boston_sqldataset(loaded_boston_db, schema=None)
-        result = dataset.load_prediction_data(0, conn=loaded_boston_db)
+        dataset = california_sqldataset(loaded_california_db, schema=None)
+        result = dataset.load_prediction_data(0, conn=loaded_california_db)
 
-        expected = boston_df.iloc[[0], :].drop(columns="MEDV")
+        expected = california_df.iloc[[0], :].drop(columns="MedHouseVal")
 
         pd.testing.assert_frame_equal(result, expected)
 
     def test_sqldataset_can_copy_to_another_sqldataset(
         self,
-        boston_sqldataset: Type[SQLDataset],
-        loaded_boston_db: str,
+        california_sqldataset: Type[SQLDataset],
+        loaded_california_db: str,
         tmp_path: pathlib.Path,
     ):
         target_db = f"sqlite:///{tmp_path / 'test.db'}"
-        source_data = boston_sqldataset(loaded_boston_db, schema=None)
-        target_data = boston_sqldataset(target_db, schema=None)
+        source_data = california_sqldataset(loaded_california_db, schema=None)
+        target_data = california_sqldataset(target_db, schema=None)
 
         source_data.copy_to(target=target_data)
 
         assert set(target_data._load_prediction_data(idx=0).columns) == {
-            "CRIM",
-            "ZN",
-            "INDUS",
-            "CHAS",
-            "NOX",
-            "RM",
-            "AGE",
-            "DIS",
-            "RAD",
-            "TAX",
-            "PTRATIO",
-            "B",
-            "LSTAT",
+            "AveBedrms",
+            "AveOccup",
+            "AveRooms",
+            "HouseAge",
+            "Latitude",
+            "Longitude",
+            "MedInc",
+            "Population",
         }
 
     @patch("ml_tooling.data.sql.pd.read_sql")
     def test_dump_data_throws_error_on_exec_failure(
         self,
         read_sql: MagicMock,
-        boston_sqldataset: Type[SQLDataset],
+        california_sqldataset: Type[SQLDataset],
         test_engine: Engine,
     ):
         read_sql.side_effect = DBAPIError("test", "test", "test")
 
         with pytest.raises(DBAPIError):
-            boston_sqldataset(test_engine, "")._dump_data()
+            california_sqldataset(test_engine, "")._dump_data()
         read_sql.assert_called_once()
 
     def test_sql_dataset_raises_exception_when_load_training_data_returns_empty(
-        self, boston_sqldataset: Type[SQLDataset]
+        self, california_sqldataset: Type[SQLDataset]
     ):
-        class FailingDataset(boston_sqldataset):
+        class FailingDataset(california_sqldataset):
             def load_training_data(self, *args, **kwargs):
                 return pd.DataFrame(dtype="object"), pd.Series(dtype="object")
 
@@ -115,9 +110,9 @@ class TestSqlDataset:
             FailingDataset("sqlite:///", schema=None).create_train_test()
 
     def test_sql_dataset_raises_exception_when_load_prediction_data_returns_empty(
-        self, boston_sqldataset: Type[SQLDataset], regression: Model
+        self, california_sqldataset: Type[SQLDataset], regression: Model
     ):
-        class FailingDataset(boston_sqldataset):
+        class FailingDataset(california_sqldataset):
             def load_prediction_data(self, *args, **kwargs):
                 return pd.DataFrame()
 
@@ -128,9 +123,9 @@ class TestSqlDataset:
             regression.make_prediction(data, 0)
 
     def test_load_data_throws_error_on_exec_failure(
-        self, boston_sqldataset: Type[SQLDataset], test_engine: Engine
+        self, california_sqldataset: Type[SQLDataset], test_engine: Engine
     ):
-        dataset = boston_sqldataset(test_engine, None)
+        dataset = california_sqldataset(test_engine, None)
         trans_mock = MagicMock()
         conn_mock = MagicMock()
         conn_mock.begin.return_value = trans_mock
@@ -149,10 +144,10 @@ class TestSqlDataset:
     def test_setup_table_creates_schema_if_has_schema_returns_false(
         self,
         create_schema_mock: MagicMock,
-        boston_sqldataset: Type[SQLDataset],
+        california_sqldataset: Type[SQLDataset],
         test_engine: Engine,
     ):
-        dataset = boston_sqldataset(test_engine, "")
+        dataset = california_sqldataset(test_engine, "")
 
         engine_mock = MagicMock()
         engine_mock.dialect.has_schema.return_value = False
@@ -163,9 +158,9 @@ class TestSqlDataset:
         create_schema_mock.assert_called_once_with("")
 
     def test_setup_table_fails_if_schema_is_passed_for_sqlite(
-        self, boston_sqldataset: Type[SQLDataset], test_engine: Engine
+        self, california_sqldataset: Type[SQLDataset], test_engine: Engine
     ):
-        dataset = boston_sqldataset(test_engine, schema=None)
+        dataset = california_sqldataset(test_engine, schema=None)
         with dataset.create_connection() as conn:
             dataset._setup_table(conn)
 

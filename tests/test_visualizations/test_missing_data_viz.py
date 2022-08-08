@@ -11,9 +11,9 @@ from ml_tooling.transformers import DFStandardScaler
 
 class TestMissingDataViz:
     @pytest.fixture()
-    def missing_data(self, train_boston_dataset):
-        train_boston_dataset.x.iloc[:10, 0] = np.nan
-        return train_boston_dataset
+    def missing_data(self, train_california_dataset):
+        train_california_dataset.x.iloc[:10, 0] = np.nan
+        return train_california_dataset
 
     @pytest.fixture()
     def ax(self, missing_data):
@@ -25,7 +25,7 @@ class TestMissingDataViz:
     def test_missing_data_can_pass_pipeline(self, missing_data: Dataset):
         pipeline = Pipeline([("scaler", DFStandardScaler())])
         ax = missing_data.plot.missing_data(feature_pipeline=pipeline)
-        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+        assert [text.get_text() for text in ax.texts] == ["0.0%"]
         plt.close()
 
     def test_target_correlation_uses_pipeline_when_passed(
@@ -39,7 +39,7 @@ class TestMissingDataViz:
         plt.close()
 
     def test_missing_data_text_labels_are_correct(self, ax):
-        assert [text.get_text() for text in ax.texts] == ["2.0%"]
+        assert [text.get_text() for text in ax.texts] == ["0.0%"]
 
     def test_ylabel_is_correct(self, ax):
         assert ax.get_ylabel() == "Feature"
@@ -49,12 +49,13 @@ class TestMissingDataViz:
 
     def test_xticklabels_are_correct(self, ax):
         assert [text.get_text() for text in ax.get_xticklabels()] == [
-            "0.00%",
-            "0.50%",
-            "1.00%",
-            "1.50%",
-            "2.00%",
-            "2.50%",
+            "0.000%",
+            "0.010%",
+            "0.020%",
+            "0.030%",
+            "0.040%",
+            "0.050%",
+            "0.060%",
         ]
 
     def test_missing_data_plots_can_be_given_an_ax(self, missing_data):
@@ -63,7 +64,9 @@ class TestMissingDataViz:
         assert ax == test_ax
         plt.close()
 
-    def test_can_call_missing_data_with_no_missing_values(self, train_boston_dataset):
-        ax = train_boston_dataset.plot.missing_data()
+    def test_can_call_missing_data_with_no_missing_values(
+        self, train_california_dataset
+    ):
+        ax = train_california_dataset.plot.missing_data()
         assert ax
         plt.close()

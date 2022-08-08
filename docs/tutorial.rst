@@ -41,7 +41,6 @@ With our data object ready to go, lets move on to the model object.
     >>> from sklearn.linear_model import LogisticRegression
     >>>
     >>> lr_clf = Model(LogisticRegression())
-    >>>
     >>> lr_clf.score_estimator(data, metrics='accuracy')
     <Result LogisticRegression: {'accuracy': 0.74}>
 

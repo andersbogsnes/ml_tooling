@@ -31,7 +31,7 @@ class TestPermutationImportancePlot:
     @pytest.fixture(scope="class")
     def regression_result(self) -> Result:
         """Setup a regression Result"""
-        dataset = load_demo_dataset("boston")
+        dataset = load_demo_dataset("california")
         model = Model(LinearRegression())
         return model.score_estimator(dataset)
 

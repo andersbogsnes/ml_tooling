@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import sqlalchemy as sa
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_iris, fetch_california_housing
 
 from ml_tooling.data import SQLDataset, FileDataset
 from ml_tooling.data.base_data import Dataset
@@ -13,11 +13,11 @@ from ml_tooling.utils import DataType
 
 
 @pytest.fixture(scope="session")
-def boston_df():
-    boston_data = load_boston()
+def california_df():
+    california_data = fetch_california_housing()
     return pd.DataFrame(
-        data=boston_data.data, columns=boston_data.feature_names
-    ).assign(MEDV=boston_data.target)
+        data=california_data.data, columns=california_data.feature_names
+    ).assign(MedHouseVal=california_data.target)
 
 
 @pytest.fixture(scope="session")
@@ -47,20 +47,20 @@ def train_iris_dataset(iris_dataset):
 
 
 @pytest.fixture(scope="session")
-def boston_dataset(boston_df):
-    class BostonData(Dataset):
+def california_dataset(california_df):
+    class CaliforniaData(Dataset):
         def load_prediction_data(self, idx) -> pd.DataFrame:
-            return boston_df.iloc[[idx]]
+            return california_df.iloc[[idx]]
 
         def load_training_data(self) -> Tuple[pd.DataFrame, DataType]:
-            return boston_df.drop(columns="MEDV"), boston_df.MEDV
+            return california_df.drop(columns="MedHouseVal"), california_df.MedHouseVal
 
-    return BostonData
+    return CaliforniaData
 
 
 @pytest.fixture()
-def train_boston_dataset(boston_dataset):
-    return boston_dataset().create_train_test(stratify=False)
+def train_california_dataset(california_dataset):
+    return california_dataset().create_train_test(stratify=False)
 
 
 @pytest.fixture
@@ -70,8 +70,8 @@ def test_engine():
 
 
 @pytest.fixture
-def loaded_boston_db(boston_df, test_engine):
-    boston_df.to_sql("boston", test_engine, index=False)
+def loaded_california_db(california_df, test_engine):
+    california_df.to_sql("california", test_engine, index=False)
     return test_engine
 
 
@@ -82,41 +82,36 @@ def loaded_iris_db(iris_df, test_engine):
 
 
 @pytest.fixture
-def boston_sqldataset():
+def california_sqldataset():
     meta = sa.MetaData()
 
-    class BostonSQLData(SQLDataset):
+    class CaliforniaSQLData(SQLDataset):
         table = sa.Table(
-            "boston",
+            "california",
             meta,
-            sa.Column("CRIM", sa.Float),
-            sa.Column("ZN", sa.Float),
-            sa.Column("INDUS", sa.Float),
-            sa.Column("CHAS", sa.Float),
-            sa.Column("NOX", sa.Float),
-            sa.Column("RM", sa.Float),
-            sa.Column("AGE", sa.Float),
-            sa.Column("DIS", sa.Float),
-            sa.Column("RAD", sa.Float),
-            sa.Column("TAX", sa.Float),
-            sa.Column("PTRATIO", sa.Float),
-            sa.Column("B", sa.Float),
-            sa.Column("LSTAT", sa.Float),
-            sa.Column("MEDV", sa.Float),
+            sa.Column("MedInc", sa.Float),
+            sa.Column("HouseAge", sa.Float),
+            sa.Column("AveRooms", sa.Float),
+            sa.Column("AveBedrms", sa.Float),
+            sa.Column("Population", sa.Float),
+            sa.Column("AveOccup", sa.Float),
+            sa.Column("Latitude", sa.Float),
+            sa.Column("Longitude", sa.Float),
+            sa.Column("MedHouseVal", sa.Float),
         )
 
         def load_training_data(
             self, conn, *args, **kwargs
         ) -> Tuple[pd.DataFrame, DataType]:
-            sql = "SELECT * FROM boston"
+            sql = "SELECT * FROM california"
             df = pd.read_sql(sql, conn)
-            return df.drop(columns="MEDV"), df.MEDV
+            return df.drop(columns="MedHouseVal"), df.MedHouseVal
 
         def load_prediction_data(self, idx, conn) -> DataType:
-            sql = "SELECT * FROM boston"
-            return pd.read_sql(sql, conn).loc[[idx]].drop(columns="MEDV")
+            sql = "SELECT * FROM california"
+            return pd.read_sql(sql, conn).loc[[idx]].drop(columns="MedHouseVal")
 
-    return BostonSQLData
+    return CaliforniaSQLData
 
 
 @pytest.fixture
@@ -148,24 +143,24 @@ def iris_sqldataset():
 
 
 @pytest.fixture
-def boston_csv(tmp_path: pathlib.Path, boston_df):
+def california_csv(tmp_path: pathlib.Path, california_df):
     output_path = tmp_path / "test.csv"
-    boston_df.to_csv(output_path, index=False)
+    california_df.to_csv(output_path, index=False)
     return output_path
 
 
 @pytest.fixture()
-def boston_filedataset():
-    class BostonFileDataset(FileDataset):
+def california_filedataset():
+    class CaliforniaFileDataset(FileDataset):
         def load_training_data(self, *args, **kwargs) -> Tuple[pd.DataFrame, DataType]:
             df = pd.read_csv(self.file_path)
-            return df.drop(columns=["MEDV"]), df.MEDV
+            return df.drop(columns=["MedHouseVal"]), df.MedHouseVal
 
         def load_prediction_data(self, idx) -> pd.DataFrame:
             df = pd.read_csv(self.file_path)
-            return df.drop(columns="MEDV").iloc[[idx]]
+            return df.drop(columns="MedHouseVal").iloc[[idx]]
 
-    return BostonFileDataset
+    return CaliforniaFileDataset
 
 
 @pytest.fixture()

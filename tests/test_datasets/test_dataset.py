@@ -78,12 +78,12 @@ class TestDataset:
             Dataset()
 
     def test_can_copy_one_dataset_into_another(
-        self, boston_csv, boston_sqldataset, test_engine, boston_filedataset
+        self, california_csv, california_sqldataset, test_engine, california_filedataset
     ):
-        csv_dataset = boston_filedataset(boston_csv)
-        sql_dataset = boston_sqldataset(test_engine, schema=None)
+        csv_dataset = california_filedataset(california_csv)
+        sql_dataset = california_sqldataset(test_engine, schema=None)
 
         csv_dataset.copy_to(sql_dataset)
 
         with sql_dataset.engine.connect() as conn:
-            conn.execute("SELECT * FROM boston")
+            conn.execute("SELECT * FROM california")

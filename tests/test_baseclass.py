@@ -446,13 +446,13 @@ class TestTrainEstimator:
 
 class TestScoreEstimator:
     def test_score_estimator_creates_train_test_data(
-        self, boston_dataset, train_boston_dataset
+        self, california_dataset, train_california_dataset
     ):
         model = Model(LinearRegression())
-        data = boston_dataset()
+        data = california_dataset()
         model.score_estimator(data)
 
-        test = train_boston_dataset
+        test = train_california_dataset
 
         pd.testing.assert_frame_equal(data.test_x, test.test_x)
         assert np.array_equal(data.test_y, test.test_y)
@@ -474,16 +474,16 @@ class TestScoreEstimator:
         assert np.array_equal(data.train_y, test.train_y)
 
     def test_score_estimator_creates_train_test_data_with_changed_config(
-        self, boston_dataset
+        self, california_dataset
     ):
         model = Model(LinearRegression())
         model.config.RANDOM_STATE = 1
         model.config.TEST_SIZE = 0.5
         model.config.TRAIN_TEST_SHUFFLE = False
-        data = boston_dataset()
+        data = california_dataset()
         model.score_estimator(data)
 
-        test = boston_dataset()
+        test = california_dataset()
         test.create_train_test(stratify=False, shuffle=False, seed=1, test_size=0.5)
 
         pd.testing.assert_frame_equal(data.test_x, test.test_x)
@@ -996,9 +996,9 @@ class TestMakePrediction:
             model.make_prediction(train_iris_dataset, 5)
 
     def test_make_prediction_with_regression_sqldataset_works_as_expected(
-        self, boston_sqldataset, loaded_boston_db
+        self, california_sqldataset, loaded_california_db
     ):
-        dataset = boston_sqldataset(loaded_boston_db, schema=None)
+        dataset = california_sqldataset(loaded_california_db, schema=None)
         dataset.create_train_test(stratify=False)
         model = Model(LinearRegression())
         model.train_estimator(dataset)

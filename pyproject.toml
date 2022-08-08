@@ -1,0 +1,74 @@
+[build-system]
+requires = [
+    "hatchling>=1.6.0",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "ml-tooling"
+description = "A library for machine learning utilities"
+version = "0.12.0"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.7"
+authors = [
+    { name = "Anders Bogsnes", email = "andersbogsnes@gmail.com" },
+]
+keywords = [
+    "framework",
+    "ml",
+    "tooling",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "attrs",
+    "joblib",
+    "matplotlib",
+    "pandas",
+    "pyyaml",
+    "scikit-learn",
+    "scikit-optimize",
+    "sqlalchemy",
+]
+
+[project.optional-dependencies]
+artifactory = [
+    "dohq-artifactory",
+]
+dev = [
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "tox",
+]
+docs = [
+    "sphinx",
+    "sphinx_rtd_theme",
+]
+tests = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/andersbogsnes/ml_tooling/issues"
+Documentation = "https://ml-tooling.readthedocs.io/en/stable/"
+Homepage = "https://github.com/andersbogsnes/ml_tooling"
+"Source Code" = "https://github.com/andersbogsnes/ml_tooling"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+]

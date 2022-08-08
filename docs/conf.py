@@ -12,7 +12,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-from ml_tooling import __version__
+from importlib import metadata
 
 # -- Project information -----------------------------------------------------
 
@@ -21,9 +21,9 @@ copyright = "2019, Anders Bogsnes"
 author = "Anders Bogsnes"
 
 # The short X.Y version
-version = __version__
+version = metadata.version("ml_tooling")
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = metadata.version("ml_tooling")
 
 # -- General configuration ---------------------------------------------------
 

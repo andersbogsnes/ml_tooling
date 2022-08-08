@@ -1,6 +1,7 @@
 import pathlib
 from datetime import datetime
 from typing import Optional, List
+from importlib import metadata
 
 import yaml
 
@@ -95,14 +96,11 @@ class Log:
                 - params -> dict of params
             * estimator_path
         """
-        from ml_tooling import __version__ as ml_tools_version
-        from sklearn import __version__ as sklearn_version
-        from pandas import __version__ as pandas_version
 
         versions = {
-            "ml_tooling": ml_tools_version,
-            "sklearn": sklearn_version,
-            "pandas": pandas_version,
+            "ml_tooling": metadata.version("ml_tooling"),
+            "sklearn": metadata.version("scikit-learn"),
+            "pandas": metadata.version("pandas"),
         }
 
         data = {

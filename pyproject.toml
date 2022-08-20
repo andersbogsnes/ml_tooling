@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ml-tooling"
 description = "A library for machine learning utilities"
-version = "0.12.0"
+version = "0.12.1"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.7"

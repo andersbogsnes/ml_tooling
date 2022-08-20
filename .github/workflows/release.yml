@@ -14,4 +14,6 @@ jobs:
           python-version: 3.10
       - run: pip install hatch
       - run: hatch build
-      - run: hatch publish -u __token__ -a ${{ PYPI_TOKEN }}
+      - env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: hatch publish -u __token__ -a "$PYPI_TOKEN"

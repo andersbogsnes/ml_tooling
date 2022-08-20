@@ -20,33 +20,34 @@ And to run tests:
 ## Example usage
 Define a class using ModelData and implement the two required methods.
 Here we simply implement a linear regression on the Boston dataset using sklearn.datasets
+
 ```python
-from sklearn.datasets import load_boston
+from sklearn.datasets import fetch_california_housing
 from sklearn.linear_model import LinearRegression
 
 from ml_tooling import Model
 from ml_tooling.data import Dataset
 
 # Define a new data class
-class BostonData(Dataset):
+class CaliforniaData(Dataset):
     def load_prediction_data(self, idx):
-        x, _ = load_boston(return_X_y=True)
+        x, _ = fetch_california_housing(return_X_y=True)
         return x[idx] # Return given observation
 
     def load_training_data(self):
-        return load_boston(return_X_y=True)
+        return fetch_california_housing(return_X_y=True)
 
 # Instantiate a model with an estimator
-linear_boston = Model(LinearRegression())
+linear_california = Model(LinearRegression())
 
 # Instantiate the data
-data = BostonData()
+data = CaliforniaData()
 
 # Split training and test data
 data.create_train_test()
 
 # Score the estimator yielding a Result object
-result = linear_boston.score_estimator(data)
+result = linear_california.score_estimator(data)
 
 # Visualize the result
 result.plot.prediction_error()

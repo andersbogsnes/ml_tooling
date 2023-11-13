@@ -43,7 +43,6 @@ class ArtifactoryStorage(Storage):
         apikey: Optional[str] = None,
         auth: Optional[Tuple[str, str]] = None,
     ):
-
         if not _has_artifactory:
             raise MLToolingError(
                 "Artifactory not installed - run pip install dohq-artifactory"

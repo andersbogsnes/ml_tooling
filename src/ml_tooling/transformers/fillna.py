@@ -46,7 +46,6 @@ class FillNA(BaseEstimator, TransformerMixin):
         }
 
     def _validate_parameters(self):
-
         if self.value is None and self.strategy is None:
             raise TransformerError(
                 "Both value and strategy are set to None."
@@ -68,7 +67,6 @@ class FillNA(BaseEstimator, TransformerMixin):
         return False
 
     def fit(self, X: pd.DataFrame, y=None):
-
         self._validate_parameters()
 
         if self.strategy:

@@ -44,7 +44,6 @@ class TestTargetFeatureDistribution:
     def test_target_feature_distribution_works_as_expected(
         self, australian_dataset: Dataset
     ):
-
         ax = australian_dataset.plot.target_feature_distribution(feature_name="A4")
 
         assert [text.get_text() for text in ax.texts] == ["0.28", "0.50", "1.00"]

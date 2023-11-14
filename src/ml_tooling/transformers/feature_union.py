@@ -24,7 +24,7 @@ class DFFeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_list = transformer_list
 
     def fit(self, X: pd.DataFrame, y=None):
-        for (name, t) in self.transformer_list:
+        for name, t in self.transformer_list:
             t.fit(X, y)
         return self
 

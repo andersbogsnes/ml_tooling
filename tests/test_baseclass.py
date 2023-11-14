@@ -330,7 +330,6 @@ class TestBaseClass:
     def test_from_yaml_serializes_correctly_with_feature_union(
         self, feature_union_classifier: DFFeatureUnion, tmp_path: pathlib.Path
     ):
-
         model = Model(feature_union_classifier)
         result = model.to_dict()
 
@@ -677,7 +676,6 @@ class TestGridSearch:
     def test_gridsearch_best_model_is_not_fitted_if_refit_is_not_true(
         self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
     ):
-
         model = Model(pipeline_logistic)
         model, results = model.gridsearch(
             train_iris_dataset,
@@ -771,7 +769,6 @@ class TestRandomSearch:
     def test_randomsearch_best_model_is_not_fitted_if_refit_is_not_true(
         self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
     ):
-
         model = Model(pipeline_logistic)
         model, results = model.randomsearch(
             train_iris_dataset,
@@ -890,7 +887,6 @@ class TestBayesSearch:
     def test_bayessearch_best_model_is_not_fitted_if_refit_is_not_true(
         self, pipeline_logistic: Pipeline, train_iris_dataset: Dataset
     ):
-
         model = Model(pipeline_logistic)
         model, results = model.bayesiansearch(
             train_iris_dataset,

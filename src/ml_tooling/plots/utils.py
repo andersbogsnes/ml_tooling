@@ -123,7 +123,6 @@ def _plot_barh(
 
     if add_label:
         for i, (x, y) in enumerate(_generate_text_labels(ax, horizontal=True)):
-
             ax.annotate(
                 f"{values.ravel()[i]:.1%}"
                 if is_percent

@@ -30,7 +30,7 @@ numpy==1.23.3
     #   scipy
 packaging==21.3
     # via matplotlib
-pandas==1.4.4
+pandas==1.5.3
     # via ml-tooling (setup.py)
 pillow==9.2.0
     # via matplotlib

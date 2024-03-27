@@ -3,7 +3,6 @@ Implements a Binner Transformer which will convert selected value to 1's and all
 values to 0
 """
 
-
 from typing import Any
 
 import numpy as np

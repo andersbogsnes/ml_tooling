@@ -61,7 +61,7 @@ class FillNA(BaseEstimator, TransformerMixin):
     def _col_is_categorical_and_is_missing_category(
         self, col: str, X: pd.DataFrame
     ) -> bool:
-        if pd.api.types.is_categorical_dtype(X[col]):
+        if isinstance(X[col].dtype, pd.CategoricalDtype):
             if self.value_map_[col] not in X[col].cat.categories:
                 return True
         return False
@@ -91,7 +91,7 @@ class FillNA(BaseEstimator, TransformerMixin):
 
         for col in x_.columns:
             if self._col_is_categorical_and_is_missing_category(col, x_):
-                x_[col].cat.add_categories(self.value_map_[col], inplace=True)
+                x_[col] = x_[col].cat.add_categories(self.value_map_[col])
             if self.indicate_nan:
                 is_nan_col_name = f"{col}_is_nan"
                 x_[is_nan_col_name] = x_[col].isna().astype(int)

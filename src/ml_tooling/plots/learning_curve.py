@@ -2,11 +2,11 @@ from typing import Sequence
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib.axes import Axes, np
+from matplotlib.axes import Axes
 from ml_tooling.utils import DataType, Estimator
 from sklearn.model_selection import learning_curve
 from sklearn.base import is_classifier
-
+import numpy as np
 
 def plot_learning_curve(
     estimator: Estimator,

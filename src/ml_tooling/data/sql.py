@@ -112,7 +112,7 @@ class SQLDataset(Dataset, metaclass=abc.ABCMeta):
 
         logger.info(f"Dumping data from {self.table}")
         logger.debug(f"Dumping data from {self.engine}/{self.table.name}")
-        stmt = sa.select([self.table])
+        stmt = sa.select(self.table)
         try:
             with self.create_connection() as conn:
                 data = pd.read_sql(stmt, conn)

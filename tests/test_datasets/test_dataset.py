@@ -3,7 +3,7 @@ import pytest
 
 from ml_tooling.data import Dataset
 from ml_tooling.utils import DatasetError
-
+import sqlalchemy as sa
 
 class TestDataset:
     def test_repr_is_correct(self, iris_dataset):
@@ -86,4 +86,4 @@ class TestDataset:
         csv_dataset.copy_to(sql_dataset)
 
         with sql_dataset.engine.connect() as conn:
-            conn.execute("SELECT * FROM california")
+            conn.execute(sa.text("SELECT * FROM california"))

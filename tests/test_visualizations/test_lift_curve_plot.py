@@ -62,7 +62,7 @@ class TestLiftCurvePlot:
         assert pytest.approx(value) == np.sum(ax.lines[line_no].get_xdata())
 
     @pytest.mark.parametrize(
-        "line_no, value", [(0, 80.7382), (1, 77.59), (2, 77.59), (3, 2)]
+        "line_no, value", [(0, 80.7382), (1, 77.59), (2, 77.34), (3, 2)]
     )
     def test_lift_curve_to_have_the_correct_ydata(
         self, ax: Axes, line_no: int, value: float

@@ -254,7 +254,6 @@ class TestBaseClass:
                     "copy_X": True,
                     "fit_intercept": True,
                     "n_jobs": None,
-                    "normalize": "deprecated",
                     "positive": False,
                 },
             }
@@ -279,7 +278,6 @@ class TestBaseClass:
                     "copy_X": True,
                     "fit_intercept": True,
                     "n_jobs": None,
-                    "normalize": "deprecated",
                     "positive": False,
                 },
             },

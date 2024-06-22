@@ -2,10 +2,10 @@ from typing import Union, Optional
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
-from matplotlib.axes import Axes, np
+from matplotlib.axes import Axes
 from ml_tooling.metrics.utils import _is_percent, _sort_values
 from ml_tooling.utils import DataType
-
+import numpy as np
 
 def _generate_text_labels(ax: plt.Axes, horizontal=False):
     """

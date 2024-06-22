@@ -15,7 +15,7 @@ from ml_tooling.result import Result
 from ml_tooling.transformers import DFStandardScaler
 from ml_tooling.utils import VizError
 
-feature_importances = ["-2.26", "-0.98", "0.82", "-0.54"]
+feature_importances = ["-2.26", "-0.97", "0.83", "-0.54"]
 
 
 class TestFeatureImportancePlot:

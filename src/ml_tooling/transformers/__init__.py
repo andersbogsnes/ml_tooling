@@ -12,7 +12,6 @@ from .scaler import DFStandardScaler
 from .select import Select
 from .pipeline import Pipeline
 
-
 __all__ = [
     "Binarize",
     "Binner",

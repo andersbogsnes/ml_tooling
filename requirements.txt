@@ -32,7 +32,7 @@ packaging==21.3
     # via matplotlib
 pandas==1.5.3
     # via ml-tooling (setup.py)
-pillow==9.2.0
+pillow==9.3.0
     # via matplotlib
 pyaml==21.10.1
     # via scikit-optimize
